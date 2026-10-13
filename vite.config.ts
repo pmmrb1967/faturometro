@@ -34,6 +34,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,woff2}'],
+        // ERSE offers (1,7 MB, refreshed weekly): fetched when the comparator opens, then cached.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/data/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'erse-data' },
+          },
+        ],
       },
     }),
   ],

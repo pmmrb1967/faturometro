@@ -16,7 +16,8 @@
     "icons": "pwa-assets-generator",
     "fixture:anon": "tsx scripts/anonymize-fixture.ts",
     "tunnel": "cloudflared tunnel --url http://localhost:4173",
-    "fixtures:synthetic": "tsx scripts/synthetic-fixtures.ts"
+    "fixtures:synthetic": "tsx scripts/synthetic-fixtures.ts",
+    "erse:sync": "tsx scripts/erse-sync.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
@@ -43,6 +44,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "fake-indexeddb": "^6.2.5",
+    "fflate": "^0.8.3",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",

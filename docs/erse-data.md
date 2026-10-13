@@ -87,6 +87,6 @@ Valores vazios aparecem como campo vazio, espaço (`" "`) ou `-`.
 
 ## Questões em aberto
 
-- **Os preços (`TF`, `TV…`) incluem IVA e taxas?** Os metadados não dizem. Os custos de serviços têm colunas separadas com e sem IVA, o que sugere que os termos não incluem IVA, mas isto **tem de ser confirmado** (documentação da ERSE ou cálculo contra faturas reais na Fase 3) antes de implementar o comparador.
+- ~~Os preços incluem IVA e taxas?~~ **Resolvido (2026-10-13): são sem IVA e sem taxas.** O manual do simulador pede ao consumidor os preços do seu contrato "sem IVA" para os comparar com as ofertas; o termo fixo de uma oferta (0,3436 €/dia a 6,9 kVA) é igual ao termo de potência das redes sem IVA de uma fatura real; os preços de energia das ofertas estão na ordem de grandeza dos preços sem IVA das faturas. IVA: `docs/electricity-vat.md`.
 - Confirmação explícita do significado de `Contagem` nos preços.
 - Licença formal de reutilização.

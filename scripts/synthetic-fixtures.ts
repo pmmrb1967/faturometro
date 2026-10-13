@@ -41,14 +41,15 @@ function write(
   console.log(`✔ fixtures/${providerId}/${name}.json`);
 }
 
-// Repsol: bi-hourly electricity, 200 kWh. Net 43,12 € + VAT 23 % 9,92 € = 53,04 €.
+// Repsol: bi-hourly electricity, 4,6 kVA, 200 kWh in 31 days. VAT per ERSE rules (docs/electricity-vat.md):
+// energy (≤ 207 kWh) and CAV at 6 % = 2,21 €; power and DGEG at 23 % = 1,44 €. Net 43,12 € → 46,77 €.
 write(
   'repsol',
   'synthetic-1',
   [
     {
       page: 2,
-      text: 'A:500246963*B:999999990*C:PT*D:FT*E:N*F:20260605*G:FAC 1000000001/2000000001*H:ABCD1234-2000000001*I1:PT*I7:43.12*I8:9.92*N:9.92*O:53.04*Q:abcd*R:0000',
+      text: 'A:500246963*B:999999990*C:PT*D:FT*E:N*F:20260605*G:FAC 1000000001/2000000001*H:ABCD1234-2000000001*I1:PT*I3:36.85*I4:2.21*I7:6.27*I8:1.44*N:3.65*O:46.77*Q:abcd*R:0000',
     },
   ],
   [
@@ -126,12 +127,16 @@ write(
       ['0,07', 435, 225],
       ['(c) IVA 23%', 53, 234],
       ['01/05 a 31/05', 234, 234],
-      ['43,1200 € x 23,00%', 285, 234],
-      ['9,92', 435, 234],
+      ['6,2700 € x 23,00%', 285, 234],
+      ['1,44', 435, 234],
+      ['(b) IVA 6%', 53, 243],
+      ['01/05 a 31/05', 234, 243],
+      ['36,8500 € x 6,00%', 285, 243],
+      ['2,21', 435, 243],
       ['Total sem IVA', 41, 251],
       ['43,12€', 432, 251],
       ['TOTAL', 40, 263],
-      ['53,04€', 430, 263],
+      ['46,77€', 430, 263],
     ]),
     page(3, [
       ['Dados da Conta', 31, 33],
