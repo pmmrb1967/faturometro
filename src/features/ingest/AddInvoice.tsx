@@ -273,9 +273,15 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
         if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} />;
         const { form, locked } = formFromQr(qr.result.qr, qr.parsed);
         const docType = qr.result.qr.docType;
-        const label = [docType ? (copy.docTypes[docType] ?? docType) : '', qr.result.qr.docId]
+        const sector = qr.parsed?.extraction.sector;
+        const label = [
+          sector ? t.sectors[sector] : '',
+          [docType ? (copy.docTypes[docType] ?? docType) : '', qr.result.qr.docId]
+            .filter(Boolean)
+            .join(' '),
+        ]
           .filter(Boolean)
-          .join(' ');
+          .join(' · ');
         const base: FormBase = { fileHash: outcome.fileHash, file: stored, qr: qr.result.qr };
         if (qr.docKey) base.docKey = qr.docKey;
         if (qr.parsed) base.parsed = qr.parsed;

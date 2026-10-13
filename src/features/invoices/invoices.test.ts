@@ -5,7 +5,7 @@ import { ProfileDb } from '../../db/schema';
 import { createAccountKeys } from '../../lib/crypto';
 import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
 import { emptyExtraction, type ExtractedInvoice } from '../../parsers/types';
-import { buildDraft, emptyForm, formFromQr } from './form';
+import { buildDraft, defaultContractId, emptyForm, formFromQr } from './form';
 import { DuplicateInvoiceError, saveInvoice } from './save';
 
 // Synthetic data only.
@@ -209,6 +209,7 @@ describe('saveInvoice', () => {
     };
     const parsed = {
       parserId: 'test',
+      providerName: 'Fornecedor Teste',
       parserVersion: '1.0.0',
       extraction,
       check: {
@@ -222,10 +223,13 @@ describe('saveInvoice', () => {
       periodStart: '2026-05-22',
       periodEnd: '2026-06-21',
       sector: 'electricity',
+      // Suggested from the parser, editable.
+      providerName: 'Fornecedor Teste',
+      contractLabel: 'Eletricidade',
     });
 
     const result = buildDraft(
-      { ...form, providerName: 'Fornecedor', contractLabel: 'Luz' },
+      { ...form, contractLabel: 'Luz' },
       { fileHash: 'file-9', qr: qr(), docKey: 'doc-9', parsed },
       { providerKnown: false },
     );
@@ -238,6 +242,7 @@ describe('saveInvoice', () => {
       parserId: 'test',
       parserVersion: '1.0.0',
     });
+    expect((await repos.providers.list())[0]?.name).toBe('Fornecedor Teste');
     expect(await repos.invoiceLines.findBy('invoiceId', invoice.id)).toHaveLength(2);
     const [reading] = await repos.readings.findBy('invoiceId', invoice.id);
     expect(reading).toMatchObject({
@@ -250,5 +255,29 @@ describe('saveInvoice', () => {
       tariffName: 'Tarifa Simples',
       electricity: { powerKva: 6.9, cycle: 'simple', socialTariff: true },
     });
+  });
+});
+
+describe('defaultContractId', () => {
+  const light = { id: 'light', sector: 'electricity' as const, supplyPointId: 'PT-CPE-1' };
+  const gas = { id: 'gas', sector: 'gas' as const, supplyPointId: 'PT-CUI-1' };
+  const manual = { id: 'manual', sector: 'electricity' as const };
+
+  it('matches the supply point first', () => {
+    expect(defaultContractId([light, gas], 'gas', 'PT-CUI-1')).toBe('gas');
+  });
+
+  it('never puts a gas invoice on the electricity contract of the same provider', () => {
+    expect(defaultContractId([light], 'gas', 'PT-CUI-1')).toBe('');
+    expect(defaultContractId([light], 'gas')).toBe('');
+  });
+
+  it('proposes a new contract for another supply point of the same sector (another house)', () => {
+    expect(defaultContractId([light], 'electricity', 'PT-CPE-2')).toBe('');
+  });
+
+  it('uses a same-sector contract without supply point (created by hand)', () => {
+    expect(defaultContractId([manual], 'electricity', 'PT-CPE-2')).toBe('manual');
+    expect(defaultContractId([light], 'electricity')).toBe('light');
   });
 });

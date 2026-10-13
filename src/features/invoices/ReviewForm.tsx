@@ -10,6 +10,7 @@ import { getSettings } from '../settings/settings';
 import {
   SECTORS,
   buildDraft,
+  defaultContractId,
   type FormBase,
   type FormErrors,
   type InvoiceForm,
@@ -35,7 +36,7 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState<string>();
   const [saving, setSaving] = useState(false);
-  /** null until the user picks: then the provider's first contract is used. */
+  /** null until the user picks: then the contract with the same CPE/CUI or sector is proposed. */
   const [contractChoice, setContractChoice] = useState<string | null>(null);
 
   const nif = form.issuerNif.trim();
@@ -52,7 +53,9 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
   const { repos } = session;
   const provider = known?.provider;
   const contracts = known?.contracts ?? [];
-  const contractId = contractChoice ?? contracts[0]?.id ?? '';
+  const contractId =
+    contractChoice ??
+    defaultContractId(contracts, form.sector, base.parsed?.extraction.supplyPointId?.value);
   const current = { ...form, contractId };
 
   const set =

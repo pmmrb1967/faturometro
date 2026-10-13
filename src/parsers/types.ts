@@ -60,6 +60,8 @@ export interface ParserContext {
 
 export interface Parser {
   id: string;
+  /** Provider name as printed on its invoices; suggested when the provider is new. */
+  name: string;
   /** Bump on every change; stored with each invoice. */
   version: string;
   sectors: Sector[];

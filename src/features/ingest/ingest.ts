@@ -33,6 +33,7 @@ export interface ReadQr {
 /** Steps 4–5: what a layout parser read, and how it compares with the QR code. */
 export interface ParsedDocument {
   parserId: string;
+  providerName: string;
   parserVersion: string;
   extraction: ExtractedInvoice;
   check: ValidationResult;
@@ -74,6 +75,7 @@ export function runParser(
     const extraction = parser.parse(ctx, qr);
     return {
       parserId: parser.id,
+      providerName: parser.name,
       parserVersion: parser.version,
       extraction,
       check: validateExtraction(extraction, qr),

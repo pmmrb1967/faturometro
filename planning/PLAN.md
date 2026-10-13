@@ -437,6 +437,7 @@ Opcional e desligada por defeito.
 3. A app recolhe, decifra localmente, processa pelo pipeline normal, e o servidor apaga. Blobs não recolhidos expiram em 30 dias.
 4. Endereço regenerável; texto claro na ativação sobre a passagem pelo servidor.
 5. Não usar OAuth do Gmail nem IMAP.
+6. Pedido do utilizador (2026-10-13): recolher automaticamente as faturas do(s) email(s) pessoal(ais), com autorização. Mantém-se o reencaminhamento (regra de reencaminhamento no email do utilizador para o endereço da app) em vez de acesso à caixa de correio: o acesso por OAuth ao Gmail exige uma auditoria de segurança paga às apps que leem email e daria acesso a todo o correio. Confirmar na altura se os fornecedores enviam o PDF em anexo ou só uma ligação para a área de cliente.
 
 ## 13. Fases e tarefas
 

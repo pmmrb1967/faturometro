@@ -200,6 +200,7 @@ function labelValue(
 
 export const repsolParser: Parser = {
   id: ID,
+  name: 'Repsol',
   version: '1.1.0',
   sectors: ['electricity', 'gas'],
   issuerNifs: [NIF],

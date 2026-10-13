@@ -149,6 +149,7 @@ function parseDetail(pages: PageText[], result: ExtractedInvoice) {
 
 export const nosParser: Parser = {
   id: 'nos',
+  name: 'NOS',
   version: '1.0.0',
   sectors: ['telecom'],
   issuerNifs: [NIF],

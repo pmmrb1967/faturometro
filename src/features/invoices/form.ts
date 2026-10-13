@@ -3,7 +3,7 @@
  * (prefilled, QR fields read-only) and for invoices typed by hand.
  */
 import { isValidNif } from '../../domain/nif';
-import type { Sector } from '../../domain/types';
+import type { Contract, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { parsePtAmount, type Cents } from '../../lib/money';
 import { signedTotalCents, vatCents, type FiscalQr } from '../../qr/parse';
@@ -68,7 +68,10 @@ export function emptyForm(): InvoiceForm {
 function fromExtraction(extraction?: ExtractedInvoice): Partial<InvoiceForm> {
   if (!extraction) return {};
   const form: Partial<InvoiceForm> = {};
-  if (extraction.sector) form.sector = extraction.sector;
+  if (extraction.sector) {
+    form.sector = extraction.sector;
+    form.contractLabel = t.sectors[extraction.sector];
+  }
   if (extraction.customerNumber) form.customerNumber = extraction.customerNumber.value;
   if (extraction.periodStart) form.periodStart = extraction.periodStart.value;
   if (extraction.periodEnd) form.periodEnd = extraction.periodEnd.value;
@@ -79,7 +82,11 @@ function fromExtraction(extraction?: ExtractedInvoice): Partial<InvoiceForm> {
 /** Prefills the form from a parser's reading of a document without a usable QR code. */
 export function formFromParsed(parsed: ParsedDocument): InvoiceForm {
   const { extraction } = parsed;
-  const form: InvoiceForm = { ...emptyForm(), ...fromExtraction(extraction) };
+  const form: InvoiceForm = {
+    ...emptyForm(),
+    ...fromExtraction(extraction),
+    providerName: parsed.providerName,
+  };
   if (extraction.docId) form.docId = extraction.docId.value;
   if (extraction.issueDate) form.issueDate = extraction.issueDate.value;
   if (extraction.totalCents) form.total = centsToPt(extraction.totalCents.value);
@@ -96,6 +103,7 @@ export function formFromQr(
     form: {
       ...emptyForm(),
       ...fromExtraction(parsed?.extraction),
+      providerName: parsed?.providerName ?? '',
       issuerNif: qr.issuerNif,
       docId: qr.docId ?? '',
       issueDate: qr.date,
@@ -201,4 +209,26 @@ function contractDetails(
     };
   }
   return details;
+}
+
+/**
+ * Contract to propose for an invoice of a known provider: the one with the
+ * same supply point (CPE/CUI), else the one of the same sector; otherwise a
+ * new contract ("" ). A provider can have several contracts (electricity and
+ * gas from the same file), so "the first one" is never assumed.
+ */
+export function defaultContractId(
+  contracts: readonly Pick<Contract, 'id' | 'sector' | 'supplyPointId'>[],
+  sector: Sector,
+  supplyPointId?: string,
+): string {
+  if (supplyPointId) {
+    const same = contracts.find((contract) => contract.supplyPointId === supplyPointId);
+    if (same) return same.id;
+  }
+  // A same-sector contract with a different supply point is another house: propose a new one.
+  const candidate = contracts.find(
+    (contract) => contract.sector === sector && (!supplyPointId || !contract.supplyPointId),
+  );
+  return candidate?.id ?? '';
 }
