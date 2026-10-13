@@ -396,7 +396,7 @@ Notificações apenas dentro da app no MVP; um contador no ícone da PWA via Bad
 - **Fornecedor inicial:** Anthropic. Abstração `AiProvider` para adicionar outros depois.
 - **Chamadas diretas do browser**, com `dangerouslyAllowBrowser: true` no SDK. A chave nunca passa por servidor nosso.
 - **Guardar a chave:** IndexedDB, dentro dos dados do perfil, cifrada com a chave da conta local (secção 11).
-- **Modelo configurável;** por defeito o modelo mais económico que extraia com fiabilidade (avaliar na Fase 4).
+- **Modelo configurável;** por defeito o modelo mais económico que extraia com fiabilidade (avaliar na Fase 5 com `pnpm ai:eval`). Candidatos e preços de tabela (USD por milhão de tokens, entrada/saída, verificados a 2026-10-13): Haiku 5.5 0,10/0,50; Sonnet 5.5 2/10; Opus 5.5 4/20.
 - **Usos:**
   1. Extração estruturada (tool use + zod)
   2. "Explica-me esta fatura" / "porque subiu?" — com contexto das últimas faturas do contrato
@@ -491,11 +491,11 @@ Opcional e desligada por defeito.
 - **Concluída quando:** uma fatura adicionada no telemóvel aparece no PC, e o servidor só contém dados cifrados.
 
 ### Fase 5 — IA BYOK
-- [ ] Ecrã de definições com chave, modelo, teste de ligação
-- [ ] Extração por IA com tool use + zod + revalidação QR
-- [ ] Avaliação: comparar a extração por IA com os parsers nas fixtures; escolher modelo por defeito
-- [ ] "Explica-me esta fatura" e cartas
-- [ ] `scripts/generate-parser.ts`
+- [x] Ecrã de definições com chave, modelo, teste de ligação, envio automático e uso do mês (registo local, Dexie v4)
+- [x] Extração por IA com saída estruturada (JSON schema da API) + zod + revalidação QR; mostra o que vai ser enviado e o custo estimado (calculado localmente) antes de enviar
+- [ ] Avaliação: comparar a extração por IA com os parsers nas fixtures; escolher modelo por defeito (`pnpm ai:eval` pronto; falta correr com a chave do utilizador em `.env.local`)
+- [x] "Explica-me esta fatura" e cartas (renegociação, denúncia, leituras estimadas), na página do contrato; só dados estruturados, sem identificadores
+- [x] `scripts/generate-parser.ts` (`pnpm parser:generate`; propostas em `fixtures/private/proposals/`, para revisão)
 - **Concluída quando:** uma fatura de layout desconhecido é extraída por IA e passa a validação com o QR.
 
 ### Fase 6 — Polimento e lançamento
@@ -642,6 +642,11 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
 | 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `app.faturometro.workers.dev` (secção 15b) |
+| 2026-10-13 | IA: saída estruturada pelo `output_config.format` (JSON schema, estável na API) em vez de ferramenta forçada; todos os campos obrigatórios e "" para desconhecido, para caber nos limites de esquema da API; valores como texto decimal convertidos para cêntimos |
+| 2026-10-13 | IA: a estimativa de custo antes de enviar é calculada localmente (a contagem exata da API enviaria a fatura antes do consentimento) |
+| 2026-10-13 | IA: explicações e cartas só com dados estruturados guardados; n.º de cliente e CPE preenchidos localmente depois da resposta; nome, morada e NIF ficam como marcadores |
+| 2026-10-13 | IA: a chave fica nas definições (cifradas); com sincronização, vai cifrada para os outros dispositivos do utilizador. Custos guardados em micro-dólares inteiros |
+| 2026-10-13 | Avaliação da IA pode usar as fixtures privadas anonimizadas (autorizado pelo utilizador); o relatório detalhado fica em `fixtures/private/` |
 | 2026-10-13 | Originais sincronizados numa segunda base D1 (não R2, que exige cartão); D1 tem 500 MB por base, não 5 GB (o total da conta) |
 | 2026-10-13 | Envio de registos numa só instrução SQL (`json_each`): o plano gratuito permite 50 consultas por pedido |
 | 2026-10-13 | Mudar a palavra-passe com sincronização: servidor primeiro, depois local; os outros dispositivos voltam a entrar com a nova, que passa a ser também a local |

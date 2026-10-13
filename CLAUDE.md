@@ -38,6 +38,8 @@ pnpm lint
 pnpm build
 pnpm erse:sync        # atualiza public/data/erse-offers.json
 pnpm fixture:anon <pdf> <parserId>   # cria fixture anonimizada
+pnpm ai:eval          # avalia a extração por IA nas fixtures (precisa de ANTHROPIC_API_KEY)
+pnpm parser:generate <fixture> <id>  # proposta de parser pela IA, para revisão
 ```
 
 Antes de dar uma tarefa por concluída: `pnpm typecheck && pnpm lint && pnpm test` sem erros.
@@ -62,7 +64,7 @@ Antes de dar uma tarefa por concluída: `pnpm typecheck && pnpm lint && pnpm tes
 ## IA
 
 - Sempre por `src/ai/` (abstração `AiProvider`). Nada de chamadas diretas ao SDK espalhadas pela app.
-- Saída estruturada via tool use; validar com zod; uma nova tentativa no máximo.
+- Saída estruturada (`output_config.format` com JSON schema); validar com zod; uma nova tentativa no máximo.
 - Mostrar ao utilizador o que vai ser enviado e o custo estimado antes de enviar (salvo se ativou o envio automático).
 - Prompts em `src/ai/prompts/`, versionados.
 

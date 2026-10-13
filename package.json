@@ -19,7 +19,9 @@
     "fixtures:synthetic": "tsx scripts/synthetic-fixtures.ts",
     "erse:sync": "tsx scripts/erse-sync.ts",
     "deploy:app": "pnpm build && wrangler deploy -c wrangler.app.toml",
-    "deploy:server": "wrangler deploy -c server/wrangler.toml"
+    "deploy:server": "wrangler deploy -c server/wrangler.toml",
+    "ai:eval": "tsx scripts/ai-eval.ts",
+    "parser:generate": "tsx scripts/generate-parser.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
