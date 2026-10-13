@@ -155,6 +155,10 @@ function parseLines(page: PageText, result: ExtractedInvoice) {
       description: name,
       amountCents: cents,
     };
+    // Second column: Real / Estimado / Acerto (adjustment of earlier estimates).
+    const basisText = row.items.find((item) => item.x > 190 && item.x < 225)?.str.trim() ?? '';
+    const basis = /^acerto$/i.test(basisText) ? 'adjustment' : readingTypeOf(basisText);
+    if (basis) line.basis = basis;
     const explanation = row.items.find((item) => EXPLANATION.test(normalize(item.str)));
     const match = explanation ? EXPLANATION.exec(normalize(explanation.str)) : null;
     if (match) {
@@ -196,7 +200,7 @@ function labelValue(
 
 export const repsolParser: Parser = {
   id: ID,
-  version: '1.0.0',
+  version: '1.1.0',
   sectors: ['electricity', 'gas'],
   issuerNifs: [NIF],
 

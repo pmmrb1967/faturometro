@@ -15,6 +15,8 @@ export type ExtractedLine = Pick<
 > & {
   /** VAT rate the line is taxed at, in percent (e.g. 23), when the invoice says so. */
   vatRate?: number;
+  /** What a consumption line is based on, when the invoice says so. */
+  basis?: Reading['readingType'] | 'adjustment';
 };
 
 export type ExtractedReading = Pick<Reading, 'quantity' | 'unit' | 'readingType' | 'dateTo'> & {
