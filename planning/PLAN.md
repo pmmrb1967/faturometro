@@ -452,9 +452,9 @@ Opcional e desligada por defeito.
 - [x] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
 - [x] Conta local: registo, entrada, bloqueio, chave de recuperação, vários perfis (secção 11)
 - [x] Esquema Dexie v1 (com `updatedAt`/`deletedAt`, campos sensíveis cifrados) e camada de repositórios (`src/db/`)
-- [ ] Upload de PDF/imagem, hash e deduplicação
-- [ ] Renderização com pdf.js e leitura de QR (zxing-wasm)
-- [ ] Parser da string QR + testes com exemplos reais anonimizados
+- [x] Upload de PDF/imagem, hash e deduplicação (ficheiro e NIF emitente + campo G); PDFs com palavra-passe (NIF guardado nas definições)
+- [x] Renderização com pdf.js e leitura de **todos** os QR de todas as páginas (zxing-wasm, WASM incluído na app, sem CDN)
+- [x] Parser da string QR + testes (7 exemplos da AT; fixtures privadas localmente)
 - [ ] Formulário manual por setor
 - [ ] Ecrã de revisão
 - [ ] Lista de contratos e faturas
@@ -597,4 +597,6 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Fixtures de faturas reais (mesmo anonimizadas) ficam só no PC, em `fixtures/private/`; no repositório público só fixtures sintéticas |
 | 2026-10-13 | Não usar faturas de terceiros encontradas na internet; layouts em falta só com PDFs cedidos com consentimento |
 | 2026-10-13 | Conta local: PBKDF2-SHA256 (600 000 iterações, WebCrypto nativo) → chave que embrulha uma chave mestra AES-GCM aleatória; chave de recuperação aleatória (base32, HKDF). Registos cifrados por inteiro; em claro só IDs, datas, hashes e enums indexados. Bloqueio automático aos 15 min; recarregar a página bloqueia. `invoices.docKey` = SHA-256(NIF emitente + campo G), em vez do número em claro |
+| 2026-10-13 | Um ficheiro pode ter várias faturas (Repsol: luz + gás; Via Verde: uma por emitente): a ingestão lê todos os QR e cada QR dá uma fatura |
+| 2026-10-13 | zxing-wasm e o worker do pdf.js são servidos pela própria app (por defeito o zxing ia buscar o WASM ao jsDelivr) |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

@@ -1,4 +1,7 @@
 import { createHmac } from 'node:crypto';
+import { isValidNif, nifCheckDigit } from '../../src/domain/nif';
+
+export { isValidNif };
 
 /**
  * Replaces personal data in invoice text with fake values of the same length
@@ -61,18 +64,6 @@ function accentInsensitiveSource(text: string): string {
     source += variants ? `[${variants}${variants.toUpperCase()}]` : escapeRegExp(char);
   }
   return source;
-}
-
-export function isValidNif(nif: string): boolean {
-  if (!/^\d{9}$/.test(nif)) return false;
-  return nifCheckDigit(nif.slice(0, 8)) === Number(nif[8]);
-}
-
-function nifCheckDigit(first8: string): number {
-  let sum = 0;
-  for (let i = 0; i < 8; i++) sum += Number(first8[i]) * (9 - i);
-  const remainder = sum % 11;
-  return remainder < 2 ? 0 : 11 - remainder;
 }
 
 /** NIB check digits (last two digits of a Portuguese IBAN). */

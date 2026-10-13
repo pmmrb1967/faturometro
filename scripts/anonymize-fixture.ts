@@ -59,8 +59,8 @@ function loadConfig(): LocalConfig {
   return parsed.data;
 }
 
-function issuerNif(qr: string | null): string | null {
-  const field = qr?.split('*').find((part) => part.trim().startsWith('A:'));
+function issuerNif(qr: string): string | null {
+  const field = qr.split('*').find((part) => part.trim().startsWith('A:'));
   return field ? field.slice(field.indexOf(':') + 1).trim() : null;
 }
 
@@ -90,10 +90,13 @@ async function main(): Promise<void> {
     throw error;
   }
 
-  const issuer = issuerNif(extracted.qr);
+  // A statement can hold invoices from several issuers: keep every issuer NIF.
+  const issuers = [
+    ...new Set(extracted.qrs.map((qr) => issuerNif(qr.text)).filter((nif) => nif !== null)),
+  ];
   const anonymizer = new Anonymizer({
     terms,
-    keepNifs: issuer ? [issuer] : [],
+    keepNifs: issuers,
     key: randomBytes(32),
   });
 
@@ -102,21 +105,20 @@ async function main(): Promise<void> {
     ...page,
     items: page.items.map((item) => ({ ...item, str: anonymizer.text(item.str) })),
   }));
-  const qr = extracted.qr === null ? null : anonymizer.qr(extracted.qr);
+  const qrs = extracted.qrs.map((qr) => ({ ...qr, text: anonymizer.qr(qr.text) }));
 
   anonymizer.assertNoLeaks([
     ...pages.flatMap((page) => page.items.map((item) => item.str)),
     // Items are anonymized one by one; also check values split across items.
     ...pages.map((page) => page.items.map((item) => item.str).join('')),
-    qr ?? '',
+    ...qrs.map((qr) => qr.text),
   ]);
 
   const fixture = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     parserId,
     createdAt: new Date().toISOString().slice(0, 10),
-    qr,
-    qrPage: extracted.qrPage,
+    qrs,
     pages,
   };
 
@@ -128,7 +130,7 @@ async function main(): Promise<void> {
   const itemCount = pages.reduce((sum, page) => sum + page.items.length, 0);
   console.log(`✔ ${basename(outPath)}: ${pages.length} page(s), ${itemCount} text items`);
   console.log(
-    `  QR: ${qr ? `found on page ${extracted.qrPage}` : 'not found'}${issuer ? `, issuer NIF ${issuer} kept` : ''}`,
+    `  QR: ${qrs.length} found${qrs.length ? ` (pages ${qrs.map((qr) => qr.page).join(', ')})` : ''}; issuer NIFs kept: ${issuers.join(', ') || 'none'}`,
   );
   console.log('  Replacements:', JSON.stringify(anonymizer.stats));
   console.log(`  Review ${outPath} (names split across items, CPE with spaces, …).`);
