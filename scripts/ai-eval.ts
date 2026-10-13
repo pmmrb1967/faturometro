@@ -8,7 +8,7 @@
  * the text of the public synthetic fixtures and, unless --public-only, of
  * the private anonymized ones (fixtures/private, local only) to the
  * Anthropic API. The console shows only aggregate numbers and the names of
- * mismatched fields; the detailed report goes to fixtures/private/ (ignored
+ * mismatched fields; the detailed report goes to ai-eval-reports/ (ignored
  * by Git).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -244,7 +244,7 @@ async function main() {
     }
   }
 
-  const outDir = join(FIXTURES, 'private');
+  const outDir = join(ROOT, 'ai-eval-reports');
   mkdirSync(outDir, { recursive: true });
   const out = join(outDir, `ai-eval-${new Date().toISOString().slice(0, 10)}.json`);
   writeFileSync(out, JSON.stringify(rows, null, 2));

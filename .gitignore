@@ -35,3 +35,6 @@ fixtures/private/
 # Cloudflare local state and dev secrets
 .wrangler/
 .dev.vars
+
+# AI evaluation reports (may quote private fixtures)
+ai-eval-reports/

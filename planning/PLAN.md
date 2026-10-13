@@ -647,7 +647,7 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | IA: a estimativa de custo antes de enviar é calculada localmente (a contagem exata da API enviaria a fatura antes do consentimento) |
 | 2026-10-13 | IA: explicações e cartas só com dados estruturados guardados; n.º de cliente e CPE preenchidos localmente depois da resposta; nome, morada e NIF ficam como marcadores |
 | 2026-10-13 | IA: a chave fica nas definições (cifradas); com sincronização, vai cifrada para os outros dispositivos do utilizador. Custos guardados em micro-dólares inteiros |
-| 2026-10-13 | Avaliação da IA pode usar as fixtures privadas anonimizadas (autorizado pelo utilizador); o relatório detalhado fica em `fixtures/private/` |
+| 2026-10-13 | Avaliação da IA pode usar as fixtures privadas anonimizadas (autorizado pelo utilizador); o relatório detalhado fica em `ai-eval-reports/` (ignorada pelo Git) |
 | 2026-10-13 | Originais sincronizados numa segunda base D1 (não R2, que exige cartão); D1 tem 500 MB por base, não 5 GB (o total da conta) |
 | 2026-10-13 | Envio de registos numa só instrução SQL (`json_each`): o plano gratuito permite 50 consultas por pedido |
 | 2026-10-13 | Mudar a palavra-passe com sincronização: servidor primeiro, depois local; os outros dispositivos voltam a entrar com a nova, que passa a ser também a local |

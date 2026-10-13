@@ -82,7 +82,7 @@ async function on<T>(profile: { email: string }, run: () => Promise<T>): Promise
 function contract(id: string, label: string) {
   return {
     id,
-    providerId: 'p1',
+    providerId: 'fornecedor-secreto-1',
     sector: 'electricity' as const,
     label,
     customerNumber: 'CLIENTE-SECRETO-42',
@@ -102,14 +102,15 @@ describe('sync between two devices', () => {
     expect(stored).not.toContain('Luz da casa');
     expect(stored).not.toContain('CLIENTE-SECRETO-42');
     expect(stored).not.toContain('electricity');
-    expect(stored).not.toContain('p1');
+    // Hyphens never occur in base64, so these cannot match ciphertext by chance.
+    expect(stored).not.toContain('fornecedor-secreto-1');
 
     const b = await deviceB();
     const pulled = await runSync({ ...b, api });
     expect(pulled.result.received).toBe(1);
     expect(await b.repos.contracts.get('c1')).toMatchObject({ label: 'Luz da casa' });
     // Indexes rebuilt locally after decrypting.
-    expect(await b.repos.contracts.findBy('providerId', 'p1')).toHaveLength(1);
+    expect(await b.repos.contracts.findBy('providerId', 'fornecedor-secreto-1')).toHaveLength(1);
   });
 
   it('syncs edits and deletions both ways, last write wins', async () => {
