@@ -486,7 +486,7 @@ Opcional e desligada por defeito.
 - [x] Apagar conta e dados do servidor
 - [ ] Política de privacidade (Fase 6, com a página "Privacidade")
 - [ ] Mudança de palavra-passe com sincronização ativa (atualizar as chaves no servidor: `PUT /v1/keys` já existe; falta a interface, que também não existe para a conta local)
-- [ ] Publicar o servidor na Cloudflare (precisa da conta do utilizador)
+- [x] Publicar o servidor na Cloudflare (secção 15b)
 - [x] Testes: o servidor nunca recebe dados em claro (teste automático com dois dispositivos; verificado também no D1 local)
 - **Concluída quando:** uma fatura adicionada no telemóvel aparece no PC, e o servidor só contém dados cifrados.
 
@@ -503,7 +503,7 @@ Opcional e desligada por defeito.
 - [ ] Exportar/importar ZIP; apagar tudo
 - [ ] CSP, cabeçalhos de segurança
 - [ ] Página "Privacidade" e "Como funciona"
-- [ ] Deploy (app estática e servidor de sincronização)
+- [x] Deploy (app estática e servidor de sincronização) — antecipado na Fase 4, secção 15b
 - [ ] Teste com 5–10 famílias (uso real durante 1 mês)
 
 ### Pós-MVP
@@ -581,6 +581,26 @@ Proposta, sem servidor e sem afiliados:
 4. **Comparar propostas recebidas:** o utilizador carrega as propostas (PDF ou manual) e a app compara-as com a apólice atual cobertura a cobertura, assinalando o que falta ou é inferior e a diferença de preço.
 5. Avaliar no futuro parcerias com mediadores (implica decidir sobre neutralidade e envio de dados).
 
+## 15b. Infraestrutura publicada
+
+Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta "Pmmrb1967@gmail.com's Account", ID `228a5886f6ada239609955a875486421`, autenticada com Google).
+
+| O quê | Endereço | Configuração |
+|---|---|---|
+| **App** (PWA estática, landing + `/app`) | <https://faturometro.faturometro.workers.dev> | `wrangler.app.toml` (Workers com ficheiros estáticos; rotas de página única) |
+| **Servidor de sincronização** (Worker) | <https://faturometro-sync.faturometro.workers.dev> | `server/wrangler.toml` |
+| **Base de dados** (D1 `faturometro`) | ID `154a4e50-74c1-4fb0-92c2-33cf9032b842` | Criada com `--jurisdiction eu`: dados guardados e processados só na UE |
+| **Subdomínio** `faturometro.workers.dev` | — | Gratuito; registado pela API (o painel só oferecia compra de domínios) |
+
+- **Origens autorizadas no servidor** (`ALLOWED_ORIGINS` em `server/wrangler.toml`): a app publicada e `localhost:5173` / `localhost:4173` (desenvolvimento).
+- **Segredo** `PRELOGIN_SECRET`: gerado aleatoriamente e enviado diretamente para a Cloudflare (`wrangler secret put`); não existe em nenhum ficheiro. Para o trocar: `pnpm exec wrangler secret put PRELOGIN_SECRET -c server/wrangler.toml` (só afeta os sais falsos de emails desconhecidos).
+- **Publicar:**
+  - app: `pnpm deploy:app` (build + `wrangler deploy -c wrangler.app.toml`)
+  - servidor: `pnpm deploy:server`; alterações ao esquema: nova migração em `server/migrations/` e `pnpm exec wrangler d1 migrations apply faturometro --remote -c server/wrangler.toml`
+- **Atenção:** `wrangler pages project create` e o "auto-config" do Wrangler alteram o projeto sozinhos (plugin Vite da Cloudflare, `wrangler.jsonc`, scripts do `package.json`). Não usar; publicar sempre com `-c` explícito.
+- O Cloudflare Pages passou a fazer parte dos Workers: a app fica em `*.workers.dev` e não em `*.pages.dev`.
+- **Verificado em produção:** conta descartável criada no PC, fatura manual, sincronização ligada, segundo dispositivo isolado recebeu a fatura, conta apagada; servidor verificado vazio depois (0 contas, 0 registos, 0 sessões).
+
 ## 16. Decisões
 
 | Data | Decisão |
@@ -617,4 +637,5 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
+| 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `faturometro.faturometro.workers.dev` (secção 15b) |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

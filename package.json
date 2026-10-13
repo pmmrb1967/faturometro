@@ -17,7 +17,9 @@
     "fixture:anon": "tsx scripts/anonymize-fixture.ts",
     "tunnel": "cloudflared tunnel --url http://localhost:4173",
     "fixtures:synthetic": "tsx scripts/synthetic-fixtures.ts",
-    "erse:sync": "tsx scripts/erse-sync.ts"
+    "erse:sync": "tsx scripts/erse-sync.ts",
+    "deploy:app": "pnpm build && wrangler deploy -c wrangler.app.toml",
+    "deploy:server": "wrangler deploy -c server/wrangler.toml"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

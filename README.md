@@ -6,6 +6,8 @@ Os dados ficam no teu browser. A IA é opcional e usa a tua própria chave de AP
 
 Estado: em desenvolvimento — ver [`planning/PLAN.md`](planning/PLAN.md).
 
+**Experimentar online:** <https://faturometro.faturometro.workers.dev> (no telemóvel: abre o endereço e instala como app). Sincronização opcional entre dispositivos através de <https://faturometro-sync.faturometro.workers.dev>, que só recebe dados cifrados.
+
 ## Experimentar
 
 Requisitos: Node 24 e pnpm (`corepack enable pnpm`). Depois de clonar: `pnpm install`.
@@ -27,3 +29,13 @@ O browser só permite a cifra da conta e a instalação como app em páginas HTT
 3. Noutro terminal: `pnpm tunnel` e abre no telemóvel o endereço `https://….trycloudflare.com` que aparece.
 
 O túnel só serve o código da app; as faturas ficam no browser do telemóvel. Cada dispositivo tem a sua conta e os seus dados até existir a sincronização (Fase 4). O endereço muda sempre que o túnel é reiniciado, e com ele a "origem" do site: uma conta criada num endereço não aparece noutro.
+
+## Publicar (Cloudflare)
+
+Detalhes, endereços e recursos em [`planning/PLAN.md`, secção 15b](planning/PLAN.md).
+
+```bash
+pnpm exec wrangler login   # uma vez
+pnpm deploy:app            # app estática
+pnpm deploy:server         # servidor de sincronização (server/)
+```

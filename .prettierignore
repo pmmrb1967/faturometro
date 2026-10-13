@@ -4,3 +4,4 @@ coverage
 samples
 pnpm-lock.yaml
 *.md
+public/data
