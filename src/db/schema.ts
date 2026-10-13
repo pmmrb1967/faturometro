@@ -13,9 +13,19 @@ export interface StoredRow {
   [indexed: string]: unknown;
 }
 
+/**
+ * File sync state of a document (in clear, indexed):
+ * - `local`: only on this device;
+ * - `uploaded`: also on the sync server;
+ * - `remote`: known from another device, contents still on the server.
+ */
+export type DocumentSyncState = 'local' | 'uploaded' | 'remote';
+
 /** Documents also carry the file contents, encrypted separately. */
 export interface StoredDocumentRow extends StoredRow {
-  encBytes: EncryptedBlob;
+  /** Missing while `syncState` is `remote`. */
+  encBytes?: EncryptedBlob;
+  syncState: DocumentSyncState;
 }
 
 /**
@@ -45,7 +55,13 @@ export const SCHEMA_V2 = {
   invoices: 'id, contractId, providerId, fileHash, &docKey, issueDate, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V2;
+/** v3: optional sync of original files; `syncState` indexed, existing files are `local`. */
+export const SCHEMA_V3 = {
+  ...SCHEMA_V2,
+  documents: 'id, invoiceId, &fileHash, updatedAt, syncState',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V3;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -64,6 +80,16 @@ export class ProfileDb extends Dexie {
     super(profileDbName(profileId));
     this.version(1).stores(SCHEMA_V1);
     this.version(2).stores(SCHEMA_V2);
+    this.version(3)
+      .stores(SCHEMA_V3)
+      .upgrade((tx) =>
+        tx
+          .table('documents')
+          .toCollection()
+          .modify((row: StoredDocumentRow) => {
+            row.syncState ??= 'local';
+          }),
+      );
   }
 }
 

@@ -479,9 +479,9 @@ Opcional e desligada por defeito.
 - **Concluída quando:** o custo estimado da oferta atual bate com as faturas reais ± 2% em todas as fixtures de eletricidade.
 
 ### Fase 4 — Sincronização opcional
-- [ ] Reconfirmar limites do plano gratuito da Cloudflare e localização dos dados na UE
+- [x] Reconfirmar limites do plano gratuito da Cloudflare e localização dos dados na UE (2026-10-13, secção 15b)
 - [x] Servidor: contas (email + hash de autenticação), API de sincronização de registos cifrados (`server/`, Worker + D1; testado em node:sqlite e no workerd local)
-- [ ] Sincronização dos PDFs cifrados (R2), opcional
+- [x] Sincronização dos PDFs cifrados, opcional por dispositivo: numa segunda base D1 (sem cartão, em vez de R2), em blocos de texto base64; quota de 50 MB por conta e 450 MB no total; "Abrir original" nas faturas (descarrega a pedido)
 - [x] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos (última alteração ganha), entrada num dispositivo novo, sincronização automática (abertura, 5 min, ao voltar a ligação)
 - [x] Apagar conta e dados do servidor
 - [ ] Política de privacidade (Fase 6, com a página "Privacidade")
@@ -590,10 +590,12 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | **App** (PWA estática, landing + `/app`) | <https://app.faturometro.workers.dev> | `wrangler.app.toml` (Workers com ficheiros estáticos; rotas de página única) |
 | **Servidor de sincronização** (Worker) | <https://sync.faturometro.workers.dev> | `server/wrangler.toml` |
 | **Base de dados** (D1 `faturometro`) | ID `154a4e50-74c1-4fb0-92c2-33cf9032b842` | Criada com `--jurisdiction eu`: dados guardados e processados só na UE |
+| **Ficheiros originais** (D1 `faturometro-files`) | ID `4217a285-91b2-4b31-ab81-eeebc4ce7dcd` | Também `--jurisdiction eu`; separada para que, se encher, as faturas continuem a sincronizar |
 | **Subdomínio** `faturometro.workers.dev` | — | Gratuito; registado pela API (o painel só oferecia compra de domínios) |
 
 - **Origens autorizadas no servidor** (`ALLOWED_ORIGINS` em `server/wrangler.toml`): a app publicada e `localhost:5173` / `localhost:4173` (desenvolvimento).
 - **Segredo** `PRELOGIN_SECRET`: gerado aleatoriamente e enviado diretamente para a Cloudflare (`wrangler secret put`); não existe em nenhum ficheiro. Para o trocar: `pnpm exec wrangler secret put PRELOGIN_SECRET -c server/wrangler.toml` (só afeta os sais falsos de emails desconhecidos).
+- **Limites do plano gratuito** (confirmados a 2026-10-13 na documentação da Cloudflare): Workers 100 000 pedidos/dia, 10 ms de CPU por pedido, 50 consultas D1 por pedido; D1 500 MB por base de dados, 5 GB por conta (até 10 bases), 5 milhões de linhas lidas e 100 000 escritas por dia; cada valor até 2 MB. Por isso: o envio de registos é uma única instrução SQL por lote, e os originais ficam numa base própria com quota por conta (50 MB) e total (450 MB).
 - **Nomes:** `<worker>.<subdomínio da conta>.workers.dev`; o subdomínio da conta é obrigatório, por isso os Workers chamam-se `app` e `sync` (antes `faturometro` e `faturometro-sync`, apagados a 2026-10-13). Um endereço sem o subdomínio exigiria um domínio próprio (pago).
 - **Publicação automática** (`.github/workflows/ci.yml`): em cada push para `main`, depois de typecheck, lint, testes e build, aplica as migrações D1 e publica o servidor e a app. A tarefa semanal da ERSE volta a publicar a app quando as ofertas mudam. Precisa do segredo `CLOUDFLARE_API_TOKEN` no GitHub (token Cloudflare "Edit Cloudflare Workers" + D1 Edit), criado pelo utilizador e guardado com `gh secret set CLOUDFLARE_API_TOKEN`; sem ele, a publicação é saltada com um aviso.
 - **Publicar à mão:**
@@ -640,5 +642,8 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
 | 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `app.faturometro.workers.dev` (secção 15b) |
+| 2026-10-13 | Originais sincronizados numa segunda base D1 (não R2, que exige cartão); D1 tem 500 MB por base, não 5 GB (o total da conta) |
+| 2026-10-13 | Envio de registos numa só instrução SQL (`json_each`): o plano gratuito permite 50 consultas por pedido |
+| 2026-10-13 | Mudar a palavra-passe com sincronização: servidor primeiro, depois local; os outros dispositivos voltam a entrar com a nova, que passa a ser também a local |
 | 2026-10-13 | Workers renomeados para `app` e `sync` (endereços mais curtos); publicação automática pela CI depois dos testes |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

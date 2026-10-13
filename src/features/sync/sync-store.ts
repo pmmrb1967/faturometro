@@ -1,6 +1,7 @@
 /** Shared sync status (used by the automatic sync and by the settings page). */
 import { useEffect, useSyncExternalStore } from 'react';
 import { runSync, SyncError, type SyncErrorCode } from '../../sync/account';
+import type { FileSyncResult } from '../../sync/files';
 import { refreshAlerts } from '../alerts/refresh';
 import type { Session } from '../auth/session-context';
 
@@ -11,6 +12,7 @@ export interface SyncStatus {
   error?: SyncErrorCode | 'unexpected';
   lastReceived?: number;
   lastConflicts?: number;
+  files?: FileSyncResult;
 }
 
 let status: SyncStatus = { running: false };
@@ -38,10 +40,15 @@ export async function syncSession(
   if (!session.profile.sync || status.running) return;
   set({ ...status, running: true });
   try {
-    const { profile, result } = await runSync(session);
+    const { profile, result, files } = await runSync(session);
     updateProfile(profile);
     if (result.received > 0) await refreshAlerts(session.repos);
-    set({ running: false, lastReceived: result.received, lastConflicts: result.conflicts });
+    set({
+      running: false,
+      lastReceived: result.received,
+      lastConflicts: result.conflicts,
+      ...(files ? { files } : {}),
+    });
   } catch (error) {
     set({ running: false, error: error instanceof SyncError ? error.code : 'unexpected' });
   }

@@ -6,7 +6,9 @@ import {
   changeAccountPassword,
   disableSync,
   enableSync,
+  fileUsage,
   reconnectSync,
+  setFileSync,
   SyncError,
 } from '../../sync/account';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
@@ -162,7 +164,7 @@ function SyncSection() {
             </p>
           )}
           {status.error === 'session_expired' && <ReconnectForm />}
-          <p className="muted">{copy.pdfNote}</p>
+          <FileSyncOption />
           <div className="ingest-actions">
             <button
               type="button"
@@ -204,6 +206,69 @@ function SyncSection() {
         </>
       )}
     </section>
+  );
+}
+
+function formatMegabytes(bytes: number): string {
+  if (bytes > 0 && bytes < 100_000) return 'menos de 0,1 MB';
+  return `${(bytes / 1_000_000).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} MB`;
+}
+
+function FileSyncOption() {
+  const { session, updateProfile } = useSession();
+  const status = useSyncStatus();
+  const settings = useLiveQuery(
+    async () => (session ? getSettings(session.repos) : null),
+    [session],
+  );
+  // Shown at once; the saved value follows.
+  const [pending, setPending] = useState<boolean>();
+  const enabled = pending ?? Boolean(session?.profile.sync?.files);
+  const usage = useLiveQuery(async () => {
+    if (!session?.profile.sync || !enabled) return null;
+    try {
+      return await fileUsage(session);
+    } catch {
+      return null;
+    }
+  }, [session, enabled, status.files?.uploaded]);
+  if (!session?.profile.sync) return null;
+
+  async function toggle(checked: boolean) {
+    if (!session) return;
+    setPending(checked);
+    const profile = await setFileSync(session.profile, checked);
+    updateProfile(profile);
+    setPending(undefined);
+    if (checked) await syncSession({ ...session, profile }, updateProfile);
+  }
+
+  const files = status.files;
+  return (
+    <div className="file-sync">
+      <label className="check settings-check">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(event) => void toggle(event.target.checked)}
+        />
+        {copy.files.label}
+      </label>
+      <p className="muted">{copy.files.hint}</p>
+      {enabled && settings && !settings.keepOriginalFiles && (
+        <p className="ingest-problem">{copy.files.needsKeep}</p>
+      )}
+      {enabled && usage && (
+        <p className="muted">
+          {copy.files.usage(formatMegabytes(usage.used), formatMegabytes(usage.quota))}
+        </p>
+      )}
+      {enabled && files?.storageFull && <p className="ingest-problem">{copy.files.full}</p>}
+      {enabled && !!files?.uploaded && <p role="status">{copy.files.sent(files.uploaded)}</p>}
+      {enabled && !!files?.downloaded && (
+        <p role="status">{copy.files.received(files.downloaded)}</p>
+      )}
+    </div>
   );
 }
 

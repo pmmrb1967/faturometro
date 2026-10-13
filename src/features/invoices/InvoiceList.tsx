@@ -3,6 +3,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { useSession } from '../auth/session-context';
+import { OriginalButton } from './OriginalButton';
 import './invoices.css';
 
 export function InvoiceList() {
@@ -14,7 +15,15 @@ export function InvoiceList() {
       session.repos.providers.list(),
       session.repos.contracts.list(),
     ]);
+    const originals = new Map(
+      await Promise.all(
+        [...new Set(invoices.map((invoice) => invoice.fileHash))].map(
+          async (fileHash) => [fileHash, await session.repos.documents.stateOf(fileHash)] as const,
+        ),
+      ),
+    );
     return {
+      originals,
       invoices: invoices.sort((a, b) => b.issueDate.localeCompare(a.issueDate)),
       providers: new Map(providers.map((provider) => [provider.id, provider])),
       contracts: new Map(contracts.map((contract) => [contract.id, contract])),
@@ -39,6 +48,12 @@ export function InvoiceList() {
               <span className="meta">
                 {formatIsoDate(invoice.issueDate)} · {data.contracts.get(invoice.contractId)?.label}
               </span>
+              {data.originals.get(invoice.fileHash) && (
+                <OriginalButton
+                  fileHash={invoice.fileHash}
+                  state={data.originals.get(invoice.fileHash)!}
+                />
+              )}
             </li>
           ))}
         </ul>

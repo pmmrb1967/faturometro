@@ -51,7 +51,9 @@ jobs:
         run: corepack enable pnpm && pnpm install --frozen-lockfile
       - name: Database migrations
         if: steps.token.outputs.ok == 'true'
-        run: pnpm exec wrangler d1 migrations apply faturometro --remote -c server/wrangler.toml
+        run: |
+          pnpm exec wrangler d1 migrations apply faturometro --remote -c server/wrangler.toml
+          pnpm exec wrangler d1 migrations apply faturometro-files --remote -c server/wrangler.toml
       - name: Sync server
         if: steps.token.outputs.ok == 'true'
         run: pnpm deploy:server

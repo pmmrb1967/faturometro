@@ -84,6 +84,12 @@ export async function syncNow(
   for (;;) {
     const page = await api.pull(token, since);
     for (const remote of page.records) {
+      if (remote.table === 'documents') {
+        // Original files: only the metadata here; contents come with syncFiles.
+        if (!remote.deletedAt && (await repos.documents.applyRemote(remote.enc, remote.updatedAt)))
+          received++;
+        continue;
+      }
       if (!isSyncedTable(remote.table)) continue;
       const repo = repos[remote.table];
       const local = await repo.updatedAtOf(remote.id);

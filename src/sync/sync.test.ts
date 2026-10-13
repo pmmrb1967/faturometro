@@ -13,22 +13,29 @@ import {
   disableSync,
   enableSync,
   reconnectSync,
+  fetchOriginal,
   runSync,
+  setFileSync,
   SyncError,
 } from './account';
+import { chunk } from './files';
 
 const ITERATIONS = 1_000;
 const SERVER = 'https://sync.test';
 
 let api: SyncApi;
 let serverDb: ReturnType<typeof memorySql>['db'];
+let fileDb: ReturnType<typeof memorySql>['db'];
 
 beforeEach(async () => {
   await profilesDb.profiles.clear();
   const memory = memorySql();
   serverDb = memory.db;
+  const files = memorySql('migrations-files/0001_files.sql');
+  fileDb = files.db;
   const handle = createApp({
     sql: memory.sql,
+    files: files.sql,
     preloginSecret: 'secret',
     allowedOrigins: [],
     minIterations: ITERATIONS,
@@ -243,5 +250,78 @@ describe('password change with sync on', () => {
     });
     expect(changed.sync).toBeUndefined();
     await expect(unlockAccount('rui@example.pt', 'nova-nova-nova')).resolves.toBeDefined();
+  });
+});
+
+describe('original files', () => {
+  const pdf = new TextEncoder().encode('%PDF-1.7 fatura com NIF 123456789 e morada secreta');
+
+  it('uploads only ciphertext and other devices download it', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    let stateA = await setFileSync(a.profile, true);
+    const sent = await runSync({ ...a, profile: stateA, api });
+    stateA = sent.profile;
+    expect(sent.files).toEqual({ uploaded: 1, downloaded: 0, storageFull: false });
+    expect(await a.repos.documents.stateOf('h1')).toBe('uploaded');
+
+    const onServer =
+      JSON.stringify(fileDb.prepare('SELECT * FROM chunks').all()) +
+      JSON.stringify(serverDb.prepare('SELECT * FROM records').all());
+    expect(onServer).not.toContain('PDF');
+    expect(onServer).not.toContain('123456789');
+    expect(onServer).not.toContain('h1');
+    expect(onServer).not.toContain('application/pdf');
+
+    // Device B with file sync off: knows the file exists, fetches it on demand.
+    const b = await deviceB();
+    await runSync({ ...b, api });
+    expect(await b.repos.documents.stateOf('h1')).toBe('remote');
+    expect(await b.repos.documents.getByFileHash('h1')).toBeUndefined();
+    expect(await fetchOriginal({ ...b, fileHash: 'h1', api })).toBe(true);
+    const file = await b.repos.documents.getByFileHash('h1');
+    expect(new TextDecoder().decode(file?.bytes)).toContain('morada secreta');
+    expect(file?.mime).toBe('application/pdf');
+
+    // Nothing is uploaded twice.
+    const again = await on(stateA, () => runSync({ ...a, profile: stateA, api }));
+    expect(again.files?.uploaded).toBe(0);
+  });
+
+  it('downloads automatically when file sync is on', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+
+    const b = await deviceB();
+    const synced = await runSync({ ...b, profile: await setFileSync(b.profile, true), api });
+    expect(synced.files?.downloaded).toBe(1);
+    expect(await b.repos.documents.stateOf('h1')).toBe('uploaded');
+  });
+
+  it('keeps the file local when the server is full, and keeps syncing records', async () => {
+    const memory = memorySql();
+    const files = memorySql('migrations-files/0001_files.sql');
+    const handle = createApp({
+      sql: memory.sql,
+      files: files.sql,
+      fileQuotaBytes: 10,
+      preloginSecret: 'secret',
+      allowedOrigins: [],
+      minIterations: ITERATIONS,
+    });
+    api = new SyncApi(SERVER, (input, init) => handle(new Request(input, init)));
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await a.repos.contracts.put(contract('c1', 'Luz'));
+    const synced = await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+    expect(synced.files?.storageFull).toBe(true);
+    expect(synced.result.pushed).toBe(1);
+    expect(await a.repos.documents.stateOf('h1')).toBe('local');
+  });
+
+  it('splits contents into chunks', () => {
+    expect(chunk('abcdefgh', 4)).toEqual(['abcd', 'efgh']);
+    expect(chunk('abcdefghij', 4)).toEqual(['abcd', 'efgh', 'ij']);
   });
 });

@@ -121,6 +121,34 @@ export class SyncApi {
     return this.call('PUT', '/v1/keys', z.object({ token: z.string() }), { body: input, token });
   }
 
+  fileUsage(token: string) {
+    return this.call('GET', '/v1/files/usage', z.object({ used: z.number(), quota: z.number() }), {
+      token,
+    });
+  }
+
+  /** Uploads one chunk of base64 ciphertext (text body, no JSON: cheaper for the server). */
+  async putChunk(token: string, fileId: string, n: number, total: number, data: string) {
+    const response = await this.fetchImpl(
+      `${this.baseUrl}/v1/files/${encodeURIComponent(fileId)}/${n}?total=${total}`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'text/plain' },
+        body: data,
+      },
+    );
+    if (!response.ok) throw new SyncHttpError(response.status);
+  }
+
+  async getChunk(token: string, fileId: string, n: number): Promise<string> {
+    const response = await this.fetchImpl(
+      `${this.baseUrl}/v1/files/${encodeURIComponent(fileId)}/${n}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!response.ok) throw new SyncHttpError(response.status);
+    return response.text();
+  }
+
   deleteAccount(token: string) {
     return this.call('DELETE', '/v1/account', null, { token });
   }

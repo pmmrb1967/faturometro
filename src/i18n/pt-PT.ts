@@ -110,7 +110,7 @@ export const t = {
     saved: 'Guardado.',
     account: {
       title: 'Conta',
-      signedInAs: (email: string) => `Conta: ${email}`,
+      signedInAs: (email: string) => `Email: ${email}`,
       changePassword: 'Mudar a palavra-passe',
       current: 'Palavra-passe atual',
       next: 'Palavra-passe nova',
@@ -152,7 +152,18 @@ export const t = {
     disableConfirm:
       'Confirmo que quero apagar a conta e todos os dados no servidor. Os dados neste dispositivo ficam.',
     disabled: 'Sincronização desligada.',
-    pdfNote: 'Os PDFs originais ainda não são sincronizados: ficam em cada dispositivo.',
+    files: {
+      label: 'Sincronizar também os PDFs e fotografias originais neste dispositivo',
+      hint: 'Cifrados aqui, como o resto. Sem esta opção, os originais dos outros dispositivos descarregam-se só quando os abrires.',
+      needsKeep:
+        'Para enviar originais, liga também “Guardar o PDF ou a fotografia original” nas preferências.',
+      usage: (used: string, quota: string) => `Espaço usado no servidor: ${used} de ${quota}.`,
+      full: 'O espaço para originais no servidor está cheio: os novos ficam só neste dispositivo. As faturas continuam a sincronizar.',
+      sent: (count: number) =>
+        count === 1 ? 'Enviado 1 original.' : `Enviados ${count} originais.`,
+      received: (count: number) =>
+        count === 1 ? 'Recebido 1 original.' : `Recebidos ${count} originais.`,
+    },
     reconnect: {
       password: 'Palavra-passe (a mais recente)',
       hint: 'Se a mudaste noutro dispositivo, usa a nova: passa também a ser a palavra-passe deste.',
@@ -192,6 +203,13 @@ export const t = {
   invoices: {
     empty: 'Ainda não tens faturas. Adiciona a primeira acima.',
     listTitle: 'Faturas guardadas',
+    original: {
+      open: 'Abrir original',
+      openRemote: 'Abrir original (descarregar)',
+      opening: 'A abrir…',
+      unavailable: 'O original já não está no servidor.',
+      failed: 'Não foi possível abrir o original. Verifica a ligação e tenta de novo.',
+    },
     review: {
       title: 'Confirma e guarda',
       fromQr: 'Os campos marcados vêm do código QR e não podem ser alterados.',

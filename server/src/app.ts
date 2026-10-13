@@ -10,6 +10,12 @@
  *   POST   /v1/changes    {records}                       → {latest}
  *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → 204  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
+ *
+ * Original files (optional, separate database), as base64 ciphertext chunks:
+ *   GET    /v1/files/usage                                → {used, quota}
+ *   PUT    /v1/files/:id/:n?total=T   (text body)         → 204, or 507 when storage is full
+ *   GET    /v1/files/:id/:n                               → text body, header X-Chunks: T
+ *   DELETE /v1/files/:id                                  → 204
  */
 import { z } from 'zod';
 import type { Sql } from './db';
@@ -21,6 +27,12 @@ export interface AppConfig {
   /** Origins allowed to call the API (the app), e.g. https://faturometro.pages.dev */
   allowedOrigins: string[];
   now?: () => Date;
+  /** Database for original files; without it the file routes answer 404. */
+  files?: Sql;
+  /** Per-account file storage, in base64 characters. */
+  fileQuotaBytes?: number;
+  /** Cap for all accounts together (the free D1 database holds 500 MB). */
+  filesTotalBytes?: number;
   /** Minimum client KDF iterations accepted (tests use fewer). */
   minIterations?: number;
 }
@@ -33,6 +45,12 @@ const MAX_ENC_LENGTH = 1_000_000;
 /** One push becomes one SQL parameter; D1 strings are limited to 2 MB. */
 export const MAX_BATCH_LENGTH = 1_900_000;
 export const DEFAULT_ITERATIONS = 600_000;
+export const FILE_QUOTA_BYTES = 50_000_000;
+export const FILES_TOTAL_BYTES = 450_000_000;
+/** Chunk of base64 ciphertext (D1 values are limited to 2 MB). */
+export const MAX_CHUNK_LENGTH = 1_000_000;
+const MAX_CHUNKS = 30;
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
 
 const email = z.string().trim().toLowerCase().max(254).pipe(z.email());
 const base64 = z
@@ -343,7 +361,83 @@ export function createApp(config: AppConfig) {
       return json({ token: await newSession(user.id) });
     }
 
+    const fileRoute = /^\/v1\/files\/([A-Za-z0-9-]{1,64})(?:\/(\d{1,3}))?$/.exec(path);
+    if (path === '/v1/files/usage' || fileRoute) {
+      const files = config.files;
+      if (!files) throw new HttpError(404, 'File sync is not available');
+
+      if (method === 'GET' && path === '/v1/files/usage') {
+        const row = await files.first<{ used: number | null }>(
+          'SELECT SUM(size) AS used FROM chunks WHERE user_id = ?',
+          user.id,
+        );
+        return json({ used: row?.used ?? 0, quota: config.fileQuotaBytes ?? FILE_QUOTA_BYTES });
+      }
+      const [, fileId, chunk] = fileRoute ?? [];
+
+      if (method === 'PUT' && fileId && chunk !== undefined) {
+        const n = Number(chunk);
+        const total = Number(url.searchParams.get('total'));
+        if (!Number.isInteger(total) || total < 1 || total > MAX_CHUNKS || n >= total) {
+          throw new HttpError(400, 'Invalid chunk');
+        }
+        const data = await request.text();
+        if (data.length === 0 || data.length > MAX_CHUNK_LENGTH || !BASE64.test(data)) {
+          throw new HttpError(400, 'Invalid chunk');
+        }
+        const usage = await files.first<{ mine: number | null; everyone: number | null }>(
+          `SELECT SUM(CASE WHEN user_id = ?1 THEN size END) AS mine, SUM(size) AS everyone
+           FROM chunks WHERE NOT (user_id = ?1 AND file_id = ?2 AND n = ?3)`,
+          user.id,
+          fileId,
+          n,
+        );
+        if (
+          (usage?.mine ?? 0) + data.length > (config.fileQuotaBytes ?? FILE_QUOTA_BYTES) ||
+          (usage?.everyone ?? 0) + data.length > (config.filesTotalBytes ?? FILES_TOTAL_BYTES)
+        ) {
+          throw new HttpError(507, 'File storage full');
+        }
+        await files.run(
+          `INSERT INTO chunks (user_id, file_id, n, total, size, data) VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT (user_id, file_id, n) DO UPDATE SET total = excluded.total,
+             size = excluded.size, data = excluded.data`,
+          user.id,
+          fileId,
+          n,
+          total,
+          data.length,
+          data,
+        );
+        return new Response(null, { status: 204 });
+      }
+
+      if (method === 'GET' && fileId && chunk !== undefined) {
+        const row = await files.first<{ total: number; data: string }>(
+          'SELECT total, data FROM chunks WHERE user_id = ? AND file_id = ? AND n = ?',
+          user.id,
+          fileId,
+          Number(chunk),
+        );
+        if (!row) throw new HttpError(404, 'Not found');
+        return new Response(row.data, {
+          headers: {
+            'Content-Type': 'text/plain',
+            'Cache-Control': 'no-store',
+            'X-Chunks': String(row.total),
+          },
+        });
+      }
+
+      if (method === 'DELETE' && fileId && chunk === undefined) {
+        await files.run('DELETE FROM chunks WHERE user_id = ? AND file_id = ?', user.id, fileId);
+        return new Response(null, { status: 204 });
+      }
+      throw new HttpError(404, 'Not found');
+    }
+
     if (method === 'DELETE' && path === '/v1/account') {
+      await config.files?.run('DELETE FROM chunks WHERE user_id = ?', user.id);
       await sql.run('DELETE FROM records WHERE user_id = ?', user.id);
       await sql.run('DELETE FROM sessions WHERE user_id = ?', user.id);
       await sql.run('DELETE FROM users WHERE id = ?', user.id);
@@ -358,6 +452,7 @@ export function createApp(config: AppConfig) {
     if (origin && config.allowedOrigins.includes(origin)) {
       response.headers.set('Access-Control-Allow-Origin', origin);
       response.headers.set('Vary', 'Origin');
+      response.headers.set('Access-Control-Expose-Headers', 'X-Chunks');
     }
     return response;
   }

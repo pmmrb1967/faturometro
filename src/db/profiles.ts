@@ -20,6 +20,8 @@ export interface ProfileSync {
   /** Latest local `updatedAt` already sent. */
   lastPushedAt: string;
   lastSyncAt?: string;
+  /** Also sync original files (PDF, photos) on this device. */
+  files?: boolean;
 }
 
 export class ProfilesDb extends Dexie {

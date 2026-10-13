@@ -289,3 +289,91 @@ describe('KDF strength', () => {
     expect(weak.status).toBe(400);
   });
 });
+
+describe('files', () => {
+  let files: ReturnType<typeof memorySql>['db'];
+
+  beforeEach(() => {
+    const memory = memorySql();
+    const fileStore = memorySql('migrations-files/0001_files.sql');
+    db = memory.db;
+    files = fileStore.db;
+    handle = createApp({
+      sql: memory.sql,
+      files: fileStore.sql,
+      fileQuotaBytes: 40,
+      filesTotalBytes: 60,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+  });
+
+  async function raw(method: string, path: string, token: string, text?: string) {
+    return handle(
+      new Request(`https://sync.example${path}`, {
+        method,
+        headers: { Origin: ORIGIN, Authorization: `Bearer ${token}` },
+        ...(text !== undefined ? { body: text } : {}),
+      }),
+    );
+  }
+
+  it('stores, returns and deletes the chunks of a file', async () => {
+    const token = await register();
+    expect((await raw('PUT', '/v1/files/f1/0?total=2', token, 'QUJD')).status).toBe(204);
+    expect((await raw('PUT', '/v1/files/f1/1?total=2', token, 'REVG')).status).toBe(204);
+
+    const second = await raw('GET', '/v1/files/f1/1', token);
+    expect(await second.text()).toBe('REVG');
+    expect(second.headers.get('X-Chunks')).toBe('2');
+    expect(second.headers.get('Access-Control-Expose-Headers')).toBe('X-Chunks');
+    expect((await call('GET', '/v1/files/usage', undefined, token)).body).toEqual({
+      used: 8,
+      quota: 40,
+    });
+
+    expect((await raw('DELETE', '/v1/files/f1', token)).status).toBe(204);
+    expect((await raw('GET', '/v1/files/f1/0', token)).status).toBe(404);
+  });
+
+  it('refuses what is not base64 and malformed chunk numbers', async () => {
+    const token = await register();
+    expect((await raw('PUT', '/v1/files/f1/0?total=1', token, 'não é base64')).status).toBe(400);
+    expect((await raw('PUT', '/v1/files/f1/1?total=1', token, 'QUJD')).status).toBe(400);
+    expect((await raw('PUT', '/v1/files/f1/0', token, 'QUJD')).status).toBe(400);
+  });
+
+  it('enforces the per-account quota and the total cap', async () => {
+    const ana = await register('ana@example.pt');
+    const rui = await register('rui@example.pt');
+    const chunk = 'A'.repeat(36);
+    expect((await raw('PUT', '/v1/files/a/0?total=1', ana, chunk)).status).toBe(204);
+    // Replacing the same chunk does not count twice.
+    expect((await raw('PUT', '/v1/files/a/0?total=1', ana, chunk)).status).toBe(204);
+    expect((await raw('PUT', '/v1/files/b/0?total=1', ana, 'QUJDREVG')).status).toBe(507);
+    // 36 used by ana; rui has quota left but the total cap (60) is reached.
+    expect((await raw('PUT', '/v1/files/c/0?total=1', rui, chunk)).status).toBe(507);
+    expect((await raw('PUT', '/v1/files/c/0?total=1', rui, 'QUJD')).status).toBe(204);
+  });
+
+  it('keeps accounts apart and deletes files with the account', async () => {
+    const ana = await register('ana@example.pt');
+    const rui = await register('rui@example.pt');
+    await raw('PUT', '/v1/files/f1/0?total=1', ana, 'QUJD');
+    expect((await raw('GET', '/v1/files/f1/0', rui)).status).toBe(404);
+    expect((await call('DELETE', '/v1/account', undefined, ana)).status).toBe(204);
+    expect(files.prepare('SELECT COUNT(*) AS n FROM chunks').get()).toEqual({ n: 0 });
+  });
+
+  it('answers 404 when the server has no file database', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const token = await register();
+    expect((await raw('GET', '/v1/files/usage', token)).status).toBe(404);
+  });
+});

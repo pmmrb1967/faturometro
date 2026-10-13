@@ -105,3 +105,32 @@
   position: absolute;
   inset: 0;
 }
+
+.original {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.text-button {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.text-button:disabled {
+  color: var(--muted);
+  cursor: progress;
+}
+
+.original-problem {
+  color: var(--danger);
+  font-size: 0.9rem;
+}

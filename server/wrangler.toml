@@ -2,7 +2,9 @@
 # Setup (once, needs a Cloudflare account):
 #   pnpm exec wrangler login
 #   pnpm exec wrangler d1 create faturometro --jurisdiction eu   # data stays in the EU; copy database_id below
+#   pnpm exec wrangler d1 create faturometro-files --jurisdiction eu   # original files; copy its id too
 #   pnpm exec wrangler d1 migrations apply faturometro --remote
+#   pnpm exec wrangler d1 migrations apply faturometro-files --remote
 #   pnpm exec wrangler secret put PRELOGIN_SECRET    # long random string
 #   pnpm exec wrangler deploy
 name = "sync"
@@ -14,6 +16,13 @@ binding = "DB"
 database_name = "faturometro"
 database_id = "154a4e50-74c1-4fb0-92c2-33cf9032b842" # created with --jurisdiction eu
 migrations_dir = "migrations"
+
+[[d1_databases]]
+# Original files (encrypted chunks), separate so a full file store never blocks record sync.
+binding = "FILES"
+database_name = "faturometro-files"
+database_id = "4217a285-91b2-4b31-ab81-eeebc4ce7dcd" # created with --jurisdiction eu
+migrations_dir = "migrations-files"
 
 [vars]
 # Origins of the app allowed to call the API (comma-separated).

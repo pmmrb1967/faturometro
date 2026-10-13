@@ -18,6 +18,7 @@ import {
 } from '../lib/crypto';
 import { SyncApi, SyncHttpError } from './api';
 import { syncNow, type SyncResult } from './engine';
+import { download, syncFiles, type FileSyncResult } from './files';
 
 export type SyncErrorCode =
   | 'wrong_password'
@@ -152,14 +153,16 @@ export async function runSync(input: {
   masterKey: CryptoKey;
   repos: Repositories;
   api?: SyncApi;
-}): Promise<{ profile: Profile; result: SyncResult }> {
+}): Promise<{ profile: Profile; result: SyncResult; files?: FileSyncResult }> {
   const sync = input.profile.sync;
   if (!sync) throw new Error('Sync is not enabled');
   const api = input.api ?? new SyncApi(sync.serverUrl);
   const token = (await decryptJson(input.masterKey, sync.token)) as string;
   let result: SyncResult;
+  let files: FileSyncResult | undefined;
   try {
     result = await syncNow(input.repos, api, token, sync);
+    if (sync.files) files = await syncFiles(input.repos, api, token, input.masterKey);
   } catch (error) {
     fromHttp(error, { 401: 'session_expired' });
   }
@@ -169,7 +172,50 @@ export async function runSync(input: {
     lastPushedAt: result.lastPushedAt,
     lastSyncAt: new Date().toISOString(),
   });
-  return { profile, result };
+  return { profile, result, ...(files ? { files } : {}) };
+}
+
+/** Turns the sync of original files on or off on this device. */
+export async function setFileSync(profile: Profile, enabled: boolean): Promise<Profile> {
+  if (!profile.sync) return profile;
+  return saveSync(profile, { ...profile.sync, files: enabled });
+}
+
+/** Space used on the server by original files. */
+export async function fileUsage(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  api?: SyncApi;
+}): Promise<{ used: number; quota: number }> {
+  const sync = input.profile.sync;
+  if (!sync) throw new Error('Sync is not enabled');
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  try {
+    return await api.fileUsage(token);
+  } catch (error) {
+    fromHttp(error, { 401: 'session_expired' });
+  }
+}
+
+/** Fetches the original of an invoice that is only on the server (opened on demand). */
+export async function fetchOriginal(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  repos: Repositories;
+  fileHash: string;
+  api?: SyncApi;
+}): Promise<boolean> {
+  const sync = input.profile.sync;
+  const meta = await input.repos.documents.remoteMetaByFileHash(input.fileHash);
+  if (!sync || !meta) return false;
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  try {
+    return await download(input.repos, api, token, input.masterKey, meta);
+  } catch (error) {
+    fromHttp(error, { 401: 'session_expired' });
+  }
 }
 
 /**

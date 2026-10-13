@@ -4,7 +4,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Contract, Invoice } from '../domain/types';
 import { createAccountKeys } from '../lib/crypto';
 import { createRepositories, type Repositories } from './repositories';
-import { CURRENT_SCHEMA, ProfileDb, SCHEMA_V1, SCHEMA_V2, type TableName } from './schema';
+import {
+  CURRENT_SCHEMA,
+  ProfileDb,
+  profileDbName,
+  SCHEMA_V1,
+  SCHEMA_V2,
+  type TableName,
+} from './schema';
 
 let db: ProfileDb;
 let repos: Repositories;
@@ -152,6 +159,21 @@ describe('schema migrations', () => {
     ).rejects.toThrow();
     expect(v2.verno).toBe(2);
     await v2.delete();
+  });
+
+  it('upgrades v2 to v3 marking existing files as local only', async () => {
+    const id = crypto.randomUUID();
+    const v2 = new Dexie(profileDbName(id));
+    v2.version(1).stores(SCHEMA_V1);
+    v2.version(2).stores(SCHEMA_V2);
+    await v2
+      .table('documents')
+      .add({ id: 'd', fileHash: 'h', updatedAt: 'x', enc: {}, encBytes: {} });
+    v2.close();
+
+    const current = new ProfileDb(id);
+    expect(await current.documents.where('syncState').equals('local').count()).toBe(1);
+    await current.delete();
   });
 });
 
