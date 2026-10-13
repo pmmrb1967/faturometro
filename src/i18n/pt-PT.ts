@@ -9,6 +9,11 @@ export const t = {
     settings: 'Definições',
   },
   placeholder: 'Em construção.',
+  update: {
+    available: 'Há uma nova versão da app.',
+    hint: 'Ao atualizar, vais ter de voltar a entrar.',
+    apply: 'Atualizar',
+  },
   signOut: 'Sair',
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   alerts: {

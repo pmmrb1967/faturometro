@@ -4,12 +4,12 @@ import '@fontsource/atkinson-hyperlegible/latin-700.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
-import { registerSW } from 'virtual:pwa-register';
+import { registerPwa } from './app/pwa';
 import { router } from './app/router';
 import { SessionProvider } from './features/auth/session';
 import './index.css';
 
-registerSW({ immediate: true });
+registerPwa();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');

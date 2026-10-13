@@ -611,4 +611,5 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Preços ERSE confirmados sem IVA; IVA calculado com as regras da ERSE (`docs/electricity-vat.md`); só ofertas para casas (sem segmento Ndom) |
 | 2026-10-13 | Comparador: encargos comuns a todas as ofertas (CAV, DGEG, desconto e financiamento da tarifa social, IEC) lidos das faturas do utilizador; repartição por períodos a partir das leituras do contador (sem perfis típicos inventados): sem leituras por período só se comparam ofertas simples |
 | 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
+| 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

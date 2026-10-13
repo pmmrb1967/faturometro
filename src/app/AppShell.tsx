@@ -1,10 +1,12 @@
 import { Link, NavLink, Outlet } from 'react-router';
 import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
+import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
 
 export function AppShell() {
   const { session, lock } = useSession();
+  const updateAvailable = useUpdateAvailable();
   return (
     <div className="shell">
       <header className="topbar">
@@ -35,6 +37,16 @@ export function AppShell() {
       </nav>
 
       <main className="content">
+        {updateAvailable && (
+          <div className="update-banner" role="status">
+            <span>
+              {t.update.available} {t.update.hint}
+            </span>
+            <button type="button" className="topbar-lock" onClick={applyUpdate}>
+              {t.update.apply}
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

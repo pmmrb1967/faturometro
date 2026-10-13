@@ -202,3 +202,15 @@ body {
     padding: 32px;
   }
 }
+
+.update-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--accent-soft);
+  border-radius: 10px;
+}
