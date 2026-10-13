@@ -1,4 +1,5 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { countSharedFiles, takeSharedFile } from '../../app/shared-files';
 import { invoiceSource } from '../../ai/document';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -34,6 +35,25 @@ export function AddInvoice() {
   const [state, setState] = useState<State>({ step: 'idle' });
   const fileInput = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  /** Files received with "Share → Faturómetro" still waiting to be read. */
+  const [sharedLeft, setSharedLeft] = useState(0);
+
+  async function readNextShared() {
+    const shared = await takeSharedFile();
+    setSharedLeft(await countSharedFiles());
+    if (shared) await read({ bytes: shared.bytes, mime: shared.mime });
+  }
+
+  // A file shared from another app is read as soon as the page opens.
+  const hasSession = Boolean(session);
+  useEffect(() => {
+    if (!hasSession) return;
+    // After this render, not inside it.
+    const timer = window.setTimeout(() => void readNextShared(), 0);
+    return () => window.clearTimeout(timer);
+    // Once per visit, when the account is open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasSession]);
 
   if (!session) return null;
   const { repos } = session;
@@ -145,6 +165,12 @@ export function AddInvoice() {
           intro={t.invoices.review.manualIntro}
           onDone={() => setState({ step: 'idle' })}
         />
+      )}
+
+      {sharedLeft > 0 && state.step !== 'reading' && (
+        <button type="button" className="action-primary" onClick={() => void readNextShared()}>
+          {copy.nextShared(sharedLeft)}
+        </button>
       )}
 
       {(state.step === 'done' || state.step === 'error') && (

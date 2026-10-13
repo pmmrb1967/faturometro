@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router';
+import { PrivacyPage } from '../landing/PrivacyPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RecoverPage } from '../features/auth/RecoverPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
@@ -25,6 +26,7 @@ function sectionElement(id: SectionId) {
 
 export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
+  { path: '/privacidade', element: <PrivacyPage /> },
   { path: '/criar-conta', element: <RegisterPage /> },
   { path: '/entrar', element: <LoginPage /> },
   { path: '/recuperar', element: <RecoverPage /> },

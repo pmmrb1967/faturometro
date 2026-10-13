@@ -1,6 +1,60 @@
 export const t = {
   appName: 'Faturómetro',
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
+  privacyPage: {
+    title: 'Privacidade',
+    updated: 'Última atualização: 13 de outubro de 2026.',
+    intro:
+      'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
+    sections: [
+      {
+        title: 'Quem é responsável',
+        body: [
+          'O Faturómetro é um projeto pessoal e gratuito de Paulo Barbosa, com o código aberto no GitHub. Não tem publicidade nem vende dados.',
+          'Para dúvidas ou pedidos, abre uma questão no repositório do projeto no GitHub (não escrevas lá dados pessoais: é público).',
+        ],
+      },
+      {
+        title: 'No teu dispositivo (sempre)',
+        body: [
+          'A conta, as faturas, os contratos, os alertas e os PDFs originais ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
+          'Não há cookies, estatísticas de utilização, publicidade nem registos com os teus dados.',
+          'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
+        ],
+      },
+      {
+        title: 'Sincronização entre dispositivos (só se a ligares)',
+        body: [
+          'Os dados são cifrados no teu dispositivo antes de saírem, e o servidor não tem a chave para os ler.',
+          'O servidor guarda: o teu email; um código derivado da palavra-passe para confirmar que és tu (só o seu hash); a chave das tuas faturas cifrada com chaves que ele não tem; e os registos cifrados, cada um com um identificador, o tipo (fatura, contrato…) e a data da última alteração. Se ligares a sincronização dos originais, guarda também os PDFs, cifrados da mesma forma.',
+          'O servidor funciona na Cloudflare, com as bases de dados restritas à União Europeia. A Cloudflare processa os pedidos (por exemplo, o endereço IP) para entregar o serviço e protegê-lo de abusos, nos termos da sua política de privacidade; o Faturómetro não guarda registos de acesso.',
+          'As sessões expiram ao fim de 30 dias. Os dados ficam no servidor até desligares a sincronização com a opção de apagar ou até apagares tudo (Definições).',
+        ],
+      },
+      {
+        title: 'Inteligência artificial (só se a usares)',
+        body: [
+          'Com uma chave tua da Anthropic, podes pedir à IA que leia uma fatura, a explique ou escreva uma carta. O pedido vai diretamente do teu dispositivo para a Anthropic, sem passar por nenhum servidor do Faturómetro, e é regido pelos termos entre ti e a Anthropic.',
+          'Antes de enviar, a app mostra o que vai ser enviado. Para ler uma fatura, envia o texto da fatura (ou o ficheiro, se não tiver texto). Para explicações e cartas, envia só valores, datas, linhas e consumos: nunca o teu nome, morada, NIF, número de cliente ou CPE.',
+          'A chave fica guardada cifrada com a tua conta e não é incluída nas exportações.',
+        ],
+      },
+      {
+        title: 'O que a app descarrega',
+        body: [
+          'A própria app e as ofertas de eletricidade publicadas pela ERSE, a partir do site do Faturómetro. Estes pedidos não levam dados teus.',
+        ],
+      },
+      {
+        title: 'Os teus direitos',
+        body: [
+          'Podes ver, exportar e apagar todos os teus dados a qualquer momento, sem pedir a ninguém: Definições → Os teus dados. Apagar a conta do servidor também está nas Definições.',
+          'Podes ainda apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD).',
+        ],
+      },
+    ],
+    back: 'Voltar ao início',
+  },
   backup: {
     title: 'Os teus dados',
     localOnlyWarning:
@@ -53,6 +107,7 @@ export const t = {
     copyright: '© 2026 Paulo Barbosa',
     license: 'Código aberto, licença AGPL-3.0',
     source: 'Código no GitHub',
+    privacy: 'Privacidade',
   },
   nav: {
     home: 'Início',
@@ -437,6 +492,10 @@ export const t = {
     intro:
       'Escolhe o PDF descarregado da área de cliente ou tira uma fotografia à fatura em papel.',
     chooseFile: 'Escolher ficheiro',
+    nextShared: (count: number) =>
+      count === 1
+        ? 'Ler o outro ficheiro partilhado'
+        : `Ler o próximo ficheiro partilhado (faltam ${count})`,
     takePhoto: 'Tirar fotografia',
     reading: 'A ler a fatura…',
     another: 'Adicionar outra',

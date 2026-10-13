@@ -20,5 +20,10 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "pwa-assets.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "pwa-assets.config.ts",
+    "security-headers.ts",
+    "src/sync/default-server.ts"
+  ]
 }

@@ -499,10 +499,10 @@ Opcional e desligada por defeito.
 - **Concluída quando:** uma fatura de layout desconhecido é extraída por IA e passa a validação com o QR.
 
 ### Fase 6 — Polimento e lançamento
-- [ ] PWA (vite-plugin-pwa): instalação, offline, Web Share Target
-- [ ] Exportar/importar ZIP; apagar tudo
-- [ ] CSP, cabeçalhos de segurança
-- [ ] Página "Privacidade" e "Como funciona"
+- [x] PWA (vite-plugin-pwa): instalação (botão "Instalar app"; passos para Safari), offline, Web Share Target (`public/share-target.js`; ficheiros na cache do browser até serem lidos)
+- [x] Exportar/importar ZIP (JSON em claro + originais, sem a chave da IA; o mais recente ganha); apagar tudo (e a conta do servidor, se escolhido)
+- [x] CSP e cabeçalhos de segurança (`security-headers.ts` → `dist/_headers` na compilação; testado sem violações com a app completa)
+- [x] Página "Privacidade" (`/privacidade`, no rodapé); "Como funciona" é a secção da página inicial
 - [x] Deploy (app estática e servidor de sincronização) — antecipado na Fase 4, secção 15b
 - [ ] Teste com 5–10 famílias (uso real durante 1 mês)
 
@@ -642,6 +642,9 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
 | 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `app.faturometro.workers.dev` (secção 15b) |
+| 2026-10-13 | Licença AGPL-3.0-or-later, © 2026 Paulo Barbosa; rodapé em todas as páginas |
+| 2026-10-13 | CSP sem 'unsafe-inline' nem eval (só 'wasm-unsafe-eval' para o leitor de QR); connect-src limitado à própria app, api.anthropic.com e ao servidor de sincronização do projeto (outro servidor exige compilar com VITE_SYNC_URL) |
+| 2026-10-13 | Exportação em claro (legível e portável, RGPD) com aviso; a chave da IA nunca é exportada |
 | 2026-10-13 | Avaliação (30 documentos: 2 sintéticos + 28 das fixtures privadas anonimizadas; referência = parsers e QR). Prompt v1: Haiku 5.5 94% dos campos e 23/30 validações QR (0,0012 US$/fatura); Sonnet 5.5 96% e 26/30 (0,0161 US$). Falhas sobretudo na Via Verde: o n.º do documento aparece entre dois blocos. Prompt v2 indica também o total do QR do documento pedido: Haiku 97% e 28/30, esforço baixo igual ao médio (mais lento). **Por omissão: Haiku 5.5, esforço baixo** |
 | 2026-10-13 | IA: saída estruturada pelo `output_config.format` (JSON schema, estável na API) em vez de ferramenta forçada; todos os campos obrigatórios e "" para desconhecido, para caber nos limites de esquema da API; valores como texto decimal convertidos para cêntimos |
 | 2026-10-13 | IA: a estimativa de custo antes de enviar é calculada localmente (a contagem exata da API enviaria a fatura antes do consentimento) |
