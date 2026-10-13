@@ -214,3 +214,22 @@ body {
   background: var(--accent-soft);
   border-radius: 10px;
 }
+
+.legal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.legal-footer p {
+  margin: 0;
+}
+
+.legal-footer a {
+  color: var(--muted);
+}

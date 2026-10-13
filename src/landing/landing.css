@@ -395,11 +395,19 @@
   }
 }
 
-.landing-footer {
+.landing-footer-wrap {
   max-width: 72rem;
   margin: 0 auto;
   padding: 32px 16px calc(env(safe-area-inset-bottom) + 40px);
   border-top: 1px solid var(--rule);
+}
+
+.landing-free {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+}
+
+.landing-footer {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LegalFooter } from '../../components/LegalFooter';
 import { Link } from 'react-router';
 import { t } from '../../i18n/pt-PT';
 import './auth.css';
@@ -25,6 +26,7 @@ export function AuthLayout({
         <p className="auth-intro">{intro}</p>
         {children}
       </main>
+      <LegalFooter />
     </div>
   );
 }

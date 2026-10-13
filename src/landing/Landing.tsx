@@ -1,9 +1,9 @@
 import { Link } from 'react-router';
+import { LegalFooter } from '../components/LegalFooter';
 import { t } from '../i18n/pt-PT';
 import { QrSlip } from './QrSlip';
 import './landing.css';
 
-const REPO_URL = 'https://github.com/pmmrb1967/faturometro';
 const copy = t.landing;
 
 export function Landing() {
@@ -86,12 +86,10 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="landing-footer">
-        <p>{copy.footer.free}</p>
-        <a href={REPO_URL} rel="noreferrer">
-          {copy.footer.source}
-        </a>
-      </footer>
+      <div className="landing-footer-wrap">
+        <p className="landing-free">{copy.footer.free}</p>
+        <LegalFooter className="landing-footer" />
+      </div>
     </div>
   );
 }

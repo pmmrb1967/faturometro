@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router';
+import { LegalFooter } from '../components/LegalFooter';
 import { useSession } from '../features/auth/session-context';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
@@ -50,6 +51,7 @@ export function AppShell() {
           </div>
         )}
         <Outlet />
+        <LegalFooter />
       </main>
     </div>
   );

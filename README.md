@@ -39,3 +39,7 @@ pnpm exec wrangler login   # uma vez
 pnpm deploy:app            # app estática
 pnpm deploy:server         # servidor de sincronização (server/)
 ```
+
+## Licença
+
+© 2026 Paulo Barbosa. Código aberto sob a licença [GNU AGPL-3.0](LICENSE) (ou versão posterior): podes usar, estudar, alterar e partilhar o código; quem publicar uma versão alterada, mesmo só como site, tem de disponibilizar o respetivo código sob a mesma licença.

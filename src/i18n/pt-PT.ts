@@ -1,6 +1,11 @@
 export const t = {
   appName: 'Faturómetro',
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
+  legal: {
+    copyright: '© 2026 Paulo Barbosa',
+    license: 'Código aberto, licença AGPL-3.0',
+    source: 'Código no GitHub',
+  },
   nav: {
     home: 'Início',
     contracts: 'Contratos',
@@ -561,8 +566,7 @@ export const t = {
       desktop: { title: 'Computador', body: 'Funciona no browser, sem instalar nada.' },
     },
     footer: {
-      free: 'O Faturómetro é gratuito e de código aberto.',
-      source: 'Código no GitHub',
+      free: 'O Faturómetro é gratuito.',
     },
   },
 } as const;
