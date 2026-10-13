@@ -113,6 +113,14 @@ export class SyncApi {
     );
   }
 
+  /** Password change: new KDF salt, authentication key and server wrap; signs out other devices. */
+  updateKeys(
+    token: string,
+    input: { authKey: string; salt: string; iterations: number; wrappedKey: ServerWrappedKey },
+  ) {
+    return this.call('PUT', '/v1/keys', z.object({ token: z.string() }), { body: input, token });
+  }
+
   deleteAccount(token: string) {
     return this.call('DELETE', '/v1/account', null, { token });
   }

@@ -485,7 +485,7 @@ Opcional e desligada por defeito.
 - [x] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos (última alteração ganha), entrada num dispositivo novo, sincronização automática (abertura, 5 min, ao voltar a ligação)
 - [x] Apagar conta e dados do servidor
 - [ ] Política de privacidade (Fase 6, com a página "Privacidade")
-- [ ] Mudança de palavra-passe com sincronização ativa (atualizar as chaves no servidor: `PUT /v1/keys` já existe; falta a interface, que também não existe para a conta local)
+- [x] Mudança de palavra-passe (Definições → Conta), local e no servidor; os outros dispositivos perdem a sessão e pedem a nova palavra-passe, que passa também a ser a local; a recuperação com a chave de recuperação atualiza o servidor quando possível
 - [x] Publicar o servidor na Cloudflare (secção 15b)
 - [x] Testes: o servidor nunca recebe dados em claro (teste automático com dois dispositivos; verificado também no D1 local)
 - **Concluída quando:** uma fatura adicionada no telemóvel aparece no PC, e o servidor só contém dados cifrados.

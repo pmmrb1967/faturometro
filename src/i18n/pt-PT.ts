@@ -108,6 +108,20 @@ export const t = {
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
     saved: 'Guardado.',
+    account: {
+      title: 'Conta',
+      signedInAs: (email: string) => `Conta: ${email}`,
+      changePassword: 'Mudar a palavra-passe',
+      current: 'Palavra-passe atual',
+      next: 'Palavra-passe nova',
+      confirm: 'Repete a palavra-passe nova',
+      syncNote:
+        'A sincronização está ligada: a palavra-passe muda também no servidor e os outros dispositivos vão pedir a nova na próxima sincronização.',
+      submit: 'Mudar a palavra-passe',
+      working: 'A mudar…',
+      done: 'Palavra-passe alterada.',
+      recoveryNote: 'A chave de recuperação continua a mesma.',
+    },
   },
   sync: {
     title: 'Sincronização entre dispositivos',
@@ -139,6 +153,12 @@ export const t = {
       'Confirmo que quero apagar a conta e todos os dados no servidor. Os dados neste dispositivo ficam.',
     disabled: 'Sincronização desligada.',
     pdfNote: 'Os PDFs originais ainda não são sincronizados: ficam em cada dispositivo.',
+    reconnect: {
+      password: 'Palavra-passe (a mais recente)',
+      hint: 'Se a mudaste noutro dispositivo, usa a nova: passa também a ser a palavra-passe deste.',
+      submit: 'Voltar a ligar',
+      working: 'A ligar…',
+    },
     connect: {
       link: 'Já usas o Faturómetro noutro dispositivo com sincronização? Entrar com essa conta',
       title: 'Entrar com conta sincronizada',
@@ -155,7 +175,9 @@ export const t = {
       locked: 'Demasiadas tentativas. Espera 15 minutos e tenta de novo.',
       email_taken_locally: 'Já existe um perfil com este email neste dispositivo.',
       offline: 'Sem ligação ao servidor. Verifica a internet ou o endereço do servidor.',
-      session_expired: 'A sessão no servidor expirou. Desliga e volta a ligar a sincronização.',
+      session_expired:
+        'A sessão no servidor terminou (por exemplo, porque a palavra-passe foi mudada noutro dispositivo). Volta a introduzir a palavra-passe.',
+      different_account: 'Esta conta no servidor não corresponde aos dados deste dispositivo.',
       unexpected: 'Não foi possível sincronizar. Tenta mais tarde.',
       serverUrl: 'Escreve um endereço https:// válido.',
     },

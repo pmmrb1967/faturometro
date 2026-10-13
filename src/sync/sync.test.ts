@@ -5,9 +5,17 @@ import { memorySql } from '../../server/test/sqlite';
 import { profilesDb } from '../db/profiles';
 import { createRepositories } from '../db/repositories';
 import { ProfileDb } from '../db/schema';
-import { createAccount } from '../features/auth/accounts';
 import { SyncApi } from './api';
-import { connectFromServer, disableSync, enableSync, runSync, SyncError } from './account';
+import { createAccount, unlockAccount } from '../features/auth/accounts';
+import {
+  changeAccountPassword,
+  connectFromServer,
+  disableSync,
+  enableSync,
+  reconnectSync,
+  runSync,
+  SyncError,
+} from './account';
 
 const ITERATIONS = 1_000;
 const SERVER = 'https://sync.test';
@@ -157,5 +165,83 @@ describe('sync between two devices', () => {
     expect(serverDb.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 0 });
     // Local data stays.
     expect(await a.repos.contracts.get('c1')).toBeDefined();
+  });
+});
+
+describe('password change with sync on', () => {
+  it('changes the password locally and on the server; the other device signs in again', async () => {
+    const a = await deviceA();
+    await a.repos.contracts.put(contract('c1', 'Luz'));
+    let stateA = (await runSync({ ...a, api })).profile;
+    const b = await deviceB();
+    let stateB = (await runSync({ ...b, api })).profile;
+
+    stateA = await on(stateA, () =>
+      changeAccountPassword({
+        ...a,
+        profile: stateA,
+        currentPassword: 'palavra-passe-longa',
+        newPassword: 'outra-palavra-nova',
+        api,
+        iterations: ITERATIONS,
+      }),
+    );
+    // New password opens the local account; the old one no longer does.
+    await expect(unlockAccount('ana@example.pt', 'outra-palavra-nova')).resolves.toBeDefined();
+    await expect(unlockAccount('ana@example.pt', 'palavra-passe-longa')).rejects.toMatchObject({
+      code: 'wrong_secret',
+    });
+    // This device keeps syncing with its new session.
+    await on(stateA, () => runSync({ ...a, profile: stateA, api }));
+
+    // The other device was signed out; the old password no longer works there.
+    await expect(on(stateB, () => runSync({ ...b, profile: stateB, api }))).rejects.toMatchObject({
+      code: 'session_expired',
+    });
+    await expect(
+      on(stateB, () =>
+        reconnectSync({ ...b, profile: stateB, password: 'palavra-passe-longa', api }),
+      ),
+    ).rejects.toMatchObject({ code: 'wrong_credentials' });
+
+    stateB = await on(stateB, () =>
+      reconnectSync({
+        ...b,
+        profile: stateB,
+        password: 'outra-palavra-nova',
+        api,
+        localIterations: ITERATIONS,
+      }),
+    );
+    await on(stateB, () => runSync({ ...b, profile: stateB, api }));
+    // And its local password is now the new one too.
+    await expect(unlockAccount('ana@example.pt', 'outra-palavra-nova')).resolves.toBeDefined();
+  });
+
+  it('refuses a wrong current password and changes nothing on the server', async () => {
+    const a = await deviceA();
+    const before = serverDb.prepare('SELECT auth_hash FROM users').get();
+    await expect(
+      changeAccountPassword({
+        ...a,
+        currentPassword: 'errada-errada',
+        newPassword: 'outra-palavra-nova',
+        api,
+        iterations: ITERATIONS,
+      }),
+    ).rejects.toMatchObject({ code: 'wrong_password' });
+    expect(serverDb.prepare('SELECT auth_hash FROM users').get()).toEqual(before);
+  });
+
+  it('works without sync (local account only)', async () => {
+    const account = await createAccount('rui@example.pt', 'certa-certa-certa', ITERATIONS);
+    const changed = await changeAccountPassword({
+      ...account,
+      currentPassword: 'certa-certa-certa',
+      newPassword: 'nova-nova-nova',
+      iterations: ITERATIONS,
+    });
+    expect(changed.sync).toBeUndefined();
+    await expect(unlockAccount('rui@example.pt', 'nova-nova-nova')).resolves.toBeDefined();
   });
 });

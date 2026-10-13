@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { t } from '../../i18n/pt-PT';
+import { syncPasswordAfterRecovery } from '../../sync/account';
 import { AccountError, recoverAccount } from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
 import { useSession } from './session-context';
@@ -38,7 +39,14 @@ export function RecoverPage() {
     if (Object.keys(found).length > 0) return;
     setBusy(true);
     try {
-      signIn(await recoverAccount(values.email, values.recoveryKey, values.password));
+      const account = await recoverAccount(values.email, values.recoveryKey, values.password);
+      // With sync on, the server gets the new password too (best effort: if it
+      // cannot be reached, the server keeps the old one).
+      const { profile } = await syncPasswordAfterRecovery({
+        ...account,
+        newPassword: values.password,
+      });
+      signIn({ ...account, profile });
       navigate('/app', { replace: true });
     } catch (error) {
       setFormError(

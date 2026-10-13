@@ -26,7 +26,8 @@ export type SyncErrorCode =
   | 'locked'
   | 'email_taken_locally'
   | 'offline'
-  | 'session_expired';
+  | 'session_expired'
+  | 'different_account';
 
 export class SyncError extends Error {
   readonly code: SyncErrorCode;
@@ -169,6 +170,149 @@ export async function runSync(input: {
     lastSyncAt: new Date().toISOString(),
   });
   return { profile, result };
+}
+
+/**
+ * Sends new server keys derived from `newPassword` (session token only, no
+ * old password needed). The server signs out the other devices.
+ */
+async function updateServerPassword(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  newPassword: string;
+  localWrappedKey: Profile['wrappedKey'];
+  api?: SyncApi;
+  iterations?: number;
+}): Promise<NonNullable<Profile['sync']>> {
+  const sync = input.profile.sync;
+  if (!sync) throw new Error('Sync is not enabled');
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  const salt = newSyncSalt();
+  const iterations = input.iterations ?? PBKDF2_ITERATIONS;
+  const keys = await deriveSyncKeys(input.newPassword, salt, iterations);
+  try {
+    const { token: newToken } = await api.updateKeys(token, {
+      authKey: keys.authKeyHex,
+      salt,
+      iterations,
+      wrappedKey: await wrapForSync(input.localWrappedKey, input.masterKey, keys),
+    });
+    return { ...sync, token: await encryptJson(input.masterKey, newToken) };
+  } catch (error) {
+    fromHttp(error, { 401: 'session_expired' });
+  }
+}
+
+/**
+ * Changes the account password on this device and, with sync on, on the
+ * server too (server first, so a failure leaves both unchanged).
+ */
+export async function changeAccountPassword(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  currentPassword: string;
+  newPassword: string;
+  api?: SyncApi;
+  iterations?: number;
+}): Promise<Profile> {
+  try {
+    await unlockWithPassword(input.profile.wrappedKey, input.currentPassword);
+  } catch (error) {
+    if (error instanceof WrongSecretError) throw new SyncError('wrong_password');
+    throw error;
+  }
+  const iterations = input.iterations ?? PBKDF2_ITERATIONS;
+  const wrappedKey = await rewrapWithPassword(
+    input.profile.wrappedKey,
+    input.masterKey,
+    input.newPassword,
+    iterations,
+  );
+  const updated: Profile = { ...input.profile, wrappedKey };
+  if (input.profile.sync) {
+    updated.sync = await updateServerPassword({
+      ...input,
+      localWrappedKey: wrappedKey,
+      iterations,
+    });
+  }
+  await profilesDb.profiles.put(updated);
+  return updated;
+}
+
+/**
+ * After a recovery-key reset: tries to give the server the new password too.
+ * Returns the profile unchanged (and `false`) if the server cannot be reached.
+ */
+export async function syncPasswordAfterRecovery(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  newPassword: string;
+  api?: SyncApi;
+  iterations?: number;
+}): Promise<{ profile: Profile; serverUpdated: boolean }> {
+  if (!input.profile.sync) return { profile: input.profile, serverUpdated: true };
+  try {
+    const sync = await updateServerPassword({
+      ...input,
+      localWrappedKey: input.profile.wrappedKey,
+    });
+    return { profile: await saveSync(input.profile, sync), serverUpdated: true };
+  } catch {
+    return { profile: input.profile, serverUpdated: false };
+  }
+}
+
+async function sameKey(a: CryptoKey, b: CryptoKey): Promise<boolean> {
+  const [x, y] = await Promise.all([
+    crypto.subtle.exportKey('raw', a),
+    crypto.subtle.exportKey('raw', b),
+  ]);
+  const bx = new Uint8Array(x);
+  const by = new Uint8Array(y);
+  return bx.length === by.length && bx.every((byte, i) => byte === by[i]);
+}
+
+/**
+ * Signs in to the server again when the session ended (usually because the
+ * password was changed on another device). The local password becomes the
+ * one given here, so every device ends up with the same password.
+ */
+export async function reconnectSync(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  password: string;
+  api?: SyncApi;
+  localIterations?: number;
+}): Promise<Profile> {
+  const sync = input.profile.sync;
+  if (!sync) throw new Error('Sync is not enabled');
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  try {
+    const { salt, iterations } = await api.prelogin(input.profile.email);
+    const keys = await deriveSyncKeys(input.password, salt, iterations);
+    const login = await api.login(input.profile.email, keys.authKeyHex);
+    const serverKey = await unwrapFromSync(login.wrappedKey.byPassword, keys);
+    if (!(await sameKey(serverKey, input.masterKey))) throw new SyncError('different_account');
+    const wrappedKey = await rewrapWithPassword(
+      input.profile.wrappedKey,
+      input.masterKey,
+      input.password,
+      input.localIterations ?? PBKDF2_ITERATIONS,
+    );
+    const updated: Profile = {
+      ...input.profile,
+      wrappedKey,
+      sync: { ...sync, token: await encryptJson(input.masterKey, login.token) },
+    };
+    await profilesDb.profiles.put(updated);
+    return updated;
+  } catch (error) {
+    if (error instanceof SyncError) throw error;
+    if (error instanceof WrongSecretError) throw new SyncError('wrong_credentials');
+    fromHttp(error, { 401: 'wrong_credentials', 429: 'locked' });
+  }
 }
 
 /** Turns sync off; with `deleteRemote`, deletes the server account and every record there. */

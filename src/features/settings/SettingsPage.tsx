@@ -2,10 +2,17 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Field } from '../../components/Field';
 import { t } from '../../i18n/pt-PT';
-import { disableSync, enableSync, SyncError } from '../../sync/account';
+import {
+  changeAccountPassword,
+  disableSync,
+  enableSync,
+  reconnectSync,
+  SyncError,
+} from '../../sync/account';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 import { useSession } from '../auth/session-context';
+import { validateNewPassword, type FieldErrors } from '../auth/validation';
 import { syncSession, useSyncStatus } from '../sync/sync-store';
 import { getSettings, updateSettings } from './settings';
 import './settings.css';
@@ -22,6 +29,7 @@ export function SettingsPage() {
   return (
     <>
       <h1>{t.settings.title}</h1>
+      <AccountSection />
       <SyncSection />
       <PreferencesSection />
     </>
@@ -153,6 +161,7 @@ function SyncSection() {
               {error ?? errorText(status.error)}
             </p>
           )}
+          {status.error === 'session_expired' && <ReconnectForm />}
           <p className="muted">{copy.pdfNote}</p>
           <div className="ingest-actions">
             <button
@@ -194,6 +203,173 @@ function SyncSection() {
           </button>
         </>
       )}
+    </section>
+  );
+}
+
+/** Shown when the server session ended (e.g. password changed on another device). */
+function ReconnectForm() {
+  const { session, updateProfile } = useSession();
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  if (!session) return null;
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!session) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const profile = await reconnectSync({ ...session, password });
+      setPassword('');
+      updateProfile(profile);
+      await syncSession({ ...session, profile }, updateProfile);
+    } catch (caught) {
+      setError(errorText(caught instanceof SyncError ? caught.code : 'unexpected'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} noValidate>
+      <input
+        type="text"
+        name="username"
+        autoComplete="username"
+        value={session.profile.email}
+        readOnly
+        hidden
+      />
+      <Field
+        id="reconnect-password"
+        label={copy.reconnect.password}
+        hint={copy.reconnect.hint}
+        type="password"
+        autoComplete="current-password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
+      {error && (
+        <p className="ingest-problem" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" className="action-primary" disabled={busy || !password}>
+        {busy ? copy.reconnect.working : copy.reconnect.submit}
+      </button>
+    </form>
+  );
+}
+
+type PasswordFields = 'current' | 'password' | 'confirm';
+
+function AccountSection() {
+  const { session, updateProfile } = useSession();
+  const [values, setValues] = useState<Record<PasswordFields, string>>({
+    current: '',
+    password: '',
+    confirm: '',
+  });
+  const [errors, setErrors] = useState<FieldErrors<PasswordFields>>({});
+  const [formError, setFormError] = useState<string>();
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (!session) return null;
+  const accountCopy = t.settings.account;
+
+  const set = (field: PasswordFields) => (event: { target: { value: string } }) => {
+    setDone(false);
+    setValues((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!session) return;
+    const found: FieldErrors<PasswordFields> = validateNewPassword(values.password, values.confirm);
+    if (!values.current) found.current = t.auth.errors.required;
+    setErrors(found);
+    setFormError(undefined);
+    if (Object.keys(found).length > 0) return;
+    setBusy(true);
+    try {
+      const profile = await changeAccountPassword({
+        ...session,
+        currentPassword: values.current,
+        newPassword: values.password,
+      });
+      updateProfile(profile);
+      setValues({ current: '', password: '', confirm: '' });
+      setDone(true);
+    } catch (caught) {
+      if (caught instanceof SyncError && caught.code === 'wrong_password') {
+        setErrors({ current: copy.errors.wrong_password });
+      } else {
+        setFormError(errorText(caught instanceof SyncError ? caught.code : 'unexpected'));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="settings-section" aria-labelledby="account-title">
+      <h2 id="account-title">{accountCopy.title}</h2>
+      <p className="muted">{accountCopy.signedInAs(session.profile.email)}</p>
+      <h3>{accountCopy.changePassword}</h3>
+      {session.profile.sync && <p className="muted">{accountCopy.syncNote}</p>}
+      <form onSubmit={submit} noValidate>
+        <input
+          type="text"
+          name="username"
+          autoComplete="username"
+          value={session.profile.email}
+          readOnly
+          hidden
+        />
+        <Field
+          id="account-current"
+          label={accountCopy.current}
+          type="password"
+          autoComplete="current-password"
+          value={values.current}
+          onChange={set('current')}
+          error={errors.current}
+        />
+        <Field
+          id="account-new"
+          label={accountCopy.next}
+          hint={t.auth.passwordHint}
+          type="password"
+          autoComplete="new-password"
+          value={values.password}
+          onChange={set('password')}
+          error={errors.password}
+        />
+        <Field
+          id="account-confirm"
+          label={accountCopy.confirm}
+          type="password"
+          autoComplete="new-password"
+          value={values.confirm}
+          onChange={set('confirm')}
+          error={errors.confirm}
+        />
+        {formError && (
+          <p className="ingest-problem" role="alert">
+            {formError}
+          </p>
+        )}
+        {done && (
+          <p role="status" className="doc-saved">
+            {accountCopy.done} {accountCopy.recoveryNote}
+          </p>
+        )}
+        <button type="submit" className="action-primary" disabled={busy}>
+          {busy ? accountCopy.working : accountCopy.submit}
+        </button>
+      </form>
     </section>
   );
 }
