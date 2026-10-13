@@ -46,7 +46,7 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 
 > Os NIF dos fornecedores **não** devem ser escritos de memória: obtêm-se do campo `A` do QR das faturas reais recolhidas na Fase 0 e registam-se em `src/parsers/registry.ts`.
 
-### P1 — MVP (10 layouts)
+### P1 — MVP (11 layouts)
 
 | # | Fornecedor | Setor | Porquê primeiro |
 |---|---|---|---|
@@ -60,16 +60,20 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 | 8 | Iberdrola | Eletricidade | Quota relevante |
 | 9 | Galp | Eletricidade (+ gás) | Muitas ofertas duais |
 | 10 | Goldenergy | Eletricidade (+ gás) | Quota relevante |
+| 11 | Repsol | Eletricidade | Já há amostras reais; PDF protegido por palavra-passe |
+
+### Outras despesas (setor `other`, só acompanhamento)
+Despesas sem alternativas de mercado a comparar (ex.: portagens Via Verde): entram pelo QR fiscal (total, IVA, data, fornecedor) e aparecem no histórico e nos alertas de aumento/fatura em falta, mas ficam fora do comparador. Parser dedicado só se o QR não bastar.
 
 ### Amostras reais disponíveis (`samples/`)
 - NOS (telecom, P1)
-- Repsol (eletricidade, P2; PDF protegido por palavra-passe = NIF do titular)
-- Via Verde (portagens; fatura + detalhe; setor ainda não previsto no modelo — ver secção 15)
+- Repsol (eletricidade, P1; PDF protegido por palavra-passe = NIF do titular)
+- Via Verde (portagens, setor `other`; fatura + detalhe)
 
 Faltam amostras dos restantes layouts P1.
 
 ### P2 — logo a seguir ao MVP
-- Eletricidade: Repsol, Plenitude, Coopérnico, Luzboa, outros com quota relevante
+- Eletricidade: Plenitude, Coopérnico, Luzboa, outros com quota relevante
 - Gás natural: layouts de gás de EDP, Galp e Goldenergy (se diferirem da eletricidade)
 - Água: entidades gestoras dos utilizadores reais (só acompanhamento de consumo e custo — não há mercado)
 
@@ -434,7 +438,7 @@ Opcional e desligada por defeito.
 - [ ] Infraestrutura: `ParserContext`, utilitários de texto/coordenadas, registo por NIF e fingerprint
 - [ ] Validação cruzada (Etapa 5)
 - [ ] Parsers telecom: MEO, NOS, Vodafone, DIGI
-- [ ] Parsers eletricidade: EDP Comercial, SU Eletricidade, Endesa, Iberdrola, Galp, Goldenergy
+- [ ] Parsers eletricidade: EDP Comercial, SU Eletricidade, Endesa, Iberdrola, Galp, Goldenergy, Repsol
 - [ ] Testes de cada parser contra todas as fixtures do layout
 - **Concluída quando:** ≥ 95% das fixtures P1 passam a validação cruzada com todos os campos obrigatórios.
 
@@ -523,9 +527,18 @@ faturometro/
 | PDFs protegidos por palavra-passe | Tentar o NIF guardado nas definições; senão pedir ao utilizador |
 
 **Questões em aberto**
-- Via Verde (portagens): novo setor `tolls` no modelo, ou `other`? Entra no MVP?
-- Repsol: promover a P1, dado que já há amostras reais?
-- Seguros: que fonte de ofertas permite comparar coberturas e preços (simuladores das seguradoras, ASF, dados introduzidos pelo utilizador)? Confirmar antes de desenhar a funcionalidade.
+- Seguros: abordagem proposta abaixo, por confirmar.
+
+**Seguros — proposta (2026-10-13, por confirmar)**
+
+Pesquisa: não foi encontrada fonte pública com preços de todas as seguradoras. A ASF tem um comparador oficial só para PPR. Os comparadores privados (ComparaJá, Mudey, QueSeguro, …) são mediadores, sem API pública conhecida, e os preços dependem do perfil de cada pessoa (condutor, veículo, imóvel, idade), por isso só existem por simulação individual. Fazer scraping desses sites violaria os seus termos e enviaria dados pessoais para servidores de terceiros (contra o princípio 1).
+
+Proposta, sem servidor e sem afiliados:
+1. **Ler a apólice** (parser/IA/manual) para um perfil de coberturas estruturado: coberturas, capitais, franquias, prémio, data de renovação.
+2. **Radar de renovação:** alerta antes da data de renovação e comparação do prémio com o ano anterior.
+3. **Kit de simulação:** resumo das coberturas atuais e dos dados pedidos pelos simuladores, com ligações neutras para comparadores e seguradoras; o utilizador simula fora da app.
+4. **Comparar propostas recebidas:** o utilizador carrega as propostas (PDF ou manual) e a app compara-as com a apólice atual cobertura a cobertura, assinalando o que falta ou é inferior e a diferença de preço.
+5. Avaliar no futuro parcerias com mediadores (implica decidir sobre neutralidade e envio de dados).
 
 ## 16. Decisões
 
@@ -539,4 +552,6 @@ faturometro/
 | 2026-10-13 | Repositório público em github.com/pmmrb1967/faturometro; licença por decidir; `samples/` e todos os PDF no `.gitignore` |
 | 2026-10-13 | Uma só base de código: PWA instalável no telemóvel e website no PC (layout responsivo, mobile-first); `vite-plugin-pwa` configurado logo na Fase 0 |
 | 2026-10-13 | Suporte a PDFs protegidos por palavra-passe, com NIF opcional guardado localmente |
+| 2026-10-13 | Via Verde e outras despesas sem alternativas de mercado: setor `other`, só acompanhamento, fora do comparador |
+| 2026-10-13 | Repsol promovida a P1 (11 layouts) |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |
