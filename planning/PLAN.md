@@ -514,3 +514,4 @@ faturometro/
 | 2026-10-13 | Ingestão por email adiada para pós-MVP, opcional e cifrada |
 | 2026-10-13 | Valores monetários em cêntimos inteiros |
 | 2026-10-13 | Nome do projeto: Faturómetro (pasta e repositório: `faturometro`; confirmar domínio e marca no INPI) |
+| 2026-10-13 | Repositório público em github.com/pmmrb1967/faturometro; licença por decidir; `samples/` e todos os PDF no `.gitignore` |
