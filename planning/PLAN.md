@@ -124,7 +124,13 @@ Servidor estático (Cloudflare Pages) ───┘  app + /data/erse-offers.json
 GitHub Action semanal ─► scripts/erse-sync.ts ─► atualiza o JSON
 ```
 
-O único backend próprio é o servidor de sincronização opcional (secção 11), que só guarda contas e dados cifrados. Alojamento a decidir na fase de sincronização (Hetzner ou Cloudflare); a API não depende do fornecedor.
+O único backend próprio é o servidor de sincronização opcional (secção 11), que só guarda contas e dados cifrados. Alojamento: plano gratuito da Cloudflare (Pages para a app e landing; Workers + D1 + R2 para a sincronização). A API não depende do fornecedor, para se poder mudar (ex.: Hetzner) se os limites gratuitos deixarem de chegar.
+
+Limites do plano gratuito (2026-10, a reconfirmar na Fase 4): Workers 100 000 pedidos/dia e 10 ms de CPU por pedido; D1 5 GB, 5 M linhas lidas/dia, 100 000 linhas escritas/dia (acima disso os pedidos falham); R2 10 GB, 1 M escritas e 10 M leituras/mês, sem custos de saída. Consequências para o desenho:
+- O servidor não faz hashing lento de palavras-passe (não cabe em 10 ms): o cliente deriva a chave de autenticação com KDF forte e o servidor guarda só SHA-256 dessa chave (alta entropia).
+- Sincronização incremental e em lote, para poupar pedidos e escritas.
+- PDFs sincronizados são opcionais (10 GB partilhados por todos os utilizadores).
+- Localização dos dados na UE (jurisdição/localização de D1 e R2) a confirmar.
 
 ## 6. Pipeline de ingestão
 
@@ -437,8 +443,8 @@ Opcional e desligada por defeito.
 ### Fase 0 — Preparação
 - [x] Criar repositório, `pnpm create vite` (React + TS), ESLint, Prettier, Vitest
 - [ ] Recolher faturas reais P1 (pelo menos 3 por layout, de meses diferentes) para `samples/`
-- [ ] Confirmar especificação do QR fiscal (documento oficial da AT) e guardar resumo em `docs/qr-fiscal.md`
-- [ ] Confirmar fonte, formato e condições de reutilização dos dados da ERSE; resumo em `docs/erse-data.md`
+- [x] Confirmar especificação do QR fiscal (documento oficial da AT) e guardar resumo em `docs/qr-fiscal.md`
+- [x] Confirmar fonte, formato e condições de reutilização dos dados da ERSE; resumo em `docs/erse-data.md` (em aberto: IVA nos preços, licença formal)
 - [ ] Escrever `scripts/anonymize-fixture.ts`
 - **Concluída quando:** existem fixtures anonimizadas para todos os layouts P1 e os dois documentos de referência.
 
@@ -470,7 +476,7 @@ Opcional e desligada por defeito.
 - **Concluída quando:** o custo estimado da oferta atual bate com as faturas reais ± 2% em todas as fixtures de eletricidade.
 
 ### Fase 4 — Sincronização opcional
-- [ ] Decidir alojamento (Hetzner ou Cloudflare) e registar na secção 16
+- [ ] Reconfirmar limites do plano gratuito da Cloudflare e localização dos dados na UE
 - [ ] Servidor: contas (email + hash de autenticação), API de sincronização de registos cifrados, armazenamento de PDFs cifrados
 - [ ] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos
 - [ ] Apagar conta e dados do servidor; política de privacidade
@@ -583,5 +589,6 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Contas locais com email + palavra-passe que cifram os dados no dispositivo (Fase 1) |
 | 2026-10-13 | Sincronização opcional entre dispositivos, cifrada ponta a ponta, numa fase própria (Fase 4) após o núcleo; regra 1 do `CLAUDE.md` alterada em conformidade; "Local-first, sem backend no MVP" substituída |
 | 2026-10-13 | Landing page pública na Fase 1 |
-| 2026-10-13 | Alojamento do servidor de sincronização por decidir (Hetzner ou Cloudflare); API independente do fornecedor |
+| 2026-10-13 | Alojamento no plano gratuito da Cloudflare (Pages + Workers + D1 + R2); a Hetzner não tem plano gratuito (VPS desde ~5–7 €/mês). API independente do fornecedor |
+| 2026-10-13 | Fonte ERSE: `Settings.json` → `csvPath` (ZIP com 2 CSV); formato em `docs/erse-data.md`. QR fiscal: especificação AT v1.1 resumida em `docs/qr-fiscal.md` |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |
