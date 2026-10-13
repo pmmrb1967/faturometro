@@ -1,11 +1,13 @@
 import { Link, NavLink, Outlet } from 'react-router';
 import { useSession } from '../features/auth/session-context';
+import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
 
 export function AppShell() {
-  const { session, lock } = useSession();
+  const { session, lock, updateProfile } = useSession();
+  useAutoSync(session, updateProfile);
   const updateAvailable = useUpdateAvailable();
   return (
     <div className="shell">

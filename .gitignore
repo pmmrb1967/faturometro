@@ -31,3 +31,7 @@ Thumbs.db
 # Fixtures made from real invoices: local only (see CLAUDE.md)
 fixtures/triage/
 fixtures/private/
+
+# Cloudflare local state and dev secrets
+.wrangler/
+.dev.vars

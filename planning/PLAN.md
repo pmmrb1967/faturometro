@@ -480,10 +480,14 @@ Opcional e desligada por defeito.
 
 ### Fase 4 — Sincronização opcional
 - [ ] Reconfirmar limites do plano gratuito da Cloudflare e localização dos dados na UE
-- [ ] Servidor: contas (email + hash de autenticação), API de sincronização de registos cifrados, armazenamento de PDFs cifrados
-- [ ] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos
-- [ ] Apagar conta e dados do servidor; política de privacidade
-- [ ] Testes: o servidor nunca recebe dados em claro (teste automático sobre os pedidos)
+- [x] Servidor: contas (email + hash de autenticação), API de sincronização de registos cifrados (`server/`, Worker + D1; testado em node:sqlite e no workerd local)
+- [ ] Sincronização dos PDFs cifrados (R2), opcional
+- [x] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos (última alteração ganha), entrada num dispositivo novo, sincronização automática (abertura, 5 min, ao voltar a ligação)
+- [x] Apagar conta e dados do servidor
+- [ ] Política de privacidade (Fase 6, com a página "Privacidade")
+- [ ] Mudança de palavra-passe com sincronização ativa (atualizar as chaves no servidor: `PUT /v1/keys` já existe; falta a interface, que também não existe para a conta local)
+- [ ] Publicar o servidor na Cloudflare (precisa da conta do utilizador)
+- [x] Testes: o servidor nunca recebe dados em claro (teste automático com dois dispositivos; verificado também no D1 local)
 - **Concluída quando:** uma fatura adicionada no telemóvel aparece no PC, e o servidor só contém dados cifrados.
 
 ### Fase 5 — IA BYOK
@@ -612,4 +616,5 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Comparador: encargos comuns a todas as ofertas (CAV, DGEG, desconto e financiamento da tarifa social, IEC) lidos das faturas do utilizador; repartição por períodos a partir das leituras do contador (sem perfis típicos inventados): sem leituras por período só se comparam ofertas simples |
 | 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
+| 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

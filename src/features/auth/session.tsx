@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Profile } from '../../db/profiles';
 import { createRepositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
 import type { UnlockedAccount } from './accounts';
@@ -22,13 +23,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const db = new ProfileDb(account.profile.id);
     setSession((current) => {
       if (current && current.db !== db) current.db.close();
-      return { profile: account.profile, db, repos: createRepositories(db, account.masterKey) };
+      return {
+        profile: account.profile,
+        db,
+        repos: createRepositories(db, account.masterKey),
+        masterKey: account.masterKey,
+      };
     });
+  }, []);
+
+  const updateProfile = useCallback((profile: Profile) => {
+    setSession((current) =>
+      current && current.profile.id === profile.id ? { ...current, profile } : current,
+    );
   }, []);
 
   useAutoLock(session !== null, lock);
 
-  const value = useMemo(() => ({ session, signIn, lock }), [session, signIn, lock]);
+  const value = useMemo(
+    () => ({ session, signIn, lock, updateProfile }),
+    [session, signIn, lock, updateProfile],
+  );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 

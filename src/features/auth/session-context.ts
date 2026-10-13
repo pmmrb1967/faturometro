@@ -8,12 +8,16 @@ export interface Session {
   profile: Profile;
   db: ProfileDb;
   repos: Repositories;
+  /** In memory only (needed to encrypt the sync token). */
+  masterKey: CryptoKey;
 }
 
 export interface SessionContextValue {
   session: Session | null;
   signIn: (account: UnlockedAccount) => void;
   lock: () => void;
+  /** Keeps the session in step with a saved profile (sync state). */
+  updateProfile: (profile: Profile) => void;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

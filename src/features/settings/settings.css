@@ -1,0 +1,44 @@
+.settings-section {
+  max-width: 40rem;
+  margin: 16px 0 24px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.settings-section h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.settings-section h3 {
+  margin: 24px 0 4px;
+  font-size: 1rem;
+}
+
+.settings-section p {
+  margin: 0 0 12px;
+}
+
+.settings-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 12px 0;
+  line-height: 1.4;
+}
+
+.settings-check input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.action-secondary.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}

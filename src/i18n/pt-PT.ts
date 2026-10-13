@@ -101,6 +101,65 @@ export const t = {
     lowPowerNote:
       'Até 3,45 kVA, parte do termo fixo tem IVA a 6 %, mas as ofertas não separam essa parte: as estimativas ficam ligeiramente acima.',
   },
+  settings: {
+    title: 'Definições',
+    preferences: 'Preferências',
+    largeFamily:
+      'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
+    keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
+    saved: 'Guardado.',
+  },
+  sync: {
+    title: 'Sincronização entre dispositivos',
+    offIntro:
+      'Desligada: as faturas existem só neste dispositivo. Se ligares, os dados são cifrados aqui antes de saírem e o servidor guarda apenas conteúdo cifrado, que não consegue ler.',
+    serverSees:
+      'O servidor fica a saber: o teu email, quando cada registo foi alterado e de que tipo é (fatura, contrato…). Não vê nomes, valores, datas das faturas, NIF nem moradas.',
+    serverUrl: 'Endereço do servidor de sincronização',
+    password: 'A tua palavra-passe',
+    passwordHint:
+      'Confirma a palavra-passe desta conta. É usada para criar a chave de acesso ao servidor e não é enviada.',
+    enable: 'Ligar sincronização',
+    enabling: 'A ligar…',
+    onIntro: (server: string) => `Ligada a ${server}.`,
+    lastSync: (when: string) => `Última sincronização: ${when}.`,
+    never: 'Ainda não sincronizou.',
+    syncing: 'A sincronizar…',
+    syncNow: 'Sincronizar agora',
+    received: (count: number) =>
+      count === 0
+        ? 'Sem novidades dos outros dispositivos.'
+        : `Recebidos ${count} registos dos outros dispositivos.`,
+    conflicts: (count: number) =>
+      `${count} registos não foram aplicados (por exemplo, a mesma fatura importada em dois dispositivos).`,
+    disableTitle: 'Desligar',
+    disableLocal: 'Desligar só neste dispositivo',
+    disableDelete: 'Desligar e apagar todos os dados do servidor',
+    disableConfirm:
+      'Confirmo que quero apagar a conta e todos os dados no servidor. Os dados neste dispositivo ficam.',
+    disabled: 'Sincronização desligada.',
+    pdfNote: 'Os PDFs originais ainda não são sincronizados: ficam em cada dispositivo.',
+    connect: {
+      link: 'Já usas o Faturómetro noutro dispositivo com sincronização? Entrar com essa conta',
+      title: 'Entrar com conta sincronizada',
+      intro:
+        'Traz para este dispositivo as faturas que já tens sincronizadas. Usa o mesmo email e a mesma palavra-passe.',
+      submit: 'Entrar e sincronizar',
+      working: 'A preparar…',
+    },
+    errors: {
+      wrong_password: 'A palavra-passe não está correta.',
+      account_exists:
+        'Já existe uma conta sincronizada com este email. Para a usar aqui, entra com ela num perfil novo (“Entrar com conta sincronizada”).',
+      wrong_credentials: 'Email ou palavra-passe errados.',
+      locked: 'Demasiadas tentativas. Espera 15 minutos e tenta de novo.',
+      email_taken_locally: 'Já existe um perfil com este email neste dispositivo.',
+      offline: 'Sem ligação ao servidor. Verifica a internet ou o endereço do servidor.',
+      session_expired: 'A sessão no servidor expirou. Desliga e volta a ligar a sincronização.',
+      unexpected: 'Não foi possível sincronizar. Tenta mais tarde.',
+      serverUrl: 'Escreve um endereço https:// válido.',
+    },
+  },
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',

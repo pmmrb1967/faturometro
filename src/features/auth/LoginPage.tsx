@@ -94,6 +94,9 @@ export function LoginPage() {
       <p className="auth-alt">
         <Link to="/criar-conta">{copy.createAccount}</Link>
       </p>
+      <p className="auth-alt">
+        <Link to="/entrar-sincronizado">{t.sync.connect.link}</Link>
+      </p>
     </AuthLayout>
   );
 }
