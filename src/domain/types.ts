@@ -136,4 +136,8 @@ export interface Settings extends SyncMeta {
   priceIncreaseThresholdPct: number;
   loyaltyAlertDays: number[];
   autoLockMinutes: number;
+  /** Large family (5+ people): reduced VAT on up to 300 kWh per 30 days. */
+  largeFamily: boolean;
+  /** Minimum estimated yearly saving for a "cheaper offer" alert (PLAN.md §9). */
+  cheaperOfferMinSavingCents: number;
 }

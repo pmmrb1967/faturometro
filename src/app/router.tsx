@@ -4,6 +4,7 @@ import { RecoverPage } from '../features/auth/RecoverPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { RequireSession } from '../features/auth/RequireSession';
 import { HomePage } from '../features/alerts/HomePage';
+import { ComparePage } from '../features/compare/ComparePage';
 import { ContractPage } from '../features/contracts/ContractPage';
 import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
@@ -13,6 +14,7 @@ import { SECTIONS, type SectionId } from './sections';
 
 function sectionElement(id: SectionId) {
   if (id === 'home') return <HomePage />;
+  if (id === 'compare') return <ComparePage />;
   if (id === 'invoices') return <InvoicesPage />;
   if (id === 'contracts') return <ContractsPage />;
   return <SectionPlaceholder section={id} />;

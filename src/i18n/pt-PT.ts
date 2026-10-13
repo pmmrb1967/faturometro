@@ -32,6 +32,41 @@ export const t = {
         `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
     },
   },
+  compare: {
+    title: 'Comparar eletricidade',
+    intro:
+      'Estimativa do custo anual com os preços de cada oferta publicada pela ERSE, para o teu consumo real e a tua potência. Inclui IVA e as taxas da tua fatura.',
+    loading: 'A carregar as ofertas da ERSE…',
+    offersUnavailable: 'Não foi possível carregar as ofertas da ERSE. Tenta mais tarde.',
+    noContract:
+      'Para comparar, adiciona uma fatura de eletricidade lida automaticamente (por agora, da Repsol), com período e leituras.',
+    contract: 'Contrato',
+    dataDate: (date: string) => `Ofertas da ERSE atualizadas a ${date}.`,
+    usage: (kwh: string) => `Consumo anual estimado: ${kwh} kWh`,
+    usageExtrapolated: (days: number) =>
+      `Calculado a partir de ${days} dias de leituras e extrapolado para um ano: o valor pode mudar com as estações.`,
+    current: 'O teu contrato atual (estimativa anual)',
+    best: 'Ofertas mais baratas',
+    none: 'Nenhuma oferta é mais barata do que o teu contrato atual, para o teu consumo.',
+    perYear: '/ano',
+    saving: (value: string) => `Poupança estimada: ${value}/ano`,
+    moreExpensive: (value: string) => `Mais cara: ${value}/ano`,
+    cycles: { '1': 'Simples', '2': 'Bi-horária', '3': 'Tri-horária' } as Record<string, string>,
+    conditions: {
+      loyalty: 'Com fidelização',
+      indexed: 'Preços indexados (variam)',
+      requiredServices: 'Serviços adicionais obrigatórios',
+      restrictions: 'Com restrições',
+      directDebitOnly: 'Só débito direto',
+      electronicOnly: 'Só fatura eletrónica',
+      newClients: 'Descontos extra só para novos clientes (não incluídos)',
+    },
+    sheet: 'Ficha da oferta',
+    disclaimer:
+      'Estimativa, não poupança garantida. Confirma sempre a ficha padronizada da oferta antes de mudar de comercializador.',
+    lowPowerNote:
+      'Até 3,45 kVA, parte do termo fixo tem IVA a 6 %, mas as ofertas não separam essa parte: as estimativas ficam ligeiramente acima.',
+  },
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',

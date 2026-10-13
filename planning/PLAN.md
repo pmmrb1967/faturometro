@@ -474,8 +474,8 @@ Opcional e desligada por defeito.
 - [x] Gráficos por contrato (valor de cada fatura; kWh faturados na luz e no gás), página de contrato com data de fim de fidelização editável
 - [x] Botão "Sair" visível (pedido do utilizador: antes chamava-se "Bloquear")
 - [x] Motor de alertas (secção 9) + testes; avisos na página Início, dispensáveis
-- [ ] `scripts/erse-sync.ts` + GitHub Action
-- [ ] Comparador de eletricidade (secção 8), validado contra faturas reais
+- [x] `scripts/erse-sync.ts` + GitHub Action semanal (e CI com typecheck, lint, testes e build)
+- [x] Comparador de eletricidade (secção 8), validado contra faturas reais: as 3 faturas de luz reconstruídas a ± 2 %; alerta "oferta mais barata" (≥ 30 €/ano, configurável)
 - **Concluída quando:** o custo estimado da oferta atual bate com as faturas reais ± 2% em todas as fixtures de eletricidade.
 
 ### Fase 4 — Sincronização opcional
@@ -608,4 +608,7 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Ciclo horário do contrato deduzido das linhas de energia faturadas (não do contador); tarifa social quando há linhas "social" |
 | 2026-10-13 | Alerta de aumento: mensalidade base em todos os setores; total vs média das 3 anteriores só em telecom/outros; na luz e gás compara o preço por kWh (o total segue o consumo) |
 | 2026-10-13 | Cor das barras dos gráficos validada (faixa de luminosidade, saturação, contraste 3:1): `#1f8a65` claro, `#34a87e` escuro |
+| 2026-10-13 | Preços ERSE confirmados sem IVA; IVA calculado com as regras da ERSE (`docs/electricity-vat.md`); só ofertas para casas (sem segmento Ndom) |
+| 2026-10-13 | Comparador: encargos comuns a todas as ofertas (CAV, DGEG, desconto e financiamento da tarifa social, IEC) lidos das faturas do utilizador; repartição por períodos a partir das leituras do contador (sem perfis típicos inventados): sem leituras por período só se comparam ofertas simples |
+| 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

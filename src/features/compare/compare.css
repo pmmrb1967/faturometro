@@ -1,0 +1,112 @@
+.compare-intro {
+  max-width: 44rem;
+}
+
+.compare-note {
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border-radius: 10px;
+  max-width: 44rem;
+}
+
+.compare-current {
+  margin: 16px 0 8px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.compare-current h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.compare-current p {
+  margin: 4px 0 0;
+}
+
+.compare-amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.compare-amount span {
+  margin-left: 2px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.offers {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.offer {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.offer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.offer-head > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.offer-head .compare-amount {
+  font-size: 1.25rem;
+}
+
+.offer-saving {
+  margin: 6px 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.offer-tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.offer-tags li {
+  padding: 2px 10px;
+  font-size: 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.offer a {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.compare-disclaimer {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
