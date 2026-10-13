@@ -9,7 +9,8 @@ export const t = {
     settings: 'Definições',
   },
   placeholder: 'Em construção.',
-  lock: 'Bloquear',
+  signOut: 'Sair',
+  signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',

@@ -14,8 +14,14 @@ export function AppShell() {
         </Link>
         <div className="topbar-account">
           <span className="topbar-email">{session?.profile.email}</span>
-          <button type="button" className="topbar-lock" onClick={lock}>
-            {t.lock}
+          <button
+            type="button"
+            className="topbar-lock"
+            onClick={lock}
+            aria-label={t.signOutLabel}
+            title={t.signOutLabel}
+          >
+            {t.signOut}
           </button>
         </div>
       </header>
