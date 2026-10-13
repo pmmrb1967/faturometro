@@ -1,4 +1,5 @@
-# Checks on every push and pull request (public synthetic fixtures only).
+# Checks on every push and pull request (public synthetic fixtures only);
+# on main, deploys to Cloudflare once every check has passed.
 name: CI
 
 on:
@@ -19,3 +20,41 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+
+  deploy:
+    # Only for main, after the checks; needs the CLOUDFLARE_API_TOKEN secret
+    # (Cloudflare token "Edit Cloudflare Workers" + D1 Edit). See PLAN.md §15b.
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: deploy
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 228a5886f6ada239609955a875486421
+    steps:
+      - name: Token configured?
+        id: token
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN is not set: skipping the deploy."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.ok == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.token.outputs.ok == 'true'
+        with:
+          node-version: 24
+      - if: steps.token.outputs.ok == 'true'
+        run: corepack enable pnpm && pnpm install --frozen-lockfile
+      - name: Database migrations
+        if: steps.token.outputs.ok == 'true'
+        run: pnpm exec wrangler d1 migrations apply faturometro --remote -c server/wrangler.toml
+      - name: Sync server
+        if: steps.token.outputs.ok == 'true'
+        run: pnpm deploy:server
+      - name: App
+        if: steps.token.outputs.ok == 'true'
+        run: pnpm deploy:app

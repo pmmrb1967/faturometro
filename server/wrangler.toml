@@ -5,7 +5,7 @@
 #   pnpm exec wrangler d1 migrations apply faturometro --remote
 #   pnpm exec wrangler secret put PRELOGIN_SECRET    # long random string
 #   pnpm exec wrangler deploy
-name = "faturometro-sync"
+name = "sync"
 main = "src/worker.ts"
 compatibility_date = "2026-10-01"
 
@@ -17,4 +17,4 @@ migrations_dir = "migrations"
 
 [vars]
 # Origins of the app allowed to call the API (comma-separated).
-ALLOWED_ORIGINS = "https://faturometro.faturometro.workers.dev,http://localhost:5173,http://localhost:4173"
+ALLOWED_ORIGINS = "https://app.faturometro.workers.dev,http://localhost:5173,http://localhost:4173"

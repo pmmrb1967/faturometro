@@ -1,7 +1,7 @@
-# The app (static PWA) on Cloudflare: https://faturometro.faturometro.workers.dev
+# The app (static PWA) on Cloudflare: https://app.faturometro.workers.dev
 # Deploy: pnpm build && pnpm exec wrangler deploy -c wrangler.app.toml
 # The sync server has its own configuration in server/wrangler.toml.
-name = "faturometro"
+name = "app"
 compatibility_date = "2026-10-01"
 
 [assets]

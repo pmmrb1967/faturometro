@@ -6,7 +6,7 @@ Os dados ficam no teu browser. A IA é opcional e usa a tua própria chave de AP
 
 Estado: em desenvolvimento — ver [`planning/PLAN.md`](planning/PLAN.md).
 
-**Experimentar online:** <https://faturometro.faturometro.workers.dev> (no telemóvel: abre o endereço e instala como app). Sincronização opcional entre dispositivos através de <https://faturometro-sync.faturometro.workers.dev>, que só recebe dados cifrados.
+**Experimentar online:** <https://app.faturometro.workers.dev> (no telemóvel: abre o endereço e instala como app). Sincronização opcional entre dispositivos através de <https://sync.faturometro.workers.dev>, que só recebe dados cifrados.
 
 ## Experimentar
 

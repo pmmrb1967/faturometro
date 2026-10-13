@@ -1,5 +1,6 @@
 # Weekly refresh of public/data/erse-offers.json from the ERSE price simulator.
-# Only public market data; commits when the ERSE file changed.
+# Only public market data. When the file changes: commit it and redeploy the
+# app (commits made with GITHUB_TOKEN do not trigger the CI workflow).
 name: ERSE offers
 
 on:
@@ -13,6 +14,10 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    concurrency: deploy
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 228a5886f6ada239609955a875486421
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,9 +27,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm erse:sync
       - name: Commit if changed
+        id: commit
         run: |
           if git diff --quiet public/data/erse-offers.json; then
             echo "No changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -32,3 +39,7 @@ jobs:
           git add public/data/erse-offers.json
           git commit -m "chore(data): update ERSE offers"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Redeploy the app with the new offers
+        if: steps.commit.outputs.changed == 'true' && env.CLOUDFLARE_API_TOKEN != ''
+        run: pnpm deploy:app

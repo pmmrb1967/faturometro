@@ -587,14 +587,16 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 
 | O quê | Endereço | Configuração |
 |---|---|---|
-| **App** (PWA estática, landing + `/app`) | <https://faturometro.faturometro.workers.dev> | `wrangler.app.toml` (Workers com ficheiros estáticos; rotas de página única) |
-| **Servidor de sincronização** (Worker) | <https://faturometro-sync.faturometro.workers.dev> | `server/wrangler.toml` |
+| **App** (PWA estática, landing + `/app`) | <https://app.faturometro.workers.dev> | `wrangler.app.toml` (Workers com ficheiros estáticos; rotas de página única) |
+| **Servidor de sincronização** (Worker) | <https://sync.faturometro.workers.dev> | `server/wrangler.toml` |
 | **Base de dados** (D1 `faturometro`) | ID `154a4e50-74c1-4fb0-92c2-33cf9032b842` | Criada com `--jurisdiction eu`: dados guardados e processados só na UE |
 | **Subdomínio** `faturometro.workers.dev` | — | Gratuito; registado pela API (o painel só oferecia compra de domínios) |
 
 - **Origens autorizadas no servidor** (`ALLOWED_ORIGINS` em `server/wrangler.toml`): a app publicada e `localhost:5173` / `localhost:4173` (desenvolvimento).
 - **Segredo** `PRELOGIN_SECRET`: gerado aleatoriamente e enviado diretamente para a Cloudflare (`wrangler secret put`); não existe em nenhum ficheiro. Para o trocar: `pnpm exec wrangler secret put PRELOGIN_SECRET -c server/wrangler.toml` (só afeta os sais falsos de emails desconhecidos).
-- **Publicar:**
+- **Nomes:** `<worker>.<subdomínio da conta>.workers.dev`; o subdomínio da conta é obrigatório, por isso os Workers chamam-se `app` e `sync` (antes `faturometro` e `faturometro-sync`, apagados a 2026-10-13). Um endereço sem o subdomínio exigiria um domínio próprio (pago).
+- **Publicação automática** (`.github/workflows/ci.yml`): em cada push para `main`, depois de typecheck, lint, testes e build, aplica as migrações D1 e publica o servidor e a app. A tarefa semanal da ERSE volta a publicar a app quando as ofertas mudam. Precisa do segredo `CLOUDFLARE_API_TOKEN` no GitHub (token Cloudflare "Edit Cloudflare Workers" + D1 Edit), criado pelo utilizador e guardado com `gh secret set CLOUDFLARE_API_TOKEN`; sem ele, a publicação é saltada com um aviso.
+- **Publicar à mão:**
   - app: `pnpm deploy:app` (build + `wrangler deploy -c wrangler.app.toml`)
   - servidor: `pnpm deploy:server`; alterações ao esquema: nova migração em `server/migrations/` e `pnpm exec wrangler d1 migrations apply faturometro --remote -c server/wrangler.toml`
 - **Atenção:** `wrangler pages project create` e o "auto-config" do Wrangler alteram o projeto sozinhos (plugin Vite da Cloudflare, `wrangler.jsonc`, scripts do `package.json`). Não usar; publicar sempre com `-c` explícito.
@@ -637,5 +639,6 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
-| 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `faturometro.faturometro.workers.dev` (secção 15b) |
+| 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `app.faturometro.workers.dev` (secção 15b) |
+| 2026-10-13 | Workers renomeados para `app` e `sync` (endereços mais curtos); publicação automática pela CI depois dos testes |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |
