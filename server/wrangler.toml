@@ -1,0 +1,20 @@
+# Faturómetro sync server (Cloudflare Workers + D1, free plan).
+# Setup (once, needs a Cloudflare account):
+#   pnpm exec wrangler login
+#   pnpm exec wrangler d1 create faturometro        # copy database_id below
+#   pnpm exec wrangler d1 migrations apply faturometro --remote
+#   pnpm exec wrangler secret put PRELOGIN_SECRET    # long random string
+#   pnpm exec wrangler deploy
+name = "faturometro-sync"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "faturometro"
+database_id = "00000000-0000-0000-0000-000000000000" # replace after `wrangler d1 create`
+migrations_dir = "migrations"
+
+[vars]
+# Origins of the app allowed to call the API (comma-separated).
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173"
