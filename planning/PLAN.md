@@ -68,9 +68,9 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 Despesas sem alternativas de mercado a comparar (ex.: portagens Via Verde): entram pelo QR fiscal (total, IVA, data, fornecedor) e aparecem no histórico e nos alertas de aumento/fatura em falta, mas ficam fora do comparador. Parser dedicado só se o QR não bastar.
 
 ### Amostras reais disponíveis (`samples/`)
-- NOS (telecom, P1)
-- Repsol (eletricidade, P1; PDF protegido por palavra-passe = NIF do titular)
-- Via Verde (portagens, setor `other`; fatura + detalhe)
+- NOS (telecom, P1) — 3 faturas; QR na página 1; NIF emitente (campo A) `502604751`
+- Repsol (eletricidade + gás, fatura dual, P1; PDF protegido por palavra-passe = NIF do titular) — 3 faturas; QR na página 2; NIF emitente `500246963`. Um documento traz duas faturas (luz e gás), cada uma com o seu ATCUD
+- Via Verde (portagens e estacionamento, setor `other`) — 3 extratos + 3 detalhes. **Cada extrato agrupa várias faturas de emitentes diferentes** (Brisa, Infraestruturas de Portugal, AEDL, Empark, CPE, Placegar, Via Verde Portugal…), cada uma com QR desenhado com fonte de código de barras; o leitor atual só descodifica um QR por documento. O detalhe não tem QR e contém o histórico de passagens (local, data, hora)
 
 Faltam amostras dos restantes layouts P1.
 
