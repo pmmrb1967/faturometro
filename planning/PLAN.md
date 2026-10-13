@@ -12,7 +12,7 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 
 ## 2. Princípios (não negociáveis)
 
-1. **Os dados ficam no dispositivo.** IndexedDB no browser. O servidor só serve ficheiros estáticos e a base de ofertas da ERSE.
+1. **Os dados ficam no dispositivo.** IndexedDB no browser, cifrado com a palavra-passe da conta local. Só saem do dispositivo se o utilizador ativar a sincronização, e nesse caso cifrados ponta a ponta: o servidor nunca vê dados em claro.
 2. **Útil sem IA.** QR fiscal → parser → formulário manual. A IA é um acelerador, não uma dependência.
 3. **A IA escreve parsers; não lê todas as faturas.** Layouts conhecidos são extraídos por código determinístico e gratuito. A IA só entra em layouts desconhecidos ou quando a validação falha.
 4. **Validação cruzada sempre.** Qualquer extração (parser ou IA) é confrontada com o total do QR fiscal.
@@ -34,10 +34,12 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 - PWA instalável, funciona offline
 - Interface responsiva: instalável como app no telemóvel (Android e iOS) e utilizável como website no PC, com o mesmo código
 - PDFs protegidos por palavra-passe (ex.: Repsol, cuja palavra-passe é o NIF do titular)
+- Landing page pública que explica a app, com entrada e registo
+- Conta local (email + palavra-passe) que cifra os dados no dispositivo; vários perfis no mesmo browser
+- Sincronização opcional entre dispositivos (telemóvel ↔ PC), cifrada ponta a ponta, escolhida pelo utilizador (secção 11)
 
 **Fora (pós-MVP)**
 - Ingestão por email (desenho já definido — secção 12)
-- Sincronização cifrada entre dispositivos
 - Comparação de telecomunicações e gás com o mercado
 - Seguros (auto, casa, vida, …): leitura de apólices, radar de renovações e sugestão de alternativas com coberturas semelhantes e mais económicas (ver secção 15 — fonte de ofertas por confirmar)
 - Notificações push (exigem servidor)
@@ -122,7 +124,7 @@ Servidor estático (Cloudflare Pages) ───┘  app + /data/erse-offers.json
 GitHub Action semanal ─► scripts/erse-sync.ts ─► atualiza o JSON
 ```
 
-Não há backend próprio no MVP.
+O único backend próprio é o servidor de sincronização opcional (secção 11), que só guarda contas e dados cifrados. Alojamento a decidir na fase de sincronização (Hetzner ou Cloudflare); a API não depende do fornecedor.
 
 ## 6. Pipeline de ingestão
 
@@ -387,7 +389,7 @@ Notificações apenas dentro da app no MVP; um contador no ícone da PWA via Bad
 
 - **Fornecedor inicial:** Anthropic. Abstração `AiProvider` para adicionar outros depois.
 - **Chamadas diretas do browser**, com `dangerouslyAllowBrowser: true` no SDK. A chave nunca passa por servidor nosso.
-- **Guardar a chave:** IndexedDB; opção de cifrar com passphrase (WebCrypto, PBKDF2 + AES-GCM).
+- **Guardar a chave:** IndexedDB, dentro dos dados do perfil, cifrada com a chave da conta local (secção 11).
 - **Modelo configurável;** por defeito o modelo mais económico que extraia com fiabilidade (avaliar na Fase 4).
 - **Usos:**
   1. Extração estruturada (tool use + zod)
@@ -398,12 +400,28 @@ Notificações apenas dentro da app no MVP; um contador no ícone da PWA via Bad
 
 ## 11. Privacidade e segurança
 
-- CSP restritiva: `connect-src 'self' https://api.anthropic.com`.
+- CSP restritiva: `connect-src 'self' https://api.anthropic.com <origem do servidor de sincronização>`.
 - Sem analytics com dados pessoais; se houver métricas, apenas agregadas e sem cookies.
 - `samples/` (faturas reais) está no `.gitignore`.
 - `scripts/anonymize-fixture.ts`: converte um PDF real numa fixture JSON de `TextItem[]` com NIF, nomes, moradas, CPE, IBAN e n.º de cliente substituídos por valores fictícios coerentes (mesmo comprimento e formato).
 - Exportação completa em ZIP; botão "apagar todos os dados".
-- Aviso ao utilizador: os dados vivem neste browser; limpar dados do site apaga tudo; fazer exportações regulares.
+- Aviso ao utilizador (sem sincronização): os dados vivem neste browser; limpar dados do site apaga tudo; fazer exportações regulares.
+
+### Contas locais
+- Registo com email (identificador) e palavra-passe; tudo no dispositivo, sem servidor.
+- Chave derivada da palavra-passe (WebCrypto: PBKDF2-SHA256 com sal aleatório, ou Argon2id via WASM — decidir na Fase 1) → chave mestra aleatória AES-GCM que cifra os dados do perfil. Mudar a palavra-passe só re-cifra a chave mestra.
+- Cada perfil tem a sua base Dexie. Os campos indexados ficam limitados a IDs, datas e hashes; o resto do registo vai cifrado.
+- A chave só existe em memória; bloqueio automático após inatividade (configurável).
+- Sem recuperação de palavra-passe: na criação, mostrar uma **chave de recuperação** para guardar e explicar que sem ela os dados se perdem.
+- Esquema preparado para sincronizar desde a v1: `updatedAt` em todos os registos e tombstones (`deletedAt`) em vez de apagar.
+
+### Sincronização opcional (cifrada ponta a ponta)
+- Desligada por defeito; o utilizador escolhe "só neste dispositivo" ou "sincronizar entre dispositivos" e pode mudar a qualquer momento. Desligar apaga os dados do servidor.
+- Da palavra-passe derivam-se duas chaves independentes: uma de autenticação (o servidor guarda só um hash dela) e uma de cifra (nunca sai do dispositivo).
+- O servidor guarda: email, hash de autenticação, a chave mestra cifrada, e registos cifrados com ID, versão e data. Nunca dados em claro.
+- PDFs originais: sincronização opcional, também cifrados (armazenamento de objetos compatível com S3).
+- Conflitos: last-write-wins por registo, com `updatedAt` e versão do servidor.
+- RGPD: política de privacidade, exportação e apagamento da conta pelo próprio utilizador.
 
 ## 12. Ingestão por email (pós-MVP — desenho de referência)
 
@@ -425,7 +443,9 @@ Opcional e desligada por defeito.
 - **Concluída quando:** existem fixtures anonimizadas para todos os layouts P1 e os dois documentos de referência.
 
 ### Fase 1 — Núcleo local + QR
-- [ ] Esquema Dexie v1 e camada de repositórios (`src/db/`)
+- [ ] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
+- [ ] Conta local: registo, entrada, bloqueio, chave de recuperação, vários perfis (secção 11)
+- [ ] Esquema Dexie v1 (com `updatedAt`/`deletedAt`, campos sensíveis cifrados) e camada de repositórios (`src/db/`)
 - [ ] Upload de PDF/imagem, hash e deduplicação
 - [ ] Renderização com pdf.js e leitura de QR (zxing-wasm)
 - [ ] Parser da string QR + testes com exemplos reais anonimizados
@@ -449,27 +469,33 @@ Opcional e desligada por defeito.
 - [ ] Comparador de eletricidade (secção 8), validado contra faturas reais
 - **Concluída quando:** o custo estimado da oferta atual bate com as faturas reais ± 2% em todas as fixtures de eletricidade.
 
-### Fase 4 — IA BYOK
+### Fase 4 — Sincronização opcional
+- [ ] Decidir alojamento (Hetzner ou Cloudflare) e registar na secção 16
+- [ ] Servidor: contas (email + hash de autenticação), API de sincronização de registos cifrados, armazenamento de PDFs cifrados
+- [ ] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos
+- [ ] Apagar conta e dados do servidor; política de privacidade
+- [ ] Testes: o servidor nunca recebe dados em claro (teste automático sobre os pedidos)
+- **Concluída quando:** uma fatura adicionada no telemóvel aparece no PC, e o servidor só contém dados cifrados.
+
+### Fase 5 — IA BYOK
 - [ ] Ecrã de definições com chave, modelo, teste de ligação
-- [ ] Cifra opcional da chave com passphrase
 - [ ] Extração por IA com tool use + zod + revalidação QR
 - [ ] Avaliação: comparar a extração por IA com os parsers nas fixtures; escolher modelo por defeito
 - [ ] "Explica-me esta fatura" e cartas
 - [ ] `scripts/generate-parser.ts`
 - **Concluída quando:** uma fatura de layout desconhecido é extraída por IA e passa a validação com o QR.
 
-### Fase 5 — Polimento e lançamento
+### Fase 6 — Polimento e lançamento
 - [ ] PWA (vite-plugin-pwa): instalação, offline, Web Share Target
 - [ ] Exportar/importar ZIP; apagar tudo
 - [ ] CSP, cabeçalhos de segurança
 - [ ] Página "Privacidade" e "Como funciona"
-- [ ] Deploy em Cloudflare Pages
+- [ ] Deploy (app estática e servidor de sincronização)
 - [ ] Teste com 5–10 famílias (uso real durante 1 mês)
 
 ### Pós-MVP
 - [ ] Layouts P2
 - [ ] Ingestão por email (secção 12)
-- [ ] Sincronização cifrada entre dispositivos
 - [ ] Gás no comparador; telecom com lista de ofertas mantida manualmente
 - [ ] Seguros (P3)
 
@@ -554,4 +580,8 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Suporte a PDFs protegidos por palavra-passe, com NIF opcional guardado localmente |
 | 2026-10-13 | Via Verde e outras despesas sem alternativas de mercado: setor `other`, só acompanhamento, fora do comparador |
 | 2026-10-13 | Repsol promovida a P1 (11 layouts) |
+| 2026-10-13 | Contas locais com email + palavra-passe que cifram os dados no dispositivo (Fase 1) |
+| 2026-10-13 | Sincronização opcional entre dispositivos, cifrada ponta a ponta, numa fase própria (Fase 4) após o núcleo; regra 1 do `CLAUDE.md` alterada em conformidade; "Local-first, sem backend no MVP" substituída |
+| 2026-10-13 | Landing page pública na Fase 1 |
+| 2026-10-13 | Alojamento do servidor de sincronização por decidir (Hetzner ou Cloudflare); API independente do fornecedor |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

@@ -1,14 +1,14 @@
 # CLAUDE.md
 
-Instruções para o Claude Code neste repositório. O plano completo está em `PLAN.md` — lê-o antes de começar qualquer fase.
+Instruções para o Claude Code neste repositório. O plano completo está em `planning/PLAN.md` — lê-o antes de começar qualquer fase.
 
 ## O projeto
 
-**Faturómetro**: PWA gratuita e local-first para acompanhar faturas domésticas portuguesas (telecom, eletricidade, gás, água), detetar aumentos e fins de fidelização, e comparar a eletricidade com as ofertas da ERSE. IA opcional com a chave do próprio utilizador.
+**Faturómetro**: PWA gratuita e local-first para acompanhar faturas domésticas portuguesas (telecom, eletricidade, gás, água), detetar aumentos e fins de fidelização, e comparar a eletricidade com as ofertas da ERSE. IA opcional com a chave do próprio utilizador. Conta local com palavra-passe e sincronização opcional entre dispositivos, cifrada ponta a ponta.
 
 ## Regras invioláveis
 
-1. **Nada de dados pessoais fora do browser.** Não criar backend, endpoints, analytics ou logs remotos que recebam dados de faturas. A única ligação externa permitida a partir da app é `https://api.anthropic.com`, e só por ação do utilizador ou definição explícita.
+1. **Nada de dados pessoais em claro fora do browser.** Não criar analytics nem logs remotos com dados de faturas. O único backend permitido é o servidor de sincronização opcional (`server/`), que só recebe email, hash de autenticação e dados **cifrados ponta a ponta no dispositivo** — nunca dados em claro nem a chave de cifra. Ligações externas a partir da app: `https://api.anthropic.com` (só por ação do utilizador ou definição explícita) e o servidor de sincronização (só se o utilizador a ativar).
 2. **Nunca ler, copiar ou commitar ficheiros de `samples/`** para fixtures, testes, prompts ou documentação. Fixtures novas só através de `scripts/anonymize-fixture.ts`.
 3. **Valores monetários em cêntimos inteiros** (`number` inteiro). Nunca somar euros em vírgula flutuante. Conversões só em `src/lib/money.ts`.
 4. **A app tem de funcionar sem IA.** Qualquer funcionalidade nova precisa de um caminho sem chave de API.
