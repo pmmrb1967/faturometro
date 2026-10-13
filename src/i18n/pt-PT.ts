@@ -67,6 +67,35 @@ export const t = {
       newClients: 'Descontos extra só para novos clientes (não incluídos)',
     },
     sheet: 'Ficha da oferta',
+    dualVariant: (name: string) =>
+      `Também existe como oferta conjunta de luz e gás (${name}), com o mesmo preço da eletricidade.`,
+    dualOnly: (supplier: string) =>
+      `Oferta conjunta: obriga a contratar também o gás com ${supplier}. O custo do gás não está incluído nesta estimativa.`,
+    glossary: {
+      title: 'O que querem dizer as siglas e termos das ofertas?',
+      items: [
+        [
+          'DD',
+          'Débito direto: pagamento automático pela conta bancária. Muitas ofertas só têm este preço com débito direto.',
+        ],
+        ['FE', 'Fatura eletrónica: a fatura chega por email ou na área de cliente, sem papel.'],
+        [
+          'Dual / Gás + Eletricidade',
+          'Oferta conjunta: a luz e o gás são contratados ao mesmo comercializador.',
+        ],
+        [
+          'Simples, bi-horária, tri-horária',
+          'Simples: o mesmo preço a qualquer hora. Bi-horária e tri-horária: preços diferentes consoante a hora (vazio, cheias, ponta).',
+        ],
+        [
+          'Preços indexados',
+          'O preço da energia acompanha o mercado e muda ao longo do tempo: a estimativa usa o valor publicado hoje.',
+        ],
+        ['Fidelização', 'Período mínimo de contrato; sair antes pode ter custos.'],
+      ] as [string, string][],
+      source:
+        'Os significados de DD e FE foram confirmados nas condições publicadas pela ERSE para cada oferta.',
+    },
     disclaimer:
       'Estimativa, não poupança garantida. Confirma sempre a ficha padronizada da oferta antes de mudar de comercializador.',
     lowPowerNote:

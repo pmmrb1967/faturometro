@@ -110,3 +110,50 @@
   font-size: 0.9rem;
   color: var(--muted);
 }
+
+.compare-glossary {
+  max-width: 44rem;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.compare-glossary summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.compare-glossary dl {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.compare-glossary dt {
+  font-weight: 700;
+}
+
+.compare-glossary dd {
+  margin: 2px 0 0;
+}
+
+.compare-glossary p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.offer-dual {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-left: 3px solid #b26a00;
+  background: var(--bg);
+  font-size: 0.9rem;
+}
+
+.offer-note {
+  margin: 4px 0;
+  font-size: 0.9rem;
+}

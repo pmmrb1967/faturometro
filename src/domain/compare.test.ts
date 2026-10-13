@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annualUsage, compareOffers, consumptionFor } from './compare';
+import { annualUsage, compareOffers, consumptionFor, groupDualVariants } from './compare';
 import type { Offer } from './erse';
 import type { Invoice, InvoiceLine, Reading } from './types';
 
@@ -179,5 +179,34 @@ describe('compareOffers', () => {
     expect(result?.results.map((item) => item.cycle).sort()).toEqual(['1', '2', '3']);
     // Same prices as the current contract: no saving on the simple version.
     expect(result?.results.find((item) => item.cycle === '1')?.savingCents).toBe(0);
+  });
+});
+
+describe('groupDualVariants', () => {
+  const prices = { '6.9': { '1': { fixedPerDay: 0.4, simple: 0.13 } } };
+  const ele = offer('EDP_ELE', prices);
+  const dual = offer('EDP_DUAL', prices, { supply: 'DUAL' });
+  const dualOnly = offer('OTHER_DUAL', prices, { supply: 'DUAL', supplier: 'OTHER' });
+  const result = (o: Offer, annualCents: number) => ({
+    offer: o,
+    cycle: '1' as const,
+    annualCents,
+    savingCents: 1,
+  });
+
+  it('shows electricity + dual twins once, preferring the electricity-only offer', () => {
+    const grouped = groupDualVariants([
+      result(dual, 41_783),
+      result(ele, 41_783),
+      result(dualOnly, 45_000),
+    ]);
+    expect(grouped.map((item) => [item.offer.id, item.dualVariant?.id])).toEqual([
+      ['EDP_ELE', 'EDP_DUAL'],
+      ['OTHER_DUAL', undefined],
+    ]);
+  });
+
+  it('keeps offers with different costs apart', () => {
+    expect(groupDualVariants([result(ele, 40_000), result(dual, 41_000)])).toHaveLength(2);
   });
 });

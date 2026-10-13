@@ -170,3 +170,37 @@ export function compareOffers(input: CompareInput): Comparison | null {
   results.sort((a, b) => a.annualCents - b.annualCents);
   return { usage: input.usage, currentAnnualCents: current.totalCents, results };
 }
+
+export interface DisplayResult extends OfferResult {
+  /** Same supplier, cycle and electricity cost, sold together with gas (dual). */
+  dualVariant?: Offer;
+}
+
+/**
+ * Many suppliers publish the same electricity prices twice: alone (ELE) and
+ * as a dual electricity + gas offer. For an electricity comparison they cost
+ * the same, so they are shown once, noting that a dual version exists.
+ */
+export function groupDualVariants(results: readonly OfferResult[]): DisplayResult[] {
+  const shown: DisplayResult[] = [];
+  const byKey = new Map<string, DisplayResult>();
+  for (const result of results) {
+    const key = `${result.offer.supplier}|${result.cycle}|${result.annualCents}`;
+    const twin = byKey.get(key);
+    if (twin && twin.offer.supply !== result.offer.supply) {
+      if (twin.offer.supply === 'ELE') twin.dualVariant ??= result.offer;
+      else {
+        // Prefer the electricity-only offer as the main card.
+        const index = shown.indexOf(twin);
+        const replacement: DisplayResult = { ...result, dualVariant: twin.offer };
+        shown[index] = replacement;
+        byKey.set(key, replacement);
+      }
+      continue;
+    }
+    const item: DisplayResult = { ...result };
+    shown.push(item);
+    byKey.set(key, item);
+  }
+  return shown;
+}

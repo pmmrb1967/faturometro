@@ -1,7 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { SelectField } from '../../components/Field';
-import { annualUsage, compareOffers, type OfferResult } from '../../domain/compare';
+import {
+  annualUsage,
+  compareOffers,
+  groupDualVariants,
+  type DisplayResult,
+} from '../../domain/compare';
 import { offersFileSchema, type OffersFile } from '../../domain/erse';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -106,11 +111,26 @@ export function ComparePage() {
   }, [session, candidate, comparison, offers, data]);
 
   if (!session || !data) return null;
+  const cheaper = comparison
+    ? groupDualVariants(comparison.results.filter((result) => result.savingCents > 0))
+    : [];
 
   return (
     <>
       <h1>{copy.title}</h1>
       <p className="muted compare-intro">{copy.intro}</p>
+      <details className="compare-glossary">
+        <summary>{copy.glossary.title}</summary>
+        <dl>
+          {copy.glossary.items.map(([term, meaning]) => (
+            <div key={term}>
+              <dt>{term}</dt>
+              <dd>{meaning}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="muted">{copy.glossary.source}</p>
+      </details>
 
       {data.candidates.length === 0 && <p className="compare-note">{copy.noContract}</p>}
       {data.candidates.length > 1 && (
@@ -154,16 +174,11 @@ export function ComparePage() {
           </section>
 
           <h2 className="section-title">{copy.best}</h2>
-          {comparison.results.filter((result) => result.savingCents > 0).length === 0 && (
-            <p className="muted">{copy.none}</p>
-          )}
+          {cheaper.length === 0 && <p className="muted">{copy.none}</p>}
           <ol className="offers">
-            {comparison.results
-              .filter((result) => result.savingCents > 0)
-              .slice(0, TOP)
-              .map((result) => (
-                <OfferCard key={`${result.offer.id}-${result.cycle}`} result={result} />
-              ))}
+            {cheaper.slice(0, TOP).map((result) => (
+              <OfferCard key={`${result.offer.id}-${result.cycle}`} result={result} />
+            ))}
           </ol>
           <p className="compare-disclaimer">{copy.disclaimer}</p>
         </>
@@ -172,7 +187,7 @@ export function ComparePage() {
   );
 }
 
-function OfferCard({ result }: { result: OfferResult }) {
+function OfferCard({ result }: { result: DisplayResult }) {
   const { offer } = result;
   const conditions = copy.conditions;
   const newClients = offer.newClientDiscounts;
@@ -214,6 +229,10 @@ function OfferCard({ result }: { result: OfferResult }) {
         </p>
       </div>
       <p className="offer-saving">{copy.saving(formatCents(result.savingCents))}</p>
+      {offer.supply === 'DUAL' && <p className="offer-dual">{copy.dualOnly(offer.supplier)}</p>}
+      {result.dualVariant && (
+        <p className="muted offer-note">{copy.dualVariant(result.dualVariant.name)}</p>
+      )}
       {tags.length > 0 && (
         <ul className="offer-tags">
           {tags.map((tag) => (
