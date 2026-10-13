@@ -471,8 +471,9 @@ Opcional e desligada por defeito.
 - **Concluída quando:** ≥ 95% das fixtures P1 passam a validação cruzada com todos os campos obrigatórios.
 
 ### Fase 3 — Histórico, alertas e comparador
-- [ ] Gráficos por contrato (custo mensal, consumo)
-- [ ] Motor de alertas (secção 9) + testes
+- [x] Gráficos por contrato (valor de cada fatura; kWh faturados na luz e no gás), página de contrato com data de fim de fidelização editável
+- [x] Botão "Sair" visível (pedido do utilizador: antes chamava-se "Bloquear")
+- [x] Motor de alertas (secção 9) + testes; avisos na página Início, dispensáveis
 - [ ] `scripts/erse-sync.ts` + GitHub Action
 - [ ] Comparador de eletricidade (secção 8), validado contra faturas reais
 - **Concluída quando:** o custo estimado da oferta atual bate com as faturas reais ± 2% em todas as fixtures de eletricidade.
@@ -605,4 +606,6 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Validação do período: fim ≤ emissão + 5 dias só para luz, gás e água; nas telecomunicações (mensalidade adiantada) só o início |
 | 2026-10-13 | Leituras vs kWh faturados comparadas por tipo (real/estimada), ignorando acertos de estimativas anteriores, com tolerância de 1 kWh por linha (kWh arredondados na fatura) |
 | 2026-10-13 | Ciclo horário do contrato deduzido das linhas de energia faturadas (não do contador); tarifa social quando há linhas "social" |
+| 2026-10-13 | Alerta de aumento: mensalidade base em todos os setores; total vs média das 3 anteriores só em telecom/outros; na luz e gás compara o preço por kWh (o total segue o consumo) |
+| 2026-10-13 | Cor das barras dos gráficos validada (faixa de luminosidade, saturação, contraste 3:1): `#1f8a65` claro, `#34a87e` escuro |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

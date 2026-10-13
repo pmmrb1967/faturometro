@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Link } from 'react-router';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
@@ -38,9 +39,9 @@ export function ContractsPage() {
         <ul className="list">
           {rows.map(({ contract, provider, count, last }) => (
             <li key={contract.id} className="list-item">
-              <strong>
+              <Link to={`/app/contratos/${contract.id}`} className="list-link">
                 {contract.label} — {provider?.name}
-              </strong>
+              </Link>
               <span className="amount">{last ? formatCents(last.totalCents) : '—'}</span>
               <span className="meta">
                 {t.sectors[contract.sector]} · {t.contracts.invoiceCount(count)}

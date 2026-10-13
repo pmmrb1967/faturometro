@@ -11,6 +11,27 @@ export const t = {
   placeholder: 'Em construção.',
   signOut: 'Sair',
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
+  alerts: {
+    title: 'Avisos',
+    empty: 'Sem avisos. Quando algo mudar nos teus contratos, aparece aqui.',
+    dismiss: 'Dispensar',
+    messages: {
+      loyaltyEnding: (label: string, date: string, days: number) =>
+        `${label}: a fidelização termina a ${date} (daqui a ${days} ${days === 1 ? 'dia' : 'dias'}). Bom momento para comparar ou renegociar.`,
+      baseFeeIncrease: (label: string, before: string, after: string) =>
+        `${label}: a mensalidade subiu de ${before} para ${after}.`,
+      totalIncrease: (label: string, before: string, after: string, pct: string) =>
+        `${label}: a última fatura (${after}) está ${pct}% acima da média das três anteriores (${before}).`,
+      unitPriceIncrease: (label: string, pct: string) =>
+        `${label}: o preço da energia subiu ${pct}% em relação à fatura anterior.`,
+      estimatedReadings: (label: string, count: number) =>
+        `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
+      missingInvoice: (label: string, date: string, days: number) =>
+        `${label}: a última fatura é de ${date}, há ${days} dias. Confirma se chegou alguma nova.`,
+      cheaperOffer: (label: string, saving: string) =>
+        `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
+    },
+  },
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',
@@ -77,6 +98,36 @@ export const t = {
       'Ainda não tens contratos. São criados quando guardas a primeira fatura de cada fornecedor.',
     invoiceCount: (count: number) => (count === 1 ? '1 fatura' : `${count} faturas`),
     lastInvoice: 'Última fatura',
+    back: 'Contratos',
+    notFound: 'Este contrato não existe.',
+    facts: {
+      provider: 'Fornecedor',
+      sector: 'Tipo de despesa',
+      customerNumber: 'N.º de cliente',
+      supplyPoint: 'CPE / CUI',
+      tariff: 'Tarifa',
+      power: 'Potência contratada',
+      cycle: 'Ciclo horário',
+      socialTariff: 'Tarifa social',
+      yes: 'Sim',
+    },
+    cycles: { simple: 'Simples', bi: 'Bi-horário', tri: 'Tri-horário' },
+    loyalty: {
+      title: 'Fim da fidelização',
+      hint: 'Normalmente não vem na fatura: vê no contrato ou na área de cliente. Avisamos 60, 30 e 7 dias antes.',
+      save: 'Guardar data',
+      clear: 'Sem fidelização',
+      saved: 'Data guardada.',
+    },
+    charts: {
+      cost: 'Valor de cada fatura',
+      consumption: 'Consumo faturado (kWh)',
+      table: 'Ver como tabela',
+      invoice: 'Fatura',
+      value: 'Valor',
+      invoiceOf: (date: string) => `Fatura de ${date}`,
+    },
+    invoicesTitle: 'Faturas deste contrato',
   },
   ingest: {
     title: 'Adicionar fatura',

@@ -3,6 +3,8 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { RecoverPage } from '../features/auth/RecoverPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { RequireSession } from '../features/auth/RequireSession';
+import { HomePage } from '../features/alerts/HomePage';
+import { ContractPage } from '../features/contracts/ContractPage';
 import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
 import { Landing } from '../landing/Landing';
@@ -10,6 +12,7 @@ import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
 import { SECTIONS, type SectionId } from './sections';
 
 function sectionElement(id: SectionId) {
+  if (id === 'home') return <HomePage />;
   if (id === 'invoices') return <InvoicesPage />;
   if (id === 'contracts') return <ContractsPage />;
   return <SectionPlaceholder section={id} />;
@@ -27,14 +30,14 @@ export const router = createBrowserRouter([
         <AppShell />
       </RequireSession>
     ),
-    children: SECTIONS.map((section) =>
-      section.path === '/app'
-        ? { index: true, element: <SectionPlaceholder section={section.id} /> }
-        : {
-            path: section.path,
-            element: sectionElement(section.id),
-          },
-    ),
+    children: [
+      ...SECTIONS.map((section) =>
+        section.path === '/app'
+          ? { index: true, element: sectionElement(section.id) }
+          : { path: section.path, element: sectionElement(section.id) },
+      ),
+      { path: '/app/contratos/:id', element: <ContractPage /> },
+    ],
   },
   { path: '*', element: <NotFound /> },
 ]);

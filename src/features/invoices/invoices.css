@@ -82,3 +82,26 @@
   border: 1px solid var(--danger);
   font-weight: 700;
 }
+
+.list-link {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.list-link:hover,
+.list-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Whole row clickable on touch screens. */
+.list-item:has(.list-link) {
+  position: relative;
+}
+
+.list-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}

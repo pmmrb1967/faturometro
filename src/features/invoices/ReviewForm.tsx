@@ -6,6 +6,7 @@ import type { Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { useSession } from '../auth/session-context';
 import { docKeyFor } from '../ingest/ingest';
+import { refreshAlerts } from '../alerts/refresh';
 import { getSettings } from '../settings/settings';
 import {
   SECTORS,
@@ -85,6 +86,7 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
         draft.docKey = await docKeyFor(draft.issuerNif, draft.docId);
       const settings = await getSettings(repos);
       await saveInvoice(repos, draft, { keepOriginalFile: settings.keepOriginalFiles });
+      await refreshAlerts(repos);
       onDone(true);
     } catch (error) {
       setFormError(
