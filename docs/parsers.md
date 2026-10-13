@@ -1,0 +1,42 @@
+# Como escrever um parser de layout
+
+Um parser lê os dados de uma fatura que o código QR fiscal não tem (período, data-limite, n.º de cliente, CPE/CUI, linhas, leituras) a partir do texto do PDF com coordenadas. O total e o IVA vêm sempre do QR; o parser lê-os também, para a validação cruzada.
+
+## Peças
+
+| Ficheiro | O que faz |
+|---|---|
+| `src/parsers/types.ts` | `Parser`, `ParserContext`, `ExtractedInvoice` (cada campo com `confidence`) |
+| `src/parsers/utils.ts` | Linhas por coordenadas (`rows`), `findItem`, `valueBelow`, `valueRightOf`, `amount`, `date`, `dayMonthRange`, `quantity`, `decimalString` |
+| `src/parsers/registry.ts` | Lista de parsers; escolha por NIF do emitente (campo A do QR) e, sem QR, por `detect()` |
+| `src/features/ingest/validate.ts` | Validação cruzada (passo 5): total e IVA contra o QR (±1 cêntimo), período, soma das linhas, leituras contra kWh faturados |
+| `src/test/fixtures.ts` | Carrega fixtures públicas (`fixtures/<id>/`) e privadas (`fixtures/private/<id>/`) |
+
+## Passos para um layout novo
+
+1. **Fixtures privadas.** Com PDFs reais (teus ou cedidos com consentimento) em `samples/`:
+   `pnpm fixture:anon samples/<ficheiro>.pdf <providerId>` → `fixtures/private/<providerId>/`. Nunca são commitadas.
+2. **Estudar o layout** nas fixtures privadas: etiquetas, colunas (x) e linhas (y). Os valores estão anonimizados; as etiquetas do modelo não.
+3. **NIF do emitente**: o campo A do QR nas fixtures. Não escrever NIF de memória.
+4. **Parser** em `src/parsers/<providerId>.ts`:
+   - trabalhar só sobre `ctx.pages` (`TextItem[]`), ancorando em etiquetas (`findItem` + `valueBelow`/`valueRightOf`) e não em posições absolutas;
+   - num ficheiro com vários QR, `parse(ctx, qr)` recebe o QR do documento a ler (ex.: Repsol encontra a página pelo n.º do documento);
+   - nunca lançar exceções por campos em falta: deixar o campo vazio e, se for estranho, acrescentar a `warnings`;
+   - `confidence: 'high'` quando o valor vem de uma etiqueta conhecida; `'low'` quando é um palpite (ex.: formato nunca visto);
+   - `linesIncludeVat` quando as linhas da fatura incluem IVA (NOS); senão as linhas somam o total sem IVA (Repsol);
+   - indicar `basis` (real, estimada, acerto) nas linhas de consumo quando a fatura o diz.
+5. **Registar** em `src/parsers/registry.ts`.
+6. **Testes** em `src/parsers/<providerId>.test.ts` contra todas as fixtures do layout, e entrada em `src/parsers/validation.test.ts`.
+7. **Fixture sintética pública** em `scripts/synthetic-fixtures.ts`: mesmas etiquetas e posições, valores inventados e coerentes (as linhas somam, o QR bate). `pnpm fixtures:synthetic` reescreve-as.
+8. Confirmar sem as privadas, como no CI: `FIXTURES_PUBLIC_ONLY=1 pnpm test`.
+
+## Ao corrigir um parser
+
+Subir `version` (fica guardada em cada fatura) e acrescentar às fixtures privadas a fatura que falhava.
+
+## Layouts atuais
+
+| Parser | NIF (campo A) | Notas |
+|---|---|---|
+| `nos` | 502604751 | Resumo com IVA incluído; mensalidade faturada adiantada (o período termina depois da data da fatura) |
+| `repsol` | 500246963 | Um PDF com resumo, uma página por fatura (luz, gás; um QR cada) e dados do contrato; linhas sem IVA; acertos de estimativas anteriores |

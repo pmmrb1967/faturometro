@@ -461,12 +461,12 @@ Opcional e desligada por defeito.
 - **Concluída quando:** qualquer fatura portuguesa com QR entra na app com total, IVA, data e fornecedor corretos, sem IA.
 
 ### Fase 2 — Parsers P1
-- [ ] Infraestrutura: `ParserContext`, utilitários de texto/coordenadas, registo por NIF e fingerprint
-- [ ] Validação cruzada (Etapa 5)
-- [ ] Parsers telecom: MEO, NOS, Vodafone, DIGI
-- [ ] Parsers eletricidade: EDP Comercial, SU Eletricidade, Endesa, Iberdrola, Galp, Goldenergy, Repsol
-- [ ] Fixtures sintéticas por layout em `fixtures/<providerId>/` (estrutura real, valores inventados e coerentes com o QR), para o CI
-- [ ] Testes de cada parser contra todas as fixtures do layout (sintéticas + privadas, quando existem)
+- [x] Infraestrutura: `ParserContext`, utilitários de texto/coordenadas, registo por NIF e fingerprint (guia em `docs/parsers.md`)
+- [x] Validação cruzada (Etapa 5), ligada à entrada de faturas (linhas, leituras e dados do contrato guardados)
+- [ ] Parsers telecom: MEO, NOS ✅, Vodafone, DIGI (sem amostras)
+- [ ] Parsers eletricidade: EDP Comercial, SU Eletricidade, Endesa, Iberdrola, Galp, Goldenergy, Repsol ✅ (luz e gás) — restantes sem amostras
+- [x] Fixtures sintéticas por layout em `fixtures/<providerId>/` (estrutura real, valores inventados e coerentes com o QR), para o CI — `scripts/synthetic-fixtures.ts`
+- [x] Testes de cada parser contra todas as fixtures do layout (sintéticas + privadas, quando existem); `FIXTURES_PUBLIC_ONLY=1` simula o CI
 - **Concluída quando:** ≥ 95% das fixtures P1 passam a validação cruzada com todos os campos obrigatórios.
 
 ### Fase 3 — Histórico, alertas e comparador
@@ -601,4 +601,7 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | zxing-wasm e o worker do pdf.js são servidos pela própria app (por defeito o zxing ia buscar o WASM ao jsDelivr) |
 | 2026-10-13 | Esquema Dexie v2: `invoices.fileHash` deixa de ser único (um ficheiro, várias faturas); o ficheiro original fica uma vez em `documents`, cifrado. Duplicados verificados antes de criar fornecedor/contrato |
 | 2026-10-13 | Nomes de fornecedores não são inventados: na primeira fatura de cada NIF o utilizador escreve o nome |
+| 2026-10-13 | Validação do período: fim ≤ emissão + 5 dias só para luz, gás e água; nas telecomunicações (mensalidade adiantada) só o início |
+| 2026-10-13 | Leituras vs kWh faturados comparadas por tipo (real/estimada), ignorando acertos de estimativas anteriores, com tolerância de 1 kWh por linha (kWh arredondados na fatura) |
+| 2026-10-13 | Ciclo horário do contrato deduzido das linhas de energia faturadas (não do contador); tarifa social quando há linhas "social" |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

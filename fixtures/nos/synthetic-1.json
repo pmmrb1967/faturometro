@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 2,
+  "parserId": "nos",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 1,
+      "text": "A:502604751*B:999999990*C:PT*D:FT*E:N*F:20260605*G:FT 100000/1000001*H:ABCD1234-1000001*I1:PT*I7:28.46*I8:6.54*N:6.54*O:35.00*Q:0000*R:0"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "N.º cliente",
+          "x": 310,
+          "y": 24,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º contribuinte",
+          "x": 409,
+          "y": 24,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "C100000001",
+          "x": 310,
+          "y": 33,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "999999990",
+          "x": 409,
+          "y": 33,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura n.º",
+          "x": 310,
+          "y": 51,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data da fatura",
+          "x": 409,
+          "y": 51,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período de faturação",
+          "x": 491,
+          "y": 51,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "nos.pt",
+          "x": 272,
+          "y": 54,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FT 100000/1000001",
+          "x": 310,
+          "y": 60,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "05-06-2026",
+          "x": 409,
+          "y": 60,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Junho de 2026",
+          "x": 491,
+          "y": 60,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nesta fatura",
+          "x": 58,
+          "y": 231,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Qtd",
+          "x": 232,
+          "y": 234,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 254,
+          "y": 234,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Serviço",
+          "x": 296,
+          "y": 234,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Desconto",
+          "x": 347,
+          "y": 234,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total",
+          "x": 423,
+          "y": 234,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "c/ IVA",
+          "x": 303,
+          "y": 243,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "c/ IVA",
+          "x": 362,
+          "y": 243,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "c/ IVA",
+          "x": 422,
+          "y": 243,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Pacotes",
+          "x": 75,
+          "y": 258,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1",
+          "x": 236,
+          "y": 258,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23%",
+          "x": 254,
+          "y": 258,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€40,00",
+          "x": 299,
+          "y": 258,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€10,00",
+          "x": 363,
+          "y": 258,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€30,00",
+          "x": 418,
+          "y": 258,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Telemóvel",
+          "x": 75,
+          "y": 282,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1",
+          "x": 236,
+          "y": 282,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23%",
+          "x": 254,
+          "y": 282,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€5,00",
+          "x": 304,
+          "y": 282,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€0,00",
+          "x": 363,
+          "y": 282,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€5,00",
+          "x": 423,
+          "y": 282,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA (23%)",
+          "x": 58,
+          "y": 327,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€6,54",
+          "x": 244,
+          "y": 327,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor desta fatura com IVA",
+          "x": 58,
+          "y": 345,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€35,00",
+          "x": 419,
+          "y": 345,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total a pagar até 30 jun 2026",
+          "x": 63,
+          "y": 369,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "NOS Comunicações, S.A. Exemplo sintético",
+          "x": 14,
+          "y": 594,
+          "width": 184,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Detalhe desta fatura",
+          "x": 58,
+          "y": 144,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Pacotes",
+          "x": 83,
+          "y": 165,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Informação sobre o seu pacote",
+          "x": 324,
+          "y": 165,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Pacote Exemplo",
+          "x": 69,
+          "y": 198,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "05 jun - 04 jul",
+          "x": 202,
+          "y": 198,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€40,000",
+          "x": 272,
+          "y": 198,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período de fidelização",
+          "x": 63,
+          "y": 270,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data fim",
+          "x": 202,
+          "y": 321,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor com IVA",
+          "x": 255,
+          "y": 321,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Não aplicável",
+          "x": 202,
+          "y": 336,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

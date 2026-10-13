@@ -36,5 +36,7 @@ function load(dir: string, isPrivate: boolean): LayoutFixture[] {
 }
 
 export function layoutFixtures(providerId: string): LayoutFixture[] {
-  return [...load(join(ROOT, providerId), false), ...load(join(ROOT, 'private', providerId), true)];
+  const publicOnly = Boolean(process.env.FIXTURES_PUBLIC_ONLY);
+  const own = publicOnly ? [] : load(join(ROOT, 'private', providerId), true);
+  return [...load(join(ROOT, providerId), false), ...own];
 }

@@ -1,0 +1,698 @@
+{
+  "schemaVersion": 2,
+  "parserId": "repsol",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 2,
+      "text": "A:500246963*B:999999990*C:PT*D:FT*E:N*F:20260605*G:FAC 1000000001/2000000001*H:ABCD1234-2000000001*I1:PT*I7:43.12*I8:9.92*N:9.92*O:53.04*Q:abcd*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Fatura/Recibo",
+          "x": 496,
+          "y": 39,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cliente / Conta:",
+          "x": 31,
+          "y": 156,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "12345 / 001",
+          "x": 92,
+          "y": 156,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Resumo de faturação",
+          "x": 31,
+          "y": 216,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Repsol Portuguesa, Lda. Exemplo sintético",
+          "x": 10,
+          "y": 543,
+          "width": 188.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Débito a partir de",
+          "x": 51,
+          "y": 768,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "15 jul 2026",
+          "x": 51,
+          "y": 780,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Fatura",
+          "x": 203,
+          "y": 33,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Cliente",
+          "x": 327,
+          "y": 33,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Leitura",
+          "x": 450,
+          "y": 33,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FAC 1000000001/2000000001",
+          "x": 203,
+          "y": 42,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Domésticos",
+          "x": 327,
+          "y": 42,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Empresa",
+          "x": 450,
+          "y": 42,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Fim Período",
+          "x": 203,
+          "y": 54,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa",
+          "x": 327,
+          "y": 54,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-31",
+          "x": 203,
+          "y": 63,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa Bi-horária Exemplo",
+          "x": 327,
+          "y": 63,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Resumo",
+          "x": 37,
+          "y": 75,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período Faturação: 2026-05-01 ~ 2026-05-31",
+          "x": 436,
+          "y": 75,
+          "width": 193.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Contador Nº",
+          "x": 39,
+          "y": 84,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Potência",
+          "x": 112,
+          "y": 84,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Consumo",
+          "x": 174,
+          "y": 84,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data",
+          "x": 274,
+          "y": 84,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura",
+          "x": 352,
+          "y": 84,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fator Multipl.",
+          "x": 410,
+          "y": 84,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumo",
+          "x": 469,
+          "y": 84,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "000000000000001",
+          "x": 39,
+          "y": 93,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,60kVA",
+          "x": 112,
+          "y": 93,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Vazio",
+          "x": 174,
+          "y": 93,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-31",
+          "x": 274,
+          "y": 93,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1.200",
+          "x": 352,
+          "y": 93,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,00000",
+          "x": 410,
+          "y": 93,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 469,
+          "y": 93,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "60,00",
+          "x": 520,
+          "y": 93,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "kWh",
+          "x": 540,
+          "y": 93,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fora de Vazio",
+          "x": 174,
+          "y": 108,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-31",
+          "x": 274,
+          "y": 108,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2.400",
+          "x": 352,
+          "y": 108,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,00000",
+          "x": 410,
+          "y": 108,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 469,
+          "y": 108,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "140,00",
+          "x": 520,
+          "y": 108,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "kWh",
+          "x": 540,
+          "y": 108,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descrição",
+          "x": 39,
+          "y": 153,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Explicação de valores",
+          "x": 285,
+          "y": 153,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor(€)",
+          "x": 423,
+          "y": 153,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 450,
+          "y": 153,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Eletricidade",
+          "x": 53,
+          "y": 168,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Energia Vazio",
+          "x": 53,
+          "y": 174,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 200,
+          "y": 174,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 174,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "60 kWh x 0,100000 €/kWh",
+          "x": 285,
+          "y": 174,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6,00",
+          "x": 435,
+          "y": 174,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Energia Fora de Vazio",
+          "x": 53,
+          "y": 183,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 200,
+          "y": 183,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 183,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "140 kWh x 0,200000 €/kWh",
+          "x": 285,
+          "y": 183,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "28,00",
+          "x": 432,
+          "y": 183,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Potência Contratada (4.60 kVA)",
+          "x": 53,
+          "y": 192,
+          "width": 138,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 192,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31 dias x 0,200000 €/dia",
+          "x": 285,
+          "y": 192,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6,20",
+          "x": 435,
+          "y": 192,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxas e Impostos",
+          "x": 53,
+          "y": 210,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Contribuição Audiovisual",
+          "x": 53,
+          "y": 216,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 216,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,000000 meses x 2,850000 €/mês",
+          "x": 285,
+          "y": 216,
+          "width": 142.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,85",
+          "x": 435,
+          "y": 216,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxa Exploração DGEG (DL-4/93)",
+          "x": 53,
+          "y": 225,
+          "width": 138,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 225,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,07",
+          "x": 435,
+          "y": 225,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(c) IVA 23%",
+          "x": 53,
+          "y": 234,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/05 a 31/05",
+          "x": 234,
+          "y": 234,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "43,1200 € x 23,00%",
+          "x": 285,
+          "y": 234,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "9,92",
+          "x": 435,
+          "y": 234,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total sem IVA",
+          "x": 41,
+          "y": 251,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "43,12€",
+          "x": 432,
+          "y": 251,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TOTAL",
+          "x": 40,
+          "y": 263,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "53,04€",
+          "x": 430,
+          "y": 263,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Dados da Conta",
+          "x": 31,
+          "y": 33,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Oferta, tarifa ou plano",
+          "x": 61,
+          "y": 81,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa Bi-horária Exemplo",
+          "x": 61,
+          "y": 93,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Potência: 4,60kVA",
+          "x": 211,
+          "y": 93,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "CPE (Código Ponto Entrega)",
+          "x": 61,
+          "y": 102,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PT 0000 0000 0000 0000 XX",
+          "x": 61,
+          "y": 111,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

@@ -156,18 +156,19 @@ describe('parseFiscalQr — tolerance and errors', () => {
 
 // Real invoices, anonymized, kept only on the developer's machine (fixtures/private).
 const PRIVATE_DIR = join(__dirname, '../../fixtures/private');
-const privateQrs = existsSync(PRIVATE_DIR)
-  ? readdirSync(PRIVATE_DIR).flatMap((provider) =>
-      readdirSync(join(PRIVATE_DIR, provider)).flatMap((file) => {
-        const fixture = JSON.parse(readFileSync(join(PRIVATE_DIR, provider, file), 'utf8')) as {
-          qrs?: { text: string }[];
-          qr?: string | null;
-        };
-        const texts = fixture.qrs?.map((qr) => qr.text) ?? (fixture.qr ? [fixture.qr] : []);
-        return texts.map((text) => ({ name: `${provider}/${file}`, text }));
-      }),
-    )
-  : [];
+const privateQrs =
+  existsSync(PRIVATE_DIR) && !process.env.FIXTURES_PUBLIC_ONLY
+    ? readdirSync(PRIVATE_DIR).flatMap((provider) =>
+        readdirSync(join(PRIVATE_DIR, provider)).flatMap((file) => {
+          const fixture = JSON.parse(readFileSync(join(PRIVATE_DIR, provider, file), 'utf8')) as {
+            qrs?: { text: string }[];
+            qr?: string | null;
+          };
+          const texts = fixture.qrs?.map((qr) => qr.text) ?? (fixture.qr ? [fixture.qr] : []);
+          return texts.map((text) => ({ name: `${provider}/${file}`, text }));
+        }),
+      )
+    : [];
 
 describe.skipIf(privateQrs.length === 0)('parseFiscalQr — private fixtures', () => {
   it.each(privateQrs)('$name', ({ text }) => {
