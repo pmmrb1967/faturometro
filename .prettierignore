@@ -1,0 +1,6 @@
+dist
+dev-dist
+coverage
+samples
+pnpm-lock.yaml
+*.md
