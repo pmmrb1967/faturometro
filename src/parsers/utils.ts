@@ -26,7 +26,10 @@ export function rows(page: PageText, tolerance = 2.5): Row[] {
 }
 
 export function normalize(text: string): string {
-  return text.replace(/[  ]/g, ' ').replace(/\s+/g, ' ').trim();
+  return text
+    .replace(/[\u00a0\u202f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function findItem(page: PageText, pattern: RegExp): TextItem | undefined {

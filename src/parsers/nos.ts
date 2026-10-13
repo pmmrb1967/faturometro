@@ -155,7 +155,7 @@ export const nosParser: Parser = {
 
   detect(ctx: ParserContext) {
     const text = ctx.pages.map(textOf).join(' ');
-    return /NOS Comunicações, S\.A\./.test(text) && /Esta é a sua fatura NOS/.test(text);
+    return /NOS Comunicações, S\.A\./.test(text) && /\bnos\.pt\b/.test(text);
   },
 
   parse(ctx: ParserContext, qr?: FiscalQr) {
