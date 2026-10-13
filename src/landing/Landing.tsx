@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { InstallButton } from '../components/InstallButton';
 import { LegalFooter } from '../components/LegalFooter';
 import { t } from '../i18n/pt-PT';
 import { QrSlip } from './QrSlip';
@@ -83,6 +84,9 @@ export function Landing() {
               </div>
             ))}
           </dl>
+          <div className="landing-install">
+            <InstallButton className="button button-primary" />
+          </div>
         </section>
       </main>
 

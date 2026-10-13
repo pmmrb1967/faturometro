@@ -233,3 +233,13 @@ body {
 .legal-footer a {
   color: var(--muted);
 }
+
+.install-steps {
+  margin: 12px 0 0;
+  padding-left: 1.4em;
+  line-height: 1.6;
+}
+
+.install-done {
+  margin: 0;
+}

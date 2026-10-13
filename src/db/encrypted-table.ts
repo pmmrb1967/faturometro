@@ -52,6 +52,17 @@ export class EncryptedTable<T extends SyncMeta> {
     await this.write((await decryptJson(this.key, enc)) as T);
   }
 
+  /**
+   * Restores a record from a backup as it was (keeping its `updatedAt`),
+   * unless this device has a newer version. Returns whether it was written.
+   */
+  async restore(record: T): Promise<boolean> {
+    const local = await this.updatedAtOf(record.id);
+    if (local !== undefined && local >= record.updatedAt) return false;
+    await this.write(record);
+    return true;
+  }
+
   private async write(record: T): Promise<T> {
     const row: StoredRow = {
       id: record.id,

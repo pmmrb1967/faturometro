@@ -1,6 +1,54 @@
 export const t = {
   appName: 'Faturómetro',
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
+  backup: {
+    title: 'Os teus dados',
+    localOnlyWarning:
+      'Sem sincronização, as faturas existem só neste dispositivo: se limpares os dados do browser ou perderes o telemóvel, perdem-se. Faz exportações regulares.',
+    exportTitle: 'Exportar tudo',
+    exportHint:
+      'Descarrega um ficheiro ZIP com todas as faturas, contratos e definições (em JSON) e os PDFs originais. Fica em claro, para o poderes ler ou guardar onde quiseres: guarda-o num sítio seguro. A chave da IA não é incluída.',
+    export: 'Exportar (ZIP)',
+    exported: (records: number, files: number) =>
+      `Exportados ${records} registos e ${files} ${files === 1 ? 'original' : 'originais'}.`,
+    importTitle: 'Importar uma exportação',
+    importHint:
+      'Junta os dados de uma exportação a esta conta. Se um registo já existir aqui com uma versão mais recente, fica o daqui.',
+    import: 'Escolher ficheiro ZIP',
+    imported: (added: number, skipped: number, files: number) =>
+      `Importados ${added} registos e ${files} ${files === 1 ? 'original' : 'originais'}` +
+      (skipped > 0 ? ` (${skipped} já estavam atualizados).` : '.'),
+    deleteTitle: 'Apagar tudo',
+    deleteHint:
+      'Apaga deste dispositivo a conta, as faturas, os contratos e os originais. Não há forma de desfazer: exporta antes, se quiseres guardar alguma coisa.',
+    deleteRemote: 'Apagar também a conta e os dados no servidor de sincronização',
+    deleteConfirm: 'Confirmo que quero apagar todos os dados desta conta.',
+    delete: 'Apagar tudo',
+    failed: 'Não foi possível concluir. Tenta outra vez.',
+    errors: {
+      not_a_backup: 'Este ficheiro não é uma exportação do Faturómetro.',
+      too_large: 'O ficheiro é demasiado grande.',
+    },
+  },
+  install: {
+    title: 'Aplicação',
+    intro:
+      'Instala o Faturómetro no telemóvel ou no computador: abre pelo ícone, em ecrã inteiro, e funciona sem internet.',
+    button: 'Instalar app',
+    installed: 'O Faturómetro está instalado neste dispositivo.',
+    iosSteps: [
+      'Abre esta página no Safari.',
+      'Toca no botão Partilhar (o quadrado com a seta para cima).',
+      'Escolhe “Adicionar ao ecrã principal” e confirma.',
+    ],
+    manualSteps: [
+      'No Chrome ou Edge: abre o menu do browser (⋮).',
+      'Escolhe “Instalar app” ou “Adicionar ao ecrã principal”.',
+      'Se o browser só oferecer “Criar atalho”, atualiza o Chrome e os Serviços do Google Play e tenta de novo; o atalho também funciona.',
+    ],
+    dataNote:
+      'Os dados ficam neste dispositivo: desinstalar a app ou limpar os dados do site apaga-os, a não ser que tenhas a sincronização ligada ou uma exportação recente.',
+  },
   legal: {
     copyright: '© 2026 Paulo Barbosa',
     license: 'Código aberto, licença AGPL-3.0',

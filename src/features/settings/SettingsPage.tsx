@@ -13,7 +13,9 @@ import {
 } from '../../sync/account';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
+import { InstallButton } from '../../components/InstallButton';
 import { AiSettings } from '../ai/AiSettings';
+import { BackupSection } from '../backup/BackupSection';
 import { useSession } from '../auth/session-context';
 import { validateNewPassword, type FieldErrors } from '../auth/validation';
 import { syncSession, useSyncStatus } from '../sync/sync-store';
@@ -36,6 +38,8 @@ export function SettingsPage() {
       <SyncSection />
       <AiSettings />
       <PreferencesSection />
+      <AppSection />
+      <BackupSection />
     </>
   );
 }
@@ -437,6 +441,17 @@ function AccountSection() {
           {busy ? accountCopy.working : accountCopy.submit}
         </button>
       </form>
+    </section>
+  );
+}
+
+function AppSection() {
+  return (
+    <section className="settings-section" aria-labelledby="app-title">
+      <h2 id="app-title">{t.install.title}</h2>
+      <p>{t.install.intro}</p>
+      <InstallButton />
+      <p className="muted">{t.install.dataNote}</p>
     </section>
   );
 }

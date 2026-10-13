@@ -422,3 +422,7 @@
   color: var(--green);
   font-weight: 700;
 }
+
+.landing-install {
+  margin-top: 24px;
+}
