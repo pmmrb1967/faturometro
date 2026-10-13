@@ -100,15 +100,6 @@ export interface Reading extends SyncMeta {
   dateTo: IsoDate;
 }
 
-export interface StoredDocument extends SyncMeta {
-  invoiceId?: string;
-  fileHash: string;
-  mime: string;
-  /** File contents (encrypted at rest like everything else). */
-  bytes: Uint8Array<ArrayBuffer>;
-  addedAt: IsoDateTime;
-}
-
 export interface Alert extends SyncMeta {
   contractId: string;
   kind:

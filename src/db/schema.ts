@@ -34,7 +34,20 @@ export const SCHEMA_V1 = {
   settings: 'id, updatedAt',
 } as const;
 
-export type TableName = keyof typeof SCHEMA_V1;
+/**
+ * v2: one file can hold several invoices (Repsol electricity + gas, Via Verde
+ * one per issuer), so invoices.fileHash is no longer unique. The file itself
+ * is stored once in `documents` (unique fileHash). Index change only: no data
+ * migration needed.
+ */
+export const SCHEMA_V2 = {
+  ...SCHEMA_V1,
+  invoices: 'id, contractId, providerId, fileHash, &docKey, issueDate, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V2;
+
+export type TableName = keyof typeof CURRENT_SCHEMA;
 
 export class ProfileDb extends Dexie {
   providers!: Table<StoredRow, string>;
@@ -50,6 +63,7 @@ export class ProfileDb extends Dexie {
   constructor(profileId: string) {
     super(profileDbName(profileId));
     this.version(1).stores(SCHEMA_V1);
+    this.version(2).stores(SCHEMA_V2);
   }
 }
 

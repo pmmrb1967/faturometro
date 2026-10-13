@@ -1,0 +1,50 @@
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.field label {
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.field input:read-only {
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.field-error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--danger);
+  font-weight: 700;
+}

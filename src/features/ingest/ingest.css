@@ -168,3 +168,8 @@
   border-radius: 6px;
   font-weight: 700;
 }
+
+.doc-saved {
+  font-weight: 700;
+  color: var(--accent);
+}

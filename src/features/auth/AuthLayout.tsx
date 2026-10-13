@@ -1,7 +1,9 @@
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { t } from '../../i18n/pt-PT';
 import './auth.css';
+
+export { Field } from '../../components/Field';
 
 export function AuthLayout({
   title,
@@ -23,38 +25,6 @@ export function AuthLayout({
         <p className="auth-intro">{intro}</p>
         {children}
       </main>
-    </div>
-  );
-}
-
-interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
-  id: string;
-  label: string;
-  hint?: string;
-  error?: string;
-}
-
-export function Field({ id, label, hint, error, ...input }: FieldProps) {
-  const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ');
-  return (
-    <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
-        {...input}
-      />
-      {hint && (
-        <p id={`${id}-hint`} className="field-hint">
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={`${id}-error`} className="field-error">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

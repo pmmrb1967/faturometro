@@ -455,9 +455,9 @@ Opcional e desligada por defeito.
 - [x] Upload de PDF/imagem, hash e deduplicação (ficheiro e NIF emitente + campo G); PDFs com palavra-passe (NIF guardado nas definições)
 - [x] Renderização com pdf.js e leitura de **todos** os QR de todas as páginas (zxing-wasm, WASM incluído na app, sem CDN)
 - [x] Parser da string QR + testes (7 exemplos da AT; fixtures privadas localmente)
-- [ ] Formulário manual por setor
-- [ ] Ecrã de revisão
-- [ ] Lista de contratos e faturas
+- [x] Formulário manual (o mesmo formulário serve de revisão; campos do QR bloqueados)
+- [x] Ecrã de revisão (uma por documento/QR; fornecedor por NIF, contrato existente ou novo)
+- [x] Lista de contratos e faturas
 - **Concluída quando:** qualquer fatura portuguesa com QR entra na app com total, IVA, data e fornecedor corretos, sem IA.
 
 ### Fase 2 — Parsers P1
@@ -599,4 +599,6 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Conta local: PBKDF2-SHA256 (600 000 iterações, WebCrypto nativo) → chave que embrulha uma chave mestra AES-GCM aleatória; chave de recuperação aleatória (base32, HKDF). Registos cifrados por inteiro; em claro só IDs, datas, hashes e enums indexados. Bloqueio automático aos 15 min; recarregar a página bloqueia. `invoices.docKey` = SHA-256(NIF emitente + campo G), em vez do número em claro |
 | 2026-10-13 | Um ficheiro pode ter várias faturas (Repsol: luz + gás; Via Verde: uma por emitente): a ingestão lê todos os QR e cada QR dá uma fatura |
 | 2026-10-13 | zxing-wasm e o worker do pdf.js são servidos pela própria app (por defeito o zxing ia buscar o WASM ao jsDelivr) |
+| 2026-10-13 | Esquema Dexie v2: `invoices.fileHash` deixa de ser único (um ficheiro, várias faturas); o ficheiro original fica uma vez em `documents`, cifrado. Duplicados verificados antes de criar fornecedor/contrato |
+| 2026-10-13 | Nomes de fornecedores não são inventados: na primeira fatura de cada NIF o utilizador escreve o nome |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

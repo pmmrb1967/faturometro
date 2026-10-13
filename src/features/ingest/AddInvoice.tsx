@@ -8,6 +8,8 @@ import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { browserIngestDeps } from './browser-deps';
 import { ingestFile, type IngestOutcome, type ReadQr } from './ingest';
+import { emptyForm, formFromQr, type FormBase } from '../invoices/form';
+import { ReviewForm } from '../invoices/ReviewForm';
 import './ingest.css';
 
 const copy = t.ingest;
@@ -16,7 +18,8 @@ type State =
   | { step: 'idle' }
   | { step: 'reading' }
   | { step: 'password'; file: PendingFile; reason: 'needed' | 'incorrect' }
-  | { step: 'done'; outcome: IngestOutcome }
+  | { step: 'done'; outcome: IngestOutcome; file: PendingFile }
+  | { step: 'manual'; fileHash: string }
   | { step: 'error' };
 
 interface PendingFile {
@@ -52,7 +55,7 @@ export function AddInvoice() {
       if (remember && outcome.kind === 'read' && outcome.usedPassword === typedPassword) {
         await updateSettings(repos, { ownNif: typedPassword });
       }
-      setState({ step: 'done', outcome });
+      setState({ step: 'done', outcome, file });
     } catch {
       setState({ step: 'error' });
     }
@@ -86,6 +89,15 @@ export function AddInvoice() {
               onClick={() => photoInput.current?.click()}
             >
               {copy.takePhoto}
+            </button>
+            <button
+              type="button"
+              className="action-secondary"
+              onClick={() =>
+                setState({ step: 'manual', fileHash: `manual:${crypto.randomUUID()}` })
+              }
+            >
+              {t.invoices.review.manual}
             </button>
           </div>
         </>
@@ -122,7 +134,16 @@ export function AddInvoice() {
       )}
 
       {state.step === 'error' && <p className="ingest-problem">{copy.failed}</p>}
-      {state.step === 'done' && <Outcome outcome={state.outcome} />}
+      {state.step === 'done' && <Outcome outcome={state.outcome} file={state.file} />}
+      {state.step === 'manual' && (
+        <ReviewForm
+          base={{ fileHash: state.fileHash }}
+          initial={emptyForm()}
+          title={t.invoices.review.manualTitle}
+          intro={t.invoices.review.manualIntro}
+          onDone={() => setState({ step: 'idle' })}
+        />
+      )}
 
       {(state.step === 'done' || state.step === 'error') && (
         <button
@@ -192,24 +213,81 @@ function PasswordForm({
   );
 }
 
-function Outcome({ outcome }: { outcome: IngestOutcome }) {
-  if (outcome.kind === 'unsupported') return <p className="ingest-problem">{copy.unsupported}</p>;
-  if (outcome.kind === 'duplicate_file')
-    return <p className="ingest-problem">{copy.duplicateFile}</p>;
-  if (outcome.kind !== 'read') return null;
-  if (outcome.qrStatus === 'missing') return <p className="ingest-problem">{copy.noQr}</p>;
+type DocStatus = 'saved' | 'skipped';
 
+function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile }) {
+  const [status, setStatus] = useState<Record<number, DocStatus>>({});
+  if (outcome.kind === 'unsupported') return <p className="ingest-problem">{copy.unsupported}</p>;
+  if (outcome.kind === 'duplicate_file') {
+    return <p className="ingest-problem">{copy.duplicateFile}</p>;
+  }
+  if (outcome.kind !== 'read') return null;
+
+  const stored = { fileHash: outcome.fileHash, mime: outcome.mime, bytes: file.bytes };
+  const done = (index: number) => (saved: boolean) =>
+    setStatus((current) => ({ ...current, [index]: saved ? 'saved' : 'skipped' }));
+
+  if (outcome.qrStatus !== 'ok') {
+    if (status[0])
+      return status[0] === 'saved' ? <p role="status">{t.invoices.review.saved}</p> : null;
+    return (
+      <>
+        <p className="ingest-problem">
+          {outcome.qrStatus === 'missing' ? copy.noQr : copy.invalidQr}
+        </p>
+        <ReviewForm
+          base={{ fileHash: outcome.fileHash, file: stored }}
+          initial={emptyForm()}
+          title={t.invoices.review.manualTitle}
+          intro={t.invoices.review.manualIntro}
+          onDone={done(0)}
+        />
+      </>
+    );
+  }
+
+  const total = outcome.qrs.length;
   return (
     <div className="ingest-result">
-      <p role="status">{copy.foundCount(outcome.qrs.length)}</p>
-      <ul className="ingest-docs">
-        {outcome.qrs.map((qr, index) => (
-          <li key={index}>
-            <QrCard qr={qr} />
-          </li>
-        ))}
-      </ul>
-      <p className="muted">{copy.saveSoon}</p>
+      <p role="status">{copy.foundCount(total)}</p>
+      {outcome.qrs.map((qr, index) => {
+        if (status[index] === 'skipped') return null;
+        if (status[index] === 'saved') {
+          return (
+            <p key={index} role="status" className="doc-saved">
+              {t.invoices.review.saved}
+            </p>
+          );
+        }
+        if (!qr.result.ok) {
+          return (
+            <p key={index} className="ingest-problem">
+              {copy.invalidQr}
+            </p>
+          );
+        }
+        if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} />;
+        const { form, locked } = formFromQr(qr.result.qr);
+        const docType = qr.result.qr.docType;
+        const label = [docType ? (copy.docTypes[docType] ?? docType) : '', qr.result.qr.docId]
+          .filter(Boolean)
+          .join(' ');
+        const base: FormBase = { fileHash: outcome.fileHash, file: stored, qr: qr.result.qr };
+        if (qr.docKey) base.docKey = qr.docKey;
+        return (
+          <ReviewForm
+            key={index}
+            base={base}
+            initial={form}
+            locked={locked}
+            title={
+              total > 1 ? `${index + 1}/${total} · ${label}` : label || t.invoices.review.title
+            }
+            intro={t.invoices.review.fromQr}
+            onDone={done(index)}
+          />
+        );
+      })}
     </div>
   );
 }
