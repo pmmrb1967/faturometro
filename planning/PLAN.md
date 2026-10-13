@@ -445,7 +445,7 @@ Opcional e desligada por defeito.
 - [ ] Recolher faturas reais P1 (pelo menos 3 por layout, de meses diferentes) para `samples/`
 - [x] Confirmar especificação do QR fiscal (documento oficial da AT) e guardar resumo em `docs/qr-fiscal.md`
 - [x] Confirmar fonte, formato e condições de reutilização dos dados da ERSE; resumo em `docs/erse-data.md` (em aberto: IVA nos preços, licença formal)
-- [ ] Escrever `scripts/anonymize-fixture.ts`
+- [x] Escrever `scripts/anonymize-fixture.ts` (palavra-passe via `FIXTURE_PDF_PASSWORD`; termos sensíveis em `samples/anonymize.local.json`)
 - **Concluída quando:** existem fixtures anonimizadas para todos os layouts P1 e os dois documentos de referência.
 
 ### Fase 1 — Núcleo local + QR
