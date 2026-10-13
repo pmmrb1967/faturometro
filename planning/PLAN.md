@@ -449,7 +449,7 @@ Opcional e desligada por defeito.
 - **Concluída quando:** existem fixtures anonimizadas (locais) para os layouts com amostras disponíveis e os dois documentos de referência. Os layouts P1 sem amostras ficam cobertos por QR + manual (+ IA) até haver PDFs cedidos com consentimento.
 
 ### Fase 1 — Núcleo local + QR
-- [ ] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
+- [x] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
 - [ ] Conta local: registo, entrada, bloqueio, chave de recuperação, vários perfis (secção 11)
 - [ ] Esquema Dexie v1 (com `updatedAt`/`deletedAt`, campos sensíveis cifrados) e camada de repositórios (`src/db/`)
 - [ ] Upload de PDF/imagem, hash e deduplicação

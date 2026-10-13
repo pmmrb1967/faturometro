@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: 'Faturómetro',
         description: 'Acompanha as faturas da casa, sem os teus dados saírem do dispositivo.',
         lang: 'pt-PT',
-        start_url: '/',
+        start_url: '/app',
         scope: '/',
         display: 'standalone',
         orientation: 'any',
