@@ -3,6 +3,10 @@ import { decodeBase32, encodeBase32 } from './base32';
 import {
   WrongSecretError,
   createAccountKeys,
+  deriveSyncKeys,
+  newSyncSalt,
+  unwrapFromSync,
+  wrapForSync,
   decryptBytes,
   decryptJson,
   encryptBytes,
@@ -109,5 +113,43 @@ describe('sha256Hex', () => {
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
     );
     expect(await sha256Hex(new TextEncoder().encode('abc'))).toBe(await sha256Hex('abc'));
+  });
+});
+
+describe('sync keys', () => {
+  it('derives a stable auth key and a wrapping key that opens the master key', async () => {
+    const { masterKey, wrapped } = await createAccountKeys('palavra', ITERATIONS);
+    const salt = newSyncSalt();
+    const keys = await deriveSyncKeys('palavra', salt, ITERATIONS);
+    const again = await deriveSyncKeys('palavra', salt, ITERATIONS);
+    expect(keys.authKeyHex).toMatch(/^[0-9a-f]{64}$/);
+    expect(again.authKeyHex).toBe(keys.authKeyHex);
+
+    const forServer = await wrapForSync(wrapped, masterKey, keys);
+    const blob = await encryptJson(masterKey, 'segredo');
+    expect(await decryptJson(await unwrapFromSync(forServer.byPassword, again), blob)).toBe(
+      'segredo',
+    );
+  });
+
+  it('gives a different auth key for another password or salt', async () => {
+    const salt = newSyncSalt();
+    const a = await deriveSyncKeys('palavra', salt, ITERATIONS);
+    const b = await deriveSyncKeys('outra', salt, ITERATIONS);
+    const c = await deriveSyncKeys('palavra', newSyncSalt(), ITERATIONS);
+    expect(new Set([a.authKeyHex, b.authKeyHex, c.authKeyHex]).size).toBe(3);
+  });
+
+  it('cannot open the master key with a wrong password', async () => {
+    const { masterKey, wrapped } = await createAccountKeys('palavra', ITERATIONS);
+    const salt = newSyncSalt();
+    const forServer = await wrapForSync(
+      wrapped,
+      masterKey,
+      await deriveSyncKeys('palavra', salt, ITERATIONS),
+    );
+    await expect(
+      unwrapFromSync(forServer.byPassword, await deriveSyncKeys('errada', salt, ITERATIONS)),
+    ).rejects.toBeInstanceOf(WrongSecretError);
   });
 });

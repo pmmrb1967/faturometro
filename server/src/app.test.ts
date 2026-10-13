@@ -252,3 +252,16 @@ describe('CORS', () => {
     ).toBe(403);
   });
 });
+
+describe('KDF strength', () => {
+  it('refuses accounts with too few client iterations', async () => {
+    const weak = await call('POST', '/v1/register', {
+      email: 'fraco@example.pt',
+      salt: 'c2FsdA==',
+      iterations: 1_000,
+      authKey: AUTH,
+      wrappedKey: WRAPPED,
+    });
+    expect(weak.status).toBe(400);
+  });
+});

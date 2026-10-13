@@ -234,3 +234,66 @@ export async function sha256Hex(data: Uint8Array<ArrayBuffer> | string): Promise
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
   return [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * Sync keys (PLAN.md §11): from the password and a salt of their own, two
+ * independent keys. The authentication key goes to the server (which stores
+ * only its SHA-256); the encryption key never leaves the device and wraps
+ * the master key stored on the server.
+ */
+export interface SyncKeys {
+  /** 32 bytes as hex, sent to the server. */
+  authKeyHex: string;
+  /** Wraps/unwraps the master key; never sent. */
+  wrappingKey: CryptoKey;
+}
+
+export async function deriveSyncKeys(
+  password: string,
+  salt: string,
+  iterations: number,
+): Promise<SyncKeys> {
+  const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
+    'deriveBits',
+  ]);
+  const bits = new Uint8Array(
+    await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: fromBase64(salt), iterations },
+      material,
+      512,
+    ),
+  );
+  const authKeyHex = [...bits.slice(0, 32)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+  const wrappingKey = await crypto.subtle.importKey(
+    'raw',
+    bits.slice(32),
+    { name: AES_GCM },
+    false,
+    ['wrapKey', 'unwrapKey'],
+  );
+  return { authKeyHex, wrappingKey };
+}
+
+export function newSyncSalt(): string {
+  return toBase64(randomBytes(SALT_BYTES));
+}
+
+/** The master key wrapped for the server: by the sync key, plus the existing recovery wrap. */
+export async function wrapForSync(
+  local: WrappedMasterKey,
+  masterKey: CryptoKey,
+  keys: SyncKeys,
+): Promise<Pick<WrappedMasterKey, 'byPassword' | 'byRecoveryKey' | 'recoverySalt'>> {
+  return {
+    byPassword: await wrap(masterKey, keys.wrappingKey),
+    byRecoveryKey: local.byRecoveryKey,
+    recoverySalt: local.recoverySalt,
+  };
+}
+
+/** Opens the master key received from the server with the sync wrapping key. */
+export async function unwrapFromSync(blob: EncryptedBlob, keys: SyncKeys): Promise<CryptoKey> {
+  return unwrap(blob, keys.wrappingKey);
+}

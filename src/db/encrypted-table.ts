@@ -26,7 +26,33 @@ export class EncryptedTable<T extends SyncMeta> {
 
   /** Inserts or replaces a record, stamping `updatedAt`. */
   async put(value: Omit<T, 'updatedAt'> & { updatedAt?: string }): Promise<T> {
-    const record = { ...value, updatedAt: new Date().toISOString() } as T;
+    return this.write({ ...value, updatedAt: new Date().toISOString() } as T);
+  }
+
+  /** `updatedAt` of the stored row (tombstones included), for last-write-wins. */
+  async updatedAtOf(id: string): Promise<string | undefined> {
+    return (await this.table.get(id))?.updatedAt;
+  }
+
+  /** Encrypted rows changed after `after` (ISO), as sent to the sync server: no clear fields. */
+  async changedSince(
+    after: string,
+  ): Promise<{ id: string; updatedAt: string; deletedAt?: string; enc: StoredRow['enc'] }[]> {
+    const rows = await this.table.where('updatedAt').above(after).toArray();
+    return rows.map((row) => ({
+      id: row.id,
+      updatedAt: row.updatedAt,
+      ...(row.deletedAt ? { deletedAt: row.deletedAt } : {}),
+      enc: row.enc,
+    }));
+  }
+
+  /** Decrypts a row sent by another device (same master key) and stores it as is. */
+  async applyRemote(enc: StoredRow['enc']): Promise<void> {
+    await this.write((await decryptJson(this.key, enc)) as T);
+  }
+
+  private async write(record: T): Promise<T> {
     const row: StoredRow = {
       id: record.id,
       updatedAt: record.updatedAt,

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { WrappedMasterKey } from '../lib/crypto';
+import type { EncryptedBlob, WrappedMasterKey } from '../lib/crypto';
 
 /** One local account. Only the email (to pick the profile) and the wrapped key are in clear. */
 export interface Profile {
@@ -7,6 +7,19 @@ export interface Profile {
   email: string;
   createdAt: string;
   wrappedKey: WrappedMasterKey;
+  /** Present when this profile syncs with a server (device-local state). */
+  sync?: ProfileSync;
+}
+
+export interface ProfileSync {
+  serverUrl: string;
+  /** Session token, encrypted with the master key. */
+  token: EncryptedBlob;
+  /** Last server sequence number received. */
+  lastPulledSeq: number;
+  /** Latest local `updatedAt` already sent. */
+  lastPushedAt: string;
+  lastSyncAt?: string;
 }
 
 export class ProfilesDb extends Dexie {

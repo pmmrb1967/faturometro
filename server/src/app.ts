@@ -21,6 +21,8 @@ export interface AppConfig {
   /** Origins allowed to call the API (the app), e.g. https://faturometro.pages.dev */
   allowedOrigins: string[];
   now?: () => Date;
+  /** Minimum client KDF iterations accepted (tests use fewer). */
+  minIterations?: number;
 }
 
 export const SESSION_DAYS = 30;
@@ -51,12 +53,14 @@ const record = z.object({
 });
 export type SyncRecord = z.infer<typeof record>;
 
+export const MIN_ITERATIONS = 100_000;
+
 const schemas = {
   prelogin: z.object({ email }),
   register: z.object({
     email,
     salt: base64,
-    iterations: z.number().int().min(100_000).max(10_000_000),
+    iterations: z.number().int().max(10_000_000),
     authKey: hex64,
     wrappedKey,
   }),
@@ -65,7 +69,7 @@ const schemas = {
   keys: z.object({
     authKey: hex64,
     salt: base64,
-    iterations: z.number().int().min(100_000).max(10_000_000),
+    iterations: z.number().int().max(10_000_000),
     wrappedKey,
   }),
 };
@@ -186,6 +190,9 @@ export function createApp(config: AppConfig) {
 
     if (method === 'POST' && path === '/v1/register') {
       const input = await body(request, schemas.register);
+      if (input.iterations < (config.minIterations ?? MIN_ITERATIONS)) {
+        throw new HttpError(400, 'Too few KDF iterations');
+      }
       if (await sql.first('SELECT id FROM users WHERE email = ?', input.email)) {
         throw new HttpError(409, 'Email already registered');
       }
@@ -304,6 +311,9 @@ export function createApp(config: AppConfig) {
 
     if (method === 'PUT' && path === '/v1/keys') {
       const input = await body(request, schemas.keys);
+      if (input.iterations < (config.minIterations ?? MIN_ITERATIONS)) {
+        throw new HttpError(400, 'Too few KDF iterations');
+      }
       await sql.run(
         'UPDATE users SET kdf_salt = ?, kdf_iterations = ?, auth_hash = ?, wrapped_key = ? WHERE id = ?',
         input.salt,
