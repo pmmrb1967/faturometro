@@ -124,6 +124,18 @@ export interface FieldCorrection extends SyncMeta {
   createdAt: IsoDateTime;
 }
 
+/** One AI request, kept on this device only (PLAN.md §10: tokens per call, locally). */
+export interface AiUsageRecord extends SyncMeta {
+  createdAt: IsoDateTime;
+  task: 'extract' | 'explain' | 'letter' | 'test';
+  model: string;
+  promptVersion: string;
+  inputTokens: number;
+  outputTokens: number;
+  /** Millionths of a US dollar (integer), from the list prices in src/ai/models.ts. */
+  costMicroUsd: number;
+}
+
 export interface Settings extends SyncMeta {
   id: 'settings';
   aiProvider?: 'anthropic';

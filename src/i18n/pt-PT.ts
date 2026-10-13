@@ -193,6 +193,88 @@ export const t = {
       serverUrl: 'Escreve um endereço https:// válido.',
     },
   },
+  ai: {
+    settings: {
+      title: 'Inteligência artificial (opcional)',
+      intro:
+        'Com uma chave tua da Anthropic, a IA lê faturas de fornecedores que a app ainda não conhece, explica faturas e escreve cartas. Sem chave, tudo o resto funciona igual.',
+      privacy:
+        'Só envia algo quando pedes (ou quando ligas o envio automático), diretamente do teu dispositivo para api.anthropic.com. Antes de enviar mostra o quê e quanto deve custar. Os custos são cobrados pela Anthropic na tua conta.',
+      getKey: 'Criar uma chave em console.anthropic.com',
+      key: 'Chave da API da Anthropic',
+      keyHint:
+        'Guardada cifrada com a tua palavra-passe. Com a sincronização ligada, vai também (cifrada) para os teus outros dispositivos.',
+      keySaved: 'Chave guardada.',
+      model: 'Modelo',
+      modelOption: (label: string, input: string, output: string) =>
+        `${label} — ${input} / ${output} US$ por milhão de tokens (entrada / saída)`,
+      recommended: ' (recomendado)',
+      autoSend: 'Enviar automaticamente as faturas que nenhum leitor reconhece (sem perguntar)',
+      save: 'Guardar',
+      test: 'Testar ligação',
+      testing: 'A testar…',
+      testOk: (cost: string) => `Ligação a funcionar. Este teste custou cerca de ${cost}.`,
+      remove: 'Apagar a chave',
+      removed: 'Chave apagada.',
+      usage: (requests: number, cost: string) =>
+        requests === 0
+          ? 'Este mês ainda não usaste a IA neste dispositivo.'
+          : `Este mês, neste dispositivo: ${requests} ${requests === 1 ? 'pedido' : 'pedidos'}, cerca de ${cost}.`,
+      pricesNote: (date: string) => `Preços de tabela da Anthropic, verificados em ${date}.`,
+    },
+    extract: {
+      noKey:
+        'Esta fatura não tem um leitor automático. Com uma chave da Anthropic (Definições), a IA pode lê-la por ti.',
+      intro: 'Esta fatura não tem um leitor automático. Podes pedir à IA para a ler.',
+      willSend: 'Vai ser enviado para api.anthropic.com:',
+      sendText: (chars: number) => `o texto da fatura (${chars.toLocaleString('pt-PT')} carateres)`,
+      sendPdf: 'o PDF da fatura (não tem texto, é uma digitalização)',
+      sendImage: 'a fotografia da fatura',
+      showText: 'Ver o texto que vai ser enviado',
+      model: (label: string) => `Modelo: ${label}.`,
+      cost: (cost: string) => `Custo estimado: cerca de ${cost} (no máximo).`,
+      send: 'Ler com IA',
+      sending: 'A ler com IA…',
+      done: 'A IA leu a fatura. Confirma os dados antes de guardar.',
+      cannotSend:
+        'Esta fatura não pode ser enviada: é um PDF protegido sem texto, ou uma imagem num formato que a IA não lê (usa JPEG ou PNG).',
+    },
+    assistant: {
+      title: 'Ajuda da IA',
+      intro:
+        'Envia só valores, datas, linhas e consumos guardados na app. Nunca o teu nome, morada, NIF, n.º de cliente ou CPE.',
+      noKey: 'Para usar, guarda uma chave da Anthropic nas Definições.',
+      noInvoices: 'Ainda não há faturas neste contrato.',
+      explain: 'Explica-me a última fatura',
+      letters: {
+        renegotiate: 'Carta: pedir um preço melhor',
+        cancel: 'Carta: denunciar o contrato',
+        estimated_reading: 'Carta: reclamar de leituras estimadas',
+      },
+      confirm: (cost: string, model: string) =>
+        `Enviar para api.anthropic.com (${model})? Custo estimado: cerca de ${cost}.`,
+      send: 'Enviar',
+      cancel: 'Cancelar',
+      working: 'A pensar…',
+      showData: 'Ver o que vai ser enviado',
+      copy: 'Copiar',
+      copied: 'Copiado',
+      placeholdersNote:
+        'Os campos entre parênteses retos ([NOME], [MORADA], [NIF]…) ficam para preencheres tu. O n.º de cliente e o CPE foram preenchidos aqui, sem os enviar.',
+      cost: (cost: string) => `Custou cerca de ${cost}.`,
+    },
+    errors: {
+      no_key: 'Falta a chave da API da Anthropic (Definições).',
+      invalid_key: 'A chave da API não é válida ou foi revogada.',
+      no_credit: 'A conta da Anthropic não tem crédito. Carrega-a em console.anthropic.com.',
+      rate_limited: 'Demasiados pedidos seguidos. Espera um minuto e tenta de novo.',
+      unavailable: 'O serviço da Anthropic não respondeu. Tenta mais tarde.',
+      offline: 'Sem ligação à internet.',
+      invalid_output: 'A IA não devolveu dados utilizáveis. Preenche à mão ou tenta outro modelo.',
+      refused: 'A IA recusou este pedido.',
+      too_large: 'O documento é demasiado grande para enviar.',
+    },
+  },
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',

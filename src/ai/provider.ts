@@ -65,9 +65,10 @@ export interface AiProvider {
   readonly model: string;
   /** A tiny request to check the key and the model. */
   testConnection(): Promise<AiUsage>;
-  estimateExtraction(source: InvoiceSource): Promise<AiEstimate>;
-  /** Structured extraction, validated with zod; one retry at most. */
-  extract(source: InvoiceSource): Promise<AiExtraction & { usage: AiUsage[] }>;
-  estimateText(request: TextRequest): Promise<AiEstimate>;
+  /**
+   * Structured extraction, validated with zod; one retry at most. With
+   * several invoices in one file, `docId` says which one.
+   */
+  extract(source: InvoiceSource, docId?: string): Promise<AiExtraction & { usage: AiUsage[] }>;
   writeText(request: TextRequest): Promise<{ text: string; usage: AiUsage }>;
 }

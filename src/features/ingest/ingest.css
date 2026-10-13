@@ -173,3 +173,21 @@
   font-weight: 700;
   color: var(--accent);
 }
+
+.ai-panel {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.ai-sent pre {
+  max-height: 240px;
+  overflow: auto;
+  padding: 8px;
+  background: var(--surface);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

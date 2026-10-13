@@ -1,4 +1,5 @@
 import type {
+  AiUsageRecord,
   Alert,
   Contract,
   FieldCorrection,
@@ -28,6 +29,8 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     ]),
     invoiceLines: new EncryptedTable<InvoiceLine>(db.invoiceLines, key, ['invoiceId']),
     readings: new EncryptedTable<Reading>(db.readings, key, ['invoiceId', 'contractId', 'dateTo']),
+    /** Device-local (not in SYNCED_TABLES). */
+    aiUsage: new EncryptedTable<AiUsageRecord>(db.aiUsage, key, ['createdAt']),
     alerts: new EncryptedTable<Alert>(db.alerts, key, ['contractId', 'kind']),
     fieldCorrections: new EncryptedTable<FieldCorrection>(db.fieldCorrections, key, ['invoiceId']),
     settings: new EncryptedTable<Settings>(db.settings, key, []),

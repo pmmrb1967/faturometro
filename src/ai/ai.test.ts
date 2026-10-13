@@ -3,7 +3,14 @@ import { validateExtraction } from '../features/ingest/validate';
 import { parseFiscalQr } from '../qr/parse';
 import { AnthropicProvider } from './anthropic';
 import { documentText, invoiceSource } from './document';
+import { estimateExtraction } from './estimate';
 import { costMicroUsd } from './models';
+import {
+  explainRequest,
+  fillPlaceholders,
+  letterRequest,
+  type ContractContext,
+} from './prompts/assist';
 import { toExtraction, type ExtractResponse } from './prompts/extract';
 import { AiError } from './provider';
 
@@ -265,15 +272,51 @@ describe('AnthropicProvider', () => {
     );
   });
 
-  it('estimates the cost with the token counting endpoint before sending', async () => {
-    const api = fakeApi([{ status: 200, body: { input_tokens: 2500 } }]);
-    const estimate = await new AnthropicProvider({
-      apiKey: 'k',
-      model: 'claude-sonnet-5-5',
-      fetch: api.fetch,
-    }).estimateExtraction(source);
-    expect(api.requests[0]?.url).toBe('https://api.anthropic.com/v1/messages/count_tokens');
-    expect(estimate.inputTokens).toBe(2500);
-    expect(estimate.costMicroUsd).toBeCloseTo(costMicroUsd('claude-sonnet-5-5', 2500, 4000));
+  it('estimates the cost locally, without sending anything', () => {
+    const local = estimateExtraction('claude-sonnet-5-5', { kind: 'text', text: 'x'.repeat(3000) });
+    expect(local.inputTokens).toBeGreaterThan(1000);
+    expect(local.costMicroUsd).toBe(
+      costMicroUsd('claude-sonnet-5-5', local.inputTokens, local.outputTokens),
+    );
+    const photo = estimateExtraction('claude-haiku-5-5', {
+      kind: 'image',
+      mime: 'image/jpeg',
+      base64: 'AA==',
+    });
+    expect(photo.costMicroUsd).toBeLessThan(10_000); // under one cent
+  });
+});
+
+describe('explain and letter prompts', () => {
+  const context: ContractContext = {
+    providerName: 'Comercializadora Exemplo',
+    contract: { sector: 'electricity', tariffName: 'Simples', powerKva: 6.9 },
+    invoices: [
+      {
+        invoice: { issueDate: '2026-09-05', totalCents: 6123, vatCents: 900 },
+        lines: [
+          { kind: 'energy', description: 'Energia', amountCents: 4000, quantity: 210, unit: 'kWh' },
+        ],
+        readings: [{ quantity: 210, unit: 'kWh', readingType: 'estimated', dateTo: '2026-08-31' }],
+      },
+    ],
+    cheaperOffer: { name: 'Outra — Tarifa X', yearlySavingCents: 10806 },
+  };
+
+  it('sends only structured invoice data, never identifiers', () => {
+    const explain = explainRequest(context);
+    expect(explain.user).toContain('61,23');
+    expect(explain.user).toContain('Leitura estimated');
+    const letter = letterRequest('renegotiate', context);
+    expect(letter.user).toContain('108,06');
+    // The context type has no field for names, NIF, customer number or CPE.
+    expect(letter.system).toContain('[N.º DE CLIENTE]');
+  });
+
+  it('fills placeholders locally and leaves the rest to the user', () => {
+    const text = 'Cliente [N.º DE CLIENTE], CPE [CPE/CUI]. Assina: [NOME]';
+    expect(fillPlaceholders(text, { customerNumber: '123', supplyPoint: 'PT00' })).toBe(
+      'Cliente 123, CPE PT00. Assina: [NOME]',
+    );
   });
 });

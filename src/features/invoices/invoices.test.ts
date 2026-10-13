@@ -192,6 +192,7 @@ describe('saveInvoice', () => {
       supplyPointId: { value: 'PT0000000000000000XX', confidence: 'high' },
       tariffName: { value: 'Tarifa Simples', confidence: 'high' },
       powerKva: { value: 6.9, confidence: 'high' },
+      loyaltyEndDate: { value: '2027-06-30', confidence: 'high' },
       lines: [
         {
           kind: 'energy',
@@ -253,6 +254,7 @@ describe('saveInvoice', () => {
     expect(await repos.contracts.get(invoice.contractId)).toMatchObject({
       supplyPointId: 'PT0000000000000000XX',
       tariffName: 'Tarifa Simples',
+      loyaltyEndDate: '2027-06-30',
       electricity: { powerKva: 6.9, cycle: 'simple', socialTariff: true },
     });
   });

@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { invoiceSource } from '../../ai/document';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
@@ -7,7 +8,8 @@ import { isValidNif } from '../../domain/nif';
 import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { browserIngestDeps } from './browser-deps';
-import { ingestFile, type IngestOutcome, type ReadQr } from './ingest';
+import { AiExtractPanel } from '../ai/AiExtractPanel';
+import { ingestFile, type IngestOutcome, type ParsedDocument, type ReadQr } from './ingest';
 import { emptyForm, formFromParsed, formFromQr, type FormBase } from '../invoices/form';
 import { ReviewForm } from '../invoices/ReviewForm';
 import './ingest.css';
@@ -217,6 +219,8 @@ type DocStatus = 'saved' | 'skipped';
 
 function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile }) {
   const [status, setStatus] = useState<Record<number, DocStatus>>({});
+  /** What the AI read, per document, when no parser knew the layout. */
+  const [aiParsed, setAiParsed] = useState<Record<number, ParsedDocument>>({});
   if (outcome.kind === 'unsupported') return <p className="ingest-problem">{copy.unsupported}</p>;
   if (outcome.kind === 'duplicate_file') {
     return <p className="ingest-problem">{copy.duplicateFile}</p>;
@@ -224,24 +228,38 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
   if (outcome.kind !== 'read') return null;
 
   const stored = { fileHash: outcome.fileHash, mime: outcome.mime, bytes: file.bytes };
+  const source = invoiceSource({
+    pages: outcome.pages,
+    bytes: file.bytes,
+    mime: outcome.mime,
+    fileKind: outcome.fileKind,
+    protectedPdf: Boolean(outcome.usedPassword),
+  });
+  const pdfPages = Math.max(1, outcome.pages.length);
+  const aiDone = (index: number) => (parsed: ParsedDocument) =>
+    setAiParsed((current) => ({ ...current, [index]: parsed }));
   const done = (index: number) => (saved: boolean) =>
     setStatus((current) => ({ ...current, [index]: saved ? 'saved' : 'skipped' }));
 
   if (outcome.qrStatus !== 'ok') {
     if (status[0])
       return status[0] === 'saved' ? <p role="status">{t.invoices.review.saved}</p> : null;
+    const parsed = outcome.parsed ?? aiParsed[0];
     return (
       <>
         <p className="ingest-problem">
           {outcome.qrStatus === 'missing' ? copy.noQr : copy.invalidQr}
         </p>
+        {!parsed && <AiExtractPanel source={source} pdfPages={pdfPages} onResult={aiDone(0)} />}
+        {aiParsed[0] && <p role="status">{t.ai.extract.done}</p>}
         <ReviewForm
+          key={parsed ? parsed.parserId : 'manual'}
           base={{
             fileHash: outcome.fileHash,
             file: stored,
-            ...(outcome.parsed ? { parsed: outcome.parsed } : {}),
+            ...(parsed ? { parsed } : {}),
           }}
-          initial={outcome.parsed ? formFromParsed(outcome.parsed) : emptyForm()}
+          initial={parsed ? formFromParsed(parsed) : emptyForm()}
           title={t.invoices.review.manualTitle}
           intro={t.invoices.review.manualIntro}
           onDone={done(0)}
@@ -271,9 +289,10 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
           );
         }
         if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} />;
-        const { form, locked } = formFromQr(qr.result.qr, qr.parsed);
+        const parsed = qr.parsed ?? aiParsed[index];
+        const { form, locked } = formFromQr(qr.result.qr, parsed);
         const docType = qr.result.qr.docType;
-        const sector = qr.parsed?.extraction.sector;
+        const sector = parsed?.extraction.sector;
         const label = [
           sector ? t.sectors[sector] : '',
           [docType ? (copy.docTypes[docType] ?? docType) : '', qr.result.qr.docId]
@@ -284,19 +303,31 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
           .join(' · ');
         const base: FormBase = { fileHash: outcome.fileHash, file: stored, qr: qr.result.qr };
         if (qr.docKey) base.docKey = qr.docKey;
-        if (qr.parsed) base.parsed = qr.parsed;
+        if (parsed) base.parsed = parsed;
         return (
-          <ReviewForm
-            key={index}
-            base={base}
-            initial={form}
-            locked={locked}
-            title={
-              total > 1 ? `${index + 1}/${total} · ${label}` : label || t.invoices.review.title
-            }
-            intro={t.invoices.review.fromQr}
-            onDone={done(index)}
-          />
+          <div key={index}>
+            {!parsed && (
+              <AiExtractPanel
+                source={source}
+                pdfPages={pdfPages}
+                {...(total > 1 && qr.result.qr.docId ? { docId: qr.result.qr.docId } : {})}
+                qr={qr.result.qr}
+                onResult={aiDone(index)}
+              />
+            )}
+            {aiParsed[index] && <p role="status">{t.ai.extract.done}</p>}
+            <ReviewForm
+              key={parsed ? parsed.parserId : 'qr'}
+              base={base}
+              initial={form}
+              locked={locked}
+              title={
+                total > 1 ? `${index + 1}/${total} · ${label}` : label || t.invoices.review.title
+              }
+              intro={t.invoices.review.fromQr}
+              onDone={done(index)}
+            />
+          </div>
         );
       })}
     </div>

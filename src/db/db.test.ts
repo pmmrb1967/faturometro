@@ -10,6 +10,7 @@ import {
   profileDbName,
   SCHEMA_V1,
   SCHEMA_V2,
+  SCHEMA_V3,
   type TableName,
 } from './schema';
 
@@ -159,6 +160,22 @@ describe('schema migrations', () => {
     ).rejects.toThrow();
     expect(v2.verno).toBe(2);
     await v2.delete();
+  });
+
+  it('upgrades to v4 with the local AI usage log', async () => {
+    const id = crypto.randomUUID();
+    const v3 = new Dexie(profileDbName(id));
+    v3.version(1).stores(SCHEMA_V1);
+    v3.version(2).stores(SCHEMA_V2);
+    v3.version(3).stores(SCHEMA_V3);
+    await v3.table('contracts').add({ id: 'c', updatedAt: 'x', enc: {} });
+    v3.close();
+
+    const current = new ProfileDb(id);
+    expect(current.verno).toBe(4);
+    expect(await current.contracts.count()).toBe(1);
+    expect(await current.aiUsage.count()).toBe(0);
+    await current.delete();
   });
 
   it('upgrades v2 to v3 marking existing files as local only', async () => {

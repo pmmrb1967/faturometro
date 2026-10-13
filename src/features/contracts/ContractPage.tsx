@@ -6,6 +6,7 @@ import { Field } from '../../components/Field';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate, formatMonthShort } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
+import { ContractAssistant } from '../ai/ContractAssistant';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import '../invoices/invoices.css';
@@ -148,6 +149,8 @@ export function ContractPage() {
           </li>
         ))}
       </ul>
+
+      {invoices.length > 0 && <ContractAssistant contract={contract} />}
     </>
   );
 }

@@ -15,7 +15,6 @@ import {
 } from './prompts/extract';
 import {
   AiError,
-  type AiEstimate,
   type AiProvider,
   type AiUsage,
   type InvoiceSource,
@@ -24,8 +23,6 @@ import {
 
 /** Room for thinking plus the JSON answer of a long invoice. */
 const EXTRACT_MAX_TOKENS = 16_000;
-/** Typical upper bound of the extraction answer, for the cost shown before sending. */
-const EXTRACT_EXPECTED_OUTPUT = 4_000;
 const MAX_TEXT_LENGTH = 200_000;
 
 export type Effort = 'low' | 'medium' | 'high';
@@ -127,7 +124,7 @@ export class AnthropicProvider implements AiProvider {
     }
   }
 
-  private extractionParams(source: InvoiceSource) {
+  private extractionParams(source: InvoiceSource, docId?: string) {
     if (source.kind === 'text' && source.text.length > MAX_TEXT_LENGTH) {
       throw new AiError('too_large');
     }
@@ -141,7 +138,7 @@ export class AnthropicProvider implements AiProvider {
             ...sourceBlocks(source),
             {
               type: 'text' as const,
-              text: extractUserPrompt(source.kind === 'text' ? source.text : undefined),
+              text: extractUserPrompt(source.kind === 'text' ? source.text : undefined, docId),
             },
           ],
         },
@@ -153,23 +150,8 @@ export class AnthropicProvider implements AiProvider {
     };
   }
 
-  async estimateExtraction(source: InvoiceSource): Promise<AiEstimate> {
-    try {
-      const { input_tokens } = await this.client.messages.countTokens(
-        this.extractionParams(source),
-      );
-      return {
-        inputTokens: input_tokens,
-        outputTokens: EXTRACT_EXPECTED_OUTPUT,
-        costMicroUsd: costMicroUsd(this.model, input_tokens, EXTRACT_EXPECTED_OUTPUT),
-      };
-    } catch (error) {
-      throw toAiError(error);
-    }
-  }
-
-  async extract(source: InvoiceSource) {
-    const params = this.extractionParams(source);
+  async extract(source: InvoiceSource, docId?: string) {
+    const params = this.extractionParams(source, docId);
     const usage: AiUsage[] = [];
     for (let attempt = 0; attempt < 2; attempt++) {
       let response: Anthropic.Message;
@@ -203,19 +185,6 @@ export class AnthropicProvider implements AiProvider {
       messages: [{ role: 'user' as const, content: request.user }],
       output_config: { effort: this.effort },
     };
-  }
-
-  async estimateText(request: TextRequest): Promise<AiEstimate> {
-    try {
-      const { input_tokens } = await this.client.messages.countTokens(this.textParams(request));
-      return {
-        inputTokens: input_tokens,
-        outputTokens: request.maxOutputTokens,
-        costMicroUsd: costMicroUsd(this.model, input_tokens, request.maxOutputTokens),
-      };
-    } catch (error) {
-      throw toAiError(error);
-    }
   }
 
   async writeText(request: TextRequest): Promise<{ text: string; usage: AiUsage }> {

@@ -134,3 +134,18 @@
   color: var(--danger);
   font-size: 0.9rem;
 }
+
+.ai-answer {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.ai-answer-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}

@@ -2,6 +2,7 @@
  * Review / manual entry form: the same form is used for QR-read invoices
  * (prefilled, QR fields read-only) and for invoices typed by hand.
  */
+import { AI_PARSER_PREFIX } from '../../ai/prompts/extract';
 import { isValidNif } from '../../domain/nif';
 import type { Contract, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -169,7 +170,12 @@ export function buildDraft(
   for (const field of ['periodStart', 'periodEnd', 'dueDate'] as const) {
     if (form[field]) {
       draft[field] = form[field];
-      draft.sources[field] = extraction?.[field]?.value === form[field] ? 'parser' : 'manual';
+      draft.sources[field] =
+        extraction?.[field]?.value === form[field]
+          ? base.parsed?.parserId.startsWith(AI_PARSER_PREFIX)
+            ? 'ai'
+            : 'parser'
+          : 'manual';
     }
   }
   if (base.parsed && extraction) {
@@ -191,6 +197,7 @@ function contractDetails(
   const details: NonNullable<InvoiceDraft['contractDetails']> = {};
   if (extraction.supplyPointId) details.supplyPointId = extraction.supplyPointId.value;
   if (extraction.tariffName) details.tariffName = extraction.tariffName.value;
+  if (extraction.loyaltyEndDate) details.loyaltyEndDate = extraction.loyaltyEndDate.value;
   if (sector === 'electricity' && extraction.powerKva) {
     // Cycle from how energy was billed (the meter may record more periods than are billed).
     const periods = new Set(

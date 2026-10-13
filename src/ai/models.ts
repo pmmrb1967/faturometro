@@ -42,6 +42,7 @@ export function costMicroUsd(modelId: string, inputTokens: number, outputTokens:
 
 /** E.g. "0,0012 US$" (four decimals: invoice requests cost fractions of a cent). */
 export function formatMicroUsd(micro: number): string {
+  if (micro > 0 && micro < 100) return '< 0,0001 US$';
   const usd = (micro / 1_000_000).toLocaleString('pt-PT', {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,

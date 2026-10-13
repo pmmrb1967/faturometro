@@ -13,6 +13,7 @@ import {
 } from '../../sync/account';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
+import { AiSettings } from '../ai/AiSettings';
 import { useSession } from '../auth/session-context';
 import { validateNewPassword, type FieldErrors } from '../auth/validation';
 import { syncSession, useSyncStatus } from '../sync/sync-store';
@@ -33,6 +34,7 @@ export function SettingsPage() {
       <h1>{t.settings.title}</h1>
       <AccountSection />
       <SyncSection />
+      <AiSettings />
       <PreferencesSection />
     </>
   );

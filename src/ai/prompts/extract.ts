@@ -49,10 +49,16 @@ Regras:
 - readings: leituras do contador (quantidade consumida no período entre leituras), com o tipo e a data da leitura final.
 - readingType: tipo da leitura principal da fatura.`;
 
-export function extractUserPrompt(documentText: string | undefined): string {
+/** Marks what the app reads from AI extractions (parserId "ai:<model>"). */
+export const AI_PARSER_PREFIX = 'ai:';
+
+export function extractUserPrompt(documentText: string | undefined, docId?: string): string {
+  const which = docId
+    ? `\n\nO ficheiro pode ter vários documentos: extrai só o documento n.º ${docId}.`
+    : '';
   return documentText
-    ? `Texto da fatura, linha a linha (as células da mesma linha estão separadas por " | "):\n\n${documentText}`
-    : 'A fatura está no documento anexo.';
+    ? `Texto da fatura, linha a linha (as células da mesma linha estão separadas por " | "):\n\n${documentText}${which}`
+    : `A fatura está no documento anexo.${which}`;
 }
 
 /** JSON schema sent to the API (strict: every property required, no extra properties). */

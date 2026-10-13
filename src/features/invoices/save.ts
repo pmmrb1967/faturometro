@@ -35,7 +35,10 @@ export interface InvoiceDraft {
   validation?: Invoice['validation'];
   confidence?: Invoice['confidence'];
   /** Contract data read from the invoice: saved on new contracts, fills gaps on existing ones. */
-  contractDetails?: Pick<Contract, 'supplyPointId' | 'tariffName' | 'electricity'>;
+  contractDetails?: Pick<
+    Contract,
+    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity'
+  >;
 }
 
 export class DuplicateInvoiceError extends Error {

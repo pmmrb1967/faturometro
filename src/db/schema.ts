@@ -61,7 +61,13 @@ export const SCHEMA_V3 = {
   documents: 'id, invoiceId, &fileHash, updatedAt, syncState',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V3;
+/** v4: local log of AI requests (not synced). New table only. */
+export const SCHEMA_V4 = {
+  ...SCHEMA_V3,
+  aiUsage: 'id, createdAt, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V4;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -75,6 +81,7 @@ export class ProfileDb extends Dexie {
   alerts!: Table<StoredRow, string>;
   fieldCorrections!: Table<StoredRow, string>;
   settings!: Table<StoredRow, string>;
+  aiUsage!: Table<StoredRow, string>;
 
   constructor(profileId: string) {
     super(profileDbName(profileId));
@@ -90,6 +97,7 @@ export class ProfileDb extends Dexie {
             row.syncState ??= 'local';
           }),
       );
+    this.version(4).stores(SCHEMA_V4);
   }
 }
 
