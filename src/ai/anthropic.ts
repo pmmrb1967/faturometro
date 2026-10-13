@@ -9,6 +9,7 @@ import {
   EXTRACT_PROMPT_VERSION,
   EXTRACT_SCHEMA,
   EXTRACT_SYSTEM,
+  type DocumentTarget,
   extractResponseSchema,
   extractUserPrompt,
   toExtraction,
@@ -124,7 +125,7 @@ export class AnthropicProvider implements AiProvider {
     }
   }
 
-  private extractionParams(source: InvoiceSource, docId?: string) {
+  private extractionParams(source: InvoiceSource, target?: DocumentTarget) {
     if (source.kind === 'text' && source.text.length > MAX_TEXT_LENGTH) {
       throw new AiError('too_large');
     }
@@ -138,7 +139,7 @@ export class AnthropicProvider implements AiProvider {
             ...sourceBlocks(source),
             {
               type: 'text' as const,
-              text: extractUserPrompt(source.kind === 'text' ? source.text : undefined, docId),
+              text: extractUserPrompt(source.kind === 'text' ? source.text : undefined, target),
             },
           ],
         },
@@ -150,8 +151,8 @@ export class AnthropicProvider implements AiProvider {
     };
   }
 
-  async extract(source: InvoiceSource, docId?: string) {
-    const params = this.extractionParams(source, docId);
+  async extract(source: InvoiceSource, target?: DocumentTarget) {
+    const params = this.extractionParams(source, target);
     const usage: AiUsage[] = [];
     for (let attempt = 0; attempt < 2; attempt++) {
       let response: Anthropic.Message;

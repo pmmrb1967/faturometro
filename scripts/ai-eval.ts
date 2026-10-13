@@ -16,6 +16,7 @@ import { join } from 'node:path';
 import { AnthropicProvider, type Effort } from '../src/ai/anthropic';
 import { documentText } from '../src/ai/document';
 import { formatMicroUsd } from '../src/ai/models';
+import type { DocumentTarget } from '../src/ai/prompts/extract';
 import { AiError } from '../src/ai/provider';
 import { validateExtraction } from '../src/features/ingest/validate';
 import type { PageText } from '../src/pdf/text';
@@ -52,7 +53,7 @@ interface Case {
   pages: PageText[];
   qr: FiscalQr;
   /** Several invoices in the file: which one. */
-  docId?: string;
+  target?: DocumentTarget;
   reference?: ExtractedInvoice;
 }
 
@@ -91,7 +92,9 @@ function loadCases(publicOnly: boolean): Case[] {
           name: `${label}/${file}${qrs.length > 1 ? `#${qr.docId}` : ''}`,
           pages: raw.pages,
           qr,
-          ...(qrs.length > 1 && qr.docId ? { docId: qr.docId } : {}),
+          ...(qrs.length > 1 && qr.docId
+            ? { target: { docId: qr.docId, totalCents: qr.totalCents } }
+            : {}),
           ...(reference ? { reference } : {}),
         });
       }
@@ -126,7 +129,8 @@ function compare(testCase: Case, ai: ExtractedInvoice): Record<string, boolean> 
   result['qr:total'] = ai.totalCents?.value === qr.totalCents;
   result['qr:vat'] = ai.vatCents === undefined || ai.vatCents.value === vatCents(qr);
   if (qr.docId) result['qr:docId'] = squash(ai.docId?.value) === squash(qr.docId);
-  result['qr:issueDate'] = ai.issueDate?.value === qr.date;
+  // A date missing from the text is not an error (the app takes it from the QR code).
+  if (ai.issueDate) result['qr:issueDate'] = ai.issueDate.value === qr.date;
   if (!reference) return result;
   // Against the layout parser.
   if (reference.sector) result.sector = ai.sector === reference.sector;
@@ -181,7 +185,7 @@ async function main() {
         try {
           const result = await provider.extract(
             { kind: 'text', text: documentText(testCase.pages) },
-            testCase.docId,
+            testCase.target,
           );
           const fields = compare(testCase, result.extraction);
           rows.push({

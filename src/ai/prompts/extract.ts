@@ -9,10 +9,10 @@
  */
 import { z } from 'zod';
 import type { InvoiceLine, Reading, Sector } from '../../domain/types';
-import { parseDotDecimalAmount } from '../../lib/money';
+import { formatCents, parseDotDecimalAmount } from '../../lib/money';
 import type { ExtractedInvoice, ExtractedLine, ExtractedReading } from '../../parsers/types';
 
-export const EXTRACT_PROMPT_VERSION = 'extract-v1';
+export const EXTRACT_PROMPT_VERSION = 'extract-v2';
 
 const SECTORS = ['electricity', 'gas', 'water', 'telecom', 'other'] as const;
 const LINE_KINDS = [
@@ -52,9 +52,22 @@ Regras:
 /** Marks what the app reads from AI extractions (parserId "ai:<model>"). */
 export const AI_PARSER_PREFIX = 'ai:';
 
-export function extractUserPrompt(documentText: string | undefined, docId?: string): string {
-  const which = docId
-    ? `\n\nO ficheiro pode ter vários documentos: extrai só o documento n.º ${docId}.`
+/**
+ * With several invoices in one file: which one, by its number and the total
+ * its fiscal QR code gives (v2: the number alone was ambiguous where it is
+ * printed between two blocks, as in Via Verde statements).
+ */
+export interface DocumentTarget {
+  docId: string;
+  totalCents: number;
+}
+
+export function extractUserPrompt(
+  documentText: string | undefined,
+  target?: DocumentTarget,
+): string {
+  const which = target
+    ? `\n\nO ficheiro tem vários documentos: extrai só o documento n.º ${target.docId}, cujo total é ${formatCents(target.totalCents)} (segundo o código QR fiscal).`
     : '';
   return documentText
     ? `Texto da fatura, linha a linha (as células da mesma linha estão separadas por " | "):\n\n${documentText}${which}`

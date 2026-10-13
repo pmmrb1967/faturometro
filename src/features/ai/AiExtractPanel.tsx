@@ -2,7 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { estimateExtraction } from '../../ai/estimate';
 import { findModel, formatMicroUsd } from '../../ai/models';
-import { AI_PARSER_PREFIX, EXTRACT_PROMPT_VERSION } from '../../ai/prompts/extract';
+import {
+  AI_PARSER_PREFIX,
+  EXTRACT_PROMPT_VERSION,
+  type DocumentTarget,
+} from '../../ai/prompts/extract';
 import { AiError, type AiUsage, type InvoiceSource } from '../../ai/provider';
 import { aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
 import { t } from '../../i18n/pt-PT';
@@ -20,7 +24,7 @@ interface Props {
   source: InvoiceSource | undefined;
   pdfPages: number;
   /** With several invoices in one file: which one. */
-  docId?: string;
+  target?: DocumentTarget;
   qr?: FiscalQr;
   onResult: (parsed: ParsedDocument) => void;
 }
@@ -31,7 +35,7 @@ interface Props {
  * user turned on automatic sending). The result goes through the same QR
  * cross-validation as the parsers.
  */
-export function AiExtractPanel({ source, pdfPages, docId, qr, onResult }: Props) {
+export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props) {
   const { session } = useSession();
   const settings = useLiveQuery(
     async () => (session ? getSettings(session.repos) : null),
@@ -49,7 +53,7 @@ export function AiExtractPanel({ source, pdfPages, docId, qr, onResult }: Props)
     setBusy(true);
     setProblem(undefined);
     try {
-      const result = await provider.extract(source, docId);
+      const result = await provider.extract(source, target);
       await recordUsage(session.repos, result.usage);
       onResult({
         parserId: `${AI_PARSER_PREFIX}${provider.model}`,

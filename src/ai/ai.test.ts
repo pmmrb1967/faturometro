@@ -194,7 +194,7 @@ describe('AnthropicProvider', () => {
       {
         task: 'extract',
         model: 'claude-haiku-5-5',
-        promptVersion: 'extract-v1',
+        promptVersion: 'extract-v2',
         inputTokens: 1000,
         outputTokens: 200,
         costMicroUsd: costMicroUsd('claude-haiku-5-5', 1000, 200),

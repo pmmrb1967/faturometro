@@ -310,7 +310,14 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
               <AiExtractPanel
                 source={source}
                 pdfPages={pdfPages}
-                {...(total > 1 && qr.result.qr.docId ? { docId: qr.result.qr.docId } : {})}
+                {...(total > 1 && qr.result.qr.docId
+                  ? {
+                      target: {
+                        docId: qr.result.qr.docId,
+                        totalCents: qr.result.qr.totalCents,
+                      },
+                    }
+                  : {})}
                 qr={qr.result.qr}
                 onResult={aiDone(index)}
               />

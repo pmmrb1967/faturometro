@@ -3,7 +3,7 @@
  * goes through an AiProvider, so other providers can be added later and
  * tests can use a fake one.
  */
-import type { AiExtraction } from './prompts/extract';
+import type { AiExtraction, DocumentTarget } from './prompts/extract';
 
 export type AiErrorCode =
   | 'no_key'
@@ -67,8 +67,11 @@ export interface AiProvider {
   testConnection(): Promise<AiUsage>;
   /**
    * Structured extraction, validated with zod; one retry at most. With
-   * several invoices in one file, `docId` says which one.
+   * several invoices in one file, `target` says which one.
    */
-  extract(source: InvoiceSource, docId?: string): Promise<AiExtraction & { usage: AiUsage[] }>;
+  extract(
+    source: InvoiceSource,
+    target?: DocumentTarget,
+  ): Promise<AiExtraction & { usage: AiUsage[] }>;
   writeText(request: TextRequest): Promise<{ text: string; usage: AiUsage }>;
 }
