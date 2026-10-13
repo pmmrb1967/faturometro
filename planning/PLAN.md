@@ -32,12 +32,14 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 - IA BYOK (Anthropic) para extração, explicação de faturas e redação de cartas
 - Exportação/importação (ZIP com JSON + PDFs)
 - PWA instalável, funciona offline
+- Interface responsiva: instalável como app no telemóvel (Android e iOS) e utilizável como website no PC, com o mesmo código
+- PDFs protegidos por palavra-passe (ex.: Repsol, cuja palavra-passe é o NIF do titular)
 
 **Fora (pós-MVP)**
 - Ingestão por email (desenho já definido — secção 12)
 - Sincronização cifrada entre dispositivos
 - Comparação de telecomunicações e gás com o mercado
-- Seguros (leitura de apólices, radar de renovações)
+- Seguros (auto, casa, vida, …): leitura de apólices, radar de renovações e sugestão de alternativas com coberturas semelhantes e mais económicas (ver secção 15 — fonte de ofertas por confirmar)
 - Notificações push (exigem servidor)
 
 ## 4. Layouts a cobrir
@@ -58,6 +60,13 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 | 8 | Iberdrola | Eletricidade | Quota relevante |
 | 9 | Galp | Eletricidade (+ gás) | Muitas ofertas duais |
 | 10 | Goldenergy | Eletricidade (+ gás) | Quota relevante |
+
+### Amostras reais disponíveis (`samples/`)
+- NOS (telecom, P1)
+- Repsol (eletricidade, P2; PDF protegido por palavra-passe = NIF do titular)
+- Via Verde (portagens; fatura + detalhe; setor ainda não previsto no modelo — ver secção 15)
+
+Faltam amostras dos restantes layouts P1.
 
 ### P2 — logo a seguir ao MVP
 - Eletricidade: Repsol, Plenitude, Coopérnico, Luzboa, outros com quota relevante
@@ -117,6 +126,12 @@ Não há backend próprio no MVP.
 - Upload de um ou vários PDFs (drag-and-drop)
 - Fotografia com a câmara (`<input type="file" accept="image/*" capture>`)
 - Android: Web Share Target ("Partilhar → Faturómetro")
+
+### Etapa 0b — PDF protegido por palavra-passe
+- pdf.js deteta a proteção (`PasswordException`).
+- Se o utilizador tiver guardado o seu NIF nas definições (apenas local), tentar primeiro com ele; senão, ou se falhar, pedir a palavra-passe.
+- A palavra-passe nunca é guardada além do NIF opcional nas definições; o hash de deduplicação é do ficheiro original.
+- `scripts/anonymize-fixture.ts` recebe a palavra-passe por variável de ambiente (`FIXTURE_PDF_PASSWORD`), nunca por ficheiro commitado.
 
 ### Etapa 1 — Deduplicação
 - SHA-256 do ficheiro. Se já existir, avisar e parar.
@@ -307,6 +322,7 @@ interface Settings {           // registo único, id = 'settings'
   aiApiKey?: string;           // opcionalmente cifrada com passphrase
   aiModel?: string;
   aiAutoSend: boolean;
+  ownNif?: string;             // NIF do titular, para abrir PDFs protegidos (só local)
   keepOriginalFiles: boolean;
   priceIncreaseThresholdPct: number;   // default 5
   loyaltyAlertDays: number[];          // default [60, 30, 7]
@@ -397,7 +413,7 @@ Opcional e desligada por defeito.
 ## 13. Fases e tarefas
 
 ### Fase 0 — Preparação
-- [ ] Criar repositório, `pnpm create vite` (React + TS), ESLint, Prettier, Vitest
+- [x] Criar repositório, `pnpm create vite` (React + TS), ESLint, Prettier, Vitest
 - [ ] Recolher faturas reais P1 (pelo menos 3 por layout, de meses diferentes) para `samples/`
 - [ ] Confirmar especificação do QR fiscal (documento oficial da AT) e guardar resumo em `docs/qr-fiscal.md`
 - [ ] Confirmar fonte, formato e condições de reutilização dos dados da ERSE; resumo em `docs/erse-data.md`
@@ -504,6 +520,12 @@ faturometro/
 | Utilizador perde dados ao limpar o browser | Avisos, lembretes de exportação, sincronização cifrada pós-MVP |
 | Fim de fidelização não aparece na fatura | Pedir ao utilizador uma vez por contrato |
 | Custos de IA para o utilizador | Confirmação prévia com custo estimado; parsers cobrem os casos comuns |
+| PDFs protegidos por palavra-passe | Tentar o NIF guardado nas definições; senão pedir ao utilizador |
+
+**Questões em aberto**
+- Via Verde (portagens): novo setor `tolls` no modelo, ou `other`? Entra no MVP?
+- Repsol: promover a P1, dado que já há amostras reais?
+- Seguros: que fonte de ofertas permite comparar coberturas e preços (simuladores das seguradoras, ASF, dados introduzidos pelo utilizador)? Confirmar antes de desenhar a funcionalidade.
 
 ## 16. Decisões
 
@@ -515,3 +537,6 @@ faturometro/
 | 2026-10-13 | Valores monetários em cêntimos inteiros |
 | 2026-10-13 | Nome do projeto: Faturómetro (pasta e repositório: `faturometro`; confirmar domínio e marca no INPI) |
 | 2026-10-13 | Repositório público em github.com/pmmrb1967/faturometro; licença por decidir; `samples/` e todos os PDF no `.gitignore` |
+| 2026-10-13 | Uma só base de código: PWA instalável no telemóvel e website no PC (layout responsivo, mobile-first); `vite-plugin-pwa` configurado logo na Fase 0 |
+| 2026-10-13 | Suporte a PDFs protegidos por palavra-passe, com NIF opcional guardado localmente |
+| 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |
