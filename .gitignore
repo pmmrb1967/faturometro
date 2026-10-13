@@ -28,5 +28,6 @@ Thumbs.db
 *.log
 .playwright-mcp/
 
-# Fixtures under review (may contain real-invoice data)
+# Fixtures made from real invoices: local only (see CLAUDE.md)
 fixtures/triage/
+fixtures/private/

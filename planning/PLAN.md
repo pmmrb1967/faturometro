@@ -16,7 +16,7 @@ A IA é **opcional** e funciona com a chave de API do próprio utilizador (BYOK)
 2. **Útil sem IA.** QR fiscal → parser → formulário manual. A IA é um acelerador, não uma dependência.
 3. **A IA escreve parsers; não lê todas as faturas.** Layouts conhecidos são extraídos por código determinístico e gratuito. A IA só entra em layouts desconhecidos ou quando a validação falha.
 4. **Validação cruzada sempre.** Qualquer extração (parser ou IA) é confrontada com o total do QR fiscal.
-5. **Nunca commitar faturas reais.** Só fixtures anonimizadas.
+5. **Nunca commitar faturas reais nem fixtures feitas a partir delas.** As fixtures reais anonimizadas ficam em `fixtures/private/` (só local); no repositório só entram fixtures sintéticas.
 6. **Neutralidade.** Sem comissões, sem afiliados no MVP.
 
 ## 3. Âmbito do MVP
@@ -442,11 +442,11 @@ Opcional e desligada por defeito.
 
 ### Fase 0 — Preparação
 - [x] Criar repositório, `pnpm create vite` (React + TS), ESLint, Prettier, Vitest
-- [ ] Recolher faturas reais P1 (pelo menos 3 por layout, de meses diferentes) para `samples/`
+- [x] Recolher faturas reais para `samples/` — NOS, Repsol, Via Verde (3 de cada); restantes P1 por obter (só com consentimento)
 - [x] Confirmar especificação do QR fiscal (documento oficial da AT) e guardar resumo em `docs/qr-fiscal.md`
 - [x] Confirmar fonte, formato e condições de reutilização dos dados da ERSE; resumo em `docs/erse-data.md` (em aberto: IVA nos preços, licença formal)
 - [x] Escrever `scripts/anonymize-fixture.ts` (palavra-passe via `FIXTURE_PDF_PASSWORD`; termos sensíveis em `samples/anonymize.local.json`)
-- **Concluída quando:** existem fixtures anonimizadas para todos os layouts P1 e os dois documentos de referência.
+- **Concluída quando:** existem fixtures anonimizadas (locais) para os layouts com amostras disponíveis e os dois documentos de referência. Os layouts P1 sem amostras ficam cobertos por QR + manual (+ IA) até haver PDFs cedidos com consentimento.
 
 ### Fase 1 — Núcleo local + QR
 - [ ] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
@@ -465,7 +465,8 @@ Opcional e desligada por defeito.
 - [ ] Validação cruzada (Etapa 5)
 - [ ] Parsers telecom: MEO, NOS, Vodafone, DIGI
 - [ ] Parsers eletricidade: EDP Comercial, SU Eletricidade, Endesa, Iberdrola, Galp, Goldenergy, Repsol
-- [ ] Testes de cada parser contra todas as fixtures do layout
+- [ ] Fixtures sintéticas por layout em `fixtures/<providerId>/` (estrutura real, valores inventados e coerentes com o QR), para o CI
+- [ ] Testes de cada parser contra todas as fixtures do layout (sintéticas + privadas, quando existem)
 - **Concluída quando:** ≥ 95% das fixtures P1 passam a validação cruzada com todos os campos obrigatórios.
 
 ### Fase 3 — Histórico, alertas e comparador
@@ -502,6 +503,7 @@ Opcional e desligada por defeito.
 ### Pós-MVP
 - [ ] Layouts P2
 - [ ] Ingestão por email (secção 12)
+- [ ] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
 - [ ] Gás no comparador; telecom com lista de ofertas mantida manualmente
 - [ ] Seguros (P3)
 
@@ -516,7 +518,8 @@ faturometro/
 │   ├── erse-data.md
 │   └── parsers.md            # como escrever um parser novo
 ├── samples/                  # faturas reais — NUNCA commitar (.gitignore)
-├── fixtures/                 # fixtures anonimizadas, commitadas
+├── fixtures/                 # fixtures sintéticas, commitadas
+│   ├── private/              # fixtures de faturas reais anonimizadas — NUNCA commitar (.gitignore)
 │   └── <parserId>/*.json
 ├── public/
 │   └── data/erse-offers.json
@@ -591,4 +594,6 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Landing page pública na Fase 1 |
 | 2026-10-13 | Alojamento no plano gratuito da Cloudflare (Pages + Workers + D1 + R2); a Hetzner não tem plano gratuito (VPS desde ~5–7 €/mês). API independente do fornecedor |
 | 2026-10-13 | Fonte ERSE: `Settings.json` → `csvPath` (ZIP com 2 CSV); formato em `docs/erse-data.md`. QR fiscal: especificação AT v1.1 resumida em `docs/qr-fiscal.md` |
+| 2026-10-13 | Fixtures de faturas reais (mesmo anonimizadas) ficam só no PC, em `fixtures/private/`; no repositório público só fixtures sintéticas |
+| 2026-10-13 | Não usar faturas de terceiros encontradas na internet; layouts em falta só com PDFs cedidos com consentimento |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

@@ -11,7 +11,9 @@
  *   rejected, so the script never runs with the example file.
  * - The password can also come from FIXTURE_PDF_PASSWORD. It is treated as
  *   sensitive (e.g. Repsol uses the holder's NIF).
- * - Output: fixtures/<parserId>/<random id>.json. Review it before committing.
+ * - Output: fixtures/private/<parserId>/<random id>.json (git-ignored: fixtures made
+ *   from real invoices never leave this machine). Public fixtures in
+ *   fixtures/<parserId>/ are synthetic.
  *
  * The script never prints original values, only replacement counts.
  */
@@ -25,7 +27,7 @@ import { extractPdf, PdfPasswordError, type ExtractedPdf } from './anonymize/pdf
 const TERMS_FILE = resolve(
   process.env.FIXTURE_TERMS_FILE ?? join('samples', 'anonymize.local.json'),
 );
-const FIXTURES_DIR = resolve('fixtures');
+const FIXTURES_DIR = resolve('fixtures', 'private');
 
 const configSchema = z.object({
   terms: z.array(z.string()),
@@ -129,9 +131,7 @@ async function main(): Promise<void> {
     `  QR: ${qr ? `found on page ${extracted.qrPage}` : 'not found'}${issuer ? `, issuer NIF ${issuer} kept` : ''}`,
   );
   console.log('  Replacements:', JSON.stringify(anonymizer.stats));
-  console.log(
-    `  Review ${outPath} before committing (names split across items, CPE with spaces, …).`,
-  );
+  console.log(`  Review ${outPath} (names split across items, CPE with spaces, …).`);
 }
 
 main().catch((error: unknown) => {

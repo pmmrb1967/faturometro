@@ -9,7 +9,7 @@ Instruções para o Claude Code neste repositório. O plano completo está em `p
 ## Regras invioláveis
 
 1. **Nada de dados pessoais em claro fora do browser.** Não criar analytics nem logs remotos com dados de faturas. O único backend permitido é o servidor de sincronização opcional (`server/`), que só recebe email, hash de autenticação e dados **cifrados ponta a ponta no dispositivo** — nunca dados em claro nem a chave de cifra. Ligações externas a partir da app: `https://api.anthropic.com` (só por ação do utilizador ou definição explícita) e o servidor de sincronização (só se o utilizador a ativar).
-2. **Nunca ler, copiar ou commitar ficheiros de `samples/`** para fixtures, testes, prompts ou documentação. Fixtures novas só através de `scripts/anonymize-fixture.ts`.
+2. **Nunca ler, copiar ou commitar ficheiros de `samples/`** para fixtures, testes, prompts ou documentação. Fixtures novas só através de `scripts/anonymize-fixture.ts`, que grava em `fixtures/private/` (ignorada pelo Git). **Fixtures feitas a partir de faturas reais nunca são commitadas**, mesmo anonimizadas: o repositório é público e seriam atribuíveis ao dono. No repositório só entram fixtures sintéticas em `fixtures/<providerId>/`.
 3. **Valores monetários em cêntimos inteiros** (`number` inteiro). Nunca somar euros em vírgula flutuante. Conversões só em `src/lib/money.ts`.
 4. **A app tem de funcionar sem IA.** Qualquer funcionalidade nova precisa de um caminho sem chave de API.
 5. **Toda a extração passa pela validação cruzada com o QR fiscal** (`src/features/ingest/validate.ts`), venha de parser ou de IA.
@@ -56,7 +56,7 @@ Antes de dar uma tarefa por concluída: `pnpm typecheck && pnpm lint && pnpm tes
 - Interface: `detect(ctx)`, `parse(ctx)`, `id`, `version`, `sectors`.
 - Trabalhar sobre `TextItem[]` (texto + coordenadas), nunca sobre o PDF diretamente.
 - Devolver confiança por campo; não lançar exceções para campos em falta.
-- Cada parser tem testes contra **todas** as fixtures em `fixtures/<providerId>/`. Ao corrigir um parser, subir `version` e acrescentar a fixture que falhava.
+- Cada parser tem testes contra **todas** as fixtures em `fixtures/<providerId>/` (sintéticas, no CI) e em `fixtures/private/<providerId>/` (reais anonimizadas, só localmente; os testes saltam-nas se a pasta não existir). Ao corrigir um parser, subir `version` e acrescentar a fixture que falhava.
 - Guia detalhado: `docs/parsers.md`.
 
 ## IA
