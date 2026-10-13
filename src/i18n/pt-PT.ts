@@ -30,6 +30,18 @@ export const t = {
       saved: 'Fatura guardada.',
       skip: 'Não guardar',
       saving: 'A guardar…',
+      checkPassed: 'Os valores lidos da fatura batem com o código QR.',
+      checkFailed: 'Alguns valores lidos não batem com o código QR: confirma-os antes de guardar.',
+      checkNone: 'Sem código QR para confirmar os valores lidos: confirma-os antes de guardar.',
+      readCounts: (lines: number, readings: number) =>
+        'Lido da fatura: ' +
+        [
+          lines === 1 ? '1 linha' : `${lines} linhas`,
+          readings > 0 ? (readings === 1 ? '1 leitura' : `${readings} leituras`) : '',
+        ]
+          .filter(Boolean)
+          .join(' e ') +
+        '.',
     },
     fields: {
       issuerNif: 'NIF do fornecedor',

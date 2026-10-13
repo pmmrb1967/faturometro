@@ -68,3 +68,17 @@
   font-size: 1.25rem;
   margin: 32px 0 12px;
 }
+
+.review-check {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  background: var(--accent-soft);
+  border-radius: 8px;
+}
+
+.review-check.is-failed {
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+  font-weight: 700;
+}

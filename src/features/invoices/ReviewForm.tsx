@@ -100,6 +100,23 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
     <form className="review" onSubmit={submit} noValidate>
       <h3>{title}</h3>
       <p className="muted">{intro}</p>
+      {base.parsed && (
+        <p
+          className={
+            base.parsed.check.validation === 'failed' ? 'review-check is-failed' : 'review-check'
+          }
+        >
+          {base.parsed.check.validation === 'passed'
+            ? copy.review.checkPassed
+            : base.parsed.check.validation === 'failed'
+              ? copy.review.checkFailed
+              : copy.review.checkNone}{' '}
+          {copy.review.readCounts(
+            base.parsed.extraction.lines.length,
+            base.parsed.extraction.readings.length,
+          )}
+        </p>
+      )}
 
       <div className="review-grid">
         <Field

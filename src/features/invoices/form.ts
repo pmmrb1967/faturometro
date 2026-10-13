@@ -7,6 +7,8 @@ import type { Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { parsePtAmount, type Cents } from '../../lib/money';
 import { signedTotalCents, vatCents, type FiscalQr } from '../../qr/parse';
+import type { ExtractedInvoice } from '../../parsers/types';
+import type { ParsedDocument } from '../ingest/ingest';
 import type { InvoiceDraft } from './save';
 
 export const SECTORS: readonly Sector[] = ['electricity', 'gas', 'water', 'telecom', 'other'];
@@ -38,6 +40,7 @@ export interface FormBase {
   file?: InvoiceDraft['file'];
   qr?: FiscalQr;
   docKey?: string;
+  parsed?: ParsedDocument;
 }
 
 const centsToPt = (cents: Cents) => (cents / 100).toFixed(2).replace('.', ',');
@@ -61,11 +64,38 @@ export function emptyForm(): InvoiceForm {
   };
 }
 
-/** Prefills the form from a QR code; returns the fields the user cannot change. */
-export function formFromQr(qr: FiscalQr): { form: InvoiceForm; locked: LockedFields } {
+/** What a parser read that the QR code does not have. */
+function fromExtraction(extraction?: ExtractedInvoice): Partial<InvoiceForm> {
+  if (!extraction) return {};
+  const form: Partial<InvoiceForm> = {};
+  if (extraction.sector) form.sector = extraction.sector;
+  if (extraction.customerNumber) form.customerNumber = extraction.customerNumber.value;
+  if (extraction.periodStart) form.periodStart = extraction.periodStart.value;
+  if (extraction.periodEnd) form.periodEnd = extraction.periodEnd.value;
+  if (extraction.dueDate) form.dueDate = extraction.dueDate.value;
+  return form;
+}
+
+/** Prefills the form from a parser's reading of a document without a usable QR code. */
+export function formFromParsed(parsed: ParsedDocument): InvoiceForm {
+  const { extraction } = parsed;
+  const form: InvoiceForm = { ...emptyForm(), ...fromExtraction(extraction) };
+  if (extraction.docId) form.docId = extraction.docId.value;
+  if (extraction.issueDate) form.issueDate = extraction.issueDate.value;
+  if (extraction.totalCents) form.total = centsToPt(extraction.totalCents.value);
+  if (extraction.vatCents) form.vat = centsToPt(extraction.vatCents.value);
+  return form;
+}
+
+/** Prefills the form from a QR code (and parser); returns the fields the user cannot change. */
+export function formFromQr(
+  qr: FiscalQr,
+  parsed?: ParsedDocument,
+): { form: InvoiceForm; locked: LockedFields } {
   return {
     form: {
       ...emptyForm(),
+      ...fromExtraction(parsed?.extraction),
       issuerNif: qr.issuerNif,
       docId: qr.docId ?? '',
       issueDate: qr.date,
@@ -127,11 +157,48 @@ export function buildDraft(
   if (base.qr?.atcud) draft.atcud = base.qr.atcud;
   const docId = base.qr?.docId ?? form.docId.trim();
   if (docId) draft.docId = docId;
+  const extraction = base.parsed?.extraction;
   for (const field of ['periodStart', 'periodEnd', 'dueDate'] as const) {
     if (form[field]) {
       draft[field] = form[field];
-      draft.sources[field] = 'manual';
+      draft.sources[field] = extraction?.[field]?.value === form[field] ? 'parser' : 'manual';
     }
   }
+  if (base.parsed && extraction) {
+    draft.parser = { id: base.parsed.parserId, version: base.parsed.parserVersion };
+    draft.lines = extraction.lines;
+    draft.readings = extraction.readings;
+    draft.validation = fromQr ? base.parsed.check.validation : 'not_checked';
+    draft.confidence = base.parsed.check.confidence;
+    draft.contractDetails = contractDetails(extraction, form.sector);
+  }
   return { ok: true, draft };
+}
+
+/** Contract data read from the invoice (CPE/CUI, tariff, power, cycle, social tariff). */
+function contractDetails(
+  extraction: ExtractedInvoice,
+  sector: InvoiceForm['sector'],
+): NonNullable<InvoiceDraft['contractDetails']> {
+  const details: NonNullable<InvoiceDraft['contractDetails']> = {};
+  if (extraction.supplyPointId) details.supplyPointId = extraction.supplyPointId.value;
+  if (extraction.tariffName) details.tariffName = extraction.tariffName.value;
+  if (sector === 'electricity' && extraction.powerKva) {
+    // Cycle from how energy was billed (the meter may record more periods than are billed).
+    const periods = new Set(
+      extraction.lines.filter((line) => line.kind === 'energy').map((line) => line.period),
+    );
+    const cycle =
+      periods.has('full') || periods.has('peak')
+        ? 'tri'
+        : periods.has('empty') || periods.has('off_empty')
+          ? 'bi'
+          : 'simple';
+    details.electricity = {
+      powerKva: extraction.powerKva.value,
+      cycle,
+      socialTariff: extraction.lines.some((line) => /social/i.test(line.description)),
+    };
+  }
+  return details;
 }

@@ -8,7 +8,7 @@ import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { browserIngestDeps } from './browser-deps';
 import { ingestFile, type IngestOutcome, type ReadQr } from './ingest';
-import { emptyForm, formFromQr, type FormBase } from '../invoices/form';
+import { emptyForm, formFromParsed, formFromQr, type FormBase } from '../invoices/form';
 import { ReviewForm } from '../invoices/ReviewForm';
 import './ingest.css';
 
@@ -236,8 +236,12 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
           {outcome.qrStatus === 'missing' ? copy.noQr : copy.invalidQr}
         </p>
         <ReviewForm
-          base={{ fileHash: outcome.fileHash, file: stored }}
-          initial={emptyForm()}
+          base={{
+            fileHash: outcome.fileHash,
+            file: stored,
+            ...(outcome.parsed ? { parsed: outcome.parsed } : {}),
+          }}
+          initial={outcome.parsed ? formFromParsed(outcome.parsed) : emptyForm()}
           title={t.invoices.review.manualTitle}
           intro={t.invoices.review.manualIntro}
           onDone={done(0)}
@@ -267,13 +271,14 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
           );
         }
         if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} />;
-        const { form, locked } = formFromQr(qr.result.qr);
+        const { form, locked } = formFromQr(qr.result.qr, qr.parsed);
         const docType = qr.result.qr.docType;
         const label = [docType ? (copy.docTypes[docType] ?? docType) : '', qr.result.qr.docId]
           .filter(Boolean)
           .join(' ');
         const base: FormBase = { fileHash: outcome.fileHash, file: stored, qr: qr.result.qr };
         if (qr.docKey) base.docKey = qr.docKey;
+        if (qr.parsed) base.parsed = qr.parsed;
         return (
           <ReviewForm
             key={index}

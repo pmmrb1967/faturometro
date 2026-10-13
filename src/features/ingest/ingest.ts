@@ -1,12 +1,16 @@
 /**
  * Ingestion pipeline, steps 0–2 (PLAN.md section 6): file → hash and
- * deduplication → PDF password → text and every fiscal QR code.
+ * deduplication → PDF password → text and every fiscal QR code, then steps
+ * 3–5: layout parser (by issuer NIF or text fingerprint) and cross-validation.
  * PDF/image reading is injected, so this module has no browser dependencies.
  */
 import { sha256Hex } from '../../lib/crypto';
 import { PdfPasswordError, type PageText, type PasswordProblem } from '../../pdf/text';
-import { parseFiscalQr, type QrParseResult } from '../../qr/parse';
+import { findParser } from '../../parsers/registry';
+import type { ExtractedInvoice } from '../../parsers/types';
+import { parseFiscalQr, type FiscalQr, type QrParseResult } from '../../qr/parse';
 import type { FoundQr } from '../../qr/scan';
+import { validateExtraction, type ValidationResult } from './validate';
 
 export interface IngestDeps {
   findInvoiceIdByFileHash(fileHash: string): Promise<string | undefined>;
@@ -23,6 +27,15 @@ export interface ReadQr {
   docKey?: string;
   /** Set when an invoice with the same issuer and document id is already stored. */
   duplicateInvoiceId?: string;
+  parsed?: ParsedDocument;
+}
+
+/** Steps 4–5: what a layout parser read, and how it compares with the QR code. */
+export interface ParsedDocument {
+  parserId: string;
+  parserVersion: string;
+  extraction: ExtractedInvoice;
+  check: ValidationResult;
 }
 
 export type FileKind = 'pdf' | 'image';
@@ -39,11 +52,36 @@ export type IngestOutcome =
       pages: PageText[];
       qrs: ReadQr[];
       qrStatus: 'ok' | 'missing' | 'invalid';
+      /** Without a usable QR code: what a parser read from the text (to prefill the form). */
+      parsed?: ParsedDocument;
       /** The password that opened the PDF, if one was needed. */
       usedPassword?: string;
     };
 
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // %PDF
+
+/** A parser that throws never blocks ingestion (PLAN.md §6, step 4). */
+export function runParser(
+  pages: PageText[],
+  qrs: FiscalQr[],
+  qr?: FiscalQr,
+): ParsedDocument | undefined {
+  if (pages.length === 0) return undefined;
+  const ctx = { pages, qrs };
+  const parser = findParser(ctx, qr?.issuerNif);
+  if (!parser) return undefined;
+  try {
+    const extraction = parser.parse(ctx, qr);
+    return {
+      parserId: parser.id,
+      parserVersion: parser.version,
+      extraction,
+      check: validateExtraction(extraction, qr),
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export function detectKind(bytes: Uint8Array, mime: string): FileKind | null {
   if (mime === 'application/pdf' || PDF_MAGIC.every((byte, index) => bytes[index] === byte)) {
@@ -119,6 +157,13 @@ export async function ingestFile(
     qrs.push(read);
   }
 
+  const parsedQrs = qrs.flatMap((qr) => (qr.result.ok ? [qr.result.qr] : []));
+  for (const qr of qrs) {
+    if (!qr.result.ok) continue;
+    const parsed = runParser(pages, parsedQrs, qr.result.qr);
+    if (parsed) qr.parsed = parsed;
+  }
+
   const qrStatus = qrs.length === 0 ? 'missing' : qrs.some((qr) => qr.result.ok) ? 'ok' : 'invalid';
   const outcome: IngestOutcome = {
     kind: 'read',
@@ -130,5 +175,9 @@ export async function ingestFile(
     qrStatus,
   };
   if (usedPassword !== undefined) outcome.usedPassword = usedPassword;
+  if (qrStatus !== 'ok') {
+    const parsed = runParser(pages, []);
+    if (parsed) outcome.parsed = parsed;
+  }
   return outcome;
 }

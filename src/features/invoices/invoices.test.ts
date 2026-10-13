@@ -4,6 +4,7 @@ import { createRepositories, type Repositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
 import { createAccountKeys } from '../../lib/crypto';
 import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
+import { emptyExtraction, type ExtractedInvoice } from '../../parsers/types';
 import { buildDraft, emptyForm, formFromQr } from './form';
 import { DuplicateInvoiceError, saveInvoice } from './save';
 
@@ -180,5 +181,74 @@ describe('saveInvoice', () => {
   it('does not keep the file when the setting is off', async () => {
     await saveInvoice(repos, draft(), { keepOriginalFile: false });
     expect(await repos.documents.getByFileHash('file-1')).toBeUndefined();
+  });
+
+  it('saves what a parser read: lines, readings, contract details and validation', async () => {
+    const extraction: ExtractedInvoice = {
+      ...emptyExtraction(),
+      sector: 'electricity',
+      periodStart: { value: '2026-05-22', confidence: 'high' },
+      periodEnd: { value: '2026-06-21', confidence: 'high' },
+      supplyPointId: { value: 'PT0000000000000000XX', confidence: 'high' },
+      tariffName: { value: 'Tarifa Simples', confidence: 'high' },
+      powerKva: { value: 6.9, confidence: 'high' },
+      lines: [
+        {
+          kind: 'energy',
+          description: 'Energia',
+          amountCents: 3000,
+          quantity: 226,
+          unit: 'kWh',
+          unitPrice: '0.13',
+        },
+        { kind: 'discount', description: 'Desc. Social', amountCents: -100 },
+      ],
+      readings: [
+        { quantity: 226, unit: 'kWh', readingType: 'real', dateTo: '2026-06-21', period: 'full' },
+      ],
+    };
+    const parsed = {
+      parserId: 'test',
+      parserVersion: '1.0.0',
+      extraction,
+      check: {
+        validation: 'passed' as const,
+        failures: [],
+        confidence: { totalCents: 'high' as const },
+      },
+    };
+    const { form } = formFromQr(qr(), parsed);
+    expect(form).toMatchObject({
+      periodStart: '2026-05-22',
+      periodEnd: '2026-06-21',
+      sector: 'electricity',
+    });
+
+    const result = buildDraft(
+      { ...form, providerName: 'Fornecedor', contractLabel: 'Luz' },
+      { fileHash: 'file-9', qr: qr(), docKey: 'doc-9', parsed },
+      { providerKnown: false },
+    );
+    if (!result.ok) throw new Error('invalid draft');
+    expect(result.draft.sources).toMatchObject({ periodStart: 'parser', totalCents: 'qr' });
+    const invoice = await saveInvoice(repos, result.draft, { keepOriginalFile: false });
+
+    expect(invoice).toMatchObject({
+      validation: 'passed',
+      parserId: 'test',
+      parserVersion: '1.0.0',
+    });
+    expect(await repos.invoiceLines.findBy('invoiceId', invoice.id)).toHaveLength(2);
+    const [reading] = await repos.readings.findBy('invoiceId', invoice.id);
+    expect(reading).toMatchObject({
+      quantity: 226,
+      dateFrom: '2026-05-22',
+      contractId: invoice.contractId,
+    });
+    expect(await repos.contracts.get(invoice.contractId)).toMatchObject({
+      supplyPointId: 'PT0000000000000000XX',
+      tariffName: 'Tarifa Simples',
+      electricity: { powerKva: 6.9, cycle: 'simple', socialTariff: true },
+    });
   });
 });
