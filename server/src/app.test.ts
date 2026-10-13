@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { memorySql } from '../test/sqlite';
 import { createApp, MAX_FAILED_LOGINS } from './app';
+import type { Sql } from './db';
 
 const ORIGIN = 'https://app.example';
 const AUTH = 'a'.repeat(64);
@@ -13,13 +14,20 @@ const WRAPPED = {
 let handle: ReturnType<typeof createApp>;
 let db: ReturnType<typeof memorySql>['db'];
 let clock = new Date('2026-10-13T12:00:00Z');
+let queries = 0;
 
 beforeEach(() => {
   const memory = memorySql();
   db = memory.db;
   clock = new Date('2026-10-13T12:00:00Z');
+  queries = 0;
+  const sql: Sql = {
+    first: (query, ...params) => (queries++, memory.sql.first(query, ...params)),
+    all: (query, ...params) => (queries++, memory.sql.all(query, ...params)),
+    run: (query, ...params) => (queries++, memory.sql.run(query, ...params)),
+  };
   handle = createApp({
-    sql: memory.sql,
+    sql,
     preloginSecret: 'secret',
     allowedOrigins: [ORIGIN],
     now: () => clock,
@@ -178,6 +186,22 @@ describe('sync', () => {
     );
     expect(stale.body).toEqual({ latest: 1 });
     expect(repeat.body).toEqual({ latest: 1 });
+  });
+
+  it('pushes 500 records with a handful of queries (D1 free plan: 50 per request)', async () => {
+    const token = await register();
+    const many = Array.from({ length: 500 }, (_, i) =>
+      record(`r${i}`, `2026-10-13T10:00:${String(i % 60).padStart(2, '0')}Z`),
+    );
+    queries = 0;
+    expect((await call('POST', '/v1/changes', { records: many }, token)).body).toEqual({
+      latest: 500,
+    });
+    expect(queries).toBeLessThan(10);
+    // Repeating the same batch changes nothing.
+    expect((await call('POST', '/v1/changes', { records: many }, token)).body).toEqual({
+      latest: 500,
+    });
   });
 
   it('syncs deletions (tombstones)', async () => {

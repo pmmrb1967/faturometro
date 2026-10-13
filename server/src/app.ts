@@ -30,6 +30,8 @@ export const MAX_FAILED_LOGINS = 10;
 export const LOCK_MINUTES = 15;
 export const MAX_RECORDS_PER_REQUEST = 500;
 const MAX_ENC_LENGTH = 1_000_000;
+/** One push becomes one SQL parameter; D1 strings are limited to 2 MB. */
+export const MAX_BATCH_LENGTH = 1_900_000;
 export const DEFAULT_ITERATIONS = 600_000;
 
 const email = z.string().trim().toLowerCase().max(254).pipe(z.email());
@@ -282,31 +284,45 @@ export function createApp(config: AppConfig) {
 
     if (method === 'POST' && path === '/v1/changes') {
       const { records } = await body(request, schemas.push);
-      let seq = user.seq;
-      for (const item of records) {
-        const existing = await sql.first<{ updated_at: string }>(
-          'SELECT updated_at FROM records WHERE user_id = ? AND id = ?',
-          user.id,
-          item.id,
-        );
-        // Last write wins; an equal timestamp is the same change coming back.
-        if (existing && existing.updated_at >= item.updatedAt) continue;
-        seq += 1;
-        await sql.run(
-          `INSERT INTO records (user_id, id, tbl, updated_at, deleted_at, enc, seq) VALUES (?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT (user_id, id) DO UPDATE SET tbl = excluded.tbl, updated_at = excluded.updated_at,
-             deleted_at = excluded.deleted_at, enc = excluded.enc, seq = excluded.seq`,
-          user.id,
-          item.id,
-          item.table,
-          item.updatedAt,
-          item.deletedAt ?? null,
-          JSON.stringify(item.enc),
-          seq,
-        );
-      }
-      await sql.run('UPDATE users SET seq = ? WHERE id = ?', seq, user.id);
-      return json({ latest: seq });
+      // One last-write-wins upsert for the whole batch (D1 on the free plan
+      // allows only 50 queries per request); an equal timestamp is the same
+      // change coming back, so it is skipped. The last entry per id counts.
+      const batch = JSON.stringify(
+        [...new Map(records.map((item) => [item.id, item])).values()].map((item) => ({
+          id: item.id,
+          tbl: item.table,
+          updated_at: item.updatedAt,
+          deleted_at: item.deletedAt ?? null,
+          enc: JSON.stringify(item.enc),
+        })),
+      );
+      if (batch.length > MAX_BATCH_LENGTH) throw new HttpError(413, 'Batch too large');
+      await sql.run(
+        `INSERT INTO records (user_id, id, tbl, updated_at, deleted_at, enc, seq)
+         SELECT ?1, j.id, j.tbl, j.updated_at, j.deleted_at, j.enc, ?2 + ROW_NUMBER() OVER (ORDER BY j.pos)
+         FROM (
+           SELECT key AS pos, value ->> 'id' AS id, value ->> 'tbl' AS tbl,
+             value ->> 'updated_at' AS updated_at, value ->> 'deleted_at' AS deleted_at,
+             value ->> 'enc' AS enc
+           FROM json_each(?3)
+         ) AS j
+         LEFT JOIN records AS r ON r.user_id = ?1 AND r.id = j.id
+         WHERE r.id IS NULL OR r.updated_at < j.updated_at
+         ON CONFLICT (user_id, id) DO UPDATE SET tbl = excluded.tbl, updated_at = excluded.updated_at,
+           deleted_at = excluded.deleted_at, enc = excluded.enc, seq = excluded.seq`,
+        user.id,
+        user.seq,
+        batch,
+      );
+      const latest =
+        (
+          await sql.first<{ seq: number | null }>(
+            'SELECT MAX(seq) AS seq FROM records WHERE user_id = ?',
+            user.id,
+          )
+        )?.seq ?? user.seq;
+      await sql.run('UPDATE users SET seq = ? WHERE id = ?', Math.max(latest, user.seq), user.id);
+      return json({ latest: Math.max(latest, user.seq) });
     }
 
     if (method === 'PUT' && path === '/v1/keys') {

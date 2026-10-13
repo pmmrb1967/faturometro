@@ -20,6 +20,8 @@ export const SYNCED_TABLES = [
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
 
 const BATCH = 500;
+/** Keeps each push well under the server limit (one SQL parameter of at most 2 MB). */
+const BATCH_BYTES = 1_500_000;
 
 export interface SyncState {
   lastPulledSeq: number;
@@ -31,6 +33,25 @@ export interface SyncResult extends SyncState {
   received: number;
   /** Records that could not be applied (e.g. the same invoice imported on two devices). */
   conflicts: number;
+}
+
+/** Splits records into pushes limited by count and by size. */
+export function batches(records: OutgoingRecord[]): OutgoingRecord[][] {
+  const result: OutgoingRecord[][] = [];
+  let current: OutgoingRecord[] = [];
+  let size = 0;
+  for (const record of records) {
+    const length = JSON.stringify(record).length;
+    if (current.length > 0 && (current.length >= BATCH || size + length > BATCH_BYTES)) {
+      result.push(current);
+      current = [];
+      size = 0;
+    }
+    current.push(record);
+    size += length;
+  }
+  if (current.length > 0) result.push(current);
+  return result;
 }
 
 function isSyncedTable(table: string): table is SyncedTable {
@@ -50,9 +71,7 @@ export async function syncNow(
       outgoing.push({ table, ...row });
     }
   }
-  for (let start = 0; start < outgoing.length; start += BATCH) {
-    await api.push(token, outgoing.slice(start, start + BATCH));
-  }
+  for (const batch of batches(outgoing)) await api.push(token, batch);
   const lastPushedAt = outgoing.reduce(
     (latest, row) => (row.updatedAt > latest ? row.updatedAt : latest),
     state.lastPushedAt,
