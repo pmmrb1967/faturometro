@@ -1,8 +1,10 @@
 import { Link, NavLink, Outlet } from 'react-router';
+import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
 import { SECTIONS, type SectionId } from './sections';
 
 export function AppShell() {
+  const { session, lock } = useSession();
   return (
     <div className="shell">
       <header className="topbar">
@@ -10,6 +12,12 @@ export function AppShell() {
           <img src="/icon.svg" alt="" width={28} height={28} />
           {t.appName}
         </Link>
+        <div className="topbar-account">
+          <span className="topbar-email">{session?.profile.email}</span>
+          <button type="button" className="topbar-lock" onClick={lock}>
+            {t.lock}
+          </button>
+        </div>
       </header>
 
       <nav className="nav" aria-label={t.appName}>

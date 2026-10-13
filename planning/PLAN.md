@@ -450,8 +450,8 @@ Opcional e desligada por defeito.
 
 ### Fase 1 — Núcleo local + QR
 - [x] Landing page (o que é, privacidade, como funciona, instalar no telemóvel) e rotas (`/` landing, `/app` aplicação)
-- [ ] Conta local: registo, entrada, bloqueio, chave de recuperação, vários perfis (secção 11)
-- [ ] Esquema Dexie v1 (com `updatedAt`/`deletedAt`, campos sensíveis cifrados) e camada de repositórios (`src/db/`)
+- [x] Conta local: registo, entrada, bloqueio, chave de recuperação, vários perfis (secção 11)
+- [x] Esquema Dexie v1 (com `updatedAt`/`deletedAt`, campos sensíveis cifrados) e camada de repositórios (`src/db/`)
 - [ ] Upload de PDF/imagem, hash e deduplicação
 - [ ] Renderização com pdf.js e leitura de QR (zxing-wasm)
 - [ ] Parser da string QR + testes com exemplos reais anonimizados
@@ -596,4 +596,5 @@ Proposta, sem servidor e sem afiliados:
 | 2026-10-13 | Fonte ERSE: `Settings.json` → `csvPath` (ZIP com 2 CSV); formato em `docs/erse-data.md`. QR fiscal: especificação AT v1.1 resumida em `docs/qr-fiscal.md` |
 | 2026-10-13 | Fixtures de faturas reais (mesmo anonimizadas) ficam só no PC, em `fixtures/private/`; no repositório público só fixtures sintéticas |
 | 2026-10-13 | Não usar faturas de terceiros encontradas na internet; layouts em falta só com PDFs cedidos com consentimento |
+| 2026-10-13 | Conta local: PBKDF2-SHA256 (600 000 iterações, WebCrypto nativo) → chave que embrulha uma chave mestra AES-GCM aleatória; chave de recuperação aleatória (base32, HKDF). Registos cifrados por inteiro; em claro só IDs, datas, hashes e enums indexados. Bloqueio automático aos 15 min; recarregar a página bloqueia. `invoices.docKey` = SHA-256(NIF emitente + campo G), em vez do número em claro |
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |

@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { registerSW } from 'virtual:pwa-register';
 import { router } from './app/router';
+import { SessionProvider } from './features/auth/session';
 import './index.css';
 
 registerSW({ immediate: true });
@@ -15,6 +16,8 @@ if (!root) throw new Error('Missing #root element');
 
 createRoot(root).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <SessionProvider>
+      <RouterProvider router={router} />
+    </SessionProvider>
   </StrictMode>,
 );

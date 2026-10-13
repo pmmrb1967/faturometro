@@ -18,8 +18,8 @@ export function Landing() {
           <img src="/icon.svg" alt="" width={32} height={32} />
           {t.appName}
         </Link>
-        <Link to="/app" className="button button-quiet">
-          {copy.openApp}
+        <Link to="/entrar" className="button button-quiet">
+          {copy.signIn}
         </Link>
       </header>
 
@@ -29,8 +29,8 @@ export function Landing() {
             <h1>{copy.hero.title}</h1>
             <p className="hero-lead">{copy.hero.lead}</p>
             <div className="hero-actions">
-              <Link to="/app" className="button button-primary">
-                {copy.openApp}
+              <Link to="/criar-conta" className="button button-primary">
+                {copy.createAccount}
               </Link>
               <a href="#como-funciona" className="button button-quiet">
                 {copy.howItWorksLink}

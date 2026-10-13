@@ -9,6 +9,64 @@ export const t = {
     settings: 'Definições',
   },
   placeholder: 'Em construção.',
+  lock: 'Bloquear',
+  auth: {
+    email: 'Email',
+    emailHint: 'Serve só para identificar a tua conta neste dispositivo.',
+    password: 'Palavra-passe',
+    passwordHint:
+      'Pelo menos 10 carateres. Não há forma de a recuperar sem a chave de recuperação.',
+    confirmPassword: 'Repete a palavra-passe',
+    working: 'A preparar a cifra…',
+    register: {
+      title: 'Criar conta',
+      intro:
+        'A conta fica só neste dispositivo. A palavra-passe cifra as tuas faturas: sem ela, ninguém as consegue ler, nem nós.',
+      submit: 'Criar conta',
+      haveAccount: 'Já tens conta neste dispositivo?',
+    },
+    recoveryKey: {
+      title: 'Guarda a tua chave de recuperação',
+      intro:
+        'Se te esqueceres da palavra-passe, esta chave é a única forma de voltar a abrir os teus dados. Guarda-a fora deste dispositivo: num gestor de palavras-passe ou impressa.',
+      copy: 'Copiar',
+      copied: 'Copiada',
+      download: 'Descarregar ficheiro',
+      fileName: 'faturometro-chave-de-recuperacao.txt',
+      fileIntro:
+        'Chave de recuperação do Faturómetro. Guarda este ficheiro num sítio seguro e apaga-o deste dispositivo.',
+      confirm: 'Guardei a chave de recuperação num sítio seguro.',
+      continue: 'Continuar',
+    },
+    login: {
+      title: 'Entrar',
+      intro: 'Abre a tua conta neste dispositivo.',
+      submit: 'Entrar',
+      noAccounts: 'Ainda não há contas neste dispositivo.',
+      createAccount: 'Criar conta',
+      forgot: 'Esqueceste-te da palavra-passe?',
+    },
+    recover: {
+      title: 'Recuperar acesso',
+      intro:
+        'Usa a chave de recuperação que guardaste ao criar a conta e escolhe uma palavra-passe nova.',
+      recoveryKey: 'Chave de recuperação',
+      newPassword: 'Palavra-passe nova',
+      submit: 'Recuperar e entrar',
+      back: 'Voltar a entrar',
+    },
+    errors: {
+      email: 'Escreve um email válido.',
+      passwordShort: 'A palavra-passe tem de ter pelo menos 10 carateres.',
+      passwordMismatch: 'As palavras-passe não coincidem.',
+      required: 'Preenche este campo.',
+      email_taken: 'Já existe uma conta com este email neste dispositivo.',
+      not_found: 'Não há nenhuma conta com este email neste dispositivo.',
+      wrong_secret: 'A palavra-passe não está correta.',
+      wrong_recovery: 'A chave de recuperação não está correta.',
+      unexpected: 'Não foi possível concluir. Tenta outra vez.',
+    },
+  },
   notFound: {
     title: 'Esta página não existe',
     body: 'Verifica o endereço ou volta ao início.',
@@ -16,7 +74,8 @@ export const t = {
   },
   landing: {
     status: 'Em desenvolvimento: algumas funções ainda não estão disponíveis.',
-    openApp: 'Abrir a app',
+    signIn: 'Entrar',
+    createAccount: 'Criar conta',
     howItWorksLink: 'Como funciona',
     hero: {
       title: 'Quanto custa a tua casa, fatura a fatura.',
