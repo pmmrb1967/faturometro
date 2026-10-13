@@ -21,8 +21,15 @@ export interface AnonymizerOptions {
 /** QR fields that may carry personal data; all others are kept untouched. */
 const QR_SENSITIVE_FIELDS = new Set(['B', 'G', 'H', 'S']);
 const FINAL_CONSUMER_NIF = '999999990';
+/** NIFs starting with 5 (legal persons) or 6 (public bodies) identify organisations, not people. */
+const COMPANY_NIF_PREFIX = /^[56]/;
 const MIN_TERM_WORD_LENGTH = 4;
-const MIN_DIGIT_RUN = 6;
+/** Numbers inside terms (door numbers, …) are also replaced on their own from this length. */
+const MIN_TERM_NUMBER_LENGTH = 3;
+/** Customer and installation numbers can be as short as 5 digits. */
+const MIN_DIGIT_RUN = 5;
+const POSTAL_CODE = /(?<!\d)(\d{4})\s*-\s*(\d{3})(?!\d)/g;
+const OPAQUE_CODE = /(?<![\w;:+/=])[A-Za-z0-9;:+/=]{16,}(?![\w;:+/=])/g;
 
 const ACCENT_CLASSES: Record<string, string> = {
   a: 'aáàâãä',
@@ -83,6 +90,22 @@ function isPlausibleDate(digits: string): boolean {
   return year >= 1990 && year <= 2099 && month >= 1 && month <= 12 && day >= 1 && day <= 31;
 }
 
+const BARCODE_SYMBOLS = /[\^`~{}|\\<>$#@!"'[\]_=+;?&]/g;
+
+/** Text drawn with a barcode font: long and dense in symbols rarely seen in prose. */
+function isBarcodeGibberish(text: string): boolean {
+  const compact = text.replace(/\s/g, '');
+  if (compact.length < 12) return false;
+  const symbols = compact.match(BARCODE_SYMBOLS)?.length ?? 0;
+  return symbols >= 4 && symbols / compact.length >= 0.15;
+}
+
+/** Puts the digits of `digits` into the positions of the digits of `template`. */
+function withSpacingOf(template: string, digits: string): string {
+  let index = 0;
+  return template.replace(/\d/g, (digit) => digits[index++] ?? digit);
+}
+
 interface Segment {
   text: string;
   /** Already replaced: later rules skip it. */
@@ -127,6 +150,8 @@ export class Anonymizer {
   private readonly originals = new Set<string>();
   private readonly keepNifs: Set<string>;
   private readonly termPatterns: RegExp[];
+  /** Whole text items to replace exactly (parts of values split across items). */
+  private readonly exactItems = new Map<string, string>();
   private readonly key: Uint8Array;
   readonly stats: Record<ReplacementKind, number> = {
     term: 0,
@@ -145,7 +170,11 @@ export class Anonymizer {
     const terms = options.terms.map((term) => term.trim()).filter((term) => term.length > 0);
     const words = terms
       .flatMap((term) => term.split(/[\s,;/]+/))
-      .filter((word) => /\p{L}/u.test(word) && word.length >= MIN_TERM_WORD_LENGTH);
+      .filter(
+        (word) =>
+          (/\p{L}/u.test(word) && word.length >= MIN_TERM_WORD_LENGTH) ||
+          (/^\d+$/.test(word) && word.length >= MIN_TERM_NUMBER_LENGTH),
+      );
     // Full terms first, then individual words (catches names split across text items).
     const unique = [...new Set([...terms, ...words])].sort((a, b) => b.length - a.length);
     this.termPatterns = unique.map(
@@ -155,8 +184,30 @@ export class Anonymizer {
     for (const term of unique) this.originals.add(term);
   }
 
+  /**
+   * Looks at a whole page before its items are anonymized one by one, to catch
+   * values split across text items (e.g. a postal code as "4455", "-", "237").
+   */
+  scanPage(items: readonly string[]): void {
+    for (const match of items.join(' ').matchAll(POSTAL_CODE)) {
+      const [, four = '', three = ''] = match;
+      const replacement = this.postalCode(`${four}-${three}`);
+      this.exactItems.set(four, replacement.slice(0, 4));
+      this.exactItems.set(three, replacement.slice(5));
+    }
+  }
+
   /** Anonymizes free text (a text item from the PDF). */
   text(input: string): string {
+    const trimmed = input.trim();
+    const exact = this.exactItems.get(trimmed);
+    if (exact !== undefined) return input.replace(trimmed, exact);
+    // Barcodes drawn with a font come out as symbol soup and may encode personal data.
+    if (isBarcodeGibberish(input)) {
+      this.stats.digits++;
+      return '#'.repeat(input.length);
+    }
+
     // Replaced segments are protected so later rules never touch them again.
     let segments: Segment[] = [{ text: input, done: false }];
     for (const pattern of this.termPatterns) {
@@ -170,19 +221,51 @@ export class Anonymizer {
     segments = applyRule(segments, /\bPT50(?:\s?\d){21}(?!\d)/g, (match) =>
       this.replace(match, 'iban', () => this.fakeIban(match)),
     );
-    segments = applyRule(segments, /(?<!\d)\d{9}(?!\d)/g, (match) => {
-      if (this.keepNifs.has(match) || !isValidNif(match)) return null;
-      return this.replace(match, 'nif', () => this.fakeNif(match));
-    });
-    segments = applyRule(segments, /(?<!\d)\d{4}-\d{3}(?!\d)/g, (match) =>
-      this.replace(match, 'postalCode', () => this.scramble(match)),
+    // Partially masked numbers ("PT50****4845", "PT50…467****404**5"): visible digits are still personal.
+    segments = applyRule(
+      segments,
+      /(?<![A-Za-z0-9])(?:[A-Z]{2})?[\d*•]*[*•]{2,}[\d*•]*/g,
+      (match) => {
+        if (!/\d/.test(match)) return null;
+        return this.replace(match, 'digits', () => this.scrambleDigits(match));
+      },
     );
+    segments = applyRule(segments, POSTAL_CODE, (match) => {
+      const [four = '', three = ''] = match.split('-').map((part) => part.trim());
+      return withSpacingOf(match, this.postalCode(`${four}-${three}`).replace('-', ''));
+    });
+    // Digit groups separated by single spaces ("123 456 789"): same mapping as the compact form.
+    segments = applyRule(segments, /(?<![\d.,])\d{2,4}(?: \d{2,4}){2,}(?!\d|[.,]\d)/g, (match) => {
+      const compact = match.replace(/ /g, '');
+      if (compact.length < MIN_DIGIT_RUN) return null;
+      if (this.isKeptNif(compact) || isPlausibleDate(compact)) return null;
+      return withSpacingOf(match, this.replaceNumber(compact));
+    });
+    // Digit groups separated by dots ("123.456.789"); amounts (",dd" after) are excluded.
+    segments = applyRule(segments, /(?<![\d.,])\d{3}(?:\.\d{3}){2,}(?!\d|[.,]\d)/g, (match) => {
+      const compact = match.replace(/\./g, '');
+      if (this.isKeptNif(compact)) return null;
+      return withSpacingOf(match, this.replaceNumber(compact));
+    });
+    segments = applyRule(segments, /(?<!\d)\d{9}(?!\d)/g, (match) => {
+      if (!isValidNif(match) || this.isKeptNif(match)) return null;
+      return this.replaceNumber(match);
+    });
     const digitRun = new RegExp(`(?<![\\d.,])\\d{${MIN_DIGIT_RUN},}(?!\\d|[.,]\\d)`, 'g');
     segments = applyRule(segments, digitRun, (match) => {
-      if (this.keepNifs.has(match) || isPlausibleDate(match)) return null;
+      if (this.isKeptNif(match) || isPlausibleDate(match)) return null;
+      return this.replaceNumber(match);
+    });
+    // Opaque codes (e.g. payment codes drawn with a barcode font) may encode personal data.
+    segments = applyRule(segments, OPAQUE_CODE, (match) => {
+      if (!/\d/.test(match) || !/[a-z]/.test(match) || !/[A-Z]/.test(match)) return null;
       return this.replace(match, 'digits', () => this.scramble(match));
     });
     return segments.map((segment) => segment.text).join('');
+  }
+
+  private postalCode(compact: string): string {
+    return this.replace(compact, 'postalCode', () => this.scramble(compact));
   }
 
   /** Anonymizes a fiscal QR code string, keeping amounts, dates and the issuer. */
@@ -211,6 +294,18 @@ export class Anonymizer {
     }
   }
 
+  /** Kept: configured NIFs, the final consumer and company/public-body NIFs (not personal data). */
+  private isKeptNif(value: string): boolean {
+    if (this.keepNifs.has(value)) return true;
+    return isValidNif(value) && COMPANY_NIF_PREFIX.test(value);
+  }
+
+  /** A valid NIF becomes another valid NIF; any other number is scrambled digit by digit. */
+  private replaceNumber(digits: string): string {
+    if (isValidNif(digits)) return this.replace(digits, 'nif', () => this.fakeNif(digits));
+    return this.replace(digits, 'digits', () => this.scramble(digits));
+  }
+
   private replace(original: string, kind: ReplacementKind, make: () => string): string {
     const known = this.replacements.get(original);
     if (known !== undefined) return known;
@@ -235,6 +330,12 @@ export class Anonymizer {
       }
       return buffer[offset++] ?? 0;
     };
+  }
+
+  /** Replaces only the digits, keeping letters and everything else. */
+  private scrambleDigits(value: string): string {
+    const next = this.stream(value, 0);
+    return value.replace(/\d/g, () => String(next() % 10));
   }
 
   /** Replaces digits with digits and letters with letters (same case), keeping everything else. */

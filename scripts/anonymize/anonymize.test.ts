@@ -91,6 +91,101 @@ describe('Anonymizer.text', () => {
     expect(output).toContain('123456,78');
   });
 
+  it('replaces digit groups separated by spaces, keeping the spacing', () => {
+    const anon = make();
+    const output = anon.text('NIF 123 456 789 | Autorização 987 654 321 12 | Tel. 912 345 678');
+    expect(output).toMatch(
+      /^NIF \d{3} \d{3} \d{3} \| Autorização \d{3} \d{3} \d{3} \d{2} \| Tel\. \d{3} \d{3} \d{3}$/,
+    );
+    expect(output).not.toContain('123 456 789');
+    expect(output).not.toContain('987 654 321');
+    expect(output).not.toContain('912 345 678');
+    expect(isValidNif(output.slice(4, 15).replace(/ /g, ''))).toBe(true);
+  });
+
+  it('uses the same replacement for a NIF with and without spaces', () => {
+    const anon = make();
+    const compact = anon.text(CUSTOMER_NIF);
+    expect(anon.text('123 456 789').replace(/ /g, '')).toBe(compact);
+  });
+
+  it('keeps company and public-body NIFs (starting with 5 or 6), with or without spaces', () => {
+    const anon = make();
+    expect(anon.text('NIPC 501 234 560 e 600000001')).toBe('NIPC 501 234 560 e 600000001');
+  });
+
+  it('does not treat amounts with space thousands as digit groups', () => {
+    expect(make().text('Total 1 234 567,89 €')).toBe('Total 1 234 567,89 €');
+  });
+
+  it('replaces the visible digits of masked numbers', () => {
+    const anon = make();
+    const output = anon.text('IBAN PT50*****************4845');
+    expect(output).toMatch(/^IBAN PT\d{2}\*{17}\d{4}$/);
+    expect(output).not.toContain('4845');
+    const irregular = anon.text('PT5012345678901****404**5');
+    expect(irregular).toMatch(/^PT\d{13}\*{4}\d{3}\*{2}\d$/);
+    expect(irregular).not.toContain('404');
+  });
+
+  it('replaces postal codes with spaces around the hyphen', () => {
+    const output = make().text('4455 - 237 Localidade');
+    expect(output).toMatch(/^\d{4} - \d{3} Localidade$/);
+    expect(output).not.toContain('4455');
+  });
+
+  it('replaces postal codes split across text items, consistently', () => {
+    const anon = make();
+    anon.scanPage(['Rua X', '4455', '-', '237', 'Localidade']);
+    const four = anon.text('4455');
+    const three = anon.text('237');
+    expect(four).toMatch(/^\d{4}$/);
+    expect(four).not.toBe('4455');
+    expect(three).toMatch(/^\d{3}$/);
+    expect(three).not.toBe('237');
+    expect(anon.text('4455-237')).toBe(`${four}-${three}`);
+    expect(() => anon.assertNoLeaks(['4455 - 237'])).toThrow(/leak/);
+  });
+
+  it('scrambles opaque encoded strings (fonts used to draw payment codes)', () => {
+    const output = make().text('jcbZGT0DY7;7s51uC;xqZjcbZ');
+    expect(output).not.toBe('jcbZGT0DY7;7s51uC;xqZjcbZ');
+    expect(output).toHaveLength('jcbZGT0DY7;7s51uC;xqZjcbZ'.length);
+  });
+
+  it('replaces 5-digit customer numbers', () => {
+    expect(make().text('Cliente / Conta: 53305 / 001')).toMatch(/^Cliente \/ Conta: \d{5} \/ 001$/);
+    expect(make().text('Cliente / Conta: 53305 / 001')).not.toContain('53305');
+  });
+
+  it('replaces numbers that are part of a term on their own (door numbers)', () => {
+    const anon = make(['Rua das Flores, 217 R/C']);
+    expect(anon.text('Alam. das Flores 217 RC ESQ')).not.toContain('217');
+    expect(anon.text('217')).not.toBe('217');
+  });
+
+  it('replaces barcode-font gibberish entirely', () => {
+    const encoded = 'B^^^Bved hZ5jG*s|T 5VUL;(;HB^^^B';
+    expect(make().text(encoded)).toBe('#'.repeat(encoded.length));
+  });
+
+  it('keeps ordinary text with some punctuation', () => {
+    const line = '31d/31d x (3,35 € x 1,00%) | -0,03 [IVA] {nota}';
+    expect(make().text(line)).toBe(line);
+  });
+
+  it('replaces numbers written with dots as thousands separators, but not amounts', () => {
+    const anon = make();
+    const output = anon.text(
+      'NIF 123.456.789 | Doc 017.339.659/08/2026 | Capital 1.576.326.759 Euros | 1.234.567,89 €',
+    );
+    expect(output).not.toContain('123.456.789');
+    expect(output).toMatch(/^NIF \d{3}\.\d{3}\.\d{3} \| Doc \d{3}\.\d{3}\.\d{3}\/08\/2026/);
+    expect(output).toContain('1.576.326.759 Euros');
+    expect(output).toContain('1.234.567,89 €');
+    expect(anon.text(CUSTOMER_NIF)).toBe(output.slice(4, 15).replace(/\./g, ''));
+  });
+
   it('keeps short numbers', () => {
     expect(make().text('Fatura n.º 2026/123 de 3,45 kVA')).toBe('Fatura n.º 2026/123 de 3,45 kVA');
   });
@@ -119,7 +214,7 @@ describe('Anonymizer.qr', () => {
     expect(text).toContain(fields.B);
     expect(text).toContain(fields.G);
     expect(fields.G).not.toBe('FT 2026/1234567');
-    expect(fields.S).toMatch(/^MB;12345;\d{9};123\.00$/);
+    expect(fields.S).toMatch(/^MB;\d{5};\d{9};123\.00$/);
     expect(fields.S).not.toContain('123456789');
   });
 

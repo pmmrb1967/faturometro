@@ -27,3 +27,6 @@ Thumbs.db
 # Logs
 *.log
 .playwright-mcp/
+
+# Fixtures under review (may contain real-invoice data)
+fixtures/triage/

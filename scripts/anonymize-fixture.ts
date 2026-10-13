@@ -95,6 +95,7 @@ async function main(): Promise<void> {
     key: randomBytes(32),
   });
 
+  for (const page of extracted.pages) anonymizer.scanPage(page.items.map((item) => item.str));
   const pages = extracted.pages.map((page) => ({
     ...page,
     items: page.items.map((item) => ({ ...item, str: anonymizer.text(item.str) })),
