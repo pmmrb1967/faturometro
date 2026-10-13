@@ -37,6 +37,9 @@ export default defineConfig({
       },
     }),
   ],
+  // HTTPS tunnel for testing on a phone (pnpm tunnel); see README.
+  server: { allowedHosts: ['.trycloudflare.com'] },
+  preview: { allowedHosts: ['.trycloudflare.com'] },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],

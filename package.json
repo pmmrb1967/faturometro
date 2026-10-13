@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:parsers": "vitest run src/parsers",
     "icons": "pwa-assets-generator",
-    "fixture:anon": "tsx scripts/anonymize-fixture.ts"
+    "fixture:anon": "tsx scripts/anonymize-fixture.ts",
+    "tunnel": "cloudflared tunnel --url http://localhost:4173"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
