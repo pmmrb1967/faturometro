@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { Field } from '../../components/Field';
 import { t } from '../../i18n/pt-PT';
 import { disableSync, enableSync, SyncError } from '../../sync/account';
+import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 import { useSession } from '../auth/session-context';
 import { syncSession, useSyncStatus } from '../sync/sync-store';
@@ -10,7 +11,7 @@ import { getSettings, updateSettings } from './settings';
 import './settings.css';
 
 const copy = t.sync;
-const DEFAULT_SERVER = import.meta.env.VITE_SYNC_URL ?? '';
+const DEFAULT_SERVER = DEFAULT_SYNC_URL;
 
 function errorText(code: string | undefined): string | undefined {
   if (!code) return undefined;

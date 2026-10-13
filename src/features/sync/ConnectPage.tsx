@@ -6,6 +6,7 @@ import { connectFromServer, SyncError } from '../../sync/account';
 import { AuthLayout, FormError } from '../auth/AuthLayout';
 import { useSession } from '../auth/session-context';
 import { validateEmail } from '../auth/validation';
+import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 
 const copy = t.sync;
@@ -14,7 +15,7 @@ const copy = t.sync;
 export function ConnectPage() {
   const { signIn } = useSession();
   const navigate = useNavigate();
-  const [serverUrl, setServerUrl] = useState(import.meta.env.VITE_SYNC_URL ?? '');
+  const [serverUrl, setServerUrl] = useState(DEFAULT_SYNC_URL);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();
