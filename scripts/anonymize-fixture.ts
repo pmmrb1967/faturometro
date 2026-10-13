@@ -3,12 +3,14 @@
  *
  *   pnpm fixture:anon <pdf> <parserId>
  *
- * - PDF password (if any): environment variable FIXTURE_PDF_PASSWORD. It is
- *   also treated as a sensitive term (e.g. Repsol uses the holder's NIF).
- * - Sensitive terms (names, addresses, …): samples/anonymize.local.json,
- *   `{ "terms": ["Full Name", "Street and number", ...] }`. The samples/
- *   folder is git-ignored; never commit this file.
- *   Override the path with FIXTURE_TERMS_FILE.
+ * - Sensitive terms (names, addresses, …) and the PDF password (if any):
+ *   samples/anonymize.local.json,
+ *   `{ "terms": ["Full Name", "Street and number", ...], "pdfPassword": "..." }`.
+ *   The samples/ folder is git-ignored; never commit this file. Override the
+ *   path with FIXTURE_TERMS_FILE. Placeholder values containing "EXEMPLO" are
+ *   rejected, so the script never runs with the example file.
+ * - The password can also come from FIXTURE_PDF_PASSWORD. It is treated as
+ *   sensitive (e.g. Repsol uses the holder's NIF).
  * - Output: fixtures/<parserId>/<random id>.json. Review it before committing.
  *
  * The script never prints original values, only replacement counts.
@@ -25,22 +27,34 @@ const TERMS_FILE = resolve(
 );
 const FIXTURES_DIR = resolve('fixtures');
 
-const termsSchema = z.object({ terms: z.array(z.string()) });
+const configSchema = z.object({
+  terms: z.array(z.string()),
+  pdfPassword: z.string().optional(),
+});
+type LocalConfig = z.infer<typeof configSchema>;
+
+const PLACEHOLDER = /EXEMPLO/i;
 
 function fail(message: string): never {
   console.error(`✖ ${message}`);
   process.exit(1);
 }
 
-function loadTerms(): string[] {
+function loadConfig(): LocalConfig {
   if (!existsSync(TERMS_FILE)) {
     fail(
       `Missing ${TERMS_FILE}. Create it with {"terms": [...]} listing names, addresses and other personal data that appear in the invoice.`,
     );
   }
-  const parsed = termsSchema.safeParse(JSON.parse(readFileSync(TERMS_FILE, 'utf8')));
-  if (!parsed.success) fail(`Invalid ${TERMS_FILE}: expected {"terms": string[]}`);
-  return parsed.data.terms;
+  const parsed = configSchema.safeParse(JSON.parse(readFileSync(TERMS_FILE, 'utf8')));
+  if (!parsed.success) {
+    fail(`Invalid ${TERMS_FILE}: expected {"terms": string[], "pdfPassword"?: string}`);
+  }
+  const { terms, pdfPassword } = parsed.data;
+  if (terms.some((term) => PLACEHOLDER.test(term)) || PLACEHOLDER.test(pdfPassword ?? '')) {
+    fail(`${TERMS_FILE} still has example values: replace them with your real data first.`);
+  }
+  return parsed.data;
 }
 
 function issuerNif(qr: string | null): string | null {
@@ -54,8 +68,9 @@ async function main(): Promise<void> {
   if (!/^[a-z0-9-]+$/.test(parserId))
     fail('parserId must be lowercase letters, digits and hyphens');
 
-  const password = process.env.FIXTURE_PDF_PASSWORD || undefined;
-  const terms = loadTerms();
+  const config = loadConfig();
+  const password = process.env.FIXTURE_PDF_PASSWORD || config.pdfPassword || undefined;
+  const terms = [...config.terms];
   // A NIF password is handled by the NIF rule (replaced by another valid NIF).
   if (password && !isValidNif(password)) terms.push(password);
 
