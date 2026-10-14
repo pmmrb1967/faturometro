@@ -2,7 +2,9 @@
  * Phase 5 evaluation (PLAN.md §13): AI extraction vs the layout parsers on
  * the fixtures, to choose the default model and effort.
  *
- *   pnpm ai:eval [--models a,b] [--efforts low,medium] [--public-only]
+ *   pnpm ai:eval [--models a,b] [--efforts low,medium] [--public-only] [--only text]
+ *
+ * --only keeps the cases whose name contains the text (e.g. "generali").
  *
  * Needs ANTHROPIC_API_KEY (environment or .env.local; never printed). Sends
  * the text of the public synthetic fixtures and, unless --public-only, of
@@ -134,6 +136,8 @@ function compare(testCase: Case, ai: ExtractedInvoice): Record<string, boolean> 
   if (!reference) return result;
   // Against the layout parser.
   if (reference.sector) result.sector = ai.sector === reference.sector;
+  const policy = reference.insurance?.value.policyNumber;
+  if (policy) result.policyNumber = squash(ai.insurance?.value.policyNumber) === squash(policy);
   for (const field of SCALAR_FIELDS) {
     const expected = reference[field]?.value;
     if (expected === undefined) continue;
@@ -159,6 +163,8 @@ interface Row {
   ok: boolean;
   error?: string;
   validation?: string;
+  /** Cross-validation checks that failed (total, vat, period, lines, readings). */
+  checks?: string[];
   fields?: Record<string, boolean>;
   costMicroUsd: number;
   inputTokens: number;
@@ -170,7 +176,8 @@ async function main() {
   const models = option('models', 'claude-haiku-5-5,claude-sonnet-5-5');
   const efforts = option('efforts', 'low') as Effort[];
   const publicOnly = process.argv.includes('--public-only');
-  const cases = loadCases(publicOnly);
+  const only = option('only', '')[0];
+  const cases = loadCases(publicOnly).filter((testCase) => !only || testCase.name.includes(only));
   const key = apiKey();
   console.log(
     `${cases.length} documentos (${cases.filter((c) => c.reference).length} com leitor de referência), modelos: ${models.join(', ')}, esforço: ${efforts.join(', ')}`,
@@ -188,12 +195,14 @@ async function main() {
             testCase.target,
           );
           const fields = compare(testCase, result.extraction);
+          const check = validateExtraction(result.extraction, testCase.qr);
           rows.push({
             model,
             effort,
             case: testCase.name,
             ok: true,
-            validation: validateExtraction(result.extraction, testCase.qr).validation,
+            validation: check.validation,
+            checks: check.failures,
             fields,
             costMicroUsd: result.usage.reduce((sum, usage) => sum + usage.costMicroUsd, 0),
             inputTokens: result.usage.reduce((sum, usage) => sum + usage.inputTokens, 0),
@@ -204,7 +213,7 @@ async function main() {
             .filter(([, right]) => !right)
             .map(([field]) => field);
           console.log(
-            `  ${model} ${effort} ${testCase.name}: ${wrong.length === 0 ? 'tudo certo' : `errado: ${wrong.join(', ')}`}`,
+            `  ${model} ${effort} ${testCase.name}: ${wrong.length === 0 ? 'tudo certo' : `errado: ${wrong.join(', ')}`}${check.failures.length > 0 ? ` (validação: ${check.failures.join(', ')})` : ''}`,
           );
         } catch (error) {
           const code = error instanceof AiError ? error.code : String(error);

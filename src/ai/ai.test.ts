@@ -19,6 +19,7 @@ import type { Profile } from '../db/profiles';
 function answer(overrides: Partial<ExtractResponse> = {}): ExtractResponse {
   return {
     sector: 'telecom',
+    policyNumber: '',
     providerName: 'Operadora Exemplo',
     docId: 'FT 2026/77',
     issueDate: '2026-09-05',
@@ -82,6 +83,13 @@ describe('toExtraction', () => {
     expect(extraction.customerNumber).toBeUndefined();
     expect(extraction.powerKva).toBeUndefined();
     expect(extraction.loyaltyEndDate?.value).toBe('2027-03-31');
+  });
+
+  it('keeps the policy number of an insurance receipt only', () => {
+    expect(
+      toExtraction(answer({ sector: 'insurance', policyNumber: ' 123 ' })).extraction.insurance,
+    ).toEqual({ value: { policyNumber: '123' }, confidence: 'high' });
+    expect(toExtraction(answer({ policyNumber: '123' })).extraction.insurance).toBeUndefined();
   });
 
   it('drops impossible dates and lines without a readable amount', () => {
@@ -196,7 +204,7 @@ describe('AnthropicProvider', () => {
       {
         task: 'extract',
         model: 'claude-haiku-5-5',
-        promptVersion: 'extract-v2',
+        promptVersion: 'extract-v3',
         inputTokens: 1000,
         outputTokens: 200,
         costMicroUsd: costMicroUsd('claude-haiku-5-5', 1000, 200),

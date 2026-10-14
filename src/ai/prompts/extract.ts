@@ -12,9 +12,9 @@ import type { InvoiceLine, Reading, Sector } from '../../domain/types';
 import { formatCents, parseDotDecimalAmount } from '../../lib/money';
 import type { ExtractedInvoice, ExtractedLine, ExtractedReading } from '../../parsers/types';
 
-export const EXTRACT_PROMPT_VERSION = 'extract-v2';
+export const EXTRACT_PROMPT_VERSION = 'extract-v3';
 
-const SECTORS = ['electricity', 'gas', 'water', 'telecom', 'other'] as const;
+const SECTORS = ['electricity', 'gas', 'water', 'telecom', 'insurance', 'other'] as const;
 const LINE_KINDS = [
   'base_fee',
   'addon',
@@ -31,23 +31,25 @@ const PERIODS = ['', 'empty', 'off_empty', 'full', 'peak'] as const;
 const READING_TYPES = ['', 'real', 'estimated', 'customer'] as const;
 const BASES = ['', 'real', 'estimated', 'customer', 'adjustment'] as const;
 
-export const EXTRACT_SYSTEM = `Lês faturas domésticas portuguesas (eletricidade, gás, água, telecomunicações e outras) e devolves os dados no formato JSON pedido.
+export const EXTRACT_SYSTEM = `Lês faturas domésticas portuguesas (eletricidade, gás, água, telecomunicações, seguros e outras) e devolves os dados no formato JSON pedido.
 
 Regras:
 - Copia apenas o que está escrito na fatura. Nunca inventes nem estimes. Se um campo não estiver na fatura, devolve "" (texto vazio).
 - Datas no formato AAAA-MM-DD.
 - Valores em euros com ponto decimal e sem separador de milhares: "1234.56". Descontos com sinal negativo: "-5.00".
 - Quantidades com ponto decimal: "123.5".
-- sector: electricity, gas, water, telecom ou other (portagens, seguros e o resto).
+- sector: electricity, gas, water, telecom, insurance (recibos de prémio de seguros) ou other (portagens e o resto).
 - docId: o número do documento tal como impresso (ex.: "FT 2026/123").
-- periodStart/periodEnd: o período faturado (consumo, ou mensalidade em telecomunicações).
+- periodStart/periodEnd: o período faturado (consumo, mensalidade em telecomunicações, ou período coberto pelo prémio de um seguro).
 - loyaltyEndDate: fim do período de fidelização, se indicado.
 - supplyPointId: CPE (eletricidade) ou CUI (gás), se indicado.
 - powerKva: potência contratada em kVA, se indicada.
 - lines: as linhas da fatura com valor. kind: base_fee (mensalidade), addon (serviço adicional), equipment, discount, usage (consumos extra), energy (energia/gás consumido), power (potência), tax (taxas e impostos, exceto IVA), other. amount: o valor da linha como está na fatura. vatRate: taxa de IVA da linha em %, se indicada. basis: em linhas de energia, se o consumo é real, estimated (estimado), customer (comunicado pelo cliente) ou adjustment (acerto).
 - linesIncludeVat: true se os valores das linhas já incluem IVA (somam o total), false se somam o valor sem IVA.
 - readings: leituras do contador (quantidade consumida no período entre leituras), com o tipo e a data da leitura final.
-- readingType: tipo da leitura principal da fatura.`;
+- readingType: tipo da leitura principal da fatura.
+- vat: só o IVA. Os seguros são isentos de IVA: o imposto do selo não é IVA (vat "0.00" se a fatura não tiver IVA).
+- Seguros: o prémio comercial é uma linha base_fee; custos de gestão ou de fracionamento são other; imposto do selo e outros encargos e taxas (FGA, INEM, ANPC…) são tax. Não incluas subtotais ("Prémio antes de impostos", "Total outras entidades") nem o total: as linhas somam o total pago (linesIncludeVat true). policyNumber: o n.º da apólice ("" se não for um seguro).`;
 
 /** Marks what the app reads from AI extractions (parserId "ai:<model>"). */
 export const AI_PARSER_PREFIX = 'ai:';
@@ -98,9 +100,11 @@ export const EXTRACT_SCHEMA = {
     'linesIncludeVat',
     'lines',
     'readings',
+    'policyNumber',
   ],
   properties: {
     sector: { type: 'string', enum: [...SECTORS] },
+    policyNumber: { type: 'string' },
     providerName: { type: 'string' },
     docId: { type: 'string' },
     issueDate: { type: 'string' },
@@ -165,6 +169,7 @@ export const EXTRACT_SCHEMA = {
 /** The same contract in zod: what comes back is checked again before use. */
 export const extractResponseSchema = z.object({
   sector: z.enum(SECTORS),
+  policyNumber: z.string().max(100),
   providerName: z.string().max(200),
   docId: z.string().max(100),
   issueDate: z.string().max(20),
@@ -275,6 +280,10 @@ export function toExtraction(response: ExtractResponse): AiExtraction {
   set('tariffName', field(text(response.tariffName)));
   set('powerKva', field(decimal(response.powerKva)));
   if (response.readingType) set('readingType', field(response.readingType));
+  const policyNumber = text(response.policyNumber);
+  if (response.sector === 'insurance' && policyNumber) {
+    set('insurance', field({ policyNumber }));
+  }
 
   for (const line of response.lines) {
     const amountCents = cents(line.amount);
