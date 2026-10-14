@@ -136,6 +136,7 @@ export async function saveInvoice(
       ),
     );
     contract = await repos.contracts.put(newContract);
+    await linkToEndedContract(repos, contract, draft.periodEnd ?? draft.issueDate);
   }
 
   if (draft.file && options.keepOriginalFile) await repos.documents.put(draft.file);
@@ -194,4 +195,24 @@ export async function saveInvoice(
     });
   }
   return saved;
+}
+
+/**
+ * A new contract after "Mudei de fornecedor" without saying which one: it
+ * replaces the latest ended contract of the same sector, if the change was
+ * before this invoice and nothing replaced it yet.
+ */
+async function linkToEndedContract(repos: Repositories, contract: Contract, invoiceDate: string) {
+  const ended = (await repos.contracts.list())
+    .filter(
+      (other) =>
+        other.id !== contract.id &&
+        other.sector === contract.sector &&
+        !other.active &&
+        other.endedAt !== undefined &&
+        other.endedAt <= invoiceDate &&
+        other.replacedById === undefined,
+    )
+    .sort((a, b) => (b.endedAt ?? '').localeCompare(a.endedAt ?? ''))[0];
+  if (ended) await repos.contracts.put({ ...ended, replacedById: contract.id });
 }

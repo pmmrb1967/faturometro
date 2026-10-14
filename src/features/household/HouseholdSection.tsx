@@ -6,6 +6,7 @@ import { formatMonthShort } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { totalSwitchSavings } from '../contracts/switch-view';
 
 const copy = t.household;
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
@@ -21,7 +22,10 @@ export function HouseholdSection() {
       session.repos.invoices.list(),
     ]);
     if (invoices.length === 0) return null;
-    return householdSummary({ contracts, invoices, today: today() });
+    return {
+      ...householdSummary({ contracts, invoices, today: today() }),
+      switchSavingCents: await totalSwitchSavings(session.repos),
+    };
   }, [session]);
   if (!summary) return null;
 
@@ -64,6 +68,16 @@ export function HouseholdSection() {
                 percent.format((Math.abs(difference) / previous) * 100),
                 difference > 0,
               )}
+        </p>
+      )}
+
+      {summary.switchSavingCents !== null && summary.switchSavingCents !== 0 && (
+        <p>
+          <strong>
+            {summary.switchSavingCents > 0
+              ? copy.switchSaving(formatCents(summary.switchSavingCents))
+              : copy.switchCost(formatCents(-summary.switchSavingCents))}
+          </strong>
         </p>
       )}
 

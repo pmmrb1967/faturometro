@@ -187,6 +187,10 @@ export const t = {
     value: 'Valor',
     monthTitle: (month: string) => `Faturas emitidas em ${month}`,
     forecast: 'Próximos 12 meses (estimativa)',
+    switchSaving: (amount: string) =>
+      `Com as mudanças de fornecedor, poupaste cerca de ${amount} até agora (estimativa).`,
+    switchCost: (amount: string) =>
+      `As mudanças de fornecedor custaram até agora mais ${amount} (estimativa).`,
     forecastNote:
       'Para cada contrato ativo: na luz, gás e água com um ano de faturas, o mesmo que no último ano; nos outros, o custo por dia das últimas faturas. Não conta com aumentos futuros. Cada fatura conta no mês em que foi emitida.',
   },
@@ -652,6 +656,40 @@ export const t = {
       open: 'Ver ofertas no COM.escolha (ANACOM)',
       unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
       note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
+    },
+    switch: {
+      title: 'Mudança de fornecedor',
+      start: 'Mudei de fornecedor',
+      intro:
+        'Regista a data em que passaste para outro fornecedor. Este contrato fica terminado (sem avisos nem previsões) e a app compara o que pagas agora com o que pagarias aqui.',
+      date: 'Data da mudança',
+      newContract: 'Contrato novo',
+      notYet: 'Ainda não tenho fatura do novo fornecedor',
+      notYetHint:
+        'O contrato novo liga-se sozinho quando guardares a primeira fatura de outro fornecedor deste tipo.',
+      save: 'Guardar mudança',
+      cancel: 'Cancelar',
+      ended: (date: string) => `Contrato terminado a ${date}.`,
+      replacedBy: 'Substituído por',
+      waiting: 'O contrato novo liga-se quando guardares a primeira fatura do novo fornecedor.',
+      reactivate: 'Reativar contrato',
+      replaces: 'Substitui',
+      since: (date: string) => `desde ${date}.`,
+      saving: (amount: string, count: number) =>
+        `Poupança estimada até agora: ${amount} (${count === 1 ? '1 fatura' : `${count} faturas`}).`,
+      costMore: (amount: string, count: number) =>
+        `Até agora pagaste mais ${amount} do que pagarias com o contrato antigo (${count === 1 ? '1 fatura' : `${count} faturas`}).`,
+      noData: 'Ainda não há faturas deste contrato depois da mudança para comparar.',
+      methods: {
+        prices:
+          'Calculado com os preços da última fatura do contrato antigo aplicados ao teu consumo real em cada fatura nova, com os mesmos impostos e taxas.',
+        perDay:
+          'Calculado com o custo por dia das últimas faturas do contrato antigo, multiplicado pelos dias de cada fatura nova.',
+        mixed:
+          'Calculado com os preços do contrato antigo e o teu consumo real nas faturas com detalhe, e pelo custo por dia nas outras.',
+      },
+      note: 'Estimativa: não conta com aumentos que o contrato antigo teria tido entretanto.',
+      listEnded: (date: string) => `Terminado a ${date}`,
     },
     monthlyPrice: {
       title: 'Mensalidade contratada (com IVA)',

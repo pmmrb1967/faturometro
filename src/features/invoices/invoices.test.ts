@@ -242,6 +242,30 @@ describe('saveInvoice', () => {
     expect(await repos.invoices.findBy('fileHash', 'file-1')).toHaveLength(2);
   });
 
+  it('links a new contract to the one ended with "Mudei de fornecedor"', async () => {
+    const first = await saveInvoice(repos, draft(), { keepOriginalFile: true });
+    const old = (await repos.contracts.get(first.contractId))!;
+    await repos.contracts.put({ ...old, active: false, endedAt: '2026-06-01' });
+    // Another supplier's first invoice (QR date 2026-06-15, after the change).
+    const second = await saveInvoice(
+      repos,
+      draft({ issuerNif: '500000001', docKey: 'doc-2', contract: { label: 'Luz nova' } }),
+      { keepOriginalFile: true },
+    );
+    expect((await repos.contracts.get(old.id))?.replacedById).toBe(second.contractId);
+
+    // A change after the invoice date is not linked.
+    const later = (await repos.contracts.get(second.contractId))!;
+    await repos.contracts.put({ ...later, active: false, endedAt: '2026-12-01' });
+    const third = await saveInvoice(
+      repos,
+      draft({ issuerNif: '500000002', docKey: 'doc-3', contract: { label: 'Luz 3' } }),
+      { keepOriginalFile: true },
+    );
+    expect((await repos.contracts.get(later.id))?.replacedById).toBeUndefined();
+    expect(third.contractId).not.toBe(later.id);
+  });
+
   it('refuses the same document twice', async () => {
     await saveInvoice(repos, draft(), { keepOriginalFile: true });
     await expect(saveInvoice(repos, draft(), { keepOriginalFile: true })).rejects.toBeInstanceOf(

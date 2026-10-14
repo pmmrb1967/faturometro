@@ -54,6 +54,10 @@ export interface Contract extends SyncMeta {
     fromInvoice?: boolean;
   };
   active: boolean;
+  /** Date the user changed supplier (the contract ended). */
+  endedAt?: IsoDate;
+  /** The contract that replaced this one (same sector, new supplier). */
+  replacedById?: string;
   createdAt: IsoDateTime;
 }
 

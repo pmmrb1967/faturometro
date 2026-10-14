@@ -1,0 +1,16 @@
+.switch-card {
+  margin: 0 0 24px;
+  max-width: 36rem;
+}
+
+.switch-card .section-title {
+  margin-top: 8px;
+}
+
+.switch-result {
+  font-size: 1.05rem;
+}
+
+.switch-start {
+  margin: 0 0 24px;
+}

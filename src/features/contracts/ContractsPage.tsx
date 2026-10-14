@@ -46,6 +46,8 @@ export function ContractsPage() {
               <span className="amount">{last ? formatCents(last.totalCents) : '—'}</span>
               <span className="meta">
                 {t.sectors[contract.sector]} · {t.contracts.invoiceCount(count)}
+                {contract.endedAt &&
+                  ` · ${t.contracts.switch.listEnded(formatIsoDate(contract.endedAt))}`}
                 {last && ` · ${t.contracts.lastInvoice} ${formatIsoDate(last.issueDate)}`}
               </span>
             </li>

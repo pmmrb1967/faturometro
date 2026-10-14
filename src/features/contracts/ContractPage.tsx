@@ -12,6 +12,7 @@ import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
 import { AuditSection } from './AuditSection';
+import { SwitchSection } from './SwitchSection';
 import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
 
@@ -110,19 +111,23 @@ export function ContractPage() {
           ))}
       </dl>
 
-      <LoyaltyForm
-        key={contract.id}
-        initial={contract.loyaltyEndDate ?? ''}
-        onSave={async (value) => {
-          const next = { ...contract };
-          if (value) next.loyaltyEndDate = value;
-          else delete next.loyaltyEndDate;
-          await session.repos.contracts.put(next);
-          await refreshAlerts(session.repos);
-        }}
-      />
+      <SwitchSection contract={contract} />
 
-      {MONTHLY_PRICE_SECTORS.includes(contract.sector) && (
+      {contract.active && (
+        <LoyaltyForm
+          key={`loyalty-${contract.id}`}
+          initial={contract.loyaltyEndDate ?? ''}
+          onSave={async (value) => {
+            const next = { ...contract };
+            if (value) next.loyaltyEndDate = value;
+            else delete next.loyaltyEndDate;
+            await session.repos.contracts.put(next);
+            await refreshAlerts(session.repos);
+          }}
+        />
+      )}
+
+      {contract.active && MONTHLY_PRICE_SECTORS.includes(contract.sector) && (
         <MonthlyPriceForm
           key={`monthly-${contract.id}`}
           initial={contract.monthlyPriceCents}
@@ -138,9 +143,9 @@ export function ContractPage() {
 
       <AuditSection contract={contract} invoices={invoices} />
 
-      {contract.sector === 'telecom' && (
+      {contract.active && contract.sector === 'telecom' && (
         <TelecomCompare
-          key={contract.id}
+          key={`telecom-${contract.id}`}
           contract={contract}
           invoices={invoices}
           onSaveServices={async (services) => {
