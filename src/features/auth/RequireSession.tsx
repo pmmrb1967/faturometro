@@ -1,13 +1,36 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
+import { listAccountEmails, openGuest } from './accounts';
+import { entryFor } from './entry';
 import { useSession } from './session-context';
 
-/** Sends to /entrar when the app is locked, and back to the same page after signing in. */
+/**
+ * Without a session, opens the guest when it is the only profile here; otherwise sends to
+ * /entrar, and back to the same page after signing in.
+ */
 export function RequireSession({ children }: { children: ReactNode }) {
-  const { session } = useSession();
+  const { session, signIn } = useSession();
   const location = useLocation();
-  if (!session) {
+  const [entry, setEntry] = useState<'checking' | 'guest' | 'login'>('checking');
+
+  useEffect(() => {
+    if (session) return;
+    let active = true;
+    void (async () => {
+      const [guest, emails] = await Promise.all([openGuest(), listAccountEmails()]);
+      if (!active) return;
+      const next = entryFor({ hasGuest: guest !== null, accounts: emails.length });
+      if (next === 'guest' && guest) signIn(guest);
+      setEntry(next);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [session, signIn]);
+
+  if (session) return children;
+  if (entry === 'login') {
     return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
   }
-  return children;
+  return null;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setSignedIn } from '../../app/pwa';
-import type { Profile } from '../../db/profiles';
+import { isGuest, type Profile } from '../../db/profiles';
 import { createRepositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
 import type { UnlockedAccount } from './accounts';
@@ -39,7 +39,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  useAutoLock(session !== null, lock);
+  // The guest has no password, so there is nothing to unlock.
+  useAutoLock(session !== null && !isGuest(session.profile), lock);
   // Signed out, a new version of the app can be applied at once.
   useEffect(() => setSignedIn(session !== null), [session]);
 
