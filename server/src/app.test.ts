@@ -120,6 +120,16 @@ describe('accounts', () => {
     expect(row.bytes).toBe(actual.bytes);
   });
 
+  it('tells a device whether its account was removed, by random id only', async () => {
+    const id = '0b6c6c3e-8a4e-4c5f-9a2b-1f2e3d4c5b6a';
+    db.prepare("INSERT INTO removed_accounts (id, removed_at) VALUES (?, '2026-10-01')").run(id);
+    expect((await call('GET', `/v1/removed/${id}`)).body).toEqual({ removed: true });
+    const other = await call('GET', '/v1/removed/11111111-2222-4333-8444-555555555555');
+    expect(other.body).toEqual({ removed: false });
+    // Anything but a random id falls through to the authenticated routes.
+    expect((await call('GET', '/v1/removed/ana@example.pt')).status).toBe(401);
+  });
+
   it('refuses a second account with the same email', async () => {
     await register();
     const again = await call('POST', '/v1/register', {

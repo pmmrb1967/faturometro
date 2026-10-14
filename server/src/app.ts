@@ -6,6 +6,7 @@
  *   POST   /v1/register   {email, salt, iterations, authKey, wrappedKey} → {token, accountId}
  *   POST   /v1/login      {email, authKey}                → {token, wrappedKey, accountId}
  *   GET    /v1/account                                    → {id}
+ *   GET    /v1/removed/:accountId                         → {removed}  (no token; random id only)
  *   POST   /v1/logout                                     → 204
  *   GET    /v1/changes?since=N                            → {records, latest}
  *   POST   /v1/changes    {records}                       → {latest}
@@ -325,6 +326,15 @@ export function createApp(config: AppConfig) {
         wrappedKey: JSON.parse(user.wrapped_key) as unknown,
         accountId: user.id,
       });
+    }
+
+    const removedRoute = /^\/v1\/removed\/([0-9a-f-]{36})$/.exec(path);
+    if (method === 'GET' && removedRoute) {
+      const row = await sql.first(
+        'SELECT id FROM removed_accounts WHERE id = ?',
+        removedRoute[1] ?? '',
+      );
+      return json({ removed: row !== null });
     }
 
     const user = await userFromToken(request);
