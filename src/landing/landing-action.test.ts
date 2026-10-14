@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { landingAction } from './landing-action';
+import { landingAction, showsTopSignIn } from './landing-action';
 
 describe('landingAction', () => {
   it('with an open session, only opens the app (never switches to a guest)', () => {
@@ -17,5 +17,14 @@ describe('landingAction', () => {
 
   it('on a new browser, starts without an account', () => {
     expect(landingAction({ signedIn: false, hasGuest: false, accounts: 0 })).toBe('startGuest');
+  });
+});
+
+describe('showsTopSignIn', () => {
+  it('shows "Entrar" at the top only when the main buttons do not offer it', () => {
+    expect(showsTopSignIn('startGuest')).toBe(true);
+    expect(showsTopSignIn('continueGuest')).toBe(true);
+    expect(showsTopSignIn('signIn')).toBe(false);
+    expect(showsTopSignIn('open')).toBe(false);
   });
 });

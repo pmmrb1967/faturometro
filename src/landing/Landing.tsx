@@ -5,7 +5,7 @@ import { LegalFooter } from '../components/LegalFooter';
 import { createGuest, listAccountEmails, openGuest } from '../features/auth/accounts';
 import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
-import { landingAction } from './landing-action';
+import { landingAction, showsTopSignIn } from './landing-action';
 import { QrSlip } from './QrSlip';
 import './landing.css';
 
@@ -38,9 +38,11 @@ export function Landing() {
           <img src="/icon.svg" alt="" width={32} height={32} />
           {t.appName}
         </Link>
-        <Link to="/entrar" className="button button-quiet">
-          {copy.signIn}
-        </Link>
+        {showsTopSignIn(action) && (
+          <Link to="/entrar" className="button button-quiet">
+            {copy.signIn}
+          </Link>
+        )}
       </header>
 
       <main>

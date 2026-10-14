@@ -13,3 +13,8 @@ export function landingAction(state: {
   if (state.hasGuest) return 'continueGuest';
   return state.accounts > 0 ? 'signIn' : 'startGuest';
 }
+
+/** The top bar's "Entrar", only when the main buttons do not already offer it or an open app. */
+export function showsTopSignIn(action: LandingAction): boolean {
+  return action === 'startGuest' || action === 'continueGuest';
+}
