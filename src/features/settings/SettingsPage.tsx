@@ -89,7 +89,12 @@ function SyncSection() {
     setError(undefined);
     try {
       updateProfile(
-        await disableSync({ profile: session.profile, masterKey: session.masterKey, deleteRemote }),
+        await disableSync({
+          profile: session.profile,
+          masterKey: session.masterKey,
+          repos: session.repos,
+          deleteRemote,
+        }),
       );
       setNotice(copy.disabled);
     } catch (caught) {

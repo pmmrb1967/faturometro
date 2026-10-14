@@ -146,6 +146,15 @@ export class DocumentStore {
   }
 
   /**
+   * The server account and its files are gone: what is here becomes local
+   * again (sent anew if sync is turned back on); what was only there is gone.
+   */
+  async forgetServer(): Promise<void> {
+    await this.table.where('syncState').anyOf('uploaded', 'pruned').modify({ syncState: 'local' });
+    await this.table.where('syncState').equals('remote').modify({ syncState: 'gone' });
+  }
+
+  /**
    * Records a document added on another device (contents still on the
    * server). Ignored when this device already has the same file.
    */

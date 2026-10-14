@@ -184,6 +184,7 @@ export async function runSync(input: {
   } catch (error) {
     if (await wasRemoved(error, api, sync)) {
       // Removed for inactivity: the data stays on this device; sync can be turned on again.
+      await input.repos.documents.forgetServer();
       await saveSync(input.profile, undefined);
       throw new SyncError('account_removed');
     }
@@ -394,6 +395,8 @@ export async function disableSync(input: {
   profile: Profile;
   masterKey: CryptoKey;
   deleteRemote: boolean;
+  /** With `deleteRemote`: the originals' sync state is reset (they are no longer on the server). */
+  repos?: Repositories;
   api?: SyncApi;
 }): Promise<Profile> {
   const sync = input.profile.sync;
@@ -406,6 +409,7 @@ export async function disableSync(input: {
     } catch (error) {
       fromHttp(error, { 401: 'session_expired' });
     }
+    await input.repos?.documents.forgetServer();
   }
   return saveSync(input.profile, undefined);
 }

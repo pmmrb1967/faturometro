@@ -461,6 +461,8 @@ describe('original files', () => {
 });
 
 describe('free plan limits', () => {
+  const pdf = new TextEncoder().encode('%PDF-1.7 original');
+
   it('stores the account id when sync is turned on', async () => {
     const a = await deviceA();
     expect(a.profile.sync?.accountId).toMatch(/^[0-9a-f-]{36}$/);
@@ -508,6 +510,36 @@ describe('free plan limits', () => {
     await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'account_removed' });
     expect((await profilesDb.profiles.get(a.profile.id))?.sync).toBeUndefined();
     expect((await a.repos.contracts.get('c1'))?.label).toBe('Luz da casa');
+  });
+
+  it('sends the originals again when sync is turned back on after a removal', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+    await runMaintenance({ sql: serverSql, now: () => new Date(Date.now() + 400 * 86_400_000) });
+    await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'account_removed' });
+
+    const local = await profilesDb.profiles.get(a.profile.id);
+    if (!local) throw new Error('Profile not found');
+    const again = await enableSync({
+      profile: local,
+      masterKey: a.masterKey,
+      password: 'palavra-passe-longa',
+      serverUrl: SERVER,
+      api,
+      iterations: ITERATIONS,
+    });
+    const synced = await runSync({ ...a, profile: await setFileSync(again, true), api });
+    expect(synced.files?.uploaded).toBe(1);
+  });
+
+  it('turning sync off with the server data deleted forgets what was there', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+    const off = await disableSync({ ...a, deleteRemote: true, api });
+    expect(off.sync).toBeUndefined();
+    expect(await a.repos.documents.stateOf('h1')).toBe('local');
   });
 
   it('still asks for the password when the session ended for another reason', async () => {
