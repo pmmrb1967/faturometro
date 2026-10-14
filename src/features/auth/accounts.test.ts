@@ -127,6 +127,16 @@ describe('guest profile', () => {
     expect((await openGuest())?.profile.id).toBe(guest.profile.id);
   });
 
+  it('refuses to convert a guest twice (stale session)', async () => {
+    const guest = await createGuest();
+    await convertGuest(guest, 'ana@example.pt', 'segredo-longo', ITERATIONS);
+    await expectCode(
+      convertGuest(guest, 'rui@example.pt', 'outro-segredo', ITERATIONS),
+      'not_found',
+    );
+    await expect(unlockAccount('ana@example.pt', 'segredo-longo')).resolves.toBeDefined();
+  });
+
   it('a guest cannot be opened with a password', async () => {
     await createGuest();
     await expectCode(unlockAccount('', 'qualquer'), 'not_found');

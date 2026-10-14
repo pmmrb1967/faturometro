@@ -156,14 +156,23 @@ export async function convertGuest(
   iterations = PBKDF2_ITERATIONS,
 ): Promise<{ profile: Profile; recoveryKey: string }> {
   const normalized = normalizeEmail(email);
-  if (await profilesDb.profiles.where('email').equals(normalized).count()) {
-    throw new AccountError('email_taken');
-  }
+  // Wrapping is not a Dexie operation, so it runs before the transaction.
   const { wrapped, recoveryKey } = await wrapMasterKey(account.masterKey, password, iterations);
-  const { id, createdAt, sync } = account.profile;
-  const profile: Profile = { id, email: normalized, createdAt, wrappedKey: wrapped };
-  if (sync) profile.sync = sync;
-  // One write: the profile is either still the guest or fully an account.
-  await profilesDb.profiles.put(profile);
+  const profile: Profile = {
+    id: account.profile.id,
+    email: normalized,
+    createdAt: account.profile.createdAt,
+    wrappedKey: wrapped,
+  };
+  await profilesDb.transaction('rw', profilesDb.profiles, async () => {
+    // A stale session must not convert again (it would replace the saved recovery key).
+    const stored = await profilesDb.profiles.get(account.profile.id);
+    if (!stored || !isGuest(stored)) throw new AccountError('not_found');
+    if (await profilesDb.profiles.where('email').equals(normalized).count()) {
+      throw new AccountError('email_taken');
+    }
+    // One write: the profile is either still the guest or fully an account.
+    await profilesDb.profiles.put(profile);
+  });
   return { profile, recoveryKey };
 }

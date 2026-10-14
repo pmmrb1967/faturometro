@@ -685,6 +685,7 @@ export const t = {
     createAccount: 'Criar conta',
     startGuest: 'Começar sem conta',
     continueGuest: 'Continuar sem conta',
+    openApp: 'Abrir a app',
     howItWorksLink: 'Como funciona',
     hero: {
       title: 'Quanto custa a tua casa, fatura a fatura.',

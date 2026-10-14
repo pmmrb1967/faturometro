@@ -2,21 +2,25 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { InstallButton } from '../components/InstallButton';
 import { LegalFooter } from '../components/LegalFooter';
-import { createGuest, openGuest } from '../features/auth/accounts';
+import { createGuest, listAccountEmails, openGuest } from '../features/auth/accounts';
 import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
+import { landingAction } from './landing-action';
 import { QrSlip } from './QrSlip';
 import './landing.css';
 
 const copy = t.landing;
 
 export function Landing() {
-  const { signIn } = useSession();
+  const { session, signIn } = useSession();
   const navigate = useNavigate();
-  const [hasGuest, setHasGuest] = useState(false);
+  const [profiles, setProfiles] = useState({ hasGuest: false, accounts: 0 });
   useEffect(() => {
-    void openGuest().then((guest) => setHasGuest(guest !== null));
+    void Promise.all([openGuest(), listAccountEmails()]).then(([guest, emails]) =>
+      setProfiles({ hasGuest: guest !== null, accounts: emails.length }),
+    );
   }, []);
+  const action = landingAction({ signedIn: session !== null, ...profiles });
 
   async function startGuest() {
     signIn(await createGuest());
@@ -45,16 +49,30 @@ export function Landing() {
             <h1>{copy.hero.title}</h1>
             <p className="hero-lead">{copy.hero.lead}</p>
             <div className="hero-actions">
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={() => void startGuest()}
-              >
-                {hasGuest ? copy.continueGuest : copy.startGuest}
-              </button>
-              <Link to="/criar-conta" className="button button-quiet">
-                {copy.createAccount}
-              </Link>
+              {action === 'open' && (
+                <Link to="/app" className="button button-primary">
+                  {copy.openApp}
+                </Link>
+              )}
+              {action === 'signIn' && (
+                <Link to="/entrar" className="button button-primary">
+                  {copy.signIn}
+                </Link>
+              )}
+              {(action === 'startGuest' || action === 'continueGuest') && (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  onClick={() => void startGuest()}
+                >
+                  {action === 'continueGuest' ? copy.continueGuest : copy.startGuest}
+                </button>
+              )}
+              {action !== 'open' && (
+                <Link to="/criar-conta" className="button button-quiet">
+                  {copy.createAccount}
+                </Link>
+              )}
               <a href="#como-funciona" className="button button-quiet">
                 {copy.howItWorksLink}
               </a>

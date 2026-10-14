@@ -12,6 +12,8 @@ export function RegisterPage() {
   const { session, signIn, updateProfile } = useSession();
   // From the guest, the account keeps its data (same key, now protected by the password).
   const converting = session !== null && isGuest(session.profile);
+  // The session stops being a guest as soon as it converts; remember it for the last step.
+  const [converted, setConverted] = useState(false);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,6 +37,8 @@ export function RegisterPage() {
           email,
           password,
         );
+        updateProfile(profile);
+        setConverted(true);
         setCreated({ account: { profile, masterKey: session.masterKey }, recoveryKey });
       } else {
         const { recoveryKey, ...account } = await createAccount(email, password);
@@ -57,8 +61,7 @@ export function RegisterPage() {
         email={created.account.profile.email}
         recoveryKey={created.recoveryKey}
         onDone={() => {
-          if (converting) updateProfile(created.account.profile);
-          else signIn(created.account);
+          if (!converted) signIn(created.account);
           navigate('/app', { replace: true });
         }}
       />
