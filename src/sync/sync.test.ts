@@ -420,6 +420,26 @@ describe('original files', () => {
     expect(chunks.n).toBe(1);
   });
 
+  it('keeps the original on the server when the announcement cannot be sent', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    let stateA = await setFileSync(a.profile, true);
+    stateA = (await runSync({ ...a, profile: stateA, api })).profile;
+    await a.repos.invoices.put(invoice('old', '2020-01-10'));
+
+    const failing = new SyncApi(SERVER, async (input, init) => {
+      const request = new Request(input, init);
+      if (request.method === 'POST' && (await request.clone().text()).includes('"documents"')) {
+        return new Response('down', { status: 503 });
+      }
+      return serverHandle(request);
+    });
+    await expect(runSync({ ...a, profile: stateA, api: failing })).rejects.toBeDefined();
+    const chunks = fileDb.prepare('SELECT COUNT(*) AS n FROM chunks').get() as { n: number };
+    expect(chunks.n).toBe(1);
+    expect(await a.repos.documents.stateOf('old')).toBe('uploaded');
+  });
+
   it('administrators keep every original on the server', async () => {
     serverWith({ adminEmails: ['ana@example.pt'] });
     const a = await deviceA();

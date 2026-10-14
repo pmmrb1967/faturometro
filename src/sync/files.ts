@@ -101,8 +101,9 @@ async function pruneOld(
     );
     if (newest >= cutoff) continue;
     const record = await repos.documents.prunedRecord(id);
-    await api.deleteFile(token, id);
+    // Announce first: a file left on the server is harmless, a silent removal is not.
     await api.push(token, [{ table: 'documents', ...record }]);
+    await api.deleteFile(token, id);
     await repos.documents.markPruned(id);
     pruned++;
   }
