@@ -85,15 +85,34 @@ export class SyncApi {
     authKey: string;
     wrappedKey: ServerWrappedKey;
   }) {
-    return this.call('POST', '/v1/register', z.object({ token: z.string() }), { body: input });
+    return this.call(
+      'POST',
+      '/v1/register',
+      z.object({ token: z.string(), accountId: z.string() }),
+      { body: input },
+    );
   }
 
   login(email: string, authKey: string) {
     return this.call(
       'POST',
       '/v1/login',
-      z.object({ token: z.string(), wrappedKey: wrappedSchema }),
+      z.object({ token: z.string(), wrappedKey: wrappedSchema, accountId: z.string() }),
       { body: { email, authKey } },
+    );
+  }
+
+  /** The server account's random id (older profiles did not store it). */
+  account(token: string) {
+    return this.call('GET', '/v1/account', z.object({ id: z.string() }), { token });
+  }
+
+  /** Whether the account was removed for inactivity (asked after a 401; no token needed). */
+  removed(accountId: string) {
+    return this.call(
+      'GET',
+      `/v1/removed/${encodeURIComponent(accountId)}`,
+      z.object({ removed: z.boolean() }),
     );
   }
 
@@ -122,9 +141,16 @@ export class SyncApi {
   }
 
   fileUsage(token: string) {
-    return this.call('GET', '/v1/files/usage', z.object({ used: z.number(), quota: z.number() }), {
-      token,
-    });
+    return this.call(
+      'GET',
+      '/v1/files/usage',
+      z.object({ used: z.number(), quota: z.number(), keepMonths: z.number().nullable() }),
+      { token },
+    );
+  }
+
+  deleteFile(token: string, fileId: string) {
+    return this.call('DELETE', `/v1/files/${encodeURIComponent(fileId)}`, null, { token });
   }
 
   /** Uploads one chunk of base64 ciphertext (text body, no JSON: cheaper for the server). */

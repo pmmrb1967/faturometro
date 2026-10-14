@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../server/src/app';
+import { runMaintenance } from '../../server/src/maintenance';
 import { memorySql } from '../../server/test/sqlite';
-import { profilesDb } from '../db/profiles';
+import { profilesDb, type ProfileSync } from '../db/profiles';
 import { createRepositories } from '../db/repositories';
 import { ProfileDb } from '../db/schema';
 import { SyncApi } from './api';
@@ -25,22 +26,31 @@ const SERVER = 'https://sync.test';
 
 let api: SyncApi;
 let serverDb: ReturnType<typeof memorySql>['db'];
+let serverSql: ReturnType<typeof memorySql>['sql'];
 let fileDb: ReturnType<typeof memorySql>['db'];
+/** The server's request handler (lets a test wrap it, e.g. to make downloads fail). */
+let serverHandle: (request: Request) => Promise<Response>;
 
-beforeEach(async () => {
-  await profilesDb.profiles.clear();
+function serverWith(options: Partial<Parameters<typeof createApp>[0]>) {
   const memory = memorySql();
   serverDb = memory.db;
-  const files = memorySql('migrations-files/0001_files.sql');
+  serverSql = memory.sql;
+  const files = memorySql('migrations-files');
   fileDb = files.db;
-  const handle = createApp({
+  serverHandle = createApp({
     sql: memory.sql,
     files: files.sql,
     preloginSecret: 'secret',
     allowedOrigins: [],
     minIterations: ITERATIONS,
+    ...options,
   });
-  api = new SyncApi(SERVER, (input, init) => handle(new Request(input, init)));
+  api = new SyncApi(SERVER, (input, init) => serverHandle(new Request(input, init)));
+}
+
+beforeEach(async () => {
+  await profilesDb.profiles.clear();
+  serverWith({});
 });
 
 async function deviceA() {
@@ -301,17 +311,7 @@ describe('original files', () => {
   });
 
   it('keeps the file local when the server is full, and keeps syncing records', async () => {
-    const memory = memorySql();
-    const files = memorySql('migrations-files/0001_files.sql');
-    const handle = createApp({
-      sql: memory.sql,
-      files: files.sql,
-      fileQuotaBytes: 10,
-      preloginSecret: 'secret',
-      allowedOrigins: [],
-      minIterations: ITERATIONS,
-    });
-    api = new SyncApi(SERVER, (input, init) => handle(new Request(input, init)));
+    serverWith({ fileQuotaBytes: 10 });
     const a = await deviceA();
     await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
     await a.repos.contracts.put(contract('c1', 'Luz'));
@@ -324,5 +324,50 @@ describe('original files', () => {
   it('splits contents into chunks', () => {
     expect(chunk('abcdefgh', 4)).toEqual(['abcd', 'efgh']);
     expect(chunk('abcdefghij', 4)).toEqual(['abcd', 'efgh', 'ij']);
+  });
+});
+
+describe('free plan limits', () => {
+  it('stores the account id when sync is turned on', async () => {
+    const a = await deviceA();
+    expect(a.profile.sync?.accountId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('fills in the account id of older profiles on the next sync', async () => {
+    const a = await deviceA();
+    const sync = { ...a.profile.sync } as ProfileSync;
+    delete sync.accountId;
+    const { profile } = await runSync({ ...a, profile: { ...a.profile, sync }, api });
+    expect(profile.sync?.accountId).toBe(a.profile.sync?.accountId);
+  });
+
+  it('says when the server is full for new accounts', async () => {
+    serverWith({ maxAccounts: 0 });
+    await expect(deviceA()).rejects.toMatchObject({ code: 'capacity' });
+  });
+
+  it('says when the records quota is reached', async () => {
+    serverWith({ recordQuotaBytes: 10 });
+    const a = await deviceA();
+    await a.repos.contracts.put(contract('c1', 'Luz'));
+    await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'records_full' });
+  });
+
+  it('turns sync off, keeping the local data, when the account was removed', async () => {
+    const a = await deviceA();
+    await a.repos.contracts.put(contract('c1', 'Luz da casa'));
+    await runSync({ ...a, api });
+    await runMaintenance({ sql: serverSql, now: () => new Date(Date.now() + 400 * 86_400_000) });
+
+    await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'account_removed' });
+    expect((await profilesDb.profiles.get(a.profile.id))?.sync).toBeUndefined();
+    expect((await a.repos.contracts.get('c1'))?.label).toBe('Luz da casa');
+  });
+
+  it('still asks for the password when the session ended for another reason', async () => {
+    const a = await deviceA();
+    serverDb.prepare('DELETE FROM sessions').run();
+    await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'session_expired' });
+    expect((await profilesDb.profiles.get(a.profile.id))?.sync).toBeDefined();
   });
 });

@@ -2,7 +2,7 @@
  * Turning sync on and off, signing in on a new device, and running a sync.
  * The password is needed only to derive the sync keys; it is never stored.
  */
-import { normalizeEmail, profilesDb, type Profile } from '../db/profiles';
+import { normalizeEmail, profilesDb, type Profile, type ProfileSync } from '../db/profiles';
 import type { Repositories } from '../db/repositories';
 import {
   PBKDF2_ITERATIONS,
@@ -28,7 +28,10 @@ export type SyncErrorCode =
   | 'email_taken_locally'
   | 'offline'
   | 'session_expired'
-  | 'different_account';
+  | 'different_account'
+  | 'capacity'
+  | 'records_full'
+  | 'account_removed';
 
 export class SyncError extends Error {
   readonly code: SyncErrorCode;
@@ -77,8 +80,9 @@ export async function enableSync(input: {
   const iterations = input.iterations ?? PBKDF2_ITERATIONS;
   const keys = await deriveSyncKeys(input.password, salt, iterations);
   let token: string;
+  let accountId: string;
   try {
-    ({ token } = await api.register({
+    ({ token, accountId } = await api.register({
       email: input.profile.email,
       salt,
       iterations,
@@ -86,10 +90,11 @@ export async function enableSync(input: {
       wrappedKey: await wrapForSync(input.profile.wrappedKey, input.masterKey, keys),
     }));
   } catch (error) {
-    fromHttp(error, { 409: 'account_exists' });
+    fromHttp(error, { 409: 'account_exists', 503: 'capacity' });
   }
   return saveSync(input.profile, {
     serverUrl: input.serverUrl,
+    accountId,
     token: await encryptJson(input.masterKey, token),
     lastPulledSeq: 0,
     lastPushedAt: '',
@@ -134,6 +139,7 @@ export async function connectFromServer(input: {
       wrappedKey,
       sync: {
         serverUrl: input.serverUrl,
+        accountId: login.accountId,
         token: await encryptJson(masterKey, login.token),
         lastPulledSeq: 0,
         lastPushedAt: '',
@@ -147,6 +153,16 @@ export async function connectFromServer(input: {
   }
 }
 
+/** After a 401: was the server account removed for inactivity? */
+async function wasRemoved(error: unknown, api: SyncApi, sync: ProfileSync): Promise<boolean> {
+  if (!(error instanceof SyncHttpError) || error.status !== 401 || !sync.accountId) return false;
+  try {
+    return (await api.removed(sync.accountId)).removed;
+  } catch {
+    return false;
+  }
+}
+
 /** Runs one sync and saves the new state on the profile. */
 export async function runSync(input: {
   profile: Profile;
@@ -154,17 +170,24 @@ export async function runSync(input: {
   repos: Repositories;
   api?: SyncApi;
 }): Promise<{ profile: Profile; result: SyncResult; files?: FileSyncResult }> {
-  const sync = input.profile.sync;
-  if (!sync) throw new Error('Sync is not enabled');
+  const current = input.profile.sync;
+  if (!current) throw new Error('Sync is not enabled');
+  let sync: ProfileSync = current;
   const api = input.api ?? new SyncApi(sync.serverUrl);
   const token = (await decryptJson(input.masterKey, sync.token)) as string;
   let result: SyncResult;
   let files: FileSyncResult | undefined;
   try {
+    if (!sync.accountId) sync = { ...sync, accountId: (await api.account(token)).id };
     result = await syncNow(input.repos, api, token, sync);
     if (sync.files) files = await syncFiles(input.repos, api, token, input.masterKey);
   } catch (error) {
-    fromHttp(error, { 401: 'session_expired' });
+    if (await wasRemoved(error, api, sync)) {
+      // Removed for inactivity: the data stays on this device; sync can be turned on again.
+      await saveSync(input.profile, undefined);
+      throw new SyncError('account_removed');
+    }
+    fromHttp(error, { 401: 'session_expired', 507: 'records_full' });
   }
   const profile = await saveSync(input.profile, {
     ...sync,
@@ -186,7 +209,7 @@ export async function fileUsage(input: {
   profile: Profile;
   masterKey: CryptoKey;
   api?: SyncApi;
-}): Promise<{ used: number; quota: number }> {
+}): Promise<{ used: number; quota: number; keepMonths: number | null }> {
   const sync = input.profile.sync;
   if (!sync) throw new Error('Sync is not enabled');
   const api = input.api ?? new SyncApi(sync.serverUrl);
@@ -350,7 +373,11 @@ export async function reconnectSync(input: {
     const updated: Profile = {
       ...input.profile,
       wrappedKey,
-      sync: { ...sync, token: await encryptJson(input.masterKey, login.token) },
+      sync: {
+        ...sync,
+        accountId: login.accountId,
+        token: await encryptJson(input.masterKey, login.token),
+      },
     };
     await profilesDb.profiles.put(updated);
     return updated;

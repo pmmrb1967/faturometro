@@ -13,6 +13,8 @@ export interface Profile {
 
 export interface ProfileSync {
   serverUrl: string;
+  /** Server account id: after a 401, tells a removed account from an ended session. */
+  accountId?: string;
   /** Session token, encrypted with the master key. */
   token: EncryptedBlob;
   /** Last server sequence number received. */
