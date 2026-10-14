@@ -124,6 +124,10 @@ export const t = {
     apply: 'Atualizar',
   },
   signOut: 'Sair',
+  password: {
+    show: 'Mostrar palavra-passe',
+    hide: 'Esconder palavra-passe',
+  },
   adminBadge: 'Administrador',
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   alerts: {
@@ -293,6 +297,9 @@ export const t = {
       intro:
         'Traz para este dispositivo as faturas que já tens sincronizadas. Usa o mesmo email e a mesma palavra-passe.',
       submit: 'Entrar e sincronizar',
+      // The server cannot say which (no account enumeration).
+      wrongCredentials:
+        'Email ou palavra-passe errados, ou esta conta ainda não tem a sincronização ligada. Liga-a primeiro no outro dispositivo (Definições).',
       working: 'A preparar…',
     },
     errors: {

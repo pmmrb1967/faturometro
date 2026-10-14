@@ -34,7 +34,11 @@ export function ConnectPage() {
       navigate('/app', { replace: true });
     } catch (caught) {
       const code = caught instanceof SyncError ? caught.code : 'unexpected';
-      setError((copy.errors as Record<string, string>)[code] ?? copy.errors.unexpected);
+      setError(
+        code === 'wrong_credentials'
+          ? copy.connect.wrongCredentials
+          : ((copy.errors as Record<string, string>)[code] ?? copy.errors.unexpected),
+      );
       setBusy(false);
     }
   }

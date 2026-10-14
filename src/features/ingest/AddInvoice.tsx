@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { countSharedFiles, takeSharedFile } from '../../app/shared-files';
+import { PasswordInput } from '../../components/Field';
 import { invoiceSource } from '../../ai/document';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -211,9 +212,8 @@ function PasswordForm({
         {reason === 'incorrect' ? copy.password.incorrect : copy.password.needed}
       </p>
       <label htmlFor="pdf-password">{copy.password.label}</label>
-      <input
+      <PasswordInput
         id="pdf-password"
-        type="password"
         autoComplete="off"
         value={password}
         onChange={(event) => setPassword(event.target.value)}

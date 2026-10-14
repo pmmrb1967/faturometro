@@ -82,7 +82,8 @@
   font-weight: 700;
 }
 
-.ingest-password input[type='password'] {
+/* Typed value can be shown (PasswordInput), so not only [type='password']. */
+.ingest-password .password-input input {
   min-height: 44px;
   padding: 8px 12px;
   font: inherit;
