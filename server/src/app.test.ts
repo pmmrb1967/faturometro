@@ -375,10 +375,33 @@ describe('files', () => {
     expect((await call('GET', '/v1/files/usage', undefined, token)).body).toEqual({
       used: 8,
       quota: 40,
+      keepMonths: 12,
     });
 
     expect((await raw('DELETE', '/v1/files/f1', token)).status).toBe(204);
     expect((await raw('GET', '/v1/files/f1/0', token)).status).toBe(404);
+  });
+
+  it('gives administrators their own quota and no originals window', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      files: memorySql('migrations-files').sql,
+      fileQuotaBytes: 4,
+      adminFileQuotaBytes: 40,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const admin = await register('admin@example.pt');
+    const ana = await register('ana@example.pt');
+    expect((await raw('PUT', '/v1/files/a/0?total=1', admin, 'QUJDREVG')).status).toBe(204);
+    expect((await raw('PUT', '/v1/files/a/0?total=1', ana, 'QUJDREVG')).status).toBe(507);
+    expect((await call('GET', '/v1/files/usage', undefined, admin)).body).toEqual({
+      used: 8,
+      quota: 40,
+      keepMonths: null,
+    });
   });
 
   it('refuses what is not base64 and malformed chunk numbers', async () => {
@@ -419,5 +442,29 @@ describe('files', () => {
     });
     const token = await register();
     expect((await raw('GET', '/v1/files/usage', token)).status).toBe(404);
+  });
+});
+
+describe('records quota', () => {
+  it('refuses records beyond the account quota with 507', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      recordQuotaBytes: 300,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const token = await register();
+    const first = await call(
+      'POST',
+      '/v1/changes',
+      { records: [record('r1', '2026-10-13T10:00:00Z')] },
+      token,
+    );
+    expect(first.status).toBe(200);
+    const big = record('r2', '2026-10-13T10:01:00Z', 'QUJD'.repeat(100));
+    const second = await call('POST', '/v1/changes', { records: [big] }, token);
+    expect(second.status).toBe(507);
+    expect(second.body).toEqual({ error: 'Record storage full' });
   });
 });

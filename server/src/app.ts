@@ -34,6 +34,14 @@ export interface AppConfig {
   fileQuotaBytes?: number;
   /** Cap for all accounts together (the free D1 database holds 500 MB). */
   filesTotalBytes?: number;
+  /** Emails (normalized) of administrator accounts: own quota, no originals window, never removed. */
+  adminEmails?: string[];
+  /** Per-account file storage of administrators, in base64 characters. */
+  adminFileQuotaBytes?: number;
+  /** Months of originals kept on the server, applied by the app (administrators: no limit). */
+  keepMonths?: number;
+  /** Per-account size of the encrypted records, in characters. */
+  recordQuotaBytes?: number;
   /** Minimum client KDF iterations accepted (tests use fewer). */
   minIterations?: number;
 }
@@ -46,7 +54,10 @@ const MAX_ENC_LENGTH = 1_000_000;
 /** One push becomes one SQL parameter; D1 strings are limited to 2 MB. */
 export const MAX_BATCH_LENGTH = 1_900_000;
 export const DEFAULT_ITERATIONS = 600_000;
-export const FILE_QUOTA_BYTES = 50_000_000;
+export const FILE_QUOTA_BYTES = 30_000_000;
+export const ADMIN_FILE_QUOTA_BYTES = 100_000_000;
+export const KEEP_MONTHS = 12;
+export const RECORD_QUOTA_BYTES = 5_000_000;
 export const FILES_TOTAL_BYTES = 450_000_000;
 /** Chunk of base64 ciphertext (D1 values are limited to 2 MB). */
 export const MAX_CHUNK_LENGTH = 1_000_000;
@@ -156,6 +167,11 @@ export function createApp(config: AppConfig) {
   const { sql } = config;
   const now = () => (config.now ?? (() => new Date()))();
   const today = () => now().toISOString().slice(0, 10);
+  const isAdmin = (address: string) => (config.adminEmails ?? []).includes(address);
+  const fileQuota = (user: UserRow) =>
+    isAdmin(user.email)
+      ? (config.adminFileQuotaBytes ?? ADMIN_FILE_QUOTA_BYTES)
+      : (config.fileQuotaBytes ?? FILE_QUOTA_BYTES);
 
   async function body<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
     let json: unknown;
@@ -336,6 +352,10 @@ export function createApp(config: AppConfig) {
         })),
       );
       if (batch.length > MAX_BATCH_LENGTH) throw new HttpError(413, 'Batch too large');
+      // Grows by each push (an overestimate when records are replaced); recomputed daily.
+      if (user.records_bytes + batch.length > (config.recordQuotaBytes ?? RECORD_QUOTA_BYTES)) {
+        throw new HttpError(507, 'Record storage full');
+      }
       await sql.run(
         `INSERT INTO records (user_id, id, tbl, updated_at, deleted_at, enc, seq)
          SELECT ?1, j.id, j.tbl, j.updated_at, j.deleted_at, j.enc, ?2 + ROW_NUMBER() OVER (ORDER BY j.pos)
@@ -360,7 +380,12 @@ export function createApp(config: AppConfig) {
             user.id,
           )
         )?.seq ?? user.seq;
-      await sql.run('UPDATE users SET seq = ? WHERE id = ?', Math.max(latest, user.seq), user.id);
+      await sql.run(
+        'UPDATE users SET seq = ?, records_bytes = records_bytes + ? WHERE id = ?',
+        Math.max(latest, user.seq),
+        batch.length,
+        user.id,
+      );
       return json({ latest: Math.max(latest, user.seq) });
     }
 
@@ -392,7 +417,11 @@ export function createApp(config: AppConfig) {
           'SELECT SUM(size) AS used FROM chunks WHERE user_id = ?',
           user.id,
         );
-        return json({ used: row?.used ?? 0, quota: config.fileQuotaBytes ?? FILE_QUOTA_BYTES });
+        return json({
+          used: row?.used ?? 0,
+          quota: fileQuota(user),
+          keepMonths: isAdmin(user.email) ? null : (config.keepMonths ?? KEEP_MONTHS),
+        });
       }
       const [, fileId, chunk] = fileRoute ?? [];
 
@@ -414,7 +443,7 @@ export function createApp(config: AppConfig) {
           n,
         );
         if (
-          (usage?.mine ?? 0) + data.length > (config.fileQuotaBytes ?? FILE_QUOTA_BYTES) ||
+          (usage?.mine ?? 0) + data.length > fileQuota(user) ||
           (usage?.everyone ?? 0) + data.length > (config.filesTotalBytes ?? FILES_TOTAL_BYTES)
         ) {
           throw new HttpError(507, 'File storage full');
