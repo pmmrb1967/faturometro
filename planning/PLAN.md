@@ -514,7 +514,30 @@ Opcional e desligada por defeito.
 - [x] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
 - [x] Gás no comparador e total luz + gás (`docs/superpowers/specs/2026-10-14-gas-comparator-design.md`)
 - [x] Telecom: comparar no COM.escolha da ANACOM, com a pesquisa preenchida (serviços lidos da fatura, limite = média do que pagas); verificação semanal das ligações no PC do responsável (`docs/anacom-comescolha.md`)
-- [ ] Seguros (P3)
+- [ ] Seguros (P3) — ver as ondas abaixo e a secção 15
+
+### Próximas ações (seleção de 2026-10-14)
+
+Escolhidas depois de comparar a app com os simuladores de energia (ERSE, DECO, Selectra, ComparaJá, Poupa Energia), com o COM.escolha, com as apps dos fornecedores e com as apps de finanças. O que distingue o Faturómetro: acompanha ao longo do tempo (não é uma consulta pontual), usa o consumo real, é neutro (sem comissões, código aberto) e os dados ficam no dispositivo. As ações abaixo reforçam isto. As que dependem de dados de referência ficam paradas até o utilizador os dar (regra 6 do `CLAUDE.md`).
+
+**Onda 1 — assentam no que já existe**
+- [ ] Auditoria da fatura ("esta fatura está certa?"): preços cobrados contra os do contrato (`contract-prices.ts`); aumento durante a fidelização; desconto que deixou de aparecer; mensalidade diferente da contratada. *Dados a confirmar:* em que casos um aumento durante a fidelização é permitido
+- [ ] Acertos de consumos antigos: assinalar faturas que cobram períodos antigos e explicar o direito do consumidor. *Dados a confirmar:* prazos de prescrição e caducidade da lei dos serviços públicos essenciais
+- [ ] Calendário sem servidor: exportar `.ics` com fim de fidelização, renovação de seguros e datas-limite de pagamento, com lembretes, para o calendário do telemóvel (compensa a falta de notificações push sem ligações novas)
+- [ ] Cartas sem IA (regra 4): modelos preenchidos com os dados do contrato (renegociação, denúncia do contrato, reclamação de leitura estimada, contestação de aumento) e ligações ao Livro de Reclamações, à ERSE e à ANACOM. A IA continua a poder personalizar
+
+**Onda 2 — diferenciação técnica**
+- [ ] "Vale a pena sair já?": custo de sair antes do fim da fidelização contra a poupança estimada. *Dados a confirmar:* regras de cálculo dos encargos de rescisão antecipada nas telecomunicações
+- [ ] Consumos da E-Redes: importar no dispositivo o ficheiro de leituras de 15 minutos que o utilizador descarrega do Balcão Digital → bi-horário e tri-horário com o perfil real, aviso de potência contratada acima do necessário, e mais tarde ofertas indexadas com preços OMIE num ficheiro estático (como as ofertas ERSE). *Dados a confirmar:* formato do ficheiro (amostra real) e fonte/licença dos preços OMIE
+- [ ] Visão anual da casa: custo por mês e por setor, previsão dos próximos 12 meses e "quanto já poupaste" depois de uma mudança registada na app
+- [ ] Ingestão por email (secção 12) — já na lista acima
+
+**Onda 3 — novos setores e apoios**
+- [ ] Seguros, versão mínima: apólice como contrato (seguradora, ramo, prémio, data de renovação, capitais e franquias principais), histórico de prémios, alertas de renovação e de aumento, entrada na exportação `.ics`. Sem lista de ofertas (não há fonte pública) e sem afiliados. *Dados a confirmar:* se os recibos de prémio têm QR fiscal (regra 5) — precisa de amostras reais
+- [ ] Seguros, comparar propostas: o utilizador carrega propostas recebidas e a app compara-as com a apólice cobertura a cobertura (o que falta, o que é inferior, diferença de preço); kit de simulação com o resumo das coberturas para usar nos simuladores externos
+- [ ] Tarifa social (luz, gás, água, internet): verificar se o agregado pode ter direito e explicar como pedir. *Dados a confirmar:* critérios oficiais em vigor
+- [ ] Água: comparar o tarifário do município com outros. *Dados a confirmar:* que dados a ERSAR publica e com que licença
+- [ ] Layouts P2 — dependem de amostras reais (ou de contribuições de layout)
 
 ## 14. Estrutura de pastas
 
@@ -670,3 +693,4 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-14 | Contribuir com layout: estrutura anonimizada no browser (números ao acaso, vocabulário de faturas, pré-visualização com tapar/destapar, dados pessoais sempre tapados), cifrada com a chave pública do responsável e enviada ao Worker (30/dia, 20 MB, 90 dias); oferecida em layouts desconhecidos e em validações falhadas |
 | 2026-10-14 | Telecom sem lista de ofertas própria: não há dados abertos da ANACOM e os comparadores privados não têm API. A app abre o COM.escolha com a pesquisa preenchida (sem pedidos à ANACOM); parâmetros em `src/data/comescolha.json`, lidos dos formulários e testados todas as semanas (corrige sozinho se só mudarem nomes ou valores; abre issue se um filtro deixar de funcionar) |
 | 2026-10-14 | Verificação do COM.escolha no PC do responsável (Agendador de Tarefas): a ANACOM bloqueia os runners do GitHub, e a app não a pode fazer (sem CORS, `X-Frame-Options`, regra 1). Grava a data da verificação na configuração e publica (uma vez por semana); o administrador vê um aviso no Início ao fim de 14 dias sem verificação |
+| 2026-10-14 | Próximas ações em três ondas (secção 13, "Próximas ações"): primeiro auditoria da fatura, calendário `.ics`, cartas sem IA; depois saída antecipada, consumos E-Redes, visão anual; seguros só depois e em versão mínima (apólice como contrato, renovações, comparar propostas recebidas), porque não há fonte pública de ofertas e os prémios dependem do perfil de cada pessoa |
