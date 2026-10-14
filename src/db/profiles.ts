@@ -1,12 +1,19 @@
 import Dexie, { type Table } from 'dexie';
 import type { EncryptedBlob, WrappedMasterKey } from '../lib/crypto';
 
-/** One local account. Only the email (to pick the profile) and the wrapped key are in clear. */
+/**
+ * One local profile: an account (email + wrapped key, the only fields in clear) or the
+ * guest (no password: the raw master key is stored, unprotected).
+ */
 export interface Profile {
   id: string;
+  /** Empty for the guest (the unique index then allows only one guest). */
   email: string;
   createdAt: string;
-  wrappedKey: WrappedMasterKey;
+  /** Accounts: the master key wrapped by the password and the recovery key. */
+  wrappedKey?: WrappedMasterKey;
+  /** Guest only: the raw master key in base64. */
+  guestKey?: string;
   /** Present when this profile syncs with a server (device-local state). */
   sync?: ProfileSync;
 }
@@ -41,4 +48,16 @@ export const profilesDb = new ProfilesDb();
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+export const GUEST_EMAIL = '';
+
+export function isGuest(profile: Profile): boolean {
+  return profile.guestKey !== undefined;
+}
+
+/** The password-wrapped key of an account; a guest has none (sync never runs for it). */
+export function wrappedKeyOf(profile: Profile): WrappedMasterKey {
+  if (!profile.wrappedKey) throw new Error('Profile has no password');
+  return profile.wrappedKey;
 }

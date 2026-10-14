@@ -2,7 +2,13 @@
  * Turning sync on and off, signing in on a new device, and running a sync.
  * The password is needed only to derive the sync keys; it is never stored.
  */
-import { normalizeEmail, profilesDb, type Profile, type ProfileSync } from '../db/profiles';
+import {
+  normalizeEmail,
+  profilesDb,
+  wrappedKeyOf,
+  type Profile,
+  type ProfileSync,
+} from '../db/profiles';
 import type { Repositories } from '../db/repositories';
 import {
   PBKDF2_ITERATIONS,
@@ -15,6 +21,7 @@ import {
   unwrapFromSync,
   wrapForSync,
   WrongSecretError,
+  type WrappedMasterKey,
 } from '../lib/crypto';
 import { SyncApi, SyncHttpError } from './api';
 import { syncNow, type SyncResult } from './engine';
@@ -71,7 +78,7 @@ export async function enableSync(input: {
 }): Promise<Profile> {
   const api = input.api ?? new SyncApi(input.serverUrl);
   try {
-    await unlockWithPassword(input.profile.wrappedKey, input.password);
+    await unlockWithPassword(wrappedKeyOf(input.profile), input.password);
   } catch (error) {
     if (error instanceof WrongSecretError) throw new SyncError('wrong_password');
     throw error;
@@ -87,7 +94,7 @@ export async function enableSync(input: {
       salt,
       iterations,
       authKey: keys.authKeyHex,
-      wrappedKey: await wrapForSync(input.profile.wrappedKey, input.masterKey, keys),
+      wrappedKey: await wrapForSync(wrappedKeyOf(input.profile), input.masterKey, keys),
     }));
   } catch (error) {
     fromHttp(error, { 409: 'account_exists', 503: 'capacity' });
@@ -251,7 +258,7 @@ async function updateServerPassword(input: {
   profile: Profile;
   masterKey: CryptoKey;
   newPassword: string;
-  localWrappedKey: Profile['wrappedKey'];
+  localWrappedKey: WrappedMasterKey;
   api?: SyncApi;
   iterations?: number;
 }): Promise<NonNullable<Profile['sync']>> {
@@ -288,14 +295,14 @@ export async function changeAccountPassword(input: {
   iterations?: number;
 }): Promise<Profile> {
   try {
-    await unlockWithPassword(input.profile.wrappedKey, input.currentPassword);
+    await unlockWithPassword(wrappedKeyOf(input.profile), input.currentPassword);
   } catch (error) {
     if (error instanceof WrongSecretError) throw new SyncError('wrong_password');
     throw error;
   }
   const iterations = input.iterations ?? PBKDF2_ITERATIONS;
   const wrappedKey = await rewrapWithPassword(
-    input.profile.wrappedKey,
+    wrappedKeyOf(input.profile),
     input.masterKey,
     input.newPassword,
     iterations,
@@ -327,7 +334,7 @@ export async function syncPasswordAfterRecovery(input: {
   try {
     const sync = await updateServerPassword({
       ...input,
-      localWrappedKey: input.profile.wrappedKey,
+      localWrappedKey: wrappedKeyOf(input.profile),
     });
     return { profile: await saveSync(input.profile, sync), serverUpdated: true };
   } catch {
@@ -367,7 +374,7 @@ export async function reconnectSync(input: {
     const serverKey = await unwrapFromSync(login.wrappedKey.byPassword, keys);
     if (!(await sameKey(serverKey, input.masterKey))) throw new SyncError('different_account');
     const wrappedKey = await rewrapWithPassword(
-      input.profile.wrappedKey,
+      wrappedKeyOf(input.profile),
       input.masterKey,
       input.password,
       input.localIterations ?? PBKDF2_ITERATIONS,

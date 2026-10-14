@@ -1,11 +1,22 @@
-import { normalizeEmail, profilesDb, type Profile } from '../../db/profiles';
+import {
+  GUEST_EMAIL,
+  isGuest,
+  normalizeEmail,
+  profilesDb,
+  wrappedKeyOf,
+  type Profile,
+} from '../../db/profiles';
 import {
   PBKDF2_ITERATIONS,
   WrongSecretError,
   createAccountKeys,
+  exportMasterKey,
+  generateMasterKey,
+  importMasterKey,
   rewrapWithPassword,
   unlockWithPassword,
   unlockWithRecoveryKey,
+  wrapMasterKey,
 } from '../../lib/crypto';
 
 export type AccountErrorCode = 'email_taken' | 'not_found' | 'wrong_secret';
@@ -47,7 +58,7 @@ export async function createAccount(
 
 async function findProfile(email: string): Promise<Profile> {
   const profile = await profilesDb.profiles.where('email').equals(normalizeEmail(email)).first();
-  if (!profile) throw new AccountError('not_found');
+  if (!profile || isGuest(profile)) throw new AccountError('not_found');
   return profile;
 }
 
@@ -62,7 +73,7 @@ async function guard<T>(promise: Promise<T>): Promise<T> {
 
 export async function unlockAccount(email: string, password: string): Promise<UnlockedAccount> {
   const profile = await findProfile(email);
-  const masterKey = await guard(unlockWithPassword(profile.wrappedKey, password));
+  const masterKey = await guard(unlockWithPassword(wrappedKeyOf(profile), password));
   return { profile, masterKey };
 }
 
@@ -74,7 +85,7 @@ export async function recoverAccount(
   iterations = PBKDF2_ITERATIONS,
 ): Promise<UnlockedAccount> {
   const profile = await findProfile(email);
-  const masterKey = await guard(unlockWithRecoveryKey(profile.wrappedKey, recoveryKey));
+  const masterKey = await guard(unlockWithRecoveryKey(wrappedKeyOf(profile), recoveryKey));
   return { profile: await savePassword(profile, masterKey, newPassword, iterations), masterKey };
 }
 
@@ -84,7 +95,7 @@ export async function changePassword(
   newPassword: string,
   iterations = PBKDF2_ITERATIONS,
 ): Promise<Profile> {
-  await guard(unlockWithPassword(account.profile.wrappedKey, currentPassword));
+  await guard(unlockWithPassword(wrappedKeyOf(account.profile), currentPassword));
   return savePassword(account.profile, account.masterKey, newPassword, iterations);
 }
 
@@ -95,7 +106,7 @@ async function savePassword(
   iterations: number,
 ): Promise<Profile> {
   const wrappedKey = await rewrapWithPassword(
-    profile.wrappedKey,
+    wrappedKeyOf(profile),
     masterKey,
     newPassword,
     iterations,
@@ -106,5 +117,53 @@ async function savePassword(
 }
 
 export async function listAccountEmails(): Promise<string[]> {
-  return (await profilesDb.profiles.toArray()).map((profile) => profile.email).sort();
+  return (await profilesDb.profiles.toArray())
+    .filter((profile) => !isGuest(profile))
+    .map((profile) => profile.email)
+    .sort();
+}
+
+async function findGuest(): Promise<Profile | undefined> {
+  return profilesDb.profiles.where('email').equals(GUEST_EMAIL).first();
+}
+
+export async function openGuest(): Promise<UnlockedAccount | null> {
+  const profile = await findGuest();
+  if (!profile?.guestKey) return null;
+  return { profile, masterKey: await importMasterKey(profile.guestKey) };
+}
+
+/** The profile without an account; returns the existing one if there is one. */
+export async function createGuest(): Promise<UnlockedAccount> {
+  const existing = await openGuest();
+  if (existing) return existing;
+  const masterKey = await generateMasterKey();
+  const profile: Profile = {
+    id: crypto.randomUUID(),
+    email: GUEST_EMAIL,
+    createdAt: new Date().toISOString(),
+    guestKey: await exportMasterKey(masterKey),
+  };
+  await profilesDb.profiles.add(profile);
+  return { profile, masterKey };
+}
+
+/** Turns the guest into an account: same master key and data, now wrapped by a password. */
+export async function convertGuest(
+  account: UnlockedAccount,
+  email: string,
+  password: string,
+  iterations = PBKDF2_ITERATIONS,
+): Promise<{ profile: Profile; recoveryKey: string }> {
+  const normalized = normalizeEmail(email);
+  if (await profilesDb.profiles.where('email').equals(normalized).count()) {
+    throw new AccountError('email_taken');
+  }
+  const { wrapped, recoveryKey } = await wrapMasterKey(account.masterKey, password, iterations);
+  const { id, createdAt, sync } = account.profile;
+  const profile: Profile = { id, email: normalized, createdAt, wrappedKey: wrapped };
+  if (sync) profile.sync = sync;
+  // One write: the profile is either still the guest or fully an account.
+  await profilesDb.profiles.put(profile);
+  return { profile, recoveryKey };
 }

@@ -5,8 +5,11 @@ import { decryptJson, encryptJson } from '../../lib/crypto';
 import {
   AccountError,
   changePassword,
+  convertGuest,
   createAccount,
+  createGuest,
   listAccountEmails,
+  openGuest,
   recoverAccount,
   unlockAccount,
 } from './accounts';
@@ -71,5 +74,56 @@ describe('local accounts', () => {
     await createAccount('rui@example.pt', 'b', ITERATIONS);
     await expectCode(unlockAccount('rui@example.pt', 'a'), 'wrong_secret');
     expect(await listAccountEmails()).toEqual(['ana@example.pt', 'rui@example.pt']);
+  });
+});
+
+describe('guest profile', () => {
+  it('creates one guest and opens it again with the same key', async () => {
+    const guest = await createGuest();
+    const blob = await encryptJson(guest.masterKey, 'fatura');
+    expect(guest.profile.email).toBe('');
+    expect((await createGuest()).profile.id).toBe(guest.profile.id);
+    const opened = await openGuest();
+    expect(await decryptJson(opened!.masterKey, blob)).toBe('fatura');
+    expect(await listAccountEmails()).toEqual([]);
+  });
+
+  it('openGuest is null without a guest', async () => {
+    expect(await openGuest()).toBeNull();
+  });
+
+  it('converts a guest: same data, password and recovery key open it, raw key gone', async () => {
+    const guest = await createGuest();
+    const blob = await encryptJson(guest.masterKey, 'antes');
+    const { profile, recoveryKey } = await convertGuest(
+      guest,
+      ' Ana@Example.PT ',
+      'segredo-longo',
+      ITERATIONS,
+    );
+    expect(profile.id).toBe(guest.profile.id);
+    expect(profile.email).toBe('ana@example.pt');
+    expect(profile.guestKey).toBeUndefined();
+    expect((await profilesDb.profiles.get(profile.id))?.guestKey).toBeUndefined();
+    expect(await openGuest()).toBeNull();
+    const unlocked = await unlockAccount('ana@example.pt', 'segredo-longo');
+    expect(await decryptJson(unlocked.masterKey, blob)).toBe('antes');
+    const recovered = await recoverAccount('ana@example.pt', recoveryKey, 'outra-longa', ITERATIONS);
+    expect(await decryptJson(recovered.masterKey, blob)).toBe('antes');
+  });
+
+  it('refuses an email already used here and keeps the guest', async () => {
+    await createAccount('ana@example.pt', 'segredo-longo', ITERATIONS);
+    const guest = await createGuest();
+    await expectCode(
+      convertGuest(guest, 'ANA@example.pt', 'x-segredo-longo', ITERATIONS),
+      'email_taken',
+    );
+    expect((await openGuest())?.profile.id).toBe(guest.profile.id);
+  });
+
+  it('a guest cannot be opened with a password', async () => {
+    await createGuest();
+    await expectCode(unlockAccount('', 'qualquer'), 'not_found');
   });
 });
