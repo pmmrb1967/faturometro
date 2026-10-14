@@ -1,10 +1,13 @@
 /** Turns the two ERSE CSV tables into the normalized offers file. Pure (tested). */
 import { z } from 'zod';
 import {
+  escalaoSchema,
   offersFileSchema,
   type CyclePrices,
+  type GasPrices,
   type Offer,
   type OffersFile,
+  type RegulatedGas,
 } from '../../src/domain/erse';
 
 export function parseCsv(text: string): Record<string, string>[] {
@@ -22,12 +25,16 @@ export function parseCsv(text: string): Record<string, string>[] {
 const REQUIRED_PRICE_COLUMNS = [
   'COM',
   'Pot_Cont',
+  'Escalao',
+  'ORD',
   'COD_Proposta',
   'Contagem',
   'TF',
   'TV|TVFV|TVP',
   'TVV|TVC',
   'TVVz',
+  'TFGN',
+  'TVGN',
 ];
 const REQUIRED_OFFER_COLUMNS = [
   'COM',
@@ -54,6 +61,12 @@ const REQUIRED_OFFER_COLUMNS = [
   'Desc. TF_ELE (%) - Novo Cliente',
   'Desc. TW_ELE (%) - Novo Cliente',
   'Desc. W_ELE (€/kWh) - Novo Cliente',
+  'ReembTF_GN (%)',
+  'ReembTW_GN (%)',
+  'ReembW_GN (€/kWh)',
+  'Desc. TF_GN (%) - Novo Cliente',
+  'Desc. TW_GN (%) - Novo Cliente',
+  'Desc. W_GN (€/kWh) - Novo Cliente',
 ];
 
 export function assertColumns(
@@ -110,6 +123,35 @@ function cyclePrices(row: Record<string, string>): CyclePrices | null {
   }
 }
 
+type GasByEscalao = Partial<Record<'1' | '2' | '3' | '4', GasPrices>>;
+
+function gasPrices(row: Record<string, string>): GasPrices | null {
+  const fixedPerDay = num(row.TFGN);
+  const perKwh = num(row.TVGN);
+  return fixedPerDay === null || perKwh === null ? null : { fixedPerDay, perKwh };
+}
+
+const gasDiscounts = (row: Record<string, string>, prefix: 'Reemb' | 'Desc.') =>
+  prefix === 'Reemb'
+    ? {
+        fixedTermPct: num(row['ReembTF_GN (%)']) ?? 0,
+        energyPct: num(row['ReembTW_GN (%)']) ?? 0,
+        energyPerKwh: num(row['ReembW_GN (€/kWh)']) ?? 0,
+      }
+    : {
+        fixedTermPct: num(row['Desc. TF_GN (%) - Novo Cliente']) ?? 0,
+        energyPct: num(row['Desc. TW_GN (%) - Novo Cliente']) ?? 0,
+        energyPerKwh: num(row['Desc. W_GN (€/kWh) - Novo Cliente']) ?? 0,
+      };
+
+/** "a.zip" already written in the current format? (Older formats are rewritten.) */
+export function isUpToDate(
+  current: { source?: string; schemaVersion?: number },
+  zipName: string,
+): boolean {
+  return current.source === zipName && current.schemaVersion === 2;
+}
+
 const segmentSchema = z.enum(['Dom', 'Ndom', 'Tod']);
 
 export function normalize(
@@ -133,15 +175,51 @@ export function normalize(
     byOffer.set(id, offer);
   }
 
+  // Gas: rows with an escalão. With an operator (ORD) they are regulated tariffs.
+  const gasByOffer = new Map<string, GasByEscalao>();
+  const regulatedPrices = new Map<string, { ord: string; prices: GasByEscalao }>();
+  for (const row of prices) {
+    const escalao = escalaoSchema.safeParse(row.Escalao?.trim());
+    const values = gasPrices(row);
+    if (!escalao.success || !values) continue;
+    const id = row.COD_Proposta ?? '';
+    const ord = row.ORD?.trim();
+    if (ord) {
+      const entry = regulatedPrices.get(id) ?? { ord, prices: {} };
+      entry.prices[escalao.data] = values;
+      regulatedPrices.set(id, entry);
+    } else {
+      const offer = gasByOffer.get(id) ?? {};
+      offer[escalao.data] = values;
+      gasByOffer.set(id, offer);
+    }
+  }
+  const regulatedGas: RegulatedGas = {};
+
   const offers: Offer[] = [];
   for (const row of conditions) {
     const supply = row.Fornecimento?.trim();
-    if (supply !== 'ELE' && supply !== 'DUAL') continue;
+    if (supply !== 'ELE' && supply !== 'GN' && supply !== 'DUAL') continue;
     const segment = segmentSchema.safeParse(row.Segmento?.trim());
     const id = row.COD_Proposta ?? '';
-    const offerPrices = byOffer.get(id);
     // Households only: offers exclusively for businesses (Ndom) are left out.
-    if (!segment.success || segment.data === 'Ndom' || !offerPrices) continue;
+    if (!segment.success || segment.data === 'Ndom') continue;
+    const regulated = regulatedPrices.get(id);
+    if (regulated) {
+      regulatedGas[regulated.ord] = {
+        offerId: id,
+        name: row.NomeProposta?.trim() ?? id,
+        prices: regulated.prices,
+      };
+      continue;
+    }
+    const offerPrices = byOffer.get(id) ?? {};
+    const offerGasPrices = gasByOffer.get(id) ?? {};
+    // Only offers with the prices their supply needs.
+    const hasElectricity = Object.keys(offerPrices).length > 0;
+    const hasGas = Object.keys(offerGasPrices).length > 0;
+    if ((supply === 'ELE' || supply === 'DUAL') && !hasElectricity) continue;
+    if (supply === 'GN' && !hasGas) continue;
     const [directDebit = false, multibanco = false, cash = false] = bits(row.FiltroPagamento, 3);
     const [electronic = false, paper = false] = bits(row.Filtrofaturacao, 2);
     offers.push({
@@ -190,10 +268,18 @@ export function normalize(
           : {}),
       },
       prices: offerPrices,
+      gasPrices: offerGasPrices,
+      gasDiscounts: gasDiscounts(row, 'Reemb'),
+      gasNewClientDiscounts: gasDiscounts(row, 'Desc.'),
     });
   }
 
-  return offersFileSchema.parse({ schemaVersion: 1, ...meta, offers });
+  // Most regulated tariffs come with prices but no conditions row: keep them too.
+  for (const [id, regulated] of regulatedPrices) {
+    regulatedGas[regulated.ord] ??= { offerId: id, name: id, prices: regulated.prices };
+  }
+
+  return offersFileSchema.parse({ schemaVersion: 2, ...meta, regulatedGas, offers });
 }
 
 /** "20261013 122404 CSV.zip" → "2026-10-13". */

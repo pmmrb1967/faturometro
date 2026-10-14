@@ -1,5 +1,5 @@
 /**
- * Normalized ERSE electricity offers (public/data/erse-offers.json), produced
+ * Normalized ERSE electricity and gas offers (public/data/erse-offers.json), produced
  * by scripts/erse-sync.ts. Format of the source: docs/erse-data.md.
  * Prices are €/day and €/kWh WITHOUT VAT, as decimal numbers.
  */
@@ -23,12 +23,30 @@ export const cyclePricesSchema = z.object({
 });
 export type CyclePrices = z.infer<typeof cyclePricesSchema>;
 
+/** Natural gas consumption tier (escalão) as the ERSE codes it. */
+export const escalaoSchema = z.enum(['1', '2', '3', '4']);
+export type Escalao = z.infer<typeof escalaoSchema>;
+
+export const gasPricesSchema = z.object({
+  /** Fixed term, €/day, without VAT. */
+  fixedPerDay: z.number(),
+  /** Energy, €/kWh, without VAT. */
+  perKwh: z.number(),
+});
+export type GasPrices = z.infer<typeof gasPricesSchema>;
+
+const gasDiscountsSchema = z.object({
+  fixedTermPct: z.number(),
+  energyPct: z.number(),
+  energyPerKwh: z.number(),
+});
+
 export const offerSchema = z.object({
   id: z.string(),
   supplier: z.string(),
   name: z.string(),
   segment: z.enum(['Dom', 'Ndom', 'Tod']),
-  supply: z.enum(['ELE', 'DUAL']),
+  supply: z.enum(['ELE', 'GN', 'DUAL']),
   durationMonths: z.number().nullable(),
   validFrom: z.string().nullable(),
   validTo: z.string().nullable(),
@@ -65,17 +83,34 @@ export const offerSchema = z.object({
     restrictions: z.string().optional(),
     priceUpdates: z.string().optional(),
   }),
-  /** By contracted power (kVA, as "6.9") and cycle code. */
+  /** Electricity, by contracted power (kVA, as "6.9") and cycle code (empty for gas-only offers). */
   prices: z.record(z.string(), z.partialRecord(cycleCodeSchema, cyclePricesSchema)),
+  /** Natural gas, by escalão (empty for electricity-only offers). */
+  gasPrices: z.partialRecord(escalaoSchema, gasPricesSchema),
+  /** Gas discounts for every client / only for new clients (shown, not applied). */
+  gasDiscounts: gasDiscountsSchema,
+  gasNewClientDiscounts: gasDiscountsSchema,
 });
 export type Offer = z.infer<typeof offerSchema>;
 
+/** Regulated (last resort) gas tariffs, by distribution operator code (ORD). */
+export const regulatedGasSchema = z.record(
+  z.string(),
+  z.object({
+    offerId: z.string(),
+    name: z.string(),
+    prices: z.partialRecord(escalaoSchema, gasPricesSchema),
+  }),
+);
+export type RegulatedGas = z.infer<typeof regulatedGasSchema>;
+
 export const offersFileSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   source: z.string(),
   /** ERSE update date (from the file name), ISO. */
   dataDate: z.string(),
   fetchedAt: z.string(),
+  regulatedGas: regulatedGasSchema,
   offers: z.array(offerSchema),
 });
 export type OffersFile = z.infer<typeof offersFileSchema>;

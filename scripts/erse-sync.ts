@@ -11,7 +11,7 @@ import { unzipSync, strFromU8 } from 'fflate';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { z } from 'zod';
-import { dataDateFromName, normalize, parseCsv } from './erse/normalize';
+import { dataDateFromName, isUpToDate, normalize, parseCsv } from './erse/normalize';
 
 const SETTINGS_URL = 'https://simuladorprecos.erse.pt/config/Settings.json';
 const OUTPUT = resolve('public', 'data', 'erse-offers.json');
@@ -32,8 +32,11 @@ async function main(): Promise<void> {
   if (!dataDate) throw new Error(`Unexpected ERSE file name: ${zipName}`);
 
   if (existsSync(OUTPUT)) {
-    const current = JSON.parse(readFileSync(OUTPUT, 'utf8')) as { source?: string };
-    if (current.source === zipName) {
+    const current = JSON.parse(readFileSync(OUTPUT, 'utf8')) as {
+      source?: string;
+      schemaVersion?: number;
+    };
+    if (isUpToDate(current, zipName)) {
       console.log(`Already up to date (${zipName}).`);
       return;
     }
@@ -57,7 +60,7 @@ async function main(): Promise<void> {
   mkdirSync(dirname(OUTPUT), { recursive: true });
   writeFileSync(OUTPUT, `${JSON.stringify(file)}\n`);
   console.log(
-    `✔ ${file.offers.length} electricity offers from ${zipName} → public/data/erse-offers.json`,
+    `✔ ${file.offers.length} offers (electricity, gas, dual) and ${Object.keys(file.regulatedGas).length} regulated gas tariffs from ${zipName} → public/data/erse-offers.json`,
   );
 }
 

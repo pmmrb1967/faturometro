@@ -64,6 +64,9 @@ function offer(id: string, prices: Offer['prices'], overrides: Partial<Offer> = 
     links: {},
     texts: {},
     prices,
+    gasPrices: {},
+    gasDiscounts: { fixedTermPct: 0, energyPct: 0, energyPerKwh: 0 },
+    gasNewClientDiscounts: { fixedTermPct: 0, energyPct: 0, energyPerKwh: 0 },
     ...overrides,
   };
 }
