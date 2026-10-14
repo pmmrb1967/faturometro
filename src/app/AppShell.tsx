@@ -18,6 +18,7 @@ export function AppShell() {
           {t.appName}
         </Link>
         <div className="topbar-account">
+          {session?.profile.sync?.admin && <span className="topbar-badge">{t.adminBadge}</span>}
           <span className="topbar-email">{session?.profile.email}</span>
           <button
             type="button"

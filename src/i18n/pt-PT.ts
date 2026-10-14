@@ -124,6 +124,7 @@ export const t = {
     apply: 'Atualizar',
   },
   signOut: 'Sair',
+  adminBadge: 'Administrador',
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   alerts: {
     title: 'Avisos',
@@ -220,6 +221,7 @@ export const t = {
     account: {
       title: 'Conta',
       signedInAs: (email: string) => `Email: ${email}`,
+      admin: 'Esta conta é de administrador: tem limites próprios no servidor de sincronização.',
       changePassword: 'Mudar a palavra-passe',
       current: 'Palavra-passe atual',
       next: 'Palavra-passe nova',

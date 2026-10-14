@@ -414,6 +414,20 @@ describe('files', () => {
     });
   });
 
+  it('tells administrators who they are in the pull answer', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const admin = await register('admin@example.pt');
+    const ana = await register('ana@example.pt');
+    expect((await call('GET', '/v1/changes', undefined, admin)).body?.admin).toBe(true);
+    expect((await call('GET', '/v1/changes', undefined, ana)).body?.admin).toBe(false);
+  });
+
   it('refuses what is not base64 and malformed chunk numbers', async () => {
     const token = await register();
     expect((await raw('PUT', '/v1/files/f1/0?total=1', token, 'não é base64')).status).toBe(400);

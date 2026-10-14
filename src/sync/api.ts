@@ -127,7 +127,12 @@ export class SyncApi {
     return this.call(
       'GET',
       `/v1/changes?since=${since}`,
-      z.object({ records: z.array(remoteRecordSchema), latest: z.number(), more: z.boolean() }),
+      z.object({
+        records: z.array(remoteRecordSchema),
+        latest: z.number(),
+        more: z.boolean(),
+        admin: z.boolean(),
+      }),
       { token },
     );
   }

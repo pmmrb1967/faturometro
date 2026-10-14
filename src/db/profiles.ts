@@ -15,6 +15,8 @@ export interface ProfileSync {
   serverUrl: string;
   /** Server account id: after a 401, tells a removed account from an ended session. */
   accountId?: string;
+  /** The server says this account is an administrator (shown in the header). */
+  admin?: boolean;
   /** Session token, encrypted with the master key. */
   token: EncryptedBlob;
   /** Last server sequence number received. */

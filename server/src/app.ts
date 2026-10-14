@@ -8,7 +8,7 @@
  *   GET    /v1/account                                    → {id}
  *   GET    /v1/removed/:accountId                         → {removed}  (no token; random id only)
  *   POST   /v1/logout                                     → 204
- *   GET    /v1/changes?since=N                            → {records, latest}
+ *   GET    /v1/changes?since=N                            → {records, latest, more, admin}
  *   POST   /v1/changes    {records}                       → {latest}
  *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → 204  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
@@ -374,6 +374,7 @@ export function createApp(config: AppConfig) {
         })),
         latest: rows.at(-1)?.seq ?? since,
         more: rows.length === MAX_RECORDS_PER_REQUEST,
+        admin: isAdmin(user.email),
       });
     }
 

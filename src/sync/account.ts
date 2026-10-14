@@ -194,6 +194,7 @@ export async function runSync(input: {
     lastPulledSeq: result.lastPulledSeq,
     lastPushedAt: result.lastPushedAt,
     lastSyncAt: new Date().toISOString(),
+    admin: result.admin,
   });
   return { profile, result, ...(files ? { files } : {}) };
 }

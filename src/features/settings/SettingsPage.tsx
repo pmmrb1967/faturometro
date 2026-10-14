@@ -397,6 +397,7 @@ function AccountSection() {
     <section className="settings-section" aria-labelledby="account-title">
       <h2 id="account-title">{accountCopy.title}</h2>
       <p className="muted">{accountCopy.signedInAs(session.profile.email)}</p>
+      {session.profile.sync?.admin && <p className="muted">{accountCopy.admin}</p>}
       <h3>{accountCopy.changePassword}</h3>
       {session.profile.sync && <p className="muted">{accountCopy.syncNote}</p>}
       <form onSubmit={submit} noValidate>

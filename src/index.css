@@ -144,6 +144,16 @@ body {
   font-size: 0.9rem;
 }
 
+.topbar-badge {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .topbar-lock {
   flex: none;
   min-height: 40px;

@@ -33,6 +33,8 @@ export interface SyncResult extends SyncState {
   received: number;
   /** Records that could not be applied (e.g. the same invoice imported on two devices). */
   conflicts: number;
+  /** The server account is an administrator (own limits). */
+  admin: boolean;
 }
 
 /** Splits records into pushes limited by count and by size. */
@@ -81,8 +83,10 @@ export async function syncNow(
   let since = state.lastPulledSeq;
   let received = 0;
   let conflicts = 0;
+  let admin: boolean; // set by the first page (the loop runs at least once)
   for (;;) {
     const page = await api.pull(token, since);
+    admin = page.admin;
     for (const remote of page.records) {
       if (remote.table === 'documents') {
         // Original files: only the metadata here; contents come with syncFiles.
@@ -105,5 +109,12 @@ export async function syncNow(
     if (!page.more) break;
   }
 
-  return { lastPulledSeq: since, lastPushedAt, pushed: outgoing.length, received, conflicts };
+  return {
+    lastPulledSeq: since,
+    lastPushedAt,
+    pushed: outgoing.length,
+    received,
+    conflicts,
+    admin,
+  };
 }

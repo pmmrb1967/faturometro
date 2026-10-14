@@ -454,6 +454,19 @@ describe('free plan limits', () => {
     expect(profile.sync?.accountId).toBe(a.profile.sync?.accountId);
   });
 
+  it('remembers on the profile whether the account is an administrator', async () => {
+    serverWith({ adminEmails: ['ana@example.pt'] });
+    const a = await deviceA();
+    const { profile } = await runSync({ ...a, api });
+    expect(profile.sync?.admin).toBe(true);
+  });
+
+  it('ordinary accounts are not administrators', async () => {
+    const a = await deviceA();
+    const { profile } = await runSync({ ...a, api });
+    expect(profile.sync?.admin).toBe(false);
+  });
+
   it('says when the server is full for new accounts', async () => {
     serverWith({ maxAccounts: 0 });
     await expect(deviceA()).rejects.toMatchObject({ code: 'capacity' });
