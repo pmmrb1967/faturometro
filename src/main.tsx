@@ -5,12 +5,14 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { listenForInstall } from './app/install';
+import { listenForOpenedFiles } from './app/opened-files';
 import { registerPwa } from './app/pwa';
 import { router } from './app/router';
 import { SessionProvider } from './features/auth/session';
 import './index.css';
 
 listenForInstall();
+listenForOpenedFiles();
 registerPwa();
 
 const root = document.getElementById('root');

@@ -794,10 +794,11 @@ export const t = {
     intro:
       'Escolhe o PDF descarregado da área de cliente ou tira uma fotografia à fatura em papel.',
     chooseFile: 'Escolher ficheiro',
-    nextShared: (count: number) =>
-      count === 1
-        ? 'Ler o outro ficheiro partilhado'
-        : `Ler o próximo ficheiro partilhado (faltam ${count})`,
+    nextFile: (count: number) =>
+      count === 1 ? 'Ler o ficheiro que falta' : `Ler o próximo ficheiro (faltam ${count})`,
+    dropHint:
+      'Podes escolher vários ficheiros de uma vez. No computador, também os podes arrastar para aqui ou, com a app instalada, abrir um PDF com o Faturómetro.',
+    dropHere: 'Larga os ficheiros para os ler',
     takePhoto: 'Tirar fotografia',
     reading: 'A ler a fatura…',
     another: 'Adicionar outra',

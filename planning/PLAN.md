@@ -510,7 +510,8 @@ Opcional e desligada por defeito.
 
 ### Pós-MVP
 - [ ] Layouts P2
-- [ ] Ingestão por email (secção 12)
+- [ ] Ingestão por email (secção 12) — **adiada** (2026-10-14): o envio manual melhorado chega para 4–6 faturas por mês; retomar se o teste com famílias mostrar que é um obstáculo
+- [x] Envio manual melhorado: vários ficheiros de uma vez (escolher ou arrastar, lidos em fila), arrastar e largar no computador e "Abrir com Faturómetro" (`file_handlers`, app instalada no Chrome/Edge; `src/app/opened-files.ts`, só em memória)
 - [x] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
 - [x] Gás no comparador e total luz + gás (`docs/superpowers/specs/2026-10-14-gas-comparator-design.md`)
 - [x] Telecom: comparar no COM.escolha da ANACOM, com a pesquisa preenchida (serviços lidos da fatura, limite = média do que pagas); verificação semanal das ligações no PC do responsável (`docs/anacom-comescolha.md`)
@@ -530,7 +531,7 @@ Escolhidas depois de comparar a app com os simuladores de energia (ERSE, DECO, S
 - [ ] "Vale a pena sair já?": custo de sair antes do fim da fidelização contra a poupança estimada. *Dados a confirmar:* regras de cálculo dos encargos de rescisão antecipada nas telecomunicações
 - [ ] Consumos da E-Redes: importar no dispositivo o ficheiro de leituras de 15 minutos que o utilizador descarrega do Balcão Digital → bi-horário e tri-horário com o perfil real, aviso de potência contratada acima do necessário, e mais tarde ofertas indexadas com preços OMIE num ficheiro estático (como as ofertas ERSE). *Dados a confirmar:* formato do ficheiro (amostra real) e fonte/licença dos preços OMIE
 - [ ] Visão anual da casa: custo por mês e por setor, previsão dos próximos 12 meses e "quanto já poupaste" depois de uma mudança registada na app
-- [ ] Ingestão por email (secção 12) — já na lista acima
+- [ ] Ingestão por email (secção 12) — adiada, ver acima
 
 **Onda 3 — novos setores e apoios**
 - [ ] Seguros, versão mínima: apólice como contrato (seguradora, ramo, prémio, data de renovação, capitais e franquias principais), histórico de prémios, alertas de renovação e de aumento, entrada na exportação `.ics`. Sem lista de ofertas (não há fonte pública) e sem afiliados. *Dados a confirmar:* se os recibos de prémio têm QR fiscal (regra 5) — precisa de amostras reais
@@ -697,3 +698,4 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-14 | Calendário: ficheiro `.ics` descarregado (sem subscrição, que exigiria servidor), com eventos de dia inteiro e UID estável por contrato/fatura; lembretes às 9:00 nos mesmos dias dos alertas de fidelização (60, 30, 7) e 3 dias antes da data-limite de pagamento; leva nome do contrato, fornecedor e valor, com aviso de que um calendário online os passa a guardar |
 | 2026-10-14 | Cartas sem IA: modelos em `pt-PT.ts` preenchidos no dispositivo (fornecedor, n.º de cliente, CPE, NIF das definições, média, aumento, leituras estimadas, oferta mais barata); só factos guardados, sem leis, prazos nem direitos (regra 6), e marcadores para o resto. Uma só ligação para reclamar: o Livro de Reclamações Eletrónico, que encaminha para a ERSE, a ANACOM ou a ERSAR. As cartas com IA continuam na secção da IA |
 | 2026-10-14 | Auditoria da fatura: última fatura contra a anterior, linha a linha (mesma linha = tipo + período + descrição sem números); preços unitários comparados pelo preço em vigor no fim do período, valores fixos por montante, impostos ignorados (fixados por lei); descontos de energia só quando desaparecem (seguem o consumo); consumos de telemóvel não contam como cobrança nova; desconto que acaba só é assinalado se os encargos fixos subiram. Mensalidade contratada (com IVA, só telecom e outras despesas) comparada com encargos fixos + descontos, ou com o total sem linhas. Alerta próprio só para descontos, cobranças novas e mensalidade acima da contratada (aumentos de preço já têm alerta). Testado também nas faturas reais anonimizadas (NOS e Repsol, só localmente) |
+| 2026-10-14 | Ingestão por email adiada. Opções avaliadas: endereço próprio + Cloudflare Email Worker (exige domínio pago e alargar a regra 1), Outlook direto pelo Microsoft Graph no browser, Gmail direto (âmbito restrito: verificação + CASA anual; em teste, 100 utilizadores e nova autorização a cada 7 dias), script do próprio utilizador no Google Apps Script. Escolhido melhorar o envio manual (vários ficheiros, arrastar, "Abrir com"), sem servidor nem ligações novas; ficheiros escolhidos, largados ou abertos ficam só em memória até serem lidos |

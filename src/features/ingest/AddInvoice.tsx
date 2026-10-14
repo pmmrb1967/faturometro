@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from 'react';
+import { onOpenedFiles, takeOpenedFiles } from '../../app/opened-files';
 import { countSharedFiles, takeSharedFile } from '../../app/shared-files';
 import { PasswordInput } from '../../components/Field';
 import { invoiceSource } from '../../ai/document';
@@ -40,20 +48,55 @@ export function AddInvoice() {
   const photoInput = useRef<HTMLInputElement>(null);
   /** Files received with "Share → Faturómetro" still waiting to be read. */
   const [sharedLeft, setSharedLeft] = useState(0);
+  /** Files chosen, dropped or opened with the app, in memory, waiting to be read. */
+  const [queue, setQueue] = useState<File[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const left = queue.length + sharedLeft;
 
-  async function readNextShared() {
+  async function readFile(file: File) {
+    await read({ bytes: new Uint8Array(await file.arrayBuffer()), mime: file.type });
+  }
+
+  /** The next waiting file: chosen or dropped first, then shared ones. */
+  async function readNext() {
+    const [next, ...rest] = queue;
+    if (next) {
+      setQueue(rest);
+      await readFile(next);
+      return;
+    }
     const shared = await takeSharedFile();
     setSharedLeft(await countSharedFiles());
     if (shared) await read({ bytes: shared.bytes, mime: shared.mime });
   }
 
-  // A file shared from another app is read as soon as the page opens.
+  /** Reads the first file now if nothing is on screen; the rest wait for "next". */
+  function enqueue(files: File[]) {
+    if (files.length === 0) return;
+    if (state.step === 'idle') {
+      const [first, ...rest] = files;
+      setQueue((current) => [...current, ...rest]);
+      if (first) void readFile(first);
+    } else {
+      setQueue((current) => [...current, ...files]);
+    }
+  }
+
+  // Files shared from another app or opened with the app are read as soon as the page opens.
   const hasSession = Boolean(session);
   useEffect(() => {
     if (!hasSession) return;
     // After this render, not inside it.
-    const timer = window.setTimeout(() => void readNextShared(), 0);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      const opened = takeOpenedFiles();
+      if (opened.length > 0) enqueue(opened);
+      else void readNext();
+    }, 0);
+    const stop = onOpenedFiles(() => setQueue((current) => [...current, ...takeOpenedFiles()]));
+    return () => {
+      window.clearTimeout(timer);
+      stop();
+    };
     // Once per visit, when the account is open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasSession]);
@@ -86,20 +129,43 @@ export function AddInvoice() {
     }
   }
 
-  async function onFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  function onFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = [...(event.target.files ?? [])];
     event.target.value = '';
-    if (!file) return;
-    await read({ bytes: new Uint8Array(await file.arrayBuffer()), mime: file.type });
+    enqueue(files);
+  }
+
+  function onDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    setDragging(false);
+    enqueue([...event.dataTransfer.files]);
   }
 
   return (
-    <section className="ingest" aria-labelledby="ingest-title">
+    <section
+      className={dragging ? 'ingest is-dragging' : 'ingest'}
+      aria-labelledby="ingest-title"
+      onDragOver={(event) => {
+        if (![...event.dataTransfer.types].includes('Files')) return;
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+      }}
+      onDrop={onDrop}
+    >
       <h2 id="ingest-title">{copy.title}</h2>
+      {dragging && (
+        <p className="ingest-drop" aria-hidden="true">
+          {copy.dropHere}
+        </p>
+      )}
 
       {state.step === 'idle' && (
         <>
           <p className="muted">{copy.intro}</p>
+          <p className="muted ingest-drop-hint">{copy.dropHint}</p>
           <div className="ingest-actions">
             <button
               type="button"
@@ -132,8 +198,9 @@ export function AddInvoice() {
         ref={fileInput}
         type="file"
         accept="application/pdf,image/*"
+        multiple
         hidden
-        onChange={(event) => void onFile(event)}
+        onChange={onFiles}
       />
       <input
         ref={photoInput}
@@ -141,7 +208,7 @@ export function AddInvoice() {
         accept="image/*"
         capture="environment"
         hidden
-        onChange={(event) => void onFile(event)}
+        onChange={onFiles}
       />
 
       {state.step === 'reading' && (
@@ -170,9 +237,9 @@ export function AddInvoice() {
         />
       )}
 
-      {sharedLeft > 0 && state.step !== 'reading' && (
-        <button type="button" className="action-primary" onClick={() => void readNextShared()}>
-          {copy.nextShared(sharedLeft)}
+      {left > 0 && state.step !== 'reading' && (
+        <button type="button" className="action-primary" onClick={() => void readNext()}>
+          {copy.nextFile(left)}
         </button>
       )}
 
