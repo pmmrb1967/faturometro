@@ -10,6 +10,8 @@ import { isValidNif } from '../../domain/nif';
 import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { browserIngestDeps } from './browser-deps';
+import { ContributeOffer } from '../contribute/ContributeOffer';
+import { shouldOffer } from '../contribute/eligible';
 import { AiExtractPanel } from '../ai/AiExtractPanel';
 import { ingestFile, type IngestOutcome, type ParsedDocument, type ReadQr } from './ingest';
 import { emptyForm, formFromParsed, formFromQr, type FormBase } from '../invoices/form';
@@ -267,6 +269,22 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
   const done = (index: number) => (saved: boolean) =>
     setStatus((current) => ({ ...current, [index]: saved ? 'saved' : 'skipped' }));
 
+  const parsedQrs = outcome.qrs.flatMap((qr) => (qr.result.ok ? [qr.result.qr] : []));
+  // What a layout parser (not the AI) read: decides whether the layout is known.
+  const byParser = outcome.qrs.find((qr) => qr.parsed)?.parsed ?? outcome.parsed;
+  const contribute = shouldOffer({
+    fileKind: outcome.fileKind,
+    hasText: outcome.pages.some((page) => page.items.length > 0),
+    ...(byParser ? { parserId: byParser.parserId, validation: byParser.check.validation } : {}),
+  }) ? (
+    <ContributeOffer
+      pages={outcome.pages}
+      qrs={parsedQrs}
+      {...(byParser ? { parsed: byParser } : {})}
+      extra={Object.values(aiParsed)}
+    />
+  ) : null;
+
   if (outcome.qrStatus !== 'ok') {
     if (status[0])
       return status[0] === 'saved' ? <p role="status">{t.invoices.review.saved}</p> : null;
@@ -276,6 +294,7 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
         <p className="ingest-problem">
           {outcome.qrStatus === 'missing' ? copy.noQr : copy.invalidQr}
         </p>
+        {contribute}
         {!parsed && <AiExtractPanel source={source} pdfPages={pdfPages} onResult={aiDone(0)} />}
         {aiParsed[0] && <p role="status">{t.ai.extract.done}</p>}
         <ReviewForm
@@ -298,6 +317,7 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
   return (
     <div className="ingest-result">
       <p role="status">{copy.foundCount(total)}</p>
+      {contribute}
       {outcome.qrs.map((qr, index) => {
         if (status[index] === 'skipped') return null;
         if (status[index] === 'saved') {

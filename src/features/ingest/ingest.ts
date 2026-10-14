@@ -97,7 +97,7 @@ export async function docKeyFor(issuerNif: string, docId: string): Promise<strin
   return sha256Hex(`${issuerNif}|${docId}`);
 }
 
-async function readPdfWithPasswords(
+export async function readPdfWithPasswords(
   bytes: Uint8Array,
   passwords: readonly string[],
   deps: IngestDeps,

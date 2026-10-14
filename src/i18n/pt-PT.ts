@@ -130,6 +130,29 @@ export const t = {
     hide: 'Esconder palavra-passe',
   },
   adminBadge: 'Administrador',
+  contribute: {
+    offer:
+      'A app ainda não conhece bem este layout. Queres ajudar? Envia só a estrutura da fatura, sem os teus dados, para que a próxima seja lida sozinha.',
+    open: 'Contribuir com este layout',
+    title: 'Contribuir com este layout',
+    intro:
+      'É isto que vai ser enviado. Os números são todos trocados por outros ao acaso. As palavras a cinzento estão tapadas; toca numa para a destapar ou tapar.',
+    warning: 'Não destapes o teu nome, morada nem outros dados teus.',
+    locked: 'Dados pessoais lidos da fatura: ficam sempre tapados.',
+    consent:
+      'Aceito enviar esta estrutura ao responsável do Faturómetro. Vai cifrada e só ele a consegue ler; serve só para a app passar a ler este layout e é apagada depois de usada (no servidor, no máximo ao fim de 90 dias).',
+    send: 'Enviar',
+    sending: 'A enviar…',
+    sent: 'Obrigado! A contribuição foi enviada.',
+    cancel: 'Cancelar',
+    notPdf: 'Só é possível com faturas em PDF que tenham texto (não com fotografias).',
+    errors: {
+      too_large: 'Esta fatura é grande demais para enviar.',
+      full: 'Não é possível receber contribuições agora. Tenta noutro dia.',
+      offline: 'Sem ligação. Tenta outra vez quando estiveres online.',
+      failed: 'Não foi possível enviar. Tenta outra vez.',
+    },
+  },
   guest: {
     badge: 'Sem conta',
     createAccount: 'Criar conta',

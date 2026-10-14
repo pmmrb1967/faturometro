@@ -3,6 +3,8 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { useSession } from '../auth/session-context';
+import { ContributeFromOriginal } from '../contribute/ContributeFromOriginal';
+import { shouldOffer } from '../contribute/eligible';
 import { OriginalButton } from './OriginalButton';
 import './invoices.css';
 
@@ -54,6 +56,13 @@ export function InvoiceList() {
                   state={data.originals.get(invoice.fileHash)!}
                 />
               )}
+              {['local', 'uploaded'].includes(data.originals.get(invoice.fileHash) ?? '') &&
+                shouldOffer({
+                  fileKind: 'pdf',
+                  hasText: true,
+                  ...(invoice.parserId ? { parserId: invoice.parserId } : {}),
+                  validation: invoice.validation,
+                }) && <ContributeFromOriginal fileHash={invoice.fileHash} />}
             </li>
           ))}
         </ul>
