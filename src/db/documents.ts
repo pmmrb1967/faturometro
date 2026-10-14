@@ -30,6 +30,8 @@ export interface RemoteDocumentMeta extends DocumentMeta {
   /** IV of `encBytes`; the server keeps only `encBytes.data`, in chunks. */
   bytesIv: string;
   chunks: number;
+  /** `false` once the contents left the server (originals window): only on devices. */
+  onServer?: false;
 }
 
 /** A document whose contents are waiting to be uploaded. */
@@ -110,11 +112,46 @@ export class DocumentStore {
   }
 
   /**
+   * Documents whose contents are both here and on the server. Key-only reads
+   * (two cursors over the same index): rows hold whole files.
+   */
+  async onServerHere(): Promise<{ id: string; fileHash: string }[]> {
+    const here = new Set(await this.table.where('syncState').equals('uploaded').primaryKeys());
+    const hashes = await this.table.orderBy('fileHash').keys();
+    const ids = await this.table.orderBy('fileHash').primaryKeys();
+    return ids.flatMap((id, i) => (here.has(id) ? [{ id, fileHash: String(hashes[i]) }] : []));
+  }
+
+  /** The record telling the other devices that the contents left the server. */
+  async prunedRecord(id: string): Promise<{ id: string; updatedAt: string; enc: EncryptedBlob }> {
+    const row = await this.table.get(id);
+    if (!row?.encBytes) throw new Error('Document contents are not on this device');
+    const meta = (await decryptJson(this.key, row.enc)) as DocumentMeta;
+    const remote: RemoteDocumentMeta = {
+      id: meta.id,
+      fileHash: meta.fileHash,
+      mime: meta.mime,
+      addedAt: meta.addedAt,
+      bytesIv: row.encBytes.iv,
+      chunks: 0,
+      onServer: false,
+    };
+    // Strictly newer than the upload record, or the server (last write wins) would keep that one.
+    const updatedAt = new Date(Math.max(Date.now(), Date.parse(row.updatedAt) + 1)).toISOString();
+    return { id, updatedAt, enc: await encryptJson(this.key, remote) };
+  }
+
+  async markPruned(id: string): Promise<void> {
+    await this.table.update(id, { syncState: 'pruned' });
+  }
+
+  /**
    * Records a document added on another device (contents still on the
    * server). Ignored when this device already has the same file.
    */
   async applyRemote(enc: EncryptedBlob, updatedAt: string): Promise<boolean> {
     const meta = (await decryptJson(this.key, enc)) as RemoteDocumentMeta;
+    if (meta.onServer === false) return this.applyPruned(meta, updatedAt);
     if (await this.table.where('fileHash').equals(meta.fileHash).count()) return false;
     if (await this.table.get(meta.id)) return false;
     await this.table.put({
@@ -124,6 +161,28 @@ export class DocumentStore {
       syncState: 'remote',
       enc: await encryptJson(this.key, meta),
     });
+    return true;
+  }
+
+  /** The contents left the server: keep what is here, never try to download them again. */
+  private async applyPruned(meta: RemoteDocumentMeta, updatedAt: string): Promise<boolean> {
+    const row =
+      (await this.table.get(meta.id)) ??
+      (await this.table.where('fileHash').equals(meta.fileHash).first());
+    if (!row) {
+      await this.table.put({
+        id: meta.id,
+        updatedAt,
+        fileHash: meta.fileHash,
+        syncState: 'gone',
+        enc: await encryptJson(this.key, meta),
+      });
+      return true;
+    }
+    const next =
+      row.syncState === 'remote' ? 'gone' : row.syncState === 'uploaded' ? 'pruned' : undefined;
+    if (!next) return false;
+    await this.table.update(row.id, { syncState: next });
     return true;
   }
 

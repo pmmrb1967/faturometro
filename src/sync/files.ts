@@ -15,6 +15,8 @@ const STORAGE_FULL = 507;
 export interface FileSyncResult {
   uploaded: number;
   downloaded: number;
+  /** Removed from the server by the originals window (still here). */
+  pruned: number;
   /** The server has no room left (account quota or total). */
   storageFull: boolean;
 }
@@ -33,8 +35,9 @@ export async function syncFiles(
   api: SyncApi,
   token: string,
   key: CryptoKey,
+  now: Date = new Date(),
 ): Promise<FileSyncResult> {
-  const result: FileSyncResult = { uploaded: 0, downloaded: 0, storageFull: false };
+  const result: FileSyncResult = { uploaded: 0, downloaded: 0, pruned: 0, storageFull: false };
 
   for (const id of await repos.documents.localOnlyIds()) {
     const upload = await repos.documents.pendingUpload(id);
@@ -61,7 +64,49 @@ export async function syncFiles(
   for (const meta of await repos.documents.remoteOnly()) {
     if (await download(repos, api, token, key, meta)) result.downloaded++;
   }
+
+  // Runs after the downloads: an original that could not be downloaded is not a candidate.
+  const { keepMonths } = await api.fileUsage(token);
+  if (keepMonths !== null) {
+    result.pruned = await pruneOld(repos, api, token, monthsBefore(now, keepMonths));
+  }
   return result;
+}
+
+/** `YYYY-MM-DD`, `months` calendar months before `date` (UTC). */
+export function monthsBefore(date: Date, months: number): string {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - months, date.getUTCDate()))
+    .toISOString()
+    .slice(0, 10);
+}
+
+/**
+ * Originals window: removes from the server the originals whose newest
+ * invoice is older than the cutoff. Only documents whose contents are here
+ * are candidates, so nothing is lost; originals without invoices stay.
+ */
+async function pruneOld(
+  repos: Repositories,
+  api: SyncApi,
+  token: string,
+  cutoff: string,
+): Promise<number> {
+  let pruned = 0;
+  for (const { id, fileHash } of await repos.documents.onServerHere()) {
+    const invoices = await repos.invoices.findBy('fileHash', fileHash);
+    if (invoices.length === 0) continue;
+    const newest = invoices.reduce(
+      (latest, invoice) => (invoice.issueDate > latest ? invoice.issueDate : latest),
+      '',
+    );
+    if (newest >= cutoff) continue;
+    const record = await repos.documents.prunedRecord(id);
+    await api.deleteFile(token, id);
+    await api.push(token, [{ table: 'documents', ...record }]);
+    await repos.documents.markPruned(id);
+    pruned++;
+  }
+  return pruned;
 }
 
 /** Downloads one file's contents; false if they are no longer on the server. */

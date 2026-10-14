@@ -17,9 +17,11 @@ export interface StoredRow {
  * File sync state of a document (in clear, indexed):
  * - `local`: only on this device;
  * - `uploaded`: also on the sync server;
- * - `remote`: known from another device, contents still on the server.
+ * - `remote`: known from another device, contents still on the server;
+ * - `pruned`: here, and removed from the server by the originals window;
+ * - `gone`: known from another device, contents no longer on the server nor here.
  */
-export type DocumentSyncState = 'local' | 'uploaded' | 'remote';
+export type DocumentSyncState = 'local' | 'uploaded' | 'remote' | 'pruned' | 'gone';
 
 /** Documents also carry the file contents, encrypted separately. */
 export interface StoredDocumentRow extends StoredRow {

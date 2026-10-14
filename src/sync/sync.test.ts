@@ -19,7 +19,8 @@ import {
   setFileSync,
   SyncError,
 } from './account';
-import { chunk } from './files';
+import type { Invoice } from '../domain/types';
+import { chunk, monthsBefore } from './files';
 
 const ITERATIONS = 1_000;
 const SERVER = 'https://sync.test';
@@ -97,6 +98,23 @@ function contract(id: string, label: string) {
     label,
     customerNumber: 'CLIENTE-SECRETO-42',
     active: true,
+    createdAt: '2026-10-13T10:00:00.000Z',
+  };
+}
+
+function invoice(fileHash: string, issueDate: string): Omit<Invoice, 'updatedAt'> {
+  return {
+    id: crypto.randomUUID(),
+    contractId: 'c1',
+    providerId: 'p1',
+    fileHash,
+    docType: 'FT',
+    issueDate,
+    totalCents: 1562,
+    qrStatus: 'ok',
+    validation: 'not_checked',
+    sources: {},
+    confidence: {},
     createdAt: '2026-10-13T10:00:00.000Z',
   };
 }
@@ -273,7 +291,7 @@ describe('original files', () => {
     let stateA = await setFileSync(a.profile, true);
     const sent = await runSync({ ...a, profile: stateA, api });
     stateA = sent.profile;
-    expect(sent.files).toEqual({ uploaded: 1, downloaded: 0, storageFull: false });
+    expect(sent.files).toEqual({ uploaded: 1, downloaded: 0, pruned: 0, storageFull: false });
     expect(await a.repos.documents.stateOf('h1')).toBe('uploaded');
 
     const onServer =
@@ -319,6 +337,101 @@ describe('original files', () => {
     expect(synced.files?.storageFull).toBe(true);
     expect(synced.result.pushed).toBe(1);
     expect(await a.repos.documents.stateOf('h1')).toBe('local');
+  });
+
+  it('keeps only the last 12 months of originals on the server', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    await a.repos.documents.put({ fileHash: 'new', mime: 'application/pdf', bytes: pdf });
+    await a.repos.documents.put({ fileHash: 'orphan', mime: 'application/pdf', bytes: pdf });
+    await a.repos.invoices.put(invoice('old', '2020-01-10'));
+    await a.repos.invoices.put(invoice('new', today));
+    let stateA = await setFileSync(a.profile, true);
+
+    const first = await runSync({ ...a, profile: stateA, api });
+    stateA = first.profile;
+    expect(first.files?.pruned).toBe(1);
+    expect(await a.repos.documents.stateOf('old')).toBe('pruned');
+    expect(await a.repos.documents.stateOf('new')).toBe('uploaded');
+    expect(await a.repos.documents.stateOf('orphan')).toBe('uploaded');
+    expect((await a.repos.documents.getByFileHash('old'))?.bytes).toBeDefined();
+    const files = fileDb.prepare('SELECT COUNT(DISTINCT file_id) AS n FROM chunks').get() as {
+      n: number;
+    };
+    expect(files.n).toBe(2);
+
+    // A device that never had it: knows it exists, does not try to download it.
+    const b = await deviceB();
+    const synced = await runSync({ ...b, profile: await setFileSync(b.profile, true), api });
+    expect(await b.repos.documents.stateOf('old')).toBe('gone');
+    expect(await b.repos.documents.getByFileHash('old')).toBeUndefined();
+    expect(synced.files?.downloaded).toBe(2);
+    expect(synced.files?.pruned).toBe(0);
+
+    // Nothing is pruned or uploaded twice.
+    const again = await on(stateA, () => runSync({ ...a, profile: stateA, api }));
+    expect(again.files).toMatchObject({ uploaded: 0, pruned: 0 });
+  });
+
+  it('marks as pruned on another device that had downloaded it', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    // No invoice yet on A: nothing is pruned on the first sync.
+    let stateA = await setFileSync(a.profile, true);
+    stateA = (await runSync({ ...a, profile: stateA, api })).profile;
+
+    const b = await deviceB();
+    const stateB = (await runSync({ ...b, profile: await setFileSync(b.profile, true), api }))
+      .profile;
+    expect(await b.repos.documents.stateOf('old')).toBe('uploaded');
+
+    await a.repos.invoices.put(invoice('old', '2020-01-10'));
+    await on(stateA, () => runSync({ ...a, profile: stateA, api }));
+    await on(stateB, () => runSync({ ...b, profile: stateB, api }));
+    expect(await b.repos.documents.stateOf('old')).toBe('pruned');
+    expect((await b.repos.documents.getByFileHash('old'))?.bytes).toBeDefined();
+  });
+
+  it('never deletes from the server an original this device could not download', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+
+    const b = await deviceB();
+    await runSync({ ...b, api }); // files off: B only knows the metadata ('remote')
+    await b.repos.invoices.put(invoice('old', '2020-01-10'));
+    const failing = new SyncApi(SERVER, async (input, init) => {
+      const url = String(input);
+      if (
+        url.includes('/v1/files/') &&
+        !url.endsWith('/usage') &&
+        (init?.method ?? 'GET') === 'GET'
+      ) {
+        return new Response('down', { status: 503 });
+      }
+      return serverHandle(new Request(input, init));
+    });
+    await expect(
+      runSync({ ...b, profile: await setFileSync(b.profile, true), api: failing }),
+    ).rejects.toBeDefined();
+    expect(await b.repos.documents.stateOf('old')).toBe('remote');
+    const chunks = fileDb.prepare('SELECT COUNT(*) AS n FROM chunks').get() as { n: number };
+    expect(chunks.n).toBe(1);
+  });
+
+  it('administrators keep every original on the server', async () => {
+    serverWith({ adminEmails: ['ana@example.pt'] });
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    await a.repos.invoices.put(invoice('old', '2020-01-10'));
+    const synced = await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+    expect(synced.files?.pruned).toBe(0);
+    expect(await a.repos.documents.stateOf('old')).toBe('uploaded');
+  });
+
+  it('counts the window in calendar months', () => {
+    expect(monthsBefore(new Date('2026-10-14T09:00:00Z'), 12)).toBe('2025-10-14');
   });
 
   it('splits contents into chunks', () => {
