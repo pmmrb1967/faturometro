@@ -152,9 +152,39 @@ export const t = {
     },
   },
   compare: {
-    title: 'Comparar eletricidade',
+    title: 'Comparar',
     intro:
-      'Estimativa do custo anual com os preços de cada oferta publicada pela ERSE, para o teu consumo real e a tua potência. Inclui IVA e as taxas da tua fatura.',
+      'Estimativa do custo anual com os preços de cada oferta publicada pela ERSE, para o teu consumo real. Inclui IVA e as taxas da tua fatura.',
+    tabs: { electricity: 'Luz', gas: 'Gás', both: 'Luz + gás' },
+    gas: {
+      noContract:
+        'Para comparar o gás, adiciona uma fatura de gás lida automaticamente (por agora, da Repsol), com período e consumo em kWh.',
+      noKwh:
+        'As tuas faturas de gás não trazem o consumo em kWh: sem o fator de conversão da fatura, não é possível estimar.',
+      escalao: 'Escalão de consumo',
+      escalaoHint: 'Vem na tua fatura de gás (ex.: "Escalão 1").',
+      escalaoChoose: 'Escolhe o escalão',
+      distributor: 'Distribuidor de gás da tua zona',
+      distributorHint:
+        'Aparece no contrato ou na área de cliente. Serve só para mostrar a tarifa regulada da tua zona.',
+      distributorChoose: 'Escolhe o distribuidor',
+      distributorUnknown: 'Não sei',
+      usage: (value: string) => `Consumo anual estimado: ${value} kWh de gás`,
+      seasonal:
+        'O gás varia muito entre inverno e verão: com menos de um ano de faturas, a estimativa pode falhar bastante.',
+      regulated: (name: string, value: string) => `Tarifa regulada (${name}): ${value}/ano`,
+      missingTaxes:
+        'A tua última fatura não traz a taxa de ocupação do subsolo nem o imposto especial: não estão incluídos.',
+    },
+    both: {
+      current: 'Os teus contratos atuais (luz + gás, estimativa anual)',
+      separate: 'Melhor combinação de ofertas separadas',
+      separatePair: (electricity: string, gas: string) => `${electricity} (luz) + ${gas} (gás)`,
+      duals: 'Ofertas conjuntas de luz e gás mais baratas',
+      noneDual: 'Nenhuma oferta conjunta é mais barata do que os teus contratos atuais.',
+      needsBoth:
+        'Para comparar luz e gás juntos, precisas de um contrato de cada com faturas lidas.',
+    },
     loading: 'A carregar as ofertas da ERSE…',
     offersUnavailable: 'Não foi possível carregar as ofertas da ERSE. Tenta mais tarde.',
     noContract:
@@ -181,10 +211,6 @@ export const t = {
       newClients: 'Descontos extra só para novos clientes (não incluídos)',
     },
     sheet: 'Ficha da oferta',
-    dualVariant: (name: string) =>
-      `Também existe como oferta conjunta de luz e gás (${name}), com o mesmo preço da eletricidade.`,
-    dualOnly: (supplier: string) =>
-      `Oferta conjunta: obriga a contratar também o gás com ${supplier}. O custo do gás não está incluído nesta estimativa.`,
     glossary: {
       title: 'O que querem dizer as siglas e termos das ofertas?',
       items: [
@@ -206,6 +232,20 @@ export const t = {
           'O preço da energia acompanha o mercado e muda ao longo do tempo: a estimativa usa o valor publicado hoje.',
         ],
         ['Fidelização', 'Período mínimo de contrato; sair antes pode ter custos.'],
+        [
+          'Escalão',
+          'Nível de consumo anual de gás (1 a 4) definido pelo distribuidor; os preços das ofertas dependem dele.',
+        ],
+        [
+          'Distribuidor',
+          'Empresa dona da rede de gás da tua zona (ex.: Lisboagás). É a mesma, seja qual for o comercializador.',
+        ],
+        [
+          'Tarifa regulada',
+          'Preço fixado pela ERSE para quem fica no mercado regulado; serve de referência.',
+        ],
+        ['TOS', 'Taxa de ocupação do subsolo: cobrada pelo município, igual em todas as ofertas.'],
+        ['IEC', 'Imposto especial sobre o consumo de gás natural, igual em todas as ofertas.'],
       ] as [string, string][],
       source:
         'Os significados de DD e FE foram confirmados nas condições publicadas pela ERSE para cada oferta.',
