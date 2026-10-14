@@ -9,6 +9,7 @@ import {
   type UnlockedAccount,
 } from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
+import { loginGreeting } from './entry';
 import { useSession } from './session-context';
 import { required, validateEmail } from './validation';
 
@@ -35,7 +36,11 @@ export function LoginPage() {
   useEffect(() => {
     void listAccountEmails().then((found) => {
       setEmails(found);
-      if (found.length === 1 && found[0]) setEmail(found[0]);
+      if (found.length === 1 && found[0]) {
+        setEmail(found[0]);
+        // The email is known: start on the password.
+        document.getElementById('password')?.focus();
+      }
     });
     void openGuest().then(setGuest);
   }, []);
@@ -65,8 +70,14 @@ export function LoginPage() {
   }
 
   const copy = t.auth.login;
+  const greeting = loginGreeting(emails === null ? null : emails.length);
   return (
-    <AuthLayout title={copy.title} intro={copy.intro}>
+    <AuthLayout
+      title={greeting === 'none' ? copy.title : copy.returningTitle}
+      intro={
+        greeting === 'none' ? copy.intro : greeting === 'many' ? copy.introMany : copy.introOne
+      }
+    >
       {emails?.length === 0 && (
         <p className="auth-notice">
           {copy.noAccounts} <Link to="/criar-conta">{copy.createAccount}</Link>

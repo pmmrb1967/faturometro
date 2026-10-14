@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entryFor } from './entry';
+import { entryFor, loginGreeting } from './entry';
 
 describe('entryFor', () => {
   it('opens the guest only when it is the only profile', () => {
@@ -12,5 +12,15 @@ describe('entryFor', () => {
 
   it('asks to sign in with no profiles', () => {
     expect(entryFor({ hasGuest: false, accounts: 0 })).toBe('login');
+  });
+});
+
+describe('loginGreeting', () => {
+  it('greets returning users and explains local accounts to new ones', () => {
+    expect(loginGreeting(1)).toBe('one');
+    expect(loginGreeting(3)).toBe('many');
+    expect(loginGreeting(0)).toBe('none');
+    // While loading, assume the usual case (one account) to avoid a flicker.
+    expect(loginGreeting(null)).toBe('one');
   });
 });

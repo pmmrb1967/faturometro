@@ -885,7 +885,10 @@ export const t = {
     },
     login: {
       title: 'Entrar',
-      intro: 'Abre a tua conta neste dispositivo.',
+      intro: 'As contas do Faturómetro ficam no dispositivo onde as crias.',
+      returningTitle: 'Olá de novo',
+      introOne: 'Escreve a palavra-passe para abrir os teus dados.',
+      introMany: 'Escolhe o email e escreve a palavra-passe.',
       submit: 'Entrar',
       noAccounts: 'Ainda não há contas neste dispositivo.',
       createAccount: 'Criar conta',
