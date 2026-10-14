@@ -287,28 +287,28 @@ describe('original files', () => {
 
   it('uploads only ciphertext and other devices download it', async () => {
     const a = await deviceA();
-    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await a.repos.documents.put({ fileHash: 'hash-secret-1', mime: 'application/pdf', bytes: pdf });
     let stateA = await setFileSync(a.profile, true);
     const sent = await runSync({ ...a, profile: stateA, api });
     stateA = sent.profile;
     expect(sent.files).toEqual({ uploaded: 1, downloaded: 0, pruned: 0, storageFull: false });
-    expect(await a.repos.documents.stateOf('h1')).toBe('uploaded');
+    expect(await a.repos.documents.stateOf('hash-secret-1')).toBe('uploaded');
 
     const onServer =
       JSON.stringify(fileDb.prepare('SELECT * FROM chunks').all()) +
       JSON.stringify(serverDb.prepare('SELECT * FROM records').all());
-    expect(onServer).not.toContain('PDF');
+    expect(onServer).not.toContain('%PDF');
     expect(onServer).not.toContain('123456789');
-    expect(onServer).not.toContain('h1');
+    expect(onServer).not.toContain('hash-secret-1');
     expect(onServer).not.toContain('application/pdf');
 
     // Device B with file sync off: knows the file exists, fetches it on demand.
     const b = await deviceB();
     await runSync({ ...b, api });
-    expect(await b.repos.documents.stateOf('h1')).toBe('remote');
-    expect(await b.repos.documents.getByFileHash('h1')).toBeUndefined();
-    expect(await fetchOriginal({ ...b, fileHash: 'h1', api })).toBe(true);
-    const file = await b.repos.documents.getByFileHash('h1');
+    expect(await b.repos.documents.stateOf('hash-secret-1')).toBe('remote');
+    expect(await b.repos.documents.getByFileHash('hash-secret-1')).toBeUndefined();
+    expect(await fetchOriginal({ ...b, fileHash: 'hash-secret-1', api })).toBe(true);
+    const file = await b.repos.documents.getByFileHash('hash-secret-1');
     expect(new TextDecoder().decode(file?.bytes)).toContain('morada secreta');
     expect(file?.mime).toBe('application/pdf');
 
