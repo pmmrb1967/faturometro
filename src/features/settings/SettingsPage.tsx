@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { Field } from '../../components/Field';
+import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import {
   changeAccountPassword,
@@ -55,6 +57,17 @@ function SyncSection() {
   const [notice, setNotice] = useState<string>();
 
   if (!session) return null;
+  if (isGuest(session.profile)) {
+    return (
+      <section className="settings-section" aria-labelledby="sync-title">
+        <h2 id="sync-title">{copy.title}</h2>
+        <p>{t.guest.syncNeedsAccount}</p>
+        <Link to="/criar-conta" className="action-primary">
+          {t.guest.createAccount}
+        </Link>
+      </section>
+    );
+  }
   const sync = session.profile.sync;
 
   async function enable(event: FormEvent) {
@@ -362,6 +375,7 @@ function AccountSection() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   if (!session) return null;
+  if (isGuest(session.profile)) return <GuestNotice />;
   const accountCopy = t.settings.account;
 
   const set = (field: PasswordFields) => (event: { target: { value: string } }) => {
@@ -498,6 +512,21 @@ function PreferencesSection() {
         />
         {t.settings.keepOriginalFiles}
       </label>
+    </section>
+  );
+}
+
+/** Instead of the account section: what using the app without an account means. */
+function GuestNotice() {
+  return (
+    <section className="settings-section" aria-labelledby="guest-title">
+      <h2 id="guest-title">{t.guest.noticeTitle}</h2>
+      {t.guest.notice.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      <Link to="/criar-conta" className="action-primary">
+        {t.guest.createAccount}
+      </Link>
     </section>
   );
 }

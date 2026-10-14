@@ -627,6 +627,8 @@ export const t = {
         'A conta fica só neste dispositivo. A palavra-passe cifra as tuas faturas: sem ela, ninguém as consegue ler, nem nós.',
       submit: 'Criar conta',
       haveAccount: 'Já tens conta neste dispositivo?',
+      convertIntro:
+        'Os dados que já tens passam para a conta. A palavra-passe passa a cifrá-los: sem ela, ninguém os consegue ler, nem nós.',
     },
     recoveryKey: {
       title: 'Guarda a tua chave de recuperação',

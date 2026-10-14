@@ -1,14 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { t } from '../../i18n/pt-PT';
-import { AccountError, createAccount, type UnlockedAccount } from './accounts';
+import { isGuest } from '../../db/profiles';
+import { AccountError, convertGuest, createAccount, type UnlockedAccount } from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
 import { RecoveryKeyStep } from './RecoveryKeyStep';
 import { useSession } from './session-context';
 import { validateRegister, type FieldErrors } from './validation';
 
 export function RegisterPage() {
-  const { signIn } = useSession();
+  const { session, signIn, updateProfile } = useSession();
+  // From the guest, the account keeps its data (same key, now protected by the password).
+  const converting = session !== null && isGuest(session.profile);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,8 +29,17 @@ export function RegisterPage() {
     if (Object.keys(found).length > 0) return;
     setBusy(true);
     try {
-      const { recoveryKey, ...account } = await createAccount(email, password);
-      setCreated({ account, recoveryKey });
+      if (session && converting) {
+        const { profile, recoveryKey } = await convertGuest(
+          { profile: session.profile, masterKey: session.masterKey },
+          email,
+          password,
+        );
+        setCreated({ account: { profile, masterKey: session.masterKey }, recoveryKey });
+      } else {
+        const { recoveryKey, ...account } = await createAccount(email, password);
+        setCreated({ account, recoveryKey });
+      }
     } catch (error) {
       setFormError(
         error instanceof AccountError && error.code === 'email_taken'
@@ -45,7 +57,8 @@ export function RegisterPage() {
         email={created.account.profile.email}
         recoveryKey={created.recoveryKey}
         onDone={() => {
-          signIn(created.account);
+          if (converting) updateProfile(created.account.profile);
+          else signIn(created.account);
           navigate('/app', { replace: true });
         }}
       />
@@ -54,7 +67,7 @@ export function RegisterPage() {
 
   const copy = t.auth.register;
   return (
-    <AuthLayout title={copy.title} intro={copy.intro}>
+    <AuthLayout title={copy.title} intro={converting ? copy.convertIntro : copy.intro}>
       <form onSubmit={submit} noValidate>
         <Field
           id="email"
@@ -90,9 +103,11 @@ export function RegisterPage() {
           {busy ? t.auth.working : copy.submit}
         </button>
       </form>
-      <p className="auth-alt">
-        {copy.haveAccount} <Link to="/entrar">{t.auth.login.submit}</Link>
-      </p>
+      {!converting && (
+        <p className="auth-alt">
+          {copy.haveAccount} <Link to="/entrar">{t.auth.login.submit}</Link>
+        </p>
+      )}
     </AuthLayout>
   );
 }
