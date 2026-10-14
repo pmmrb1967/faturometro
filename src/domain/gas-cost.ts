@@ -91,6 +91,15 @@ const NETWORK = /redes/i;
 const FIXED_TERM = /termo fixo/i;
 const FIXED_FEE = /fixa/i;
 
+/**
+ * The invoice settles earlier estimates (energy lines without a unit price):
+ * its discounts and taxes then include amounts of other periods, so it is not
+ * a good source of per-day and per-kWh charges.
+ */
+export function hasEarlierAdjustments(lines: readonly GasLine[]): boolean {
+  return lines.some((line) => line.kind === 'energy' && line.unitPrice === undefined);
+}
+
 /** null when the invoice has no priced energy in kWh (e.g. only m³, or no parser). */
 export function gasBreakdownFromLines(
   lines: readonly GasLine[],

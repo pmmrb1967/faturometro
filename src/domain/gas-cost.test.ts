@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { estimateGasCost, gasBreakdownFromLines, NO_GAS_COMMON_CHARGES } from './gas-cost';
+import {
+  estimateGasCost,
+  gasBreakdownFromLines,
+  hasEarlierAdjustments,
+  NO_GAS_COMMON_CHARGES,
+} from './gas-cost';
 import type { InvoiceLine } from './types';
 
 // Synthetic numbers only.
@@ -110,6 +115,16 @@ describe('gasBreakdownFromLines', () => {
       netCents: 2090,
       vatCents: 481,
     });
+  });
+
+  it('tells invoices that settle earlier estimates apart (their amounts span other periods)', () => {
+    expect(hasEarlierAdjustments(LINES)).toBe(false);
+    expect(
+      hasEarlierAdjustments([
+        ...LINES,
+        { kind: 'energy', description: 'Energia', amountCents: -1500 },
+      ]),
+    ).toBe(true);
   });
 
   it('needs priced energy in kWh', () => {

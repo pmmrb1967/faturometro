@@ -85,6 +85,12 @@ const READINGS = [
 ];
 
 describe('annualUsage', () => {
+  it('has no estimate when the invoices bring only m³ (gas without kWh)', () => {
+    const gasInvoice = invoice('g1', '2026-08-01', '2026-08-31');
+    const m3: Reading = { ...reading('g1', undefined, 30), unit: 'm3' };
+    expect(annualUsage([gasInvoice], [m3], '2026-10-14')).toBeNull();
+  });
+
   it('scales the last 12 months of readings to a year, by period', () => {
     const usage = annualUsage(INVOICES, READINGS, '2026-06-15');
     expect(usage?.daysCovered).toBe(60);
