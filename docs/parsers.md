@@ -24,7 +24,8 @@ Um parser lê os dados de uma fatura que o código QR fiscal não tem (período,
    - nunca lançar exceções por campos em falta: deixar o campo vazio e, se for estranho, acrescentar a `warnings`;
    - `confidence: 'high'` quando o valor vem de uma etiqueta conhecida; `'low'` quando é um palpite (ex.: formato nunca visto);
    - `linesIncludeVat` quando as linhas da fatura incluem IVA (NOS); senão as linhas somam o total sem IVA (Repsol);
-   - indicar `basis` (real, estimada, acerto) nas linhas de consumo quando a fatura o diz.
+   - indicar `basis` (real, estimada, acerto) nas linhas de consumo quando a fatura o diz;
+   - telecom: `telecomServices` (internet, TV, fixo, telemóvel) quando a fatura lista o que o pacote inclui; servem para a pesquisa no COM.escolha (`docs/anacom-comescolha.md`).
 5. **Registar** em `src/parsers/registry.ts`.
 6. **Testes** em `src/parsers/<providerId>.test.ts` contra todas as fixtures do layout, e entrada em `src/parsers/validation.test.ts`.
 7. **Fixture sintética pública** em `scripts/synthetic-fixtures.ts`: mesmas etiquetas e posições, valores inventados e coerentes (as linhas somam, o QR bate). `pnpm fixtures:synthetic` reescreve-as.
@@ -46,5 +47,5 @@ Subir `version` (fica guardada em cada fatura) e acrescentar às fixtures privad
 
 | Parser | NIF (campo A) | Notas |
 |---|---|---|
-| `nos` | 502604751 | Resumo com IVA incluído; mensalidade faturada adiantada (o período termina depois da data da fatura) |
+| `nos` | 502604751 | Resumo com IVA incluído; mensalidade faturada adiantada (o período termina depois da data da fatura); serviços do bloco "Informação sobre o seu pacote" |
 | `repsol` | 500246963 | Um PDF com resumo, uma página por fatura (luz, gás; um QR cada) e dados do contrato; linhas sem IVA; acertos de estimativas anteriores |
