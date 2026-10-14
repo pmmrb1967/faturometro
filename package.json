@@ -21,7 +21,8 @@
     "deploy:app": "pnpm build && wrangler deploy -c wrangler.app.toml",
     "deploy:server": "wrangler deploy -c server/wrangler.toml",
     "ai:eval": "tsx scripts/ai-eval.ts",
-    "parser:generate": "tsx scripts/generate-parser.ts"
+    "parser:generate": "tsx scripts/generate-parser.ts",
+    "contrib:keygen": "tsx scripts/contrib-keygen.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
