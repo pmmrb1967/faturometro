@@ -149,7 +149,7 @@ write(
   ],
 );
 
-// NOS: package with a discount and mobile usage. Total 35,00 € with VAT (23 %: 6,54 €).
+// NOS: 4-service package (internet, TV, landline, one mobile plan) with a discount and mobile usage. Total 35,00 € with VAT (23 %: 6,54 €).
 write(
   'nos',
   'synthetic-1',
@@ -207,6 +207,13 @@ write(
       ['Pacote Exemplo', 69, 198],
       ['05 jun - 04 jul', 202, 198],
       ['€40,000', 272, 198],
+      ['100 canais', 345, 201],
+      ['500Mbps', 471, 201],
+      ['Tarifário Exemplo', 471, 222],
+      ['(900000001)', 471, 234],
+      ['Voz Fixa (200000001)', 345, 249],
+      ['Total pacotes', 61, 261],
+      ['€40,00', 276, 261],
       ['Período de fidelização', 63, 270],
       ['Data fim', 202, 321],
       ['Valor com IVA', 255, 321],

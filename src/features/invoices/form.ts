@@ -189,7 +189,7 @@ export function buildDraft(
   return { ok: true, draft };
 }
 
-/** Contract data read from the invoice (CPE/CUI, tariff, power, cycle, social tariff). */
+/** Contract data read from the invoice (CPE/CUI, tariff, power, cycle, social tariff, telecom services). */
 function contractDetails(
   extraction: ExtractedInvoice,
   sector: InvoiceForm['sector'],
@@ -217,6 +217,9 @@ function contractDetails(
   }
   if (sector === 'gas' && extraction.gasEscalao) {
     details.gas = { escalao: extraction.gasEscalao.value };
+  }
+  if (sector === 'telecom' && extraction.telecomServices) {
+    details.telecom = { services: extraction.telecomServices.value, fromInvoice: true };
   }
   return details;
 }

@@ -1,4 +1,11 @@
-import type { Confidence, ConsumptionPeriod, InvoiceLine, Reading, Sector } from '../domain/types';
+import type {
+  Confidence,
+  ConsumptionPeriod,
+  InvoiceLine,
+  Reading,
+  Sector,
+  TelecomService,
+} from '../domain/types';
 import type { Cents } from '../lib/money';
 import type { PageText } from '../pdf/text';
 import type { FiscalQr } from '../qr/parse';
@@ -45,6 +52,8 @@ export interface ExtractedInvoice {
   /** Natural gas consumption tier (escalão 1–4), as printed on the invoice. */
   gasEscalao?: Field<1 | 2 | 3 | 4>;
   loyaltyEndDate?: Field<string>;
+  /** Services of a telecom contract, in TELECOM_SERVICES order. */
+  telecomServices?: Field<TelecomService[]>;
   readingType?: Field<Reading['readingType']>;
   lines: ExtractedLine[];
   /** True when line amounts include VAT (they then add up to the total, not the net). */

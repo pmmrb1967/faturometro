@@ -6,6 +6,9 @@ export type Confidence = 'high' | 'low';
 export type Source = 'qr' | 'parser' | 'ai' | 'manual';
 export type IsoDate = string;
 export type IsoDateTime = string;
+/** Services of a telecom contract, in this display order. */
+export const TELECOM_SERVICES = ['internet', 'tv', 'landline', 'mobile'] as const;
+export type TelecomService = (typeof TELECOM_SERVICES)[number];
 
 /** Present on every stored record, for the optional sync. */
 export interface SyncMeta {
@@ -42,6 +45,11 @@ export interface Contract extends SyncMeta {
     escalao?: 1 | 2 | 3 | 4;
     /** Distribution operator: ERSE ORD code, or 'unknown'. Chosen by the user. */
     distributor?: string;
+  };
+  telecom?: {
+    services: TelecomService[];
+    /** Read from an invoice and not yet confirmed by the user. */
+    fromInvoice?: boolean;
   };
   active: boolean;
   createdAt: IsoDateTime;

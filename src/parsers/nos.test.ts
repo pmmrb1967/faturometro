@@ -37,6 +37,8 @@ describe('nos parser', () => {
     expect(result.dueDate?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.dueDate!.value > qr.date).toBe(true);
     expect(result.tariffName?.value).toBeTruthy();
+    // Every fixture's package has internet, TV, a landline and mobile plans.
+    expect(result.telecomServices?.value).toEqual(['internet', 'tv', 'landline', 'mobile']);
     expect(result.periodStart!.value < result.periodEnd!.value).toBe(true);
     // Fees are billed for the month starting around the invoice date.
     expect(Math.abs(Date.parse(result.periodStart!.value) - Date.parse(qr.date))).toBeLessThan(

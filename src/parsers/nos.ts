@@ -3,7 +3,7 @@
  * summary by service with VAT included, due date. Following pages: detail
  * per service. Layout studied on 2026 invoices.
  */
-import type { InvoiceLine } from '../domain/types';
+import { TELECOM_SERVICES, type InvoiceLine, type TelecomService } from '../domain/types';
 import { sumCents } from '../lib/money';
 import type { PageText } from '../pdf/text';
 import type { FiscalQr } from '../qr/parse';
@@ -147,10 +147,48 @@ function parseDetail(pages: PageText[], result: ExtractedInvoice) {
   }
 }
 
+/**
+ * Services of the contract. The package block of the detail pages lists each
+ * component ("150 canais", "1Gbps", "Voz Fixa (…)", a mobile plan with its
+ * number); summary rows for TV or mobile extras count too.
+ */
+function parseServices(pages: PageText[], result: ExtractedInvoice) {
+  const found = new Set<TelecomService>();
+  const [first, ...detail] = pages;
+  for (const row of first ? rows(first) : []) {
+    const label = normalize(row.items[0]?.str ?? '');
+    if (/^televis[ãa]o$/i.test(label)) found.add('tv');
+    if (/^telem[óo]vel$/i.test(label)) found.add('mobile');
+    if (/^internet$/i.test(label)) found.add('internet');
+    if (/^(telefone|voz)$/i.test(label)) found.add('landline');
+  }
+  for (const page of detail) {
+    const info = findItem(page, /^Informação sobre o seu pacote$/);
+    if (!info) continue;
+    const end = rows(page).find((row) => row.y > info.y && /^Total pacotes/.test(row.text));
+    for (const item of page.items) {
+      if (item.y <= info.y || (end && item.y >= end.y) || item.x < info.x - 10) continue;
+      const text = normalize(item.str);
+      if (/\b\d+\s*canais\b/i.test(text)) found.add('tv');
+      if (/\b\d+\s*[MG]bps\b/i.test(text)) found.add('internet');
+      if (/^Voz Fixa\b/i.test(text)) found.add('landline');
+      // A mobile plan's number stands alone under it; the landline's is inside "Voz Fixa (…)".
+      if (/^\(\d{9}\)$/.test(text)) found.add('mobile');
+    }
+    break;
+  }
+  if (found.size > 0) {
+    result.telecomServices = {
+      value: TELECOM_SERVICES.filter((service) => found.has(service)),
+      confidence: 'high',
+    };
+  }
+}
+
 export const nosParser: Parser = {
   id: 'nos',
   name: 'NOS',
-  version: '1.0.0',
+  version: '1.1.0',
   sectors: ['telecom'],
   issuerNifs: [NIF],
 
@@ -170,6 +208,7 @@ export const nosParser: Parser = {
     parseHeader(first, result);
     parseSummary(first, result);
     parseDetail(ctx.pages.slice(1), result);
+    parseServices(ctx.pages, result);
     if (qr?.docId && result.docId && result.docId.value !== normalize(qr.docId)) {
       result.warnings.push('Document number differs from the QR code');
     }

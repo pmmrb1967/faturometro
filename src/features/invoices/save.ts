@@ -37,7 +37,7 @@ export interface InvoiceDraft {
   /** Contract data read from the invoice: saved on new contracts, fills gaps on existing ones. */
   contractDetails?: Pick<
     Contract,
-    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity' | 'gas'
+    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity' | 'gas' | 'telecom'
   >;
 }
 
@@ -103,6 +103,17 @@ export async function saveInvoice(
       if (others.every((invoice) => invoice.issueDate <= draft.issueDate)) {
         missing.gas = { ...current.gas, escalao };
       }
+    }
+    // Services read from invoices follow the newest one until the user confirms them.
+    const telecom = draft.contractDetails?.telecom;
+    if (
+      telecom &&
+      current.telecom?.fromInvoice &&
+      telecom.services.join() !== current.telecom.services.join()
+    ) {
+      const others = await repos.invoices.findBy('contractId', current.id);
+      if (others.every((invoice) => invoice.issueDate <= draft.issueDate))
+        missing.telecom = telecom;
     }
     if (Object.keys(missing).length > 0)
       contract = await repos.contracts.put({ ...current, ...missing });

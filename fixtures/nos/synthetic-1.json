@@ -374,6 +374,62 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "100 canais",
+          "x": 345,
+          "y": 201,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "500Mbps",
+          "x": 471,
+          "y": 201,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifário Exemplo",
+          "x": 471,
+          "y": 222,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(900000001)",
+          "x": 471,
+          "y": 234,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Voz Fixa (200000001)",
+          "x": 345,
+          "y": 249,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total pacotes",
+          "x": 61,
+          "y": 261,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€40,00",
+          "x": 276,
+          "y": 261,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "Período de fidelização",
           "x": 63,
           "y": 270,

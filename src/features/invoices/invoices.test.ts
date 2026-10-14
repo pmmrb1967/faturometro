@@ -7,6 +7,7 @@ import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
 import { emptyExtraction, type ExtractedInvoice } from '../../parsers/types';
 import { buildDraft, defaultContractId, emptyForm, formFromQr } from './form';
 import { DuplicateInvoiceError, saveInvoice } from './save';
+import type { TelecomService } from '../../domain/types';
 
 // Synthetic data only.
 const QR =
@@ -188,6 +189,44 @@ describe('saveInvoice', () => {
       { keepOriginalFile: false },
     );
     expect((await repos.contracts.get(first.contractId))?.gas?.escalao).toBe(2);
+  });
+
+  it('takes telecom services from the newest invoice until the user confirms them', async () => {
+    const telecomDraft = (docKey: string, issueDate: string, services: TelecomService[]) =>
+      draft({
+        sector: 'telecom',
+        docKey,
+        issueDate,
+        contractDetails: { telecom: { services, fromInvoice: true } },
+      });
+    const first = await saveInvoice(repos, telecomDraft('t-1', '2026-06-05', ['internet', 'tv']), {
+      keepOriginalFile: false,
+    });
+    const contractId = first.contractId;
+    const save = (docKey: string, issueDate: string, services: TelecomService[]) =>
+      saveInvoice(
+        repos,
+        { ...telecomDraft(docKey, issueDate, services), contract: { id: contractId } },
+        { keepOriginalFile: false },
+      );
+
+    await save('t-2', '2026-07-05', ['internet', 'tv', 'mobile']);
+    expect((await repos.contracts.get(contractId))?.telecom?.services).toEqual([
+      'internet',
+      'tv',
+      'mobile',
+    ]);
+    // An older invoice does not bring the old services back.
+    await save('t-0', '2026-05-05', ['internet']);
+    expect((await repos.contracts.get(contractId))?.telecom?.services).toHaveLength(3);
+
+    // Once confirmed by the user, invoices no longer change them.
+    const contract = await repos.contracts.get(contractId);
+    await repos.contracts.put({ ...contract!, telecom: { services: ['internet', 'tv'] } });
+    await save('t-3', '2026-08-05', ['internet', 'tv', 'mobile']);
+    expect((await repos.contracts.get(contractId))?.telecom).toEqual({
+      services: ['internet', 'tv'],
+    });
   });
 
   it('reuses the provider and an existing contract', async () => {
