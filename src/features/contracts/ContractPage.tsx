@@ -9,6 +9,7 @@ import { formatCents } from '../../lib/money';
 import { ContractAssistant } from '../ai/ContractAssistant';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
 
 const copy = t.contracts;
@@ -115,6 +116,17 @@ export function ContractPage() {
           await refreshAlerts(session.repos);
         }}
       />
+
+      {contract.sector === 'telecom' && (
+        <TelecomCompare
+          key={contract.id}
+          contract={contract}
+          invoices={invoices}
+          onSaveServices={async (services) => {
+            await session.repos.contracts.put({ ...contract, telecom: { services } });
+          }}
+        />
+      )}
 
       <BarChart
         title={copy.charts.cost}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatCents, parseDotDecimalAmount, parsePtAmount, sumCents } from './money';
+import { formatCents, parseDotDecimalAmount, parsePtAmount, sumCents, wholeEurosUp } from './money';
 
 describe('parsePtAmount', () => {
   it.each([
@@ -54,5 +54,13 @@ describe('sumCents', () => {
 describe('formatCents', () => {
   it('formats in pt-PT euros', () => {
     expect(formatCents(123456).replace(/\s/g, ' ')).toBe('1234,56 €');
+  });
+});
+
+describe('wholeEurosUp', () => {
+  it('rounds up to whole euros', () => {
+    expect(wholeEurosUp(3990)).toBe(40);
+    expect(wholeEurosUp(4000)).toBe(40);
+    expect(wholeEurosUp(4001)).toBe(41);
   });
 });

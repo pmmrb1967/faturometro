@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "changedAt": "2026-10-14",
+  "base": "https://www.anacom.pt/tarifarios/",
+  "combined": {
+    "path": "CombinadosResultadosConsulta.do",
+    "fixed": {
+      "todosPrestadores": "on",
+      "todasFidelizacoes": "on"
+    },
+    "limitParam": "limiteMensal",
+    "postalParam": "codigoPostalPrefixo",
+    "serviceParam": "idServico",
+    "serviceIds": {
+      "internet": "1",
+      "tv": "2",
+      "landline": "3",
+      "mobile": "4"
+    }
+  },
+  "single": {
+    "internet": {
+      "path": "InternetResultadosConsulta.do",
+      "fixed": {
+        "todosPrestadores": "on",
+        "todasTecnologias": "on",
+        "todasFidelizacoes": "on"
+      },
+      "limitParam": "limiteMensal",
+      "postalParam": "codigoPostalPrefixo"
+    },
+    "tv": {
+      "path": "TelevisaoResultadosConsulta.do",
+      "fixed": {
+        "todosPrestadores": "on",
+        "todasFidelizacoes": "on"
+      },
+      "limitParam": "limiteMensal",
+      "postalParam": "codigoPostalPrefixo"
+    },
+    "landline": {
+      "path": "FixoResultadosConsulta.do",
+      "fixed": {
+        "todosTiposTarifarios": "on",
+        "todosPrestadores": "on",
+        "todasFidelizacoes": "on"
+      },
+      "limitParam": "limiteMensal",
+      "postalParam": "codigoPostalPrefixo"
+    },
+    "mobile": {
+      "path": "MovelResultadosConsulta.do",
+      "fixed": {
+        "todosTiposTarifarios": "on",
+        "todosPrestadores": "on",
+        "todasFidelizacoes": "on"
+      },
+      "limitParam": "limiteMensal"
+    }
+  }
+}

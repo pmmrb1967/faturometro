@@ -598,6 +598,32 @@ export const t = {
       invoiceOf: (date: string) => `Fatura de ${date}`,
     },
     invoicesTitle: 'Faturas deste contrato',
+    telecom: {
+      title: 'Comparar com outras ofertas',
+      services: 'Serviços incluídos',
+      serviceNames: {
+        internet: 'Internet',
+        tv: 'Televisão',
+        landline: 'Telefone fixo',
+        mobile: 'Telemóvel',
+      },
+      fromInvoice: 'Lidos da tua última fatura. Confirma ou corrige.',
+      confirm: 'Confirmar serviços',
+      save: 'Guardar serviços',
+      saved: 'Serviços guardados.',
+      average: (amount: string, count: number) =>
+        count === 1
+          ? `Pagaste ${amount} na última fatura.`
+          : `Pagas em média ${amount} por mês (últimas ${count} faturas).`,
+      cheaperOnly: (euros: number) => `Só ofertas até ${euros} € por mês`,
+      postal: 'Código postal (4 primeiros dígitos, opcional)',
+      postalHint: 'Para veres só as ofertas com cobertura na tua zona. Não fica guardado.',
+      postalInvalid: 'Escreve os 4 primeiros dígitos (ex.: 4000).',
+      chooseServices: 'Escolhe os serviços que tens para comparar.',
+      open: 'Ver ofertas no COM.escolha (ANACOM)',
+      unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
+      note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
+    },
   },
   ingest: {
     title: 'Adicionar fatura',

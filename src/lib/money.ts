@@ -53,6 +53,12 @@ export function sumCents(values: readonly Cents[]): Cents {
   return total;
 }
 
+/** Whole euros, rounded up (e.g. 3990 → 40): for "up to what you pay" limits. */
+export function wholeEurosUp(cents: Cents): number {
+  if (!Number.isInteger(cents)) throw new TypeError(`Not integer cents: ${cents}`);
+  return Math.ceil(cents / 100);
+}
+
 const EUR_FORMAT = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' });
 
 /** Formats cents for display only (e.g. "1234,56 €"). */
