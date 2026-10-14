@@ -6,6 +6,7 @@
  *   password (PBKDF2-SHA256) and with a key derived from the recovery key
  *   (HKDF-SHA256; the recovery key is random, so no slow KDF is needed).
  * - Changing the password only re-wraps the master key.
+ * - A profile without an account keeps the raw master key (no password).
  */
 import { decodeBase32, encodeBase32 } from './base32';
 
@@ -14,6 +15,7 @@ const SALT_BYTES = 16;
 const IV_BYTES = 12;
 const RECOVERY_KEY_BYTES = 32;
 const AES_GCM = 'AES-GCM';
+const MASTER_KEY_USAGES: KeyUsage[] = ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'];
 
 export interface EncryptedBlob {
   iv: string;
@@ -112,7 +114,7 @@ async function unwrap(blob: EncryptedBlob, wrappingKey: CryptoKey): Promise<Cryp
       { name: AES_GCM, iv: fromBase64(blob.iv) },
       { name: AES_GCM, length: 256 },
       true, // extractable only so it can be re-wrapped (password change, recovery)
-      ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'],
+      MASTER_KEY_USAGES,
     );
   } catch {
     throw new WrongSecretError();
@@ -140,16 +142,31 @@ export interface NewAccountKeys {
   recoveryKey: string;
 }
 
-export async function createAccountKeys(
+export async function generateMasterKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey({ name: AES_GCM, length: 256 }, true, MASTER_KEY_USAGES);
+}
+
+/** Raw master key in base64: only for a profile without an account (no password). */
+export async function exportMasterKey(masterKey: CryptoKey): Promise<string> {
+  return toBase64(new Uint8Array(await crypto.subtle.exportKey('raw', masterKey)));
+}
+
+export async function importMasterKey(raw: string): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    'raw',
+    fromBase64(raw),
+    { name: AES_GCM, length: 256 },
+    true,
+    MASTER_KEY_USAGES,
+  );
+}
+
+/** Wraps an existing master key with a password and a new recovery key. */
+export async function wrapMasterKey(
+  masterKey: CryptoKey,
   password: string,
   iterations = PBKDF2_ITERATIONS,
-): Promise<NewAccountKeys> {
-  const masterKey = await crypto.subtle.generateKey({ name: AES_GCM, length: 256 }, true, [
-    'encrypt',
-    'decrypt',
-    'wrapKey',
-    'unwrapKey',
-  ]);
+): Promise<{ wrapped: WrappedMasterKey; recoveryKey: string }> {
   const kdf: PasswordKdf = {
     algorithm: 'PBKDF2-SHA256',
     iterations,
@@ -163,7 +180,15 @@ export async function createAccountKeys(
     byRecoveryKey: await wrap(masterKey, await recoveryKeyKey(recoveryKey, recoverySalt)),
     recoverySalt,
   };
-  return { masterKey, wrapped, recoveryKey };
+  return { wrapped, recoveryKey };
+}
+
+export async function createAccountKeys(
+  password: string,
+  iterations = PBKDF2_ITERATIONS,
+): Promise<NewAccountKeys> {
+  const masterKey = await generateMasterKey();
+  return { masterKey, ...(await wrapMasterKey(masterKey, password, iterations)) };
 }
 
 export async function unlockWithPassword(

@@ -11,10 +11,14 @@ import {
   decryptJson,
   encryptBytes,
   encryptJson,
+  exportMasterKey,
+  generateMasterKey,
+  importMasterKey,
   rewrapWithPassword,
   sha256Hex,
   unlockWithPassword,
   unlockWithRecoveryKey,
+  wrapMasterKey,
 } from './crypto';
 
 // Few iterations keep the tests fast; production uses PBKDF2_ITERATIONS.
@@ -151,5 +155,31 @@ describe('sync keys', () => {
     await expect(
       unwrapFromSync(forServer.byPassword, await deriveSyncKeys('errada', salt, ITERATIONS)),
     ).rejects.toBeInstanceOf(WrongSecretError);
+  });
+});
+
+describe('stored master key', () => {
+  it('exports and imports the same master key', async () => {
+    const key = await generateMasterKey();
+    const blob = await encryptJson(key, { a: 1 });
+    const again = await importMasterKey(await exportMasterKey(key));
+    expect(await decryptJson(again, blob)).toEqual({ a: 1 });
+  });
+
+  it('wraps an existing master key with a password and a recovery key', async () => {
+    const key = await generateMasterKey();
+    const blob = await encryptJson(key, 'antes');
+    const { wrapped, recoveryKey } = await wrapMasterKey(key, 'segredo-longo', ITERATIONS);
+    expect(await decryptJson(await unlockWithPassword(wrapped, 'segredo-longo'), blob)).toBe(
+      'antes',
+    );
+    expect(await decryptJson(await unlockWithRecoveryKey(wrapped, recoveryKey), blob)).toBe(
+      'antes',
+    );
+  });
+
+  it('an imported key can be wrapped again', async () => {
+    const key = await importMasterKey(await exportMasterKey(await generateMasterKey()));
+    await expect(wrapMasterKey(key, 'segredo-longo', ITERATIONS)).resolves.toBeDefined();
   });
 });
