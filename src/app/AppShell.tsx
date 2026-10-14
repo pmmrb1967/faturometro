@@ -3,6 +3,7 @@ import { LegalFooter } from '../components/LegalFooter';
 import { useSession } from '../features/auth/session-context';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
+import { NavIcon } from './NavIcon';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
 
@@ -35,7 +36,8 @@ export function AppShell() {
       <nav className="nav" aria-label={t.appName}>
         {SECTIONS.map((section) => (
           <NavLink key={section.id} to={section.path} end className="nav-item">
-            {t.nav[section.id]}
+            <NavIcon section={section.id} />
+            <span>{t.nav[section.id]}</span>
           </NavLink>
         ))}
       </nav>
