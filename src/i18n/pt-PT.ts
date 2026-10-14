@@ -174,6 +174,22 @@ export const t = {
     ],
   },
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
+  household: {
+    title: 'A tua casa nos últimos 12 meses',
+    total: 'Total',
+    previous: (difference: string, pct: string, up: boolean) =>
+      `${up ? '+' : '−'}${difference} (${up ? '+' : '−'}${pct} %) do que nos 12 meses anteriores`,
+    same: 'O mesmo que nos 12 meses anteriores',
+    bySector: 'Por tipo de despesa',
+    share: (amount: string, pct: string) => `${amount} (${pct} %)`,
+    chart: 'Faturas de cada mês',
+    month: 'Mês',
+    value: 'Valor',
+    monthTitle: (month: string) => `Faturas emitidas em ${month}`,
+    forecast: 'Próximos 12 meses (estimativa)',
+    forecastNote:
+      'Para cada contrato ativo: na luz, gás e água com um ano de faturas, o mesmo que no último ano; nos outros, o custo por dia das últimas faturas. Não conta com aumentos futuros. Cada fatura conta no mês em que foi emitida.',
+  },
   alerts: {
     title: 'Avisos',
     empty: 'Sem avisos. Quando algo mudar nos teus contratos, aparece aqui.',

@@ -6,6 +6,7 @@ import { checkIsStale, comEscolhaConfigSchema } from '../../domain/comescolha';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { useSession } from '../auth/session-context';
+import { HouseholdSection } from '../household/HouseholdSection';
 import { dismissAlert, refreshAlerts, today } from './refresh';
 import './alerts.css';
 
@@ -73,6 +74,7 @@ export function HomePage() {
           </li>
         ))}
       </ul>
+      <HouseholdSection />
     </>
   );
 }
