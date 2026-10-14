@@ -1,5 +1,6 @@
 /** Shared sync status (used by the automatic sync and by the settings page). */
 import { useEffect, useSyncExternalStore } from 'react';
+import { profilesDb } from '../../db/profiles';
 import { runSync, SyncError, type SyncErrorCode } from '../../sync/account';
 import type { FileSyncResult } from '../../sync/files';
 import { refreshAlerts } from '../alerts/refresh';
@@ -50,6 +51,11 @@ export async function syncSession(
       ...(files ? { files } : {}),
     });
   } catch (error) {
+    if (error instanceof SyncError && error.code === 'account_removed') {
+      // runSync already turned sync off for this profile; show it.
+      const profile = await profilesDb.profiles.get(session.profile.id);
+      if (profile) updateProfile(profile);
+    }
     set({ running: false, error: error instanceof SyncError ? error.code : 'unexpected' });
   }
 }

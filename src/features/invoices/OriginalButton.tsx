@@ -34,7 +34,7 @@ export function OriginalButton({
       }
       if (!file) {
         target?.close();
-        setProblem(copy.unavailable);
+        setProblem(state === 'gone' ? copy.gone : copy.unavailable);
         return;
       }
       const url = URL.createObjectURL(new Blob([file.bytes], { type: file.mime }));

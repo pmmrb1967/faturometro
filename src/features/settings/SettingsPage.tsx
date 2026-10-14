@@ -111,6 +111,11 @@ function SyncSection() {
       {!sync && (
         <form onSubmit={enable} noValidate>
           <p>{copy.offIntro}</p>
+          {status.error === 'account_removed' && (
+            <p className="ingest-problem" role="alert">
+              {copy.errors.account_removed}
+            </p>
+          )}
           <p className="muted">{copy.serverSees}</p>
           {/* Tells password managers which account the password belongs to. */}
           <input
@@ -269,11 +274,15 @@ function FileSyncOption() {
           {copy.files.usage(formatMegabytes(usage.used), formatMegabytes(usage.quota))}
         </p>
       )}
+      {enabled && usage && usage.keepMonths !== null && (
+        <p className="muted">{copy.files.keep(usage.keepMonths)}</p>
+      )}
       {enabled && files?.storageFull && <p className="ingest-problem">{copy.files.full}</p>}
       {enabled && !!files?.uploaded && <p role="status">{copy.files.sent(files.uploaded)}</p>}
       {enabled && !!files?.downloaded && (
         <p role="status">{copy.files.received(files.downloaded)}</p>
       )}
+      {enabled && !!files?.pruned && <p role="status">{copy.files.pruned(files.pruned)}</p>}
     </div>
   );
 }

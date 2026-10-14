@@ -3,7 +3,7 @@ export const t = {
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
   privacyPage: {
     title: 'Privacidade',
-    updated: 'Última atualização: 13 de outubro de 2026.',
+    updated: 'Última atualização: 14 de outubro de 2026.',
     intro:
       'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
     sections: [
@@ -26,9 +26,10 @@ export const t = {
         title: 'Sincronização entre dispositivos (só se a ligares)',
         body: [
           'Os dados são cifrados no teu dispositivo antes de saírem, e o servidor não tem a chave para os ler.',
-          'O servidor guarda: o teu email; um código derivado da palavra-passe para confirmar que és tu (só o seu hash); a chave das tuas faturas cifrada com chaves que ele não tem; e os registos cifrados, cada um com um identificador, o tipo (fatura, contrato…) e a data da última alteração. Se ligares a sincronização dos originais, guarda também os PDFs, cifrados da mesma forma.',
+          'O servidor guarda: o teu email e o dia em que sincronizaste pela última vez; um código derivado da palavra-passe para confirmar que és tu (só o seu hash); a chave das tuas faturas cifrada com chaves que ele não tem; e os registos cifrados, cada um com um identificador, o tipo (fatura, contrato…) e a data da última alteração. Se ligares a sincronização dos originais, guarda também os PDFs, cifrados da mesma forma.',
           'O servidor funciona na Cloudflare, com as bases de dados restritas à União Europeia. A Cloudflare processa os pedidos (por exemplo, o endereço IP) para entregar o serviço e protegê-lo de abusos, nos termos da sua política de privacidade; o Faturómetro não guarda registos de acesso.',
           'As sessões expiram ao fim de 30 dias. Os dados ficam no servidor até desligares a sincronização com a opção de apagar ou até apagares tudo (Definições).',
+          'Para o serviço continuar gratuito há limites: os PDFs originais com mais de 12 meses saem do servidor e ficam só nos teus dispositivos; uma conta que não sincronize há 12 meses é apagada do servidor (os dados nos teus dispositivos ficam); e, quando o servidor está perto da lotação, não é possível ligar a sincronização em contas novas.',
         ],
       },
       {
@@ -236,7 +237,7 @@ export const t = {
     offIntro:
       'Desligada: as faturas existem só neste dispositivo. Se ligares, os dados são cifrados aqui antes de saírem e o servidor guarda apenas conteúdo cifrado, que não consegue ler.',
     serverSees:
-      'O servidor fica a saber: o teu email, quando cada registo foi alterado e de que tipo é (fatura, contrato…). Não vê nomes, valores, datas das faturas, NIF nem moradas.',
+      'O servidor fica a saber: o teu email, o dia em que sincronizaste pela última vez, quando cada registo foi alterado e de que tipo é (fatura, contrato…). Não vê nomes, valores, datas das faturas, NIF nem moradas.',
     serverUrl: 'Endereço do servidor de sincronização',
     password: 'A tua palavra-passe',
     passwordHint:
@@ -267,6 +268,12 @@ export const t = {
         'Para enviar originais, liga também “Guardar o PDF ou a fotografia original” nas preferências.',
       usage: (used: string, quota: string) => `Espaço usado no servidor: ${used} de ${quota}.`,
       full: 'O espaço para originais no servidor está cheio: os novos ficam só neste dispositivo. As faturas continuam a sincronizar.',
+      keep: (months: number) =>
+        `Os originais com mais de ${months} meses ficam só nos teus dispositivos (saem do servidor).`,
+      pruned: (count: number) =>
+        count === 1
+          ? '1 original antigo saiu do servidor (continua neste dispositivo).'
+          : `${count} originais antigos saíram do servidor (continuam neste dispositivo).`,
       sent: (count: number) =>
         count === 1 ? 'Enviado 1 original.' : `Enviados ${count} originais.`,
       received: (count: number) =>
@@ -298,6 +305,12 @@ export const t = {
         'A sessão no servidor terminou (por exemplo, porque a palavra-passe foi mudada noutro dispositivo). Volta a introduzir a palavra-passe.',
       different_account: 'Esta conta no servidor não corresponde aos dados deste dispositivo.',
       unexpected: 'Não foi possível sincronizar. Tenta mais tarde.',
+      capacity:
+        'A sincronização está lotada de momento. Os teus dados continuam neste dispositivo; tenta mais tarde.',
+      records_full:
+        'Atingiste o espaço para registos no servidor. Os novos dados ficam só neste dispositivo.',
+      account_removed:
+        'A tua conta de sincronização foi removida por inatividade (12 meses sem sincronizar). Os teus dados estão neste dispositivo; podes voltar a ligar a sincronização.',
       serverUrl: 'Escreve um endereço https:// válido.',
     },
   },
@@ -399,6 +412,7 @@ export const t = {
       opening: 'A abrir…',
       unavailable: 'O original já não está no servidor.',
       failed: 'Não foi possível abrir o original. Verifica a ligação e tenta de novo.',
+      gone: 'Este original já só está guardado nos dispositivos que o tinham.',
     },
     review: {
       title: 'Confirma e guarda',
