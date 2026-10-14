@@ -1761,6 +1761,120 @@ git commit -m "feat(ui): free plan limits in settings, originals and privacy pag
 
 ---
 
+### Task 8b: Administrator badge
+
+The server is the only one that knows who is an administrator, so the app learns it only with sync on (CLAUDE.md rule 1). It comes in the pull answer the app already requests on every sync: no extra requests.
+
+**Files:**
+- Modify: `server/src/app.ts` (`GET /v1/changes` answer), `server/src/app.test.ts`
+- Modify: `src/sync/api.ts` (pull schema), `src/sync/engine.ts` (`SyncResult.admin`), `src/db/profiles.ts` (`ProfileSync.admin`), `src/sync/account.ts` (`runSync` stores it)
+- Modify: `src/app/AppShell.tsx`, `src/index.css`, `src/features/settings/SettingsPage.tsx`, `src/i18n/pt-PT.ts`
+- Test: `src/sync/sync.test.ts`
+
+**Interfaces:**
+- Consumes: `isAdmin` (Task 2).
+- Produces: `GET /v1/changes` → `{ records, latest, more, admin: boolean }`; `SyncResult.admin: boolean`; `ProfileSync.admin?: boolean`.
+
+- [ ] **Step 1: Failing tests**
+
+`server/src/app.test.ts`, in `describe('files', …)` after the administrators test (same server setup):
+
+```ts
+  it('tells administrators who they are in the pull answer', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const admin = await register('admin@example.pt');
+    const ana = await register('ana@example.pt');
+    expect((await call('GET', '/v1/changes', undefined, admin)).body?.admin).toBe(true);
+    expect((await call('GET', '/v1/changes', undefined, ana)).body?.admin).toBe(false);
+  });
+```
+
+`src/sync/sync.test.ts`, in `describe('free plan limits', …)`:
+
+```ts
+  it('remembers on the profile whether the account is an administrator', async () => {
+    serverWith({ adminEmails: ['ana@example.pt'] });
+    const a = await deviceA();
+    const { profile } = await runSync({ ...a, api });
+    expect(profile.sync?.admin).toBe(true);
+  });
+
+  it('ordinary accounts are not administrators', async () => {
+    const a = await deviceA();
+    const { profile } = await runSync({ ...a, api });
+    expect(profile.sync?.admin).toBe(false);
+  });
+```
+
+Run: `pnpm vitest run server/src/app.test.ts src/sync/sync.test.ts` — Expected: the new tests FAIL.
+
+- [ ] **Step 2: Server**
+
+In `GET /v1/changes`, add to the answer: `admin: isAdmin(user.email),`. In the header comment: `GET /v1/changes?since=N → {records, latest, more, admin}`.
+
+- [ ] **Step 3: App sync**
+
+`src/sync/api.ts` `pull` schema: add `admin: z.boolean()`.
+
+`src/sync/engine.ts`: `SyncResult` gets `/** The server account is an administrator (own limits). */ admin: boolean;`. In `syncNow`, before the pull loop `let admin = false;`, inside the loop after `const page = …` add `admin = page.admin;`, and return `{ …existing, admin }`.
+
+`src/db/profiles.ts` `ProfileSync`: `/** The server says this account is an administrator (shown in the header). */ admin?: boolean;`
+
+`src/sync/account.ts` `runSync`'s `saveSync`: add `admin: result.admin,`.
+
+Fix any other `SyncResult` literals the typecheck reports (tests or mocks) by adding `admin: false`.
+
+- [ ] **Step 4: UI**
+
+`src/i18n/pt-PT.ts`: at the top level next to `signOut`, add `adminBadge: 'Administrador',`; in `settings.account` add `admin: 'Esta conta é de administrador: tem limites próprios no servidor de sincronização.',`.
+
+`src/app/AppShell.tsx`, inside `.topbar-account` before the email:
+
+```tsx
+          {session?.profile.sync?.admin && <span className="topbar-badge">{t.adminBadge}</span>}
+```
+
+`src/index.css`, after `.topbar-email`:
+
+```css
+.topbar-badge {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+```
+
+(The badge stays visible on phones, where the email is hidden.)
+
+`src/features/settings/SettingsPage.tsx`, in the account section after the `signedInAs` paragraph:
+
+```tsx
+      {session.profile.sync?.admin && <p className="muted">{accountCopy.admin}</p>}
+```
+
+- [ ] **Step 5: Verify**
+
+Run: `pnpm typecheck && pnpm lint && pnpm test` — Expected: PASS. In `pnpm dev` (narrow and wide window), with a profile whose `sync.admin` is true (set it in the browser's IndexedDB `faturometro-profiles`), the badge shows in the header and the line in Definições → Conta.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add server/src/app.ts server/src/app.test.ts src/sync/api.ts src/sync/engine.ts src/db/profiles.ts src/sync/account.ts src/app/AppShell.tsx src/index.css src/features/settings/SettingsPage.tsx src/i18n/pt-PT.ts src/sync/sync.test.ts
+git commit -m "feat: show the administrator badge after login"
+```
+
+---
+
 ### Task 9: Weekly usage alert
 
 **Files:**
