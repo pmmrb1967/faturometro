@@ -3,7 +3,7 @@ import { sumCents } from '../lib/money';
 import { vatCents } from '../qr/parse';
 import { layoutFixtures } from '../test/fixtures';
 import { findParser } from './registry';
-import { repsolParser } from './repsol';
+import { escalaoOf, repsolParser } from './repsol';
 
 const fixtures = layoutFixtures('repsol');
 const documents = fixtures.flatMap((fixture) =>
@@ -49,6 +49,34 @@ describe('repsol parser', () => {
       expect(read).toBeCloseTo(billed, 6);
     } else {
       expect(result.sector).toBe('gas');
+      expect(result.gasEscalao?.value).toBeGreaterThanOrEqual(1);
+      // Gas consumption comes in kWh (m³ × correction factor × calorific value).
+      expect(result.readings.every((reading) => reading.unit === 'kWh')).toBe(true);
     }
+  });
+});
+
+describe('escalaoOf', () => {
+  const page = (strings: string[]) => ({
+    page: 1,
+    width: 600,
+    height: 800,
+    items: strings.map((str, index) => ({
+      str,
+      x: 50,
+      y: 100 + index * 12,
+      width: 40,
+      height: 10,
+      fontName: 'f',
+    })),
+  });
+
+  it('reads the gas consumption tier', () => {
+    expect(escalaoOf(page(['Escalão', 'Escalão 2']))).toBe(2);
+  });
+
+  it('ignores pages without one', () => {
+    expect(escalaoOf(page(['Potência: 6,90kVA']))).toBeUndefined();
+    expect(escalaoOf(page(['Escalão 7']))).toBeUndefined();
   });
 });

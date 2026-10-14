@@ -198,10 +198,17 @@ function labelValue(
   return position === 'below' ? valueBelow(page, item, 20) : valueRightOf(page, item);
 }
 
+/** "Escalão 2" on a gas invoice page → 2. */
+export function escalaoOf(page: PageText): 1 | 2 | 3 | 4 | undefined {
+  const item = page.items.find((candidate) => /^Escalão [1-4]$/.test(normalize(candidate.str)));
+  const value = item ? Number(normalize(item.str).slice(-1)) : NaN;
+  return value === 1 || value === 2 || value === 3 || value === 4 ? value : undefined;
+}
+
 export const repsolParser: Parser = {
   id: ID,
   name: 'Repsol',
-  version: '1.1.0',
+  version: '1.2.0',
   sectors: ['electricity', 'gas'],
   issuerNifs: [NIF],
 
@@ -219,6 +226,8 @@ export const repsolParser: Parser = {
     }
     const isGas = Boolean(findItem(page, /^Escalão$/));
     result.sector = isGas ? 'gas' : 'electricity';
+    const escalao = isGas ? escalaoOf(page) : undefined;
+    if (escalao) result.gasEscalao = { value: escalao, confidence: 'high' };
 
     const docId = labelValue(page, /^Fatura$/, 'below');
     if (docId) result.docId = { value: normalize(docId.str), confidence: 'high' };

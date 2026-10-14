@@ -37,6 +37,12 @@ export interface Contract extends SyncMeta {
     cycleType?: 'daily' | 'weekly';
     socialTariff: boolean;
   };
+  gas?: {
+    /** Consumption tier (escalão 1–4), from the invoice or chosen by the user. */
+    escalao?: 1 | 2 | 3 | 4;
+    /** Distribution operator: ERSE ORD code, or 'unknown'. Chosen by the user. */
+    distributor?: string;
+  };
   active: boolean;
   createdAt: IsoDateTime;
 }

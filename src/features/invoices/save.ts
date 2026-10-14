@@ -37,7 +37,7 @@ export interface InvoiceDraft {
   /** Contract data read from the invoice: saved on new contracts, fills gaps on existing ones. */
   contractDetails?: Pick<
     Contract,
-    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity'
+    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity' | 'gas'
   >;
 }
 

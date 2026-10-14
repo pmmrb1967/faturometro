@@ -42,6 +42,8 @@ export interface ExtractedInvoice {
   supplyPointId?: Field<string>;
   tariffName?: Field<string>;
   powerKva?: Field<number>;
+  /** Natural gas consumption tier (escalão 1–4), as printed on the invoice. */
+  gasEscalao?: Field<1 | 2 | 3 | 4>;
   loyaltyEndDate?: Field<string>;
   readingType?: Field<Reading['readingType']>;
   lines: ExtractedLine[];

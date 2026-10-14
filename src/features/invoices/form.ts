@@ -215,6 +215,9 @@ function contractDetails(
       socialTariff: extraction.lines.some((line) => /social/i.test(line.description)),
     };
   }
+  if (sector === 'gas' && extraction.gasEscalao) {
+    details.gas = { escalao: extraction.gasEscalao.value };
+  }
   return details;
 }
 
