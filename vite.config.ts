@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { execSync } from 'node:child_process';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -16,7 +17,20 @@ function securityHeaders(syncUrl: string): Plugin {
   };
 }
 
+/** Short commit of the build, shown in Settings so it is clear which version is running. */
+function buildCommit(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'dev';
+  }
+}
+
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_COMMIT__: JSON.stringify(buildCommit()),
+    __APP_BUILT__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+  },
   plugins: [
     react(),
     securityHeaders(loadEnv(mode, process.cwd(), 'VITE_').VITE_SYNC_URL || PROJECT_SYNC_URL),

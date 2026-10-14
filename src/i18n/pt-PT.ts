@@ -99,6 +99,7 @@ export const t = {
       'Instala o Faturómetro no telemóvel ou no computador: abre pelo ícone, em ecrã inteiro, e funciona sem internet.',
     button: 'Instalar app',
     installed: 'O Faturómetro está instalado neste dispositivo.',
+    version: (commit: string, built: string) => `Versão ${commit} · ${built}`,
     iosSteps: [
       'Abre esta página no Safari.',
       'Toca no botão Partilhar (o quadrado com a seta para cima).',
