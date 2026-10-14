@@ -484,7 +484,7 @@ Opcional e desligada por defeito.
 - [x] Sincronização dos PDFs cifrados, opcional por dispositivo: numa segunda base D1 (sem cartão, em vez de R2), em blocos de texto base64; quota de 50 MB por conta e 450 MB no total; "Abrir original" nas faturas (descarrega a pedido)
 - [x] Cliente: ativar/desativar sincronização, envio e receção incrementais, resolução de conflitos (última alteração ganha), entrada num dispositivo novo, sincronização automática (abertura, 5 min, ao voltar a ligação)
 - [x] Apagar conta e dados do servidor
-- [ ] Política de privacidade (Fase 6, com a página "Privacidade")
+- [x] Política de privacidade (página `/privacidade`, Fase 6)
 - [x] Mudança de palavra-passe (Definições → Conta), local e no servidor; os outros dispositivos perdem a sessão e pedem a nova palavra-passe, que passa também a ser a local; a recuperação com a chave de recuperação atualiza o servidor quando possível
 - [x] Publicar o servidor na Cloudflare (secção 15b)
 - [x] Testes: o servidor nunca recebe dados em claro (teste automático com dois dispositivos; verificado também no D1 local)
