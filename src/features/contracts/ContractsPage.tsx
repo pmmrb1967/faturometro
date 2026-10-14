@@ -4,6 +4,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { useSession } from '../auth/session-context';
+import { CalendarExport } from './CalendarExport';
 import '../invoices/invoices.css';
 
 export function ContractsPage() {
@@ -51,6 +52,7 @@ export function ContractsPage() {
           ))}
         </ul>
       )}
+      {rows && rows.length > 0 && <CalendarExport />}
     </>
   );
 }

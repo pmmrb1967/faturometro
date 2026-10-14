@@ -628,6 +628,29 @@ export const t = {
       unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
       note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
     },
+    calendar: {
+      title: 'Datas no teu calendário',
+      intro:
+        'Descarrega um ficheiro com o fim das fidelizações e as datas-limite de pagamento, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
+      export: 'Adicionar ao calendário',
+      exported: (count: number) =>
+        count === 1 ? 'Ficheiro com 1 data descarregado.' : `Ficheiro com ${count} datas descarregado.`,
+      empty:
+        'Ainda não há datas para o calendário. Guarda o fim da fidelização na página de cada contrato.',
+      note: 'O ficheiro é criado neste dispositivo e tem o nome dos contratos e o valor das faturas. Se o abrires num calendário online (Google, Outlook, iCloud), estes dados passam a estar lá. Quando mudares uma data ou guardares faturas novas, descarrega-o outra vez. Alguns calendários usam os teus lembretes habituais em vez dos do ficheiro.',
+      fileName: 'faturometro-datas.ics',
+      calendarName: 'Faturómetro',
+      name: (label: string, provider: string) => (provider ? `${label}, ${provider}` : label),
+      loyaltySummary: (name: string) => `Fim da fidelização: ${name}`,
+      loyaltyDescription:
+        'A fidelização deste contrato termina hoje. A partir daqui podes mudar de tarifário ou de operador sem penalização. Compara as ofertas no Faturómetro antes de aceitar uma renovação.',
+      loyaltyReminder: (name: string) => `A fidelização de ${name} está a acabar`,
+      paymentSummary: (name: string, amount: string) => `Pagar fatura: ${name} (${amount})`,
+      paymentDescription: (issueDate: string) =>
+        `Data-limite de pagamento da fatura de ${issueDate}. Se pagas por débito direto, não precisas de fazer nada.`,
+      paymentReminder: (name: string, amount: string) =>
+        `Fatura de ${name} (${amount}) a pagar em breve`,
+    },
   },
   ingest: {
     title: 'Adicionar fatura',
