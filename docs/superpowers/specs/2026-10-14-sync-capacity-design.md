@@ -27,9 +27,9 @@ A sincronização entre dispositivos nunca deve obrigar a pagar a Cloudflare. Qu
 | Travão à entrada | 80% de ocupação | idem |
 | Inatividade até apagar a conta | 12 meses | idem |
 | Alerta de ocupação | 70%, verificado semanalmente | `.github/workflows/` |
-| Contas de administrador | `ADMIN_EMAILS` (lista separada por vírgulas) | `server/wrangler.toml` `[vars]` |
+| Contas de administrador | `ADMIN_EMAILS` (lista separada por vírgulas) | segredo do Worker (`wrangler secret put`), para o email não ficar no repositório público |
 
-Todos os valores são variáveis do Worker: mudam com um `wrangler deploy` do servidor, sem nova versão da app. Os valores por omissão em `server/src/app.ts` passam a ser estes; os testes injetam os seus.
+Todos os valores (exceto `ADMIN_EMAILS`) são variáveis do Worker: mudam com um `wrangler deploy` do servidor, sem nova versão da app. Os valores por omissão em `server/src/app.ts` passam a ser estes; os testes injetam os seus.
 
 ## Desenho
 
@@ -45,8 +45,8 @@ Contas que já ultrapassem a nova quota (30 MB) não perdem nada: só deixam de 
 
 Em cada sincronização de originais, **só num dispositivo com a sincronização de originais ligada**, depois do envio e da descarga que já existem:
 
-1. Para cada original no servidor, a data de referência é a data de emissão mais recente das faturas que o usam; sem faturas, a data em que foi acrescentado (`addedAt`).
-2. Se for anterior a hoje − `keepMonths` meses: confirma que o dispositivo tem a cópia local (se não tiver, descarrega-a primeiro; se a descarga falhar, não apaga).
+1. Para cada original no servidor que o dispositivo também tem, a data de referência é a data de emissão mais recente das faturas que o usam. Um original sem faturas fica no servidor (não há data em que confiar).
+2. Se for anterior a hoje − `keepMonths` meses, apaga-o. Só são candidatos os originais cuja cópia local existe: como a descarga dos originais em falta corre antes, um original que não se conseguiu descarregar nunca é apagado.
 3. Apaga-o do servidor (`DELETE /v1/files/:id`, já existe) e atualiza o registo cifrado do documento com `onServer: false`, para os outros dispositivos não tentarem descarregá-lo.
 
 Noutros dispositivos, "Abrir original" de um documento com `onServer: false` que não exista localmente mostra: "Este original já só está guardado nos dispositivos que o tinham" (texto final em `src/i18n/pt-PT.ts`).
@@ -64,22 +64,22 @@ Um documento com `onServer: false` não volta a ser enviado (não entra em `loca
 
 `POST /v1/register` responde **503** com `{ error: "capacity" }` quando qualquer destes se verifica:
 
-- número de contas ≥ máximo (contagem direta, exceto administradores);
+- número de contas ≥ máximo (contagem direta de todas as contas);
 - originais ≥ 80% de `FILES_TOTAL_BYTES`;
 - registos ≥ 80% do espaço de registos (500 MB).
 
 Os totais de ocupação vêm da tabela `stats` (secção 6), não de uma soma em cada registo. A app mostra: "A sincronização está lotada de momento. Os teus dados continuam neste dispositivo; tenta mais tarde." Quem já sincroniza não é afetado.
 
-Novo `GET /v1/status` (sem autenticação) → `{ registrationOpen: boolean }`, para a app avisar antes de o utilizador escrever a palavra-passe. Só devolve um booleano: nada sobre contas ou ocupação.
+Não há um pedido para a app saber a lotação antes de o utilizador tentar ativar: a regra 1 do `CLAUDE.md` só permite contactar o servidor depois de o utilizador ativar a sincronização.
 
 ### 5. Limpeza de contas inativas
 
 - Nova coluna `users.last_seen_at` (data ISO `YYYY-MM-DD`; para as contas existentes, a data da migração). Atualizada em qualquer pedido autenticado quando a data guardada é anterior a hoje: no máximo uma escrita por conta e por dia.
 - Uma tarefa agendada do Worker (Cron Trigger, diária) apaga as contas não administradoras com `last_seen_at` anterior a hoje − 12 meses: originais, registos, sessões e conta, como o `DELETE /v1/account`.
 - Cada conta apagada deixa uma marca em `removed_accounts (id, removed_at)`: só o id aleatório da conta, sem email. As marcas com mais de 24 meses são apagadas pela mesma tarefa.
-- `POST /v1/register` passa a devolver também o `accountId`, que a app guarda no estado de sincronização do perfil. Para perfis antigos sem ele, a app obtém-no num novo `GET /v1/account` (autenticado) na próxima sincronização.
-- `POST /v1/login` aceita um `accountId` opcional; se constar de `removed_accounts`, responde **410**. Como o id é aleatório e só o dispositivo o conhece, isto não permite descobrir emails.
-- Ao receber 410, a app desliga a sincronização do perfil (os dados locais ficam intactos) e mostra: "A tua conta de sincronização foi removida por inatividade. Os teus dados estão neste dispositivo; podes voltar a ativar a sincronização." Reativar é o fluxo normal de ativação, sujeito ao travão à entrada.
+- `POST /v1/register` e `POST /v1/login` passam a devolver também o `accountId`, que a app guarda no estado de sincronização do perfil. Para perfis antigos sem ele, a app obtém-no num novo `GET /v1/account` (autenticado) na próxima sincronização. Um perfil antigo que nunca sincronize depois desta versão não recebe o aviso: vê o pedido de palavra-passe habitual.
+- Novo `GET /v1/removed/:accountId` (sem autenticação) → `{ removed: boolean }`. Como o id é aleatório e só os dispositivos da conta o conhecem, isto não permite descobrir emails.
+- Quando uma sincronização recebe 401 e o perfil tem `accountId`, a app pergunta `GET /v1/removed/:accountId`. Se a conta foi removida, a app desliga a sincronização do perfil (os dados locais ficam intactos) e mostra: "A tua conta de sincronização foi removida por inatividade. Os teus dados estão neste dispositivo; podes voltar a ativar a sincronização." Reativar é o fluxo normal de ativação, sujeito ao travão à entrada.
 - A página `/privacidade` passa a explicar a remoção por inatividade e a janela de 12 meses dos originais.
 
 ### 6. Estatísticas e monitorização
@@ -105,14 +105,14 @@ Novo `GET /v1/status` (sem autenticação) → `{ registrationOpen: boolean }`, 
 Servidor (`server/src/app.test.ts`, relógio simulado):
 - política devolvida em `/v1/files/usage` para conta normal e administrador;
 - quota de originais (conta normal vs. administrador) e de registos (507);
-- travão à entrada por número de contas e por ocupação (503) e `/v1/status`;
+- travão à entrada por número de contas e por ocupação (503);
 - `last_seen_at` atualizado no máximo uma vez por dia;
 - tarefa diária: apaga só inativos não administradores, cria marcas, limpa marcas antigas, escreve `stats`;
-- login com `accountId` removido → 410; com `accountId` desconhecido ou ausente → comportamento atual.
+- `register` e `login` devolvem o `accountId`; `GET /v1/removed/:id` responde `true` só para contas removidas.
 
 App:
 - janela móvel: apaga só originais antigos, nunca sem cópia local, marca `onServer: false`, não volta a enviá-los; administrador (`keepMonths: null`) não apaga nada;
-- 410 desliga a sincronização sem tocar nos dados locais;
+- conta removida: a sincronização desliga-se sem tocar nos dados locais;
 - 503 `capacity` mostra a mensagem de lotação.
 
 ## Fora de âmbito
