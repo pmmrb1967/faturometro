@@ -9,6 +9,7 @@ import type { Contract, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents, type Cents } from '../../lib/money';
+import { findingText, latestAudit } from '../contracts/audit-view';
 import { getSettings } from '../settings/settings';
 
 const copy = t.contracts.letters;
@@ -50,6 +51,8 @@ export interface LetterData {
   };
   /** From the estimated-readings alert. */
   estimatedCount?: number;
+  /** What changed in the latest invoice (audit), one sentence each. */
+  auditDetails?: string[];
   /** From the cheaper-offer alert. */
   cheaperOffer?: { name: string; yearlySavingCents: Cents };
 }
@@ -110,6 +113,9 @@ function bodyOf(kind: LetterKind, data: LetterData, today: string): string[] {
     case 'price_increase':
       return [
         paragraphs(copy.client(service, data.contract.tariffName), increaseText(data)),
+        ...(data.auditDetails?.length
+          ? [[copy.auditDetails, ...data.auditDetails.map((line) => `- ${line}`)].join('\n')]
+          : []),
         paragraphs(copy.increaseAsk, loyaltyText(data, today)),
       ];
     case 'estimated_reading':
@@ -152,12 +158,14 @@ export function buildLetter(
 
 /** Gathers what the letters use from the stored contract, invoices, alerts and settings. */
 export async function loadLetterData(repos: Repositories, contract: Contract): Promise<LetterData> {
-  const [provider, invoices, alerts, settings] = await Promise.all([
+  const [provider, invoices, alerts, settings, audit] = await Promise.all([
     repos.providers.get(contract.providerId),
     repos.invoices.findBy('contractId', contract.id),
     repos.alerts.list(),
     getSettings(repos),
+    latestAudit(repos, contract),
   ]);
+  const auditDetails = audit?.audit.findings.map(findingText) ?? [];
   invoices.sort((a, b) => b.issueDate.localeCompare(a.issueDate));
   const own = alerts
     .filter((alert) => alert.contractId === contract.id)
@@ -175,6 +183,7 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
     providerName: provider?.name ?? '',
     contract,
     ...(settings.ownNif ? { ownNif: settings.ownNif } : {}),
+    ...(auditDetails.length > 0 ? { auditDetails } : {}),
     ...(average ? { average } : {}),
     ...(latest
       ? { latestInvoice: { issueDate: latest.issueDate, totalCents: latest.totalCents } }

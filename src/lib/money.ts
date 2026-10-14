@@ -59,6 +59,14 @@ export function wholeEurosUp(cents: Cents): number {
   return Math.ceil(cents / 100);
 }
 
+/** Cents as text for an input field, without the euro sign (e.g. 3999 → "39,99"). */
+export function centsToPtInput(cents: Cents): string {
+  if (!Number.isInteger(cents)) throw new TypeError(`Not integer cents: ${cents}`);
+  const sign = cents < 0 ? '-' : '';
+  const abs = Math.abs(cents);
+  return `${sign}${Math.floor(abs / 100)},${String(abs % 100).padStart(2, '0')}`;
+}
+
 const EUR_FORMAT = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' });
 
 /** Formats cents for display only (e.g. "1234,56 €"). */

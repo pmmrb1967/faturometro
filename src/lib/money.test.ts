@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatCents, parseDotDecimalAmount, parsePtAmount, sumCents, wholeEurosUp } from './money';
+import {
+  centsToPtInput,
+  formatCents,
+  parseDotDecimalAmount,
+  parsePtAmount,
+  sumCents,
+  wholeEurosUp,
+} from './money';
 
 describe('parsePtAmount', () => {
   it.each([
@@ -62,5 +69,14 @@ describe('wholeEurosUp', () => {
     expect(wholeEurosUp(3990)).toBe(40);
     expect(wholeEurosUp(4000)).toBe(40);
     expect(wholeEurosUp(4001)).toBe(41);
+  });
+});
+
+describe('centsToPtInput', () => {
+  it('writes cents with a comma and two decimals', () => {
+    expect(centsToPtInput(3999)).toBe('39,99');
+    expect(centsToPtInput(5)).toBe('0,05');
+    expect(centsToPtInput(-1200)).toBe('-12,00');
+    expect(parsePtAmount(centsToPtInput(123456))).toBe(123456);
   });
 });

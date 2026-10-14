@@ -81,6 +81,17 @@ describe('buildLetter', () => {
     );
   });
 
+  it('lists what the audit found in the increase letter', () => {
+    const text = buildLetter(
+      'price_increase',
+      data({ auditDetails: ['Pacote: passou de 49,99 € para 52,99 €.'] }),
+      TODAY,
+    ).text;
+    expect(text).toContain(
+      'Comparando com a fatura anterior:\n- Pacote: passou de 49,99 € para 52,99 €.',
+    );
+  });
+
   it('asks for equipment instructions only when cancelling telecom', () => {
     const telecom = buildLetter(
       'cancel',

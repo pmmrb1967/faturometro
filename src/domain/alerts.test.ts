@@ -197,3 +197,35 @@ describe('missing invoice', () => {
     ).toEqual([]);
   });
 });
+
+describe('invoice audit', () => {
+  it('alerts when a discount of the previous invoice is gone', () => {
+    const alerts = computeAlerts(
+      input({
+        invoices: [invoice('a', '2026-04-24', 2500), invoice('b', '2026-05-24', 3000)],
+        lines: [
+          line('a', { kind: 'base_fee', amountCents: 3000 }),
+          line('a', { kind: 'discount', description: 'Desconto', amountCents: -500 }),
+          line('b', { kind: 'base_fee', amountCents: 3000 }),
+        ],
+      }),
+    );
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        key: 'c1:invoice_audit:b',
+        kind: 'invoice_audit',
+        data: { invoiceId: 'b', issueDate: '2026-05-24', kinds: ['discount_ended'] },
+      }),
+    ]);
+  });
+
+  it('alerts when the invoice is above the contracted monthly price', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [contract({ monthlyPriceCents: 2999 })],
+        invoices: [invoice('a', '2026-05-24', 3499)],
+      }),
+    );
+    expect(kinds(alerts)).toEqual(['invoice_audit']);
+  });
+});

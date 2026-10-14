@@ -34,6 +34,8 @@ export interface Contract extends SyncMeta {
   supplyPointId?: string;
   tariffName?: string;
   loyaltyEndDate?: IsoDate;
+  /** Monthly price with VAT the user says was contracted (fixed-price sectors), entered by hand. */
+  monthlyPriceCents?: Cents;
   electricity?: {
     powerKva: number;
     cycle: 'simple' | 'bi' | 'tri';
@@ -121,7 +123,8 @@ export interface Alert extends SyncMeta {
     | 'price_increase'
     | 'estimated_readings'
     | 'missing_invoice'
-    | 'cheaper_offer';
+    | 'cheaper_offer'
+    | 'invoice_audit';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

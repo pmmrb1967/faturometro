@@ -139,7 +139,12 @@ describe('toICalendar', () => {
       '2026-10-14T12:34:56.789Z',
     );
     expect(ics.endsWith('\r\n')).toBe(true);
-    expect(ics.split('\r\n').slice(0, -1).every((line) => line.length > 0)).toBe(true);
+    expect(
+      ics
+        .split('\r\n')
+        .slice(0, -1)
+        .every((line) => line.length > 0),
+    ).toBe(true);
     const lines = ics.split('\r\n');
     expect(lines).toEqual(
       expect.arrayContaining([

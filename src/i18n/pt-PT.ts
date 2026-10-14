@@ -197,6 +197,14 @@ export const t = {
         `${label}: a última fatura é de ${date}, há ${days} dias. Confirma se chegou alguma nova.`,
       cheaperOffer: (label: string, saving: string) =>
         `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
+      invoiceAudit: (label: string, date: string, parts: string[]) =>
+        `${label}: na fatura de ${date}, ${parts.join(', ')}. Vê o detalhe na página do contrato.`,
+      auditParts: {
+        discount_ended: 'deixou de aparecer um desconto',
+        discount_reduced: 'um desconto ficou mais pequeno',
+        new_charge: 'há uma cobrança nova',
+        above_contracted: 'pagas mais do que a mensalidade contratada',
+      } as Record<string, string>,
     },
   },
   compare: {
@@ -628,6 +636,44 @@ export const t = {
       unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
       note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
     },
+    monthlyPrice: {
+      title: 'Mensalidade contratada (com IVA)',
+      hint: 'O preço mensal que te prometeram no contrato, com descontos. Comparamos cada fatura com este valor.',
+      save: 'Guardar mensalidade',
+      clear: 'Apagar',
+      saved: 'Mensalidade guardada.',
+      invalid: 'Escreve um valor como 39,99.',
+    },
+    audit: {
+      title: 'O que mudou na última fatura',
+      intro: (date: string, previous?: string) =>
+        previous
+          ? `Fatura de ${date} comparada com a de ${previous}, linha a linha.`
+          : `Fatura de ${date}.`,
+      noDetail:
+        'Esta fatura só tem o total (lida pelo código QR), por isso não há linhas para comparar. Com a mensalidade contratada guardada, comparamos o total.',
+      onlyOne: 'Ainda só há uma fatura: a comparação começa na próxima.',
+      nothing: 'Não encontrámos alterações de preços, descontos ou cobranças.',
+      priceChanged: (description: string, before: string, after: string) =>
+        `${description}: o preço passou de ${before} para ${after}.`,
+      feeChanged: (description: string, before: string, after: string) =>
+        `${description}: passou de ${before} para ${after}.`,
+      discountEnded: (description: string, amount: string) =>
+        `${description}: o desconto de ${amount} deixou de aparecer.`,
+      discountReduced: (description: string, before: string, after: string) =>
+        `${description}: o desconto passou de ${before} para ${after}.`,
+      newCharge: (description: string, amount: string) =>
+        `${description}: cobrança nova de ${amount}.`,
+      aboveContracted: (charged: string, contracted: string) =>
+        `Pagas ${charged} de mensalidade, acima dos ${contracted} contratados.`,
+      duringLoyalty:
+        'Esta fatura é do período de fidelização. Confirma no contrato se estas alterações estão previstas.',
+      letter: 'Se não concordares, usa a carta "Contestar um aumento" mais abaixo.',
+      units: { kWh: 'kWh', m3: 'm³', day: 'dia', month: 'mês', min: 'min', GB: 'GB' } as Record<
+        string,
+        string
+      >,
+    },
     letters: {
       title: 'Cartas',
       intro:
@@ -700,6 +746,7 @@ export const t = {
         `Na fatura de ${date}, o preço da energia subiu ${pct} % em relação à fatura anterior.`,
       increaseUnknown: (date: string, amount: string) =>
         `Na fatura de ${date}, no valor de ${amount}, verifiquei um aumento do preço que pago.`,
+      auditDetails: 'Comparando com a fatura anterior:',
       increaseAsk:
         'Peço que me expliquem o motivo deste aumento e a cláusula do contrato em que se baseia. Se o aumento não estiver previsto no contrato, peço que o corrijam e que me devolvam a diferença já cobrada.',
       estimatedCount: (count: number) =>

@@ -33,7 +33,12 @@ export async function buildCalendarFile(
   const entries = events.map((event): CalendarEntry => {
     const name = copy.name(event.contract.label, providerName.get(event.contract.providerId) ?? '');
     const url = `${origin}/app/contratos/${event.contract.id}`;
-    const base = { uid: event.uid, date: event.date, url, remindDaysBefore: event.remindDaysBefore };
+    const base = {
+      uid: event.uid,
+      date: event.date,
+      url,
+      remindDaysBefore: event.remindDaysBefore,
+    };
     if (event.kind === 'loyalty_end' || !event.invoice) {
       return {
         ...base,

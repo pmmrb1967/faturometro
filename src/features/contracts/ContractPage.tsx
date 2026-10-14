@@ -5,11 +5,13 @@ import { BarChart, type Bar } from '../../components/BarChart';
 import { Field } from '../../components/Field';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate, formatMonthShort } from '../../lib/dates';
-import { formatCents } from '../../lib/money';
+import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
 import { ContractAssistant } from '../ai/ContractAssistant';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
+import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
+import { AuditSection } from './AuditSection';
 import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
 
@@ -118,6 +120,22 @@ export function ContractPage() {
         }}
       />
 
+      {MONTHLY_PRICE_SECTORS.includes(contract.sector) && (
+        <MonthlyPriceForm
+          key={`monthly-${contract.id}`}
+          initial={contract.monthlyPriceCents}
+          onSave={async (cents) => {
+            const next = { ...contract };
+            if (cents === undefined) delete next.monthlyPriceCents;
+            else next.monthlyPriceCents = cents;
+            await session.repos.contracts.put(next);
+            await refreshAlerts(session.repos);
+          }}
+        />
+      )}
+
+      <AuditSection contract={contract} invoices={invoices} />
+
       {contract.sector === 'telecom' && (
         <TelecomCompare
           key={contract.id}
@@ -219,6 +237,71 @@ function LoyaltyForm({
       {saved && (
         <p role="status" className="doc-saved">
           {loyalty.saved}
+        </p>
+      )}
+    </form>
+  );
+}
+
+function MonthlyPriceForm({
+  initial,
+  onSave,
+}: {
+  initial: number | undefined;
+  onSave: (cents: number | undefined) => Promise<void>;
+}) {
+  const [value, setValue] = useState(initial === undefined ? '' : centsToPtInput(initial));
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string>();
+  const monthly = copy.monthlyPrice;
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const cents = value.trim() ? parsePtAmount(value) : undefined;
+    if (cents === null || (cents !== undefined && cents <= 0)) {
+      setError(monthly.invalid);
+      return;
+    }
+    setError(undefined);
+    await onSave(cents);
+    setSaved(true);
+  }
+
+  return (
+    <form className="loyalty" onSubmit={submit} noValidate>
+      <Field
+        id="monthly-price"
+        label={monthly.title}
+        hint={monthly.hint}
+        inputMode="decimal"
+        value={value}
+        {...(error ? { error } : {})}
+        onChange={(event) => {
+          setValue(event.target.value);
+          setSaved(false);
+        }}
+      />
+      <div className="ingest-actions">
+        <button type="submit" className="action-primary">
+          {monthly.save}
+        </button>
+        {initial !== undefined && (
+          <button
+            type="button"
+            className="action-secondary"
+            onClick={() => {
+              setValue('');
+              setError(undefined);
+              void onSave(undefined).then(() => setSaved(true));
+            }}
+          >
+            {monthly.clear}
+          </button>
+        )}
+      </div>
+      {saved && (
+        <p role="status" className="doc-saved">
+          {monthly.saved}
         </p>
       )}
     </form>

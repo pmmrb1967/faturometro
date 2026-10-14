@@ -59,3 +59,20 @@ describe('refreshAlerts', () => {
     expect(await visible()).toEqual([]);
   });
 });
+
+describe('invoice audit message', () => {
+  it('lists what changed', async () => {
+    const { alertMessage } = await import('./refresh');
+    expect(
+      alertMessage(
+        {
+          kind: 'invoice_audit',
+          data: { issueDate: '2026-10-01', kinds: ['discount_ended', 'new_charge'] },
+        },
+        { label: 'Internet' } as never,
+      ),
+    ).toBe(
+      'Internet: na fatura de 01-10-2026, deixou de aparecer um desconto, há uma cobrança nova. Vê o detalhe na página do contrato.',
+    );
+  });
+});

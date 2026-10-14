@@ -4,6 +4,7 @@
  * Each alert has a stable key, so recomputing replaces it and a dismissed
  * alert stays dismissed.
  */
+import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
 
 export const MISSING_INVOICE_DAYS = 40;
@@ -163,6 +164,32 @@ function missingAlert(contract: Contract, history: Invoice[], today: string): Al
   };
 }
 
+/** Discounts gone, new charges or above the contracted price (price rises have their own alert). */
+function auditAlert(
+  contract: Contract,
+  history: Invoice[],
+  linesOf: (invoice: Invoice) => InvoiceLine[],
+): AlertDraft | null {
+  const latest = history.at(-1);
+  if (!latest) return null;
+  const previous = history.at(-2);
+  const audit = auditInvoice({
+    contract,
+    invoice: latest,
+    lines: linesOf(latest),
+    ...(previous ? { previous, previousLines: linesOf(previous) } : {}),
+  });
+  if (!needsAuditAlert(audit)) return null;
+  const kinds = [...new Set(audit.findings.map((finding: AuditFinding) => finding.kind))];
+  return {
+    key: `${contract.id}:invoice_audit:${latest.id}`,
+    contractId: contract.id,
+    kind: 'invoice_audit',
+    severity: 'warning',
+    data: { invoiceId: latest.id, issueDate: latest.issueDate, kinds },
+  };
+}
+
 export function computeAlerts(input: AlertInput): AlertDraft[] {
   const linesByInvoice = groupBy(input.lines, (line) => line.invoiceId);
   const readingsByInvoice = groupBy(input.readings, (reading) => reading.invoiceId);
@@ -179,6 +206,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         priceAlert(contract, history, linesOf, input),
         estimatedAlert(contract, history, readingsOf),
         missingAlert(contract, history, input.today),
+        auditAlert(contract, history, linesOf),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
 }

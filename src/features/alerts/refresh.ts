@@ -35,6 +35,11 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
       return copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
     case 'cheaper_offer':
       return copy.cheaperOffer(label, formatCents(number('savingCents')));
+    case 'invoice_audit': {
+      const kinds = Array.isArray(data.kinds) ? data.kinds.map(String) : [];
+      const parts = kinds.map((kind) => copy.auditParts[kind]).filter(Boolean) as string[];
+      return copy.invoiceAudit(label, formatIsoDate(text('issueDate')), parts);
+    }
   }
 }
 
