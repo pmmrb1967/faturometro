@@ -61,6 +61,7 @@ export function ContributeFromOriginal({ fileHash }: { fileHash: string }) {
           qrs,
           ...(parsed ? { extraction: parsed.extraction } : {}),
           ...(settings.ownNif ? { ownNif: settings.ownNif } : {}),
+          ...(session.profile.email ? { email: session.profile.email } : {}),
         }),
       });
     } catch {

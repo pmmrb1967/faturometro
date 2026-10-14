@@ -54,6 +54,7 @@ export function ContributeOffer({
       qrs,
       ...(reading ? { extraction: reading.extraction } : {}),
       ...(settings.ownNif ? { ownNif: settings.ownNif } : {}),
+      ...(session?.profile.email ? { email: session.profile.email } : {}),
     }),
   );
   return (

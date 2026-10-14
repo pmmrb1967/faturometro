@@ -118,3 +118,64 @@ describe('contribution skeleton', () => {
     expect(out.issuerNif).toBe('500000000');
   });
 });
+
+describe('contribution skeleton: leaks found in review', () => {
+  const page = (...strs: string[]): PageText[] => [
+    { page: 1, width: 595, height: 842, items: strs.map((s, i) => item(s, 10, 10 + i * 10)) },
+  ];
+  const render = (pages: PageText[], personal: string[] = []) =>
+    renderContribution(
+      buildDraft({ pages, qrs: [], personal, context: { pages: 1 }, random: seeded() }),
+    );
+  const out = (pages: PageText[], personal: string[] = []) =>
+    render(pages, personal).pages[0]!.items.map((i) => i.str);
+
+  it('never passes glyph codes, private-use or non-ASCII digits in clear (C1)', () => {
+    const [glyphs, privateUse, fullwidth] = out(
+      page('\u0012\u0005\u0013\u0001', '', '１２３ ½'),
+    );
+    expect(glyphs).toBe('????');
+    expect(privateUse).toBe('???');
+    expect(fullwidth).not.toMatch(/[１２３½]/u);
+    expect(fullwidth).toMatch(/^\d{3} \d$/);
+  });
+
+  it('masks surnames and places that look like vocabulary, accents count (C2)', () => {
+    const [line] = out(page('Maria Dias, Rua da Luz, Campanhã, Vila Real'));
+    expect(line).not.toMatch(/Dias|Luz|Campanhã|Real/);
+    expect(line).toContain(' da ');
+  });
+
+  it('locks letters glued to digits (I2)', () => {
+    const draft = buildDraft({
+      pages: page('Ref CT12AB34 PT50'),
+      qrs: [],
+      personal: [],
+      context: { pages: 1 },
+      random: seeded(),
+    });
+    for (const key of ['ct', 'ab', 'pt']) expect(draft.words[key]?.locked).toBe(true);
+    expect(renderContribution(draft).pages[0]!.items[0]!.str).not.toMatch(/CT|AB|PT/);
+  });
+
+  it('locks personal words written with ligatures (NFKD)', () => {
+    const [line] = out(page('Teﬁlo Exemplo'), ['Tefilo']);
+    const draft = buildDraft({
+      pages: page('Teﬁlo'),
+      qrs: [],
+      personal: ['Tefilo'],
+      context: { pages: 1 },
+      random: seeded(),
+    });
+    expect(Object.values(draft.words)[0]!.locked).toBe(true);
+    expect(line).not.toContain('ﬁ');
+  });
+
+  it('does not keep the exact width of items with masked words (I1)', () => {
+    const [rendered] = render(page('Silva')).pages[0]!.items;
+    expect(rendered!.str).toBe('Xxxxx');
+    expect(rendered!.width).toBe(5 * 8 * 0.5);
+    const [label] = render(page('Total')).pages[0]!.items;
+    expect(label!.width).toBe(50);
+  });
+});

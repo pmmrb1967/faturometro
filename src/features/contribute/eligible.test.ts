@@ -35,4 +35,9 @@ describe('personalValues', () => {
     expect(new Set(values).size).toBe(values.length);
     expect(personalValues({ qrs: [qr('999999990')] })).toEqual([]);
   });
+
+  it('adds the local part of the account email (I3)', () => {
+    expect(personalValues({ qrs: [], email: 'maria.dias@exemplo.pt' })).toEqual(['maria.dias']);
+    expect(personalValues({ qrs: [], email: '' })).toEqual([]);
+  });
 });

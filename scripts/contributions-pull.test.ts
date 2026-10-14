@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { encryptContribution, generateMaintainerKeys } from '../src/features/contribute/envelope';
-import { saveContribution } from './contributions-pull';
+import { pullAll, saveContribution } from './contributions-pull';
 
 const CONTRIBUTION = {
   version: 1,
@@ -33,5 +33,36 @@ describe('saveContribution', () => {
     const envelope = await encryptContribution(CONTRIBUTION, a.publicJwk);
     await expect(saveContribution(envelope, b.privateJwk, root, 'abc')).rejects.toThrow();
     expect(existsSync(root) ? readdirSync(root) : []).toEqual([]);
+  });
+});
+
+describe('pullAll', () => {
+  it('saves the good ones, discards undecryptable junk and stops when empty (I4)', async () => {
+    const keys = await generateMaintainerKeys();
+    const root = mkdtempSync(join(tmpdir(), 'contrib-'));
+    const good = await encryptContribution(CONTRIBUTION, keys.publicJwk);
+    const rows = new Map<string, unknown>([
+      ['00000000-0000-4000-8000-000000000001', { junk: true }],
+      ['00000000-0000-4000-8000-000000000002', good],
+    ]);
+    const fakeFetch = (async (url: string, init?: RequestInit) => {
+      const id = /contributions\/(.+)$/.exec(url)?.[1];
+      if (init?.method === 'DELETE' && id) {
+        rows.delete(id);
+        return new Response(null, { status: 204 });
+      }
+      const contributions = [...rows].map(([rowId, envelope]) => ({ id: rowId, envelope }));
+      return new Response(JSON.stringify({ contributions }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const result = await pullAll({
+      server: 'https://s',
+      token: 't',
+      privateJwk: keys.privateJwk,
+      root,
+      fetch: fakeFetch,
+    });
+    expect(result).toEqual({ saved: 1, discarded: ['00000000-0000-4000-8000-000000000001'] });
+    expect(rows.size).toBe(0);
+    expect(readdirSync(join(root, '500000000'))).toHaveLength(1);
   });
 });

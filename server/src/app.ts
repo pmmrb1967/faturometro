@@ -287,6 +287,31 @@ export function createApp(config: AppConfig) {
     return user;
   }
 
+  /** The body as text, refusing (413) as soon as it grows past `max` bytes. */
+  async function readCapped(request: Request, max: number): Promise<string> {
+    const reader = request.body?.getReader();
+    if (!reader) return '';
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > max) {
+        await reader.cancel();
+        throw new HttpError(413, 'Too large');
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return new TextDecoder().decode(bytes);
+  }
+
   function isMaintainer(request: Request): boolean {
     const expected = config.contribAdminToken;
     const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
@@ -295,7 +320,11 @@ export function createApp(config: AppConfig) {
 
   async function contributions(request: Request, method: string, path: string) {
     if (method === 'POST' && path === '/v1/contributions') {
-      const text = await request.text();
+      // Checked before reading, so a huge body is never loaded in memory.
+      if (Number(request.headers.get('Content-Length') ?? 0) > MAX_CONTRIBUTION_LENGTH) {
+        throw new HttpError(413, 'Too large');
+      }
+      const text = await readCapped(request, MAX_CONTRIBUTION_LENGTH);
       if (text.length > MAX_CONTRIBUTION_LENGTH) throw new HttpError(413, 'Too large');
       let parsed: unknown;
       try {

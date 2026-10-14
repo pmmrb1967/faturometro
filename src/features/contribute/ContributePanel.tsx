@@ -11,7 +11,6 @@ import {
   type Draft,
   type DraftItem,
 } from './skeleton';
-import { VOCABULARY } from './vocabulary';
 import './contribute.css';
 
 const copy = t.contribute;
@@ -135,12 +134,12 @@ function Item({
         if (token.kind !== 'word') return token.text;
         const word = draft.words[token.key];
         if (!word) return token.shape;
-        if (!word.masked && VOCABULARY.has(token.key)) return token.original;
         return (
           <button
             key={index}
             type="button"
             className={word.masked ? 'contribute-word masked' : 'contribute-word'}
+            aria-pressed={word.masked}
             disabled={word.locked}
             title={word.locked ? copy.locked : undefined}
             onClick={() => onToggle(token.key)}

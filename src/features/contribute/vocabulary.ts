@@ -1,6 +1,7 @@
 /**
  * Words typical of Portuguese household invoices: they stay readable in a layout
- * contribution. Only template vocabulary: no proper names or place names.
+ * contribution. Only template vocabulary: no proper names or place names, and no word
+ * that is also a common surname or place (Dias, Luz, Real, Ponta, Maio, Abril…).
  */
 import { wordKey } from './word-key';
 
@@ -16,8 +17,6 @@ const WORDS = [
   'original',
   'duplicado',
   'segunda',
-  'via',
-  'n',
   'nº',
   'º',
   'ª',
@@ -36,14 +35,11 @@ const WORDS = [
   'mês',
   'meses',
   'dia',
-  'dias',
   'ano',
   'anos',
   'janeiro',
   'fevereiro',
   'março',
-  'abril',
-  'maio',
   'junho',
   'julho',
   'agosto',
@@ -53,7 +49,6 @@ const WORDS = [
   'dezembro',
   'jan',
   'fev',
-  'mar',
   'abr',
   'mai',
   'jun',
@@ -104,8 +99,6 @@ const WORDS = [
   'percentagem',
   // Grammar words
   'de',
-  'a',
-  'o',
   'os',
   'as',
   'do',
@@ -123,7 +116,6 @@ const WORDS = [
   'para',
   'com',
   'sem',
-  'e',
   'ou',
   'até',
   'desde',
@@ -190,9 +182,7 @@ const WORDS = [
   'horário',
   'vazio',
   'fora',
-  'ponta',
   'cheias',
-  'super',
   'potência',
   'contratada',
   'energia',
@@ -207,19 +197,15 @@ const WORDS = [
   'kwh',
   'kw',
   'kva',
-  'm',
   'gás',
   'natural',
   'eletricidade',
-  'luz',
   'água',
   'saneamento',
   'resíduos',
   'urbanos',
   'leitura',
   'leituras',
-  'real',
-  'reais',
   'estimada',
   'estimadas',
   'estimativa',

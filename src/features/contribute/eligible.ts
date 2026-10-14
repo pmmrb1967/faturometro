@@ -21,12 +21,15 @@ export function personalValues(input: {
   qrs: FiscalQr[];
   extraction?: ExtractedInvoice;
   ownNif?: string;
+  /** The account email: its local part often holds the person's name. */
+  email?: string;
 }): string[] {
   const values = [
     ...input.qrs.map((qr) => qr.buyerNif),
     input.ownNif,
     input.extraction?.customerNumber?.value,
     input.extraction?.supplyPointId?.value,
+    input.email?.split('@')[0],
   ].filter((value): value is string => Boolean(value?.trim()) && value !== FINAL_CONSUMER);
   return [...new Set(values)];
 }

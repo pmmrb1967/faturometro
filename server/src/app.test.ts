@@ -625,6 +625,21 @@ describe('contributions', () => {
     expect((await call('POST', '/v1/contributions', big)).status).toBe(413);
   });
 
+  it('refuses by Content-Length before reading the body (I5)', async () => {
+    const response = await handle(
+      new Request('https://sync.example/v1/contributions', {
+        method: 'POST',
+        headers: {
+          Origin: ORIGIN,
+          'Content-Type': 'application/json',
+          'Content-Length': '100000000',
+        },
+        body: JSON.stringify(ENVELOPE),
+      }),
+    );
+    expect(response.status).toBe(413);
+  });
+
   it('caps contributions per day and in total', async () => {
     expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);
     expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);

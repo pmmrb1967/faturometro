@@ -11,7 +11,7 @@
 import type { PageText, TextItem } from '../../pdf/text';
 import type { FiscalQr } from '../../qr/parse';
 import { VOCABULARY } from './vocabulary';
-import { wordKey } from './word-key';
+import { foldKey, wordKey } from './word-key';
 
 export { wordKey } from './word-key';
 
@@ -73,7 +73,15 @@ export interface DraftInput {
   random?: () => number;
 }
 
-const TOKEN = /(\p{L}+)|(\d+)|([^\p{L}\d]+)/gu;
+/**
+ * Letters (with combining marks), numbers in any script, spaces/punctuation/symbols,
+ * and anything else (glyph codes of fonts without a Unicode map, private use…), which
+ * never leaves in clear.
+ */
+const TOKEN = /([\p{L}\p{M}]+)|(\p{N}+)|([\s\p{P}\p{S}]+)|([\s\S])/gu;
+const UNKNOWN = '?';
+/** Width of a rendered item with masked words: average glyph, not the real word's width. */
+const AVERAGE_GLYPH = 0.5;
 /** QR fields kept as they are: issuer NIF, buyer country, document type and status, tax regions. */
 const QR_KEPT = new Set(['A', 'C', 'D', 'E', 'I1', 'J1', 'K1']);
 const FINAL_CONSUMER = '999999990';
@@ -98,7 +106,14 @@ function randomDigits(original: string, random: () => number): string {
 }
 
 function letterRuns(text: string): string[] {
-  return text.match(/\p{L}+/gu) ?? [];
+  return text.match(/[\p{L}\p{M}]+/gu) ?? [];
+}
+
+/** Letters glued to numbers ("CT12AB34", "PT50"): codes, never words of the template. */
+function gluedToNumbers(text: string): string[] {
+  return (text.match(/\S+/gu) ?? [])
+    .filter((chunk) => /\p{N}/u.test(chunk) && /\p{L}/u.test(chunk))
+    .flatMap(letterRuns);
 }
 
 export function buildDraft(input: DraftInput): Draft {
@@ -120,10 +135,11 @@ export function buildDraft(input: DraftInput): Draft {
       qr.buyerNif && qr.buyerNif !== FINAL_CONSUMER ? [qr.buyerNif] : [],
     ),
   ];
-  for (const value of personal) for (const run of letterRuns(value)) locked.add(wordKey(run));
+  for (const value of personal) for (const run of letterRuns(value)) locked.add(foldKey(run));
   for (const page of input.pages) {
     for (const item of page.items) {
-      if (item.str.includes('@')) for (const run of letterRuns(item.str)) locked.add(wordKey(run));
+      if (item.str.includes('@')) for (const run of letterRuns(item.str)) locked.add(foldKey(run));
+      for (const run of gluedToNumbers(item.str)) locked.add(foldKey(run));
     }
   }
 
@@ -134,22 +150,26 @@ export function buildDraft(input: DraftInput): Draft {
     height: page.height,
     items: page.items.map(({ str, ...position }): DraftItem => {
       const tokens: Token[] = [];
-      for (const [, letters, digits, other] of str.matchAll(TOKEN)) {
+      for (const [, letters, digits, other, unknown] of str.matchAll(TOKEN)) {
         if (letters !== undefined) {
           const key = wordKey(letters);
+          const isLocked = locked.has(foldKey(letters));
           const state = (words[key] ??= {
             key,
             sample: letters,
             count: 0,
-            locked: locked.has(key),
-            masked: locked.has(key) || !VOCABULARY.has(key),
+            locked: isLocked,
+            masked: isLocked || !VOCABULARY.has(key),
           });
+          if (isLocked && !state.locked) Object.assign(state, { locked: true, masked: true });
           state.count++;
           tokens.push({ kind: 'word', key, original: letters, shape: shapeOf(letters) });
         } else if (digits !== undefined) {
           tokens.push({ kind: 'num', text: num(digits) });
         } else if (other !== undefined) {
           tokens.push({ kind: 'sep', text: other });
+        } else if (unknown !== undefined) {
+          tokens.push({ kind: 'sep', text: UNKNOWN });
         }
       }
       return { ...position, tokens };
@@ -179,6 +199,7 @@ function anonymizeQr(raw: string, num: (digits: string) => string): string {
       // The date is mandatory for the QR to parse; only its year stays.
       if (code === 'F') return `F:${value.slice(0, 4)}0101`;
       const masked = value
+        .replace(/[^\x20-\x7E]/g, UNKNOWN)
         .replace(/\d+/g, (digits) => num(digits))
         .replace(/\p{L}+/gu, (letters) => 'X'.repeat(letters.length));
       return `${code}:${masked}`;
@@ -204,15 +225,21 @@ export function renderContribution(draft: Draft, now = new Date()): Contribution
       page: page.page,
       width: page.width,
       height: page.height,
-      items: page.items.map(({ tokens, ...position }) => ({
-        ...position,
-        str: tokens
+      items: page.items.map(({ tokens, ...position }) => {
+        const masked = (token: Token) =>
+          token.kind === 'word' && draft.words[token.key]?.masked !== false;
+        const str = tokens
           .map((token) => {
             if (token.kind !== 'word') return token.text;
-            return draft.words[token.key]?.masked === false ? token.original : token.shape;
+            return masked(token) ? token.shape : token.original;
           })
-          .join(''),
-      })),
+          .join('');
+        // The exact width would tell which letters hide behind a masked word.
+        const width = tokens.some(masked)
+          ? str.length * position.height * AVERAGE_GLYPH
+          : position.width;
+        return { ...position, width, str };
+      }),
     })),
     qrs: draft.qrs.map((text) => ({ text })),
   };
