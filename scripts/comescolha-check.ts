@@ -4,10 +4,11 @@
  *   pnpm comescolha:check
  *
  * Reads the parameters from ANACOM's query forms and checks that each filter
- * still changes the results. If the parameters changed and work, it rewrites
- * src/data/comescolha.json (the workflow then commits and redeploys). If a
- * filter is ignored, it keeps the file and exits with code 2 (the workflow
- * opens an issue). Only public pages are read: no user data involved.
+ * still changes the results. When everything works it records the date in
+ * src/data/comescolha.json (and any renamed parameters); the weekly task
+ * (scripts/comescolha-weekly.ps1) then commits and pushes, and CI redeploys.
+ * If a filter is ignored or a form changed, it keeps the file and exits with
+ * code 2 (the task opens an issue). Only public pages are read: no user data.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -57,9 +58,12 @@ function canonical(value: unknown): string {
   );
 }
 
-/** The same parameters, whatever the date. */
+/** The same parameters, whatever the dates. */
 function sameSearches(a: ComEscolhaConfig, b: ComEscolhaConfig): boolean {
-  return canonical({ ...a, changedAt: '' }) === canonical({ ...b, changedAt: '' });
+  return (
+    canonical({ ...a, changedAt: '', checkedAt: '' }) ===
+    canonical({ ...b, changedAt: '', checkedAt: '' })
+  );
 }
 
 async function main(): Promise<number> {
@@ -78,16 +82,23 @@ async function main(): Promise<number> {
     );
     return 2;
   }
-  if (sameSearches(found, current)) {
-    console.log('COM.escolha: parameters unchanged, every filter works.');
-    return 0;
-  }
+  const today = new Date().toISOString().slice(0, 10);
+  const changed = !sameSearches(found, current);
   const next = comEscolhaConfigSchema.parse({
     ...found,
-    changedAt: new Date().toISOString().slice(0, 10),
+    changedAt: changed ? today : current.changedAt,
+    checkedAt: today,
   });
-  writeFileSync(OUTPUT, `${JSON.stringify(next, null, 2)}\n`);
-  console.log('COM.escolha: parameters changed and work; src/data/comescolha.json updated.');
+  writeFileSync(
+    OUTPUT,
+    `${JSON.stringify(next, null, 2)}
+`,
+  );
+  console.log(
+    changed
+      ? 'COM.escolha: parameters changed and work; src/data/comescolha.json updated.'
+      : 'COM.escolha: parameters unchanged, every filter works.',
+  );
   return 0;
 }
 

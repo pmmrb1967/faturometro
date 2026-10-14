@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import config from '../data/comescolha.json';
-import { comEscolhaConfigSchema, comEscolhaUrl, monthlyAverage } from './comescolha';
+import { checkIsStale, comEscolhaConfigSchema, comEscolhaUrl, monthlyAverage } from './comescolha';
 
 const parsed = comEscolhaConfigSchema.parse(config);
 
@@ -81,5 +81,13 @@ describe('monthlyAverage', () => {
 
   it('is null without invoices', () => {
     expect(monthlyAverage([])).toBeNull();
+  });
+});
+
+describe('checkIsStale', () => {
+  it('reminds after two weeks without a passing check', () => {
+    expect(checkIsStale('2026-10-14', '2026-10-28')).toBe(false);
+    expect(checkIsStale('2026-10-14', '2026-10-29')).toBe(true);
+    expect(checkIsStale('not a date', '2026-10-29')).toBe(true);
   });
 });

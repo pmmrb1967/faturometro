@@ -178,6 +178,10 @@ export const t = {
     title: 'Avisos',
     empty: 'Sem avisos. Quando algo mudar nos teus contratos, aparece aqui.',
     dismiss: 'Dispensar',
+    admin: {
+      comEscolhaStale: (date: string) =>
+        `Administrador: as ligações ao COM.escolha não são verificadas desde ${date}. Confirma que o PC esteve ligado e vê o registo da tarefa semanal (docs/anacom-comescolha.md).`,
+    },
     messages: {
       loyaltyEnding: (label: string, date: string, days: number) =>
         `${label}: a fidelização termina a ${date} (daqui a ${days} ${days === 1 ? 'dia' : 'dias'}). Bom momento para comparar ou renegociar.`,

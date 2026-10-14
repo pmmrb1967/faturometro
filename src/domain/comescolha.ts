@@ -2,7 +2,8 @@
  * Links to COM.escolha, ANACOM's tariff comparator (docs/anacom-comescolha.md).
  * The app never calls ANACOM: it only builds a search address that the user
  * opens. The parameters live in src/data/comescolha.json, read from ANACOM's
- * forms and checked every week by scripts/comescolha-check.ts.
+ * forms and checked every week by scripts/comescolha-check.ts (run on the
+ * maintainer's PC: ANACOM blocks GitHub's runners).
  */
 import { z } from 'zod';
 import { wholeEurosUp, type Cents } from '../lib/money';
@@ -23,6 +24,8 @@ export const comEscolhaConfigSchema = z.object({
   schemaVersion: z.literal(1),
   /** When the parameters last changed (ISO date). */
   changedAt: z.string(),
+  /** When the weekly check last passed (ISO date). */
+  checkedAt: z.string(),
   base: z.string().url(),
   /** Two or more services. */
   combined: searchSchema.extend({
@@ -91,4 +94,13 @@ export function monthlyAverage(
   if (latest.length === 0) return null;
   const sum = latest.reduce((total, invoice) => total + invoice.totalCents, 0);
   return { cents: Math.round(sum / latest.length), count: latest.length };
+}
+
+/** Days without a passing check after which the administrator is reminded. */
+export const CHECK_STALE_DAYS = 14;
+
+/** Whether the weekly check has not passed for too long (dates as YYYY-MM-DD). */
+export function checkIsStale(checkedAt: string, today: string): boolean {
+  const days = (Date.parse(today) - Date.parse(checkedAt)) / 86_400_000;
+  return !(days <= CHECK_STALE_DAYS);
 }
