@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { setSignedIn } from '../../app/pwa';
 import type { Profile } from '../../db/profiles';
 import { createRepositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
@@ -39,6 +40,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useAutoLock(session !== null, lock);
+  // Signed out, a new version of the app can be applied at once.
+  useEffect(() => setSignedIn(session !== null), [session]);
 
   const value = useMemo(
     () => ({ session, signIn, lock, updateProfile }),

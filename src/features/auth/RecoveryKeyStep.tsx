@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHoldUpdates } from '../../app/pwa';
 import { t } from '../../i18n/pt-PT';
 import { AuthLayout } from './AuthLayout';
 
@@ -9,6 +10,8 @@ interface Props {
 }
 
 export function RecoveryKeyStep({ email, recoveryKey, onDone }: Props) {
+  // Shown once: a new version of the app must not reload it away.
+  useHoldUpdates(true);
   const copy = t.auth.recoveryKey;
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
