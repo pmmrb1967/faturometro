@@ -18,6 +18,7 @@
     "tunnel": "cloudflared tunnel --url http://localhost:4173",
     "fixtures:synthetic": "tsx scripts/synthetic-fixtures.ts",
     "erse:sync": "tsx scripts/erse-sync.ts",
+    "comescolha:check": "tsx scripts/comescolha-check.ts",
     "deploy:app": "pnpm build && wrangler deploy -c wrangler.app.toml",
     "deploy:server": "wrangler deploy -c server/wrangler.toml",
     "ai:eval": "tsx scripts/ai-eval.ts",
