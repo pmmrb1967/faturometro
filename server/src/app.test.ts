@@ -491,6 +491,40 @@ describe('records quota', () => {
     expect(second.status).toBe(507);
     expect(second.body).toEqual({ error: 'Record storage full' });
   });
+
+  it('charges only what a push actually stores: repeats and shrinking changes pass', async () => {
+    const memory = memorySql();
+    db = memory.db;
+    handle = createApp({
+      sql: memory.sql,
+      recordQuotaBytes: 160,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const token = await register();
+    const records = [
+      record('r1', '2026-10-13T10:00:00Z', 'QUJD'.repeat(10)),
+      record('r2', '2026-10-13T10:00:00Z', 'QUJD'.repeat(10)),
+    ];
+    expect((await call('POST', '/v1/changes', { records }, token)).status).toBe(200);
+    // A second device sending the same records back stores nothing new.
+    expect((await call('POST', '/v1/changes', { records }, token)).status).toBe(200);
+    expect((await call('POST', '/v1/changes', { records }, token)).status).toBe(200);
+    // At the quota, a deletion (smaller record) still goes through.
+    const tombstone = {
+      ...record('r1', '2026-10-13T11:00:00Z', 'QQ=='),
+      deletedAt: '2026-10-13T11:00:00Z',
+    };
+    expect((await call('POST', '/v1/changes', { records: [tombstone] }, token)).status).toBe(200);
+    const stored = db.prepare('SELECT records_bytes AS bytes FROM users').get() as {
+      bytes: number;
+    };
+    const actual = db.prepare('SELECT SUM(LENGTH(enc)) AS bytes FROM records').get() as {
+      bytes: number;
+    };
+    expect(stored.bytes).toBe(actual.bytes);
+  });
 });
 
 describe('admission', () => {

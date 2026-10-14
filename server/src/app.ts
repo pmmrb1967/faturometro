@@ -393,13 +393,10 @@ export function createApp(config: AppConfig) {
         })),
       );
       if (batch.length > MAX_BATCH_LENGTH) throw new HttpError(413, 'Batch too large');
-      // Grows by each push (an overestimate when records are replaced); recomputed daily.
-      if (user.records_bytes + batch.length > (config.recordQuotaBytes ?? RECORD_QUOTA_BYTES)) {
-        throw new HttpError(507, 'Record storage full');
-      }
-      await sql.run(
-        `INSERT INTO records (user_id, id, tbl, updated_at, deleted_at, enc, seq)
-         SELECT ?1, j.id, j.tbl, j.updated_at, j.deleted_at, j.enc, ?2 + ROW_NUMBER() OVER (ORDER BY j.pos)
+      // Only the rows the upsert below will write count: repeats of stored
+      // records (another device sending them back) and shrinking changes
+      // (deletions) never hit the quota.
+      const incoming = `
          FROM (
            SELECT key AS pos, value ->> 'id' AS id, value ->> 'tbl' AS tbl,
              value ->> 'updated_at' AS updated_at, value ->> 'deleted_at' AS deleted_at,
@@ -407,7 +404,26 @@ export function createApp(config: AppConfig) {
            FROM json_each(?3)
          ) AS j
          LEFT JOIN records AS r ON r.user_id = ?1 AND r.id = j.id
-         WHERE r.id IS NULL OR r.updated_at < j.updated_at
+         WHERE r.id IS NULL OR r.updated_at < j.updated_at`;
+      const delta =
+        (
+          await sql.first<{ delta: number | null }>(
+            `SELECT SUM(LENGTH(j.enc) - COALESCE(LENGTH(r.enc), 0)) AS delta ${incoming}`,
+            user.id,
+            user.seq,
+            batch,
+          )
+        )?.delta ?? 0;
+      if (
+        delta > 0 &&
+        user.records_bytes + delta > (config.recordQuotaBytes ?? RECORD_QUOTA_BYTES)
+      ) {
+        throw new HttpError(507, 'Record storage full');
+      }
+      await sql.run(
+        `INSERT INTO records (user_id, id, tbl, updated_at, deleted_at, enc, seq)
+         SELECT ?1, j.id, j.tbl, j.updated_at, j.deleted_at, j.enc, ?2 + ROW_NUMBER() OVER (ORDER BY j.pos)
+         ${incoming}
          ON CONFLICT (user_id, id) DO UPDATE SET tbl = excluded.tbl, updated_at = excluded.updated_at,
            deleted_at = excluded.deleted_at, enc = excluded.enc, seq = excluded.seq`,
         user.id,
@@ -422,9 +438,9 @@ export function createApp(config: AppConfig) {
           )
         )?.seq ?? user.seq;
       await sql.run(
-        'UPDATE users SET seq = ?, records_bytes = records_bytes + ? WHERE id = ?',
+        'UPDATE users SET seq = ?, records_bytes = MAX(0, records_bytes + ?) WHERE id = ?',
         Math.max(latest, user.seq),
-        batch.length,
+        delta,
         user.id,
       );
       return json({ latest: Math.max(latest, user.seq) });
