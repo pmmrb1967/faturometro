@@ -99,6 +99,32 @@ describe('calendarEvents', () => {
   });
 });
 
+describe('insurance renewals', () => {
+  it('adds the day after the latest paid period, for insurance contracts', () => {
+    const policy = contract({ id: 'ins', sector: 'insurance' });
+    const receipt = (id: string, end: string): Invoice => ({
+      ...invoice(id, undefined, 'ins'),
+      periodStart: '2025-10-10',
+      periodEnd: end,
+    });
+    const events = calendarEvents(
+      input({
+        contracts: [policy],
+        invoices: [receipt('old', '2025-10-09'), receipt('new', '2026-10-09')],
+        today: '2026-09-01',
+      }),
+    );
+    expect(events).toEqual([
+      expect.objectContaining({
+        uid: 'renewal-ins@faturometro',
+        kind: 'renewal',
+        date: '2026-10-10',
+        remindDaysBefore: [30, 7],
+      }),
+    ]);
+  });
+});
+
 describe('ics helpers', () => {
   it('escapes text values', () => {
     expect(escapeText('a\\b; c, d\ne')).toBe('a\\\\b\\; c\\, d\\ne');

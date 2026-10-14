@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 2,
+  "parserId": "generali",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 1,
+      "text": "A:500940231*B:999999990*C:PT*D:FR*E:N*F:20261020*G:F 1000000/00000001*H:ABCD1234-00000001*I1:PT*I2:301.50*L:10.00*M:27.14*N:27.14*O:338.64*Q:abcd*R:0000*S:     "
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Fatura/Recibo",
+          "x": 487,
+          "y": 32,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Seguro Multirrisco",
+          "x": 503,
+          "y": 45,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Cliente",
+          "x": 68,
+          "y": 207,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nome:",
+          "x": 68,
+          "y": 220,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "NOME EXEMPLO",
+          "x": 95,
+          "y": 220,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Cliente:",
+          "x": 68,
+          "y": 232,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1000000001",
+          "x": 108,
+          "y": 232,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Contribuinte:",
+          "x": 68,
+          "y": 242,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "999999990",
+          "x": 126,
+          "y": 242,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Contrato",
+          "x": 68,
+          "y": 282,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Produto:",
+          "x": 68,
+          "y": 295,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "CASA",
+          "x": 102,
+          "y": 295,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Opção:",
+          "x": 68,
+          "y": 307,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Base",
+          "x": 96,
+          "y": 307,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Apólice:",
+          "x": 68,
+          "y": 320,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2000000001",
+          "x": 109,
+          "y": 320,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Objeto Seguro",
+          "x": 68,
+          "y": 337,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Objectos Seguros:",
+          "x": 68,
+          "y": 350,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2",
+          "x": 144,
+          "y": 350,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Generali Seguros, S.A. Exemplo sintético",
+          "x": 13,
+          "y": 517,
+          "width": 184,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Documento",
+          "x": 298,
+          "y": 587,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Detalhe do Valor a Pagar",
+          "x": 450,
+          "y": 587,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Fatura/Recibo:",
+          "x": 290,
+          "y": 597,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "F 1000000/00000001",
+          "x": 343,
+          "y": 597,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Prémio comercial",
+          "x": 442,
+          "y": 597,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "300,00 €",
+          "x": 544,
+          "y": 597,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Custos de fracionamento",
+          "x": 442,
+          "y": 610,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,00 €",
+          "x": 551,
+          "y": 610,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo:",
+          "x": 290,
+          "y": 620,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Continuado",
+          "x": 308,
+          "y": 620,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Custos de gestão do seguro",
+          "x": 442,
+          "y": 620,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,50 €",
+          "x": 551,
+          "y": 620,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Periodicidade de pagamento:",
+          "x": 290,
+          "y": 632,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Anual",
+          "x": 378,
+          "y": 632,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Prémio antes de impostos",
+          "x": 442,
+          "y": 632,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "301,50 €",
+          "x": 544,
+          "y": 632,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período:",
+          "x": 290,
+          "y": 642,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-11-01 00:00 a 2027-10-31",
+          "x": 318,
+          "y": 642,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Imposto de selo",
+          "x": 442,
+          "y": 642,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(3)",
+          "x": 486,
+          "y": 642,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "27,14 €",
+          "x": 547,
+          "y": 642,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de emissão:",
+          "x": 290,
+          "y": 655,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-10-20",
+          "x": 345,
+          "y": 655,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Outros encargos e taxas",
+          "x": 442,
+          "y": 655,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10,00 €",
+          "x": 547,
+          "y": 655,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "37,14 €",
+          "x": 547,
+          "y": 665,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total outras entidades",
+          "x": 442,
+          "y": 668,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total:",
+          "x": 440,
+          "y": 682,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "338,64 €",
+          "x": 536,
+          "y": 682,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Dados do Objeto Seguro",
+          "x": 68,
+          "y": 80,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "OBJETO SEGURO",
+          "x": 60,
+          "y": 97,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "LOCAL RISCO",
+          "x": 299,
+          "y": 97,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "VALOR SEGURO",
+          "x": 493,
+          "y": 97,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "RECHEIO",
+          "x": 63,
+          "y": 115,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "MORADA EXEMPLO",
+          "x": 241,
+          "y": 115,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20 000,00 €",
+          "x": 501,
+          "y": 115,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IMÓVEL",
+          "x": 63,
+          "y": 127,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "MORADA EXEMPLO",
+          "x": 241,
+          "y": 127,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "150 000,00 €",
+          "x": 499,
+          "y": 127,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "INFORMAÇÕES IMPORTANTES",
+          "x": 60,
+          "y": 152,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

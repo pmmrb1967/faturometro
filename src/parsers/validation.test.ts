@@ -4,7 +4,7 @@ import { layoutFixtures } from '../test/fixtures';
 import { findParser } from './registry';
 
 // Every layout with fixtures: parser output must pass cross-validation with the QR code.
-const documents = ['nos', 'repsol', 'indaqua'].flatMap((provider) =>
+const documents = ['nos', 'repsol', 'indaqua', 'generali'].flatMap((provider) =>
   layoutFixtures(provider).flatMap((fixture) =>
     fixture.qrs.map((qr, index) => ({
       name: `${provider}/${fixture.name} #${index + 1}`,

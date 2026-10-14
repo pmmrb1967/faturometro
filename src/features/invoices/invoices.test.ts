@@ -266,6 +266,32 @@ describe('saveInvoice', () => {
     expect(third.contractId).not.toBe(later.id);
   });
 
+  it('keeps the policy data of the newest insurance receipt', async () => {
+    const insurance = (capital: number) => ({
+      policyNumber: '111',
+      capitals: [{ name: 'Imóvel', capitalCents: capital }],
+    });
+    const first = await saveInvoice(
+      repos,
+      draft({ sector: 'insurance', contractDetails: { insurance: insurance(100) } }),
+      { keepOriginalFile: false },
+    );
+    await saveInvoice(
+      repos,
+      draft({
+        sector: 'insurance',
+        docKey: 'doc-2',
+        issueDate: '2027-06-15',
+        contract: { id: first.contractId },
+        contractDetails: { insurance: insurance(200) },
+      }),
+      { keepOriginalFile: false },
+    );
+    expect((await repos.contracts.get(first.contractId))?.insurance?.capitals).toEqual([
+      { name: 'Imóvel', capitalCents: 200 },
+    ]);
+  });
+
   it('refuses the same document twice', async () => {
     await saveInvoice(repos, draft(), { keepOriginalFile: true });
     await expect(saveInvoice(repos, draft(), { keepOriginalFile: true })).rejects.toBeInstanceOf(
@@ -377,5 +403,14 @@ describe('defaultContractId', () => {
   it('uses a same-sector contract without supply point (created by hand)', () => {
     expect(defaultContractId([manual], 'electricity', 'PT-CPE-2')).toBe('manual');
     expect(defaultContractId([light], 'electricity')).toBe('light');
+  });
+
+  it('keeps one insurance contract per policy (car and home from the same insurer)', () => {
+    const car = { id: 'car', sector: 'insurance' as const, insurance: { policyNumber: '111' } };
+    const home = { id: 'home', sector: 'insurance' as const, insurance: { policyNumber: '222' } };
+    expect(defaultContractId([car, home], 'insurance', undefined, '222')).toBe('home');
+    expect(defaultContractId([car, home], 'insurance', undefined, '333')).toBe('');
+    const byHand = { id: 'hand', sector: 'insurance' as const };
+    expect(defaultContractId([car, byHand], 'insurance', undefined, '333')).toBe('hand');
   });
 });

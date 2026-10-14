@@ -1,7 +1,7 @@
 /** Shared domain types (PLAN.md section 7). Money in integer cents; dates as ISO YYYY-MM-DD. */
 import type { Cents } from '../lib/money';
 
-export type Sector = 'telecom' | 'electricity' | 'gas' | 'water' | 'other';
+export type Sector = 'telecom' | 'electricity' | 'gas' | 'water' | 'insurance' | 'other';
 export type Confidence = 'high' | 'low';
 export type Source = 'qr' | 'parser' | 'ai' | 'manual';
 export type IsoDate = string;
@@ -23,6 +23,18 @@ export interface Provider extends SyncMeta {
   name: string;
   sectors: Sector[];
   parserId?: string;
+}
+
+/** What an insurance policy covers, as printed on its receipts (the newest one wins). */
+export interface InsuranceDetails {
+  /** Product and option ("Automóvel Ligeiros", "Mais"). */
+  product?: string;
+  option?: string;
+  policyNumber?: string;
+  /** What is insured ("FORD Kuga Diesel", "Recheio e imóvel"). */
+  insuredObject?: string;
+  /** Insured capitals ("Imóvel" 285 149,24 €). */
+  capitals?: { name: string; capitalCents: Cents }[];
 }
 
 export interface Contract extends SyncMeta {
@@ -48,6 +60,7 @@ export interface Contract extends SyncMeta {
     /** Distribution operator: ERSE ORD code, or 'unknown'. Chosen by the user. */
     distributor?: string;
   };
+  insurance?: InsuranceDetails;
   telecom?: {
     services: TelecomService[];
     /** Read from an invoice and not yet confirmed by the user. */
@@ -128,7 +141,8 @@ export interface Alert extends SyncMeta {
     | 'estimated_readings'
     | 'missing_invoice'
     | 'cheaper_offer'
-    | 'invoice_audit';
+    | 'invoice_audit'
+    | 'renewal';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

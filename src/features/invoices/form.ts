@@ -12,7 +12,14 @@ import type { ExtractedInvoice } from '../../parsers/types';
 import type { ParsedDocument } from '../ingest/ingest';
 import type { InvoiceDraft } from './save';
 
-export const SECTORS: readonly Sector[] = ['electricity', 'gas', 'water', 'telecom', 'other'];
+export const SECTORS: readonly Sector[] = [
+  'electricity',
+  'gas',
+  'water',
+  'telecom',
+  'insurance',
+  'other',
+];
 
 export interface InvoiceForm {
   issuerNif: string;
@@ -218,6 +225,9 @@ function contractDetails(
   if (sector === 'gas' && extraction.gasEscalao) {
     details.gas = { escalao: extraction.gasEscalao.value };
   }
+  if (sector === 'insurance' && extraction.insurance) {
+    details.insurance = extraction.insurance.value;
+  }
   if (sector === 'telecom' && extraction.telecomServices) {
     details.telecom = { services: extraction.telecomServices.value, fromInvoice: true };
   }
@@ -231,10 +241,20 @@ function contractDetails(
  * gas from the same file), so "the first one" is never assumed.
  */
 export function defaultContractId(
-  contracts: readonly Pick<Contract, 'id' | 'sector' | 'supplyPointId'>[],
+  contracts: readonly Pick<Contract, 'id' | 'sector' | 'supplyPointId' | 'insurance'>[],
   sector: Sector,
   supplyPointId?: string,
+  policyNumber?: string,
 ): string {
+  // Insurance: one contract per policy (car and home from the same insurer).
+  if (policyNumber) {
+    const same = contracts.find((contract) => contract.insurance?.policyNumber === policyNumber);
+    if (same) return same.id;
+    const unnumbered = contracts.find(
+      (contract) => contract.sector === sector && !contract.insurance?.policyNumber,
+    );
+    return unnumbered?.id ?? '';
+  }
   if (supplyPointId) {
     const same = contracts.find((contract) => contract.supplyPointId === supplyPointId);
     if (same) return same.id;

@@ -90,6 +90,21 @@ describe('validateExtraction', () => {
     ).toContain('period');
   });
 
+  it('lets an insurance receipt come weeks before the period it pays for', () => {
+    const insurance = (start: string) =>
+      electricity({
+        sector: 'insurance',
+        periodStart: { value: start, confidence: 'high' },
+        periodEnd: { value: '2027-06-30', confidence: 'high' },
+        readings: [],
+        lines: [{ kind: 'base_fee', description: 'Prémio comercial', amountCents: 4279 }],
+        linesIncludeVat: true,
+      });
+    // Issued 2026-06-23: up to 60 days ahead.
+    expect(validateExtraction(insurance('2026-08-01'), QR).failures).toEqual([]);
+    expect(validateExtraction(insurance('2026-09-01'), QR).failures).toEqual(['period']);
+  });
+
   it('lets telecom bill the coming month in advance', () => {
     const telecom = electricity({
       sector: 'telecom',

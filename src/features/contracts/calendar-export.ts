@@ -39,6 +39,14 @@ export async function buildCalendarFile(
       url,
       remindDaysBefore: event.remindDaysBefore,
     };
+    if (event.kind === 'renewal') {
+      return {
+        ...base,
+        summary: copy.renewalSummary(name),
+        description: copy.renewalDescription,
+        reminder: copy.renewalReminder(name),
+      };
+    }
     if (event.kind === 'loyalty_end' || !event.invoice) {
       return {
         ...base,

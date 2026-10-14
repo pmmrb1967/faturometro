@@ -217,6 +217,10 @@ export const t = {
         `${label}: a última fatura é de ${date}, há ${days} dias. Confirma se chegou alguma nova.`,
       cheaperOffer: (label: string, saving: string) =>
         `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
+      premiumIncrease: (label: string, before: string, after: string, pct: string) =>
+        `${label}: o prémio subiu de ${before} para ${after} (+${pct}%).`,
+      renewal: (label: string, date: string, days: number) =>
+        `${label}: o seguro renova a ${date} (daqui a ${days} ${days === 1 ? 'dia' : 'dias'}). Bom momento para pedir propostas com as mesmas coberturas.`,
       invoiceAudit: (label: string, date: string, parts: string[]) =>
         `${label}: na fatura de ${date}, ${parts.join(', ')}. Vê o detalhe na página do contrato.`,
       auditParts: {
@@ -531,6 +535,7 @@ export const t = {
     gas: 'Gás',
     water: 'Água',
     telecom: 'Telecomunicações',
+    insurance: 'Seguros',
     other: 'Outras despesas',
   },
   invoices: {
@@ -612,6 +617,11 @@ export const t = {
       cycle: 'Ciclo horário',
       socialTariff: 'Tarifa social',
       yes: 'Sim',
+      product: 'Produto',
+      policy: 'N.º da apólice',
+      insuredObject: 'Objeto seguro',
+      capital: (name: string) => `Capital: ${name}`,
+      renewal: 'Renova a',
     },
     cycles: { simple: 'Simples', bi: 'Bi-horário', tri: 'Tri-horário' },
     loyalty: {
@@ -765,6 +775,7 @@ export const t = {
         gas: 'fornecimento de gás natural',
         water: 'fornecimento de água',
         telecom: 'serviços de telecomunicações',
+        insurance: 'seguros',
         other: 'serviço',
       },
       header: (nif: string, provider: string, date: string) =>
@@ -821,7 +832,7 @@ export const t = {
     calendar: {
       title: 'Datas no teu calendário',
       intro:
-        'Descarrega um ficheiro com o fim das fidelizações e as datas-limite de pagamento, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
+        'Descarrega um ficheiro com o fim das fidelizações, as renovações dos seguros e as datas-limite de pagamento, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
       export: 'Adicionar ao calendário',
       exported: (count: number) =>
         count === 1
@@ -837,6 +848,10 @@ export const t = {
       loyaltyDescription:
         'A fidelização deste contrato termina hoje. A partir daqui podes mudar de tarifário ou de operador sem penalização. Compara as ofertas no Faturómetro antes de aceitar uma renovação.',
       loyaltyReminder: (name: string) => `A fidelização de ${name} está a acabar`,
+      renewalSummary: (name: string) => `Renovação do seguro: ${name}`,
+      renewalDescription:
+        'O seguro renova hoje por mais um período. Antes disso, podes pedir propostas a outras seguradoras com as mesmas coberturas e comparar no Faturómetro.',
+      renewalReminder: (name: string) => `O seguro ${name} está a renovar`,
       paymentSummary: (name: string, amount: string) => `Pagar fatura: ${name} (${amount})`,
       paymentDescription: (issueDate: string) =>
         `Data-limite de pagamento da fatura de ${issueDate}. Se pagas por débito direto, não precisas de fazer nada.`,

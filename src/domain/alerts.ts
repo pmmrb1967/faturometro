@@ -9,6 +9,8 @@ import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings }
 
 export const MISSING_INVOICE_DAYS = 40;
 export const ESTIMATED_IN_A_ROW = 3;
+/** Days after a billing period's length before an invoice counts as missing. */
+const MISSING_INVOICE_SLACK_DAYS = 10;
 const PRICE_HISTORY = 3;
 /** Total-based price rule only where the total does not depend on consumption. */
 const FIXED_PRICE_SECTORS: readonly Sector[] = ['telecom', 'other'];
@@ -57,6 +59,34 @@ function loyaltyAlert(contract: Contract, input: AlertInput): AlertDraft | null 
   };
 }
 
+function addDay(iso: string): string {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) + DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Insurance: the policy renews the day after the paid period ends (same steps as loyalty). */
+function renewalAlert(
+  contract: Contract,
+  history: Invoice[],
+  input: AlertInput,
+): AlertDraft | null {
+  const end = history.at(-1)?.periodEnd;
+  if (contract.sector !== 'insurance' || !end) return null;
+  const renewal = addDay(end);
+  const daysLeft = daysBetween(input.today, renewal);
+  if (daysLeft < 0) return null;
+  const reached = [...input.settings.loyaltyAlertDays]
+    .sort((a, b) => a - b)
+    .find((threshold) => daysLeft <= threshold);
+  if (reached === undefined) return null;
+  return {
+    key: `${contract.id}:renewal:${renewal}:${reached}`,
+    contractId: contract.id,
+    kind: 'renewal',
+    severity: daysLeft <= 30 ? 'warning' : 'info',
+    data: { date: renewal, daysLeft, threshold: reached },
+  };
+}
+
 function baseFee(lines: InvoiceLine[]): number | null {
   const fees = lines.filter((line) => line.kind === 'base_fee');
   return fees.length > 0 ? fees.reduce((sum, line) => sum + line.amountCents, 0) : null;
@@ -97,6 +127,13 @@ function priceAlert(
       increasePct: ((after - before) / before) * 100,
     },
   });
+
+  // Insurance: what was paid against the previous premium (receipts are yearly or by instalment).
+  if (contract.sector === 'insurance') {
+    return previous.totalCents > 0 && latest.totalCents > previous.totalCents * (1 + threshold)
+      ? make('premium', previous.totalCents, latest.totalCents)
+      : null;
+  }
 
   // Monthly base fee went up (any sector that bills one).
   const feeNow = baseFee(linesOf(latest));
@@ -154,7 +191,12 @@ function missingAlert(contract: Contract, history: Invoice[], today: string): Al
   const latest = history.at(-1);
   if (!contract.active || !latest) return null;
   const days = daysBetween(latest.issueDate, today);
-  if (days <= MISSING_INVOICE_DAYS) return null;
+  // Invoices for longer periods (bimonthly water, yearly insurance) come less often.
+  const period =
+    latest.periodStart && latest.periodEnd
+      ? daysBetween(latest.periodStart, latest.periodEnd) + 1
+      : 0;
+  if (days <= Math.max(MISSING_INVOICE_DAYS, period + MISSING_INVOICE_SLACK_DAYS)) return null;
   return {
     key: `${contract.id}:missing_invoice:${latest.id}`,
     contractId: contract.id,
@@ -203,6 +245,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
       const history = [...(invoicesByContract.get(contract.id) ?? [])].sort(byDate);
       return [
         loyaltyAlert(contract, input),
+        renewalAlert(contract, history, input),
         priceAlert(contract, history, linesOf, input),
         estimatedAlert(contract, history, readingsOf),
         missingAlert(contract, history, input.today),

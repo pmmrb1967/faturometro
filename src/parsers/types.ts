@@ -1,5 +1,6 @@
 import type {
   Confidence,
+  InsuranceDetails,
   ConsumptionPeriod,
   InvoiceLine,
   Reading,
@@ -56,6 +57,8 @@ export interface ExtractedInvoice {
   /** Natural gas consumption tier (escalão 1–4), as printed on the invoice. */
   gasEscalao?: Field<1 | 2 | 3 | 4>;
   loyaltyEndDate?: Field<string>;
+  /** Insurance policy: product, policy number, insured object and capitals. */
+  insurance?: Field<InsuranceDetails>;
   /** Services of a telecom contract, in TELECOM_SERVICES order. */
   telecomServices?: Field<TelecomService[]>;
   readingType?: Field<Reading['readingType']>;

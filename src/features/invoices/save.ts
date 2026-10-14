@@ -37,7 +37,13 @@ export interface InvoiceDraft {
   /** Contract data read from the invoice: saved on new contracts, fills gaps on existing ones. */
   contractDetails?: Pick<
     Contract,
-    'supplyPointId' | 'tariffName' | 'loyaltyEndDate' | 'electricity' | 'gas' | 'telecom'
+    | 'supplyPointId'
+    | 'tariffName'
+    | 'loyaltyEndDate'
+    | 'electricity'
+    | 'gas'
+    | 'telecom'
+    | 'insurance'
   >;
 }
 
@@ -114,6 +120,14 @@ export async function saveInvoice(
       const others = await repos.invoices.findBy('contractId', current.id);
       if (others.every((invoice) => invoice.issueDate <= draft.issueDate))
         missing.telecom = telecom;
+    }
+    // A policy's objects and capitals change at each renewal: the newest receipt decides.
+    const insurance = draft.contractDetails?.insurance;
+    if (insurance && current.insurance) {
+      const others = await repos.invoices.findBy('contractId', current.id);
+      if (others.every((invoice) => invoice.issueDate <= draft.issueDate)) {
+        missing.insurance = { ...current.insurance, ...insurance };
+      }
     }
     if (Object.keys(missing).length > 0)
       contract = await repos.contracts.put({ ...current, ...missing });

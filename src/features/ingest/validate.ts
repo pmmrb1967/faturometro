@@ -13,6 +13,8 @@ const TOLERANCE_CENTS = 1;
 const ISSUE_SLACK_DAYS = 5;
 /** Consumption-based sectors bill the past; telecom bills the coming month in advance. */
 const BILLED_IN_ARREARS: readonly Sector[] = ['electricity', 'gas', 'water'];
+/** Insurance receipts can be issued weeks before the period they pay for starts. */
+const INSURANCE_ADVANCE_DAYS = 60;
 
 export type Check = 'total' | 'vat' | 'period' | 'lines' | 'readings';
 
@@ -82,7 +84,8 @@ export function validateExtraction(extracted: ExtractedInvoice, qr?: FiscalQr): 
   const end = extracted.periodEnd?.value;
   const issue = qr?.date ?? extracted.issueDate?.value;
   if (start && end) {
-    const limit = issue ? addDays(issue, ISSUE_SLACK_DAYS) : undefined;
+    const slack = extracted.sector === 'insurance' ? INSURANCE_ADVANCE_DAYS : ISSUE_SLACK_DAYS;
+    const limit = issue ? addDays(issue, slack) : undefined;
     const arrears = extracted.sector === undefined || BILLED_IN_ARREARS.includes(extracted.sector);
     const ok = start <= end && (!limit || (arrears ? end <= limit : start <= limit));
     if (!ok) fail('period', ['periodStart', 'periodEnd']);

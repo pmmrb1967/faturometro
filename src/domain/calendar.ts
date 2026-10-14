@@ -12,7 +12,7 @@ export const PAYMENT_REMINDER_DAYS = [3];
 /** Reminders fire at this local hour. */
 const REMINDER_HOUR = 9;
 
-export type CalendarEventKind = 'loyalty_end' | 'payment_due';
+export type CalendarEventKind = 'loyalty_end' | 'payment_due' | 'renewal';
 
 export interface CalendarEvent {
   /** Stable across exports, so importing again updates the event. */
@@ -54,6 +54,25 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
     events.push({
       uid: `loyalty-${contract.id}@${UID_DOMAIN}`,
       kind: 'loyalty_end',
+      date,
+      remindDaysBefore: remindersAhead(input.loyaltyAlertDays, date, input.today),
+      contract,
+    });
+  }
+
+  // Insurance renews the day after the latest paid period ends.
+  for (const contract of active.filter((candidate) => candidate.sector === 'insurance')) {
+    const end = input.invoices
+      .filter((invoice) => invoice.contractId === contract.id && invoice.periodEnd)
+      .map((invoice) => invoice.periodEnd!)
+      .sort()
+      .at(-1);
+    if (!end) continue;
+    const date = nextDay(end);
+    if (date < input.today) continue;
+    events.push({
+      uid: `renewal-${contract.id}@${UID_DOMAIN}`,
+      kind: 'renewal',
       date,
       remindDaysBefore: remindersAhead(input.loyaltyAlertDays, date, input.today),
       contract,

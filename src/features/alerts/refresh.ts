@@ -23,6 +23,14 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
     case 'price_increase': {
       const pct = number('increasePct').toFixed(1).replace('.', ',');
       if (text('reason') === 'unit_price') return copy.unitPriceIncrease(label, pct);
+      if (text('reason') === 'premium') {
+        return copy.premiumIncrease(
+          label,
+          formatCents(number('before')),
+          formatCents(number('after')),
+          pct,
+        );
+      }
       const before = formatCents(number('before'));
       const after = formatCents(number('after'));
       return text('reason') === 'base_fee'
@@ -35,6 +43,8 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
       return copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
     case 'cheaper_offer':
       return copy.cheaperOffer(label, formatCents(number('savingCents')));
+    case 'renewal':
+      return copy.renewal(label, formatIsoDate(text('date')), number('daysLeft'));
     case 'invoice_audit': {
       const kinds = Array.isArray(data.kinds) ? data.kinds.map(String) : [];
       const parts = kinds.map((kind) => copy.auditParts[kind]).filter(Boolean) as string[];

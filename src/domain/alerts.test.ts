@@ -229,3 +229,80 @@ describe('invoice audit', () => {
     expect(kinds(alerts)).toEqual(['invoice_audit']);
   });
 });
+
+describe('insurance', () => {
+  const policy = contract({ sector: 'insurance', label: 'Seguro Automóvel' });
+  // Insurance receipts are issued just before the period; water invoices after it.
+  const receipt = (id: string, start: string, end: string, total: number, issued = start) => ({
+    ...invoice(id, issued, total),
+    periodStart: start,
+    periodEnd: end,
+  });
+
+  it('alerts before the renewal, the day after the paid period ends', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [policy],
+        invoices: [receipt('a', '2025-10-10', '2026-10-09', 46138)],
+        today: '2026-09-15',
+      }),
+    );
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        key: 'c1:renewal:2026-10-10:30',
+        kind: 'renewal',
+        data: { date: '2026-10-10', daysLeft: 25, threshold: 30 },
+      }),
+    ]);
+    // Not for other sectors.
+    expect(
+      kinds(
+        computeAlerts(
+          input({ invoices: [receipt('a', '2025-10-10', '2026-10-09', 1)], today: '2026-09-15' }),
+        ),
+      ),
+    ).not.toContain('renewal');
+  });
+
+  it('flags a higher premium than the previous receipt', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [policy],
+        invoices: [
+          receipt('a', '2024-11-01', '2025-10-31', 39789),
+          receipt('b', '2025-11-01', '2026-10-31', 43251),
+        ],
+        today: '2025-11-05',
+      }),
+    );
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        kind: 'price_increase',
+        data: expect.objectContaining({ reason: 'premium', before: 39789, after: 43251 }),
+      }),
+    ]);
+  });
+
+  it('does not count a yearly receipt as missing before its period ends', () => {
+    const yearly = input({
+      contracts: [policy],
+      invoices: [receipt('a', '2025-10-10', '2026-10-09', 46138)],
+      today: '2026-08-01',
+    });
+    expect(kinds(computeAlerts(yearly))).not.toContain('missing_invoice');
+    // Bimonthly water: 62 days + 10.
+    const water = contract({ sector: 'water' });
+    const bimonthly = (today: string) =>
+      kinds(
+        computeAlerts(
+          input({
+            contracts: [water],
+            invoices: [receipt('w', '2026-03-04', '2026-05-04', 3286, '2026-05-07')],
+            today,
+          }),
+        ),
+      );
+    expect(bimonthly('2026-07-10')).not.toContain('missing_invoice');
+    expect(bimonthly('2026-07-25')).toContain('missing_invoice');
+  });
+});

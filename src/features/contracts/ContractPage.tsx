@@ -11,6 +11,7 @@ import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
+import type { Contract, Invoice } from '../../domain/types';
 import { AuditSection } from './AuditSection';
 import { SwitchSection } from './SwitchSection';
 import { TelecomCompare } from './TelecomCompare';
@@ -91,6 +92,7 @@ export function ContractPage() {
     ],
     [copy.facts.cycle, contract.electricity ? copy.cycles[contract.electricity.cycle] : undefined],
     [copy.facts.socialTariff, contract.electricity?.socialTariff ? copy.facts.yes : undefined],
+    ...insuranceFacts(contract, invoices),
   ];
 
   return (
@@ -313,4 +315,33 @@ function MonthlyPriceForm({
       )}
     </form>
   );
+}
+
+/** Policy data read from the receipts, and when it renews (the day after the paid period). */
+function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, string | undefined][] {
+  const insurance = contract.insurance;
+  if (contract.sector !== 'insurance') return [];
+  const end = invoices
+    .map((invoice) => invoice.periodEnd)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
+  const facts = copy.facts;
+  return [
+    [
+      facts.product,
+      [insurance?.product, insurance?.option].filter(Boolean).join(' · ') || undefined,
+    ],
+    [facts.policy, insurance?.policyNumber],
+    [facts.insuredObject, insurance?.insuredObject],
+    ...(insurance?.capitals ?? []).map((capital): [string, string] => [
+      facts.capital(capital.name),
+      formatCents(capital.capitalCents),
+    ]),
+    [facts.renewal, end && contract.active ? formatIsoDate(nextDay(end)) : undefined],
+  ];
+}
+
+function nextDay(iso: string): string {
+  return new Date(Date.parse(`${iso}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 }

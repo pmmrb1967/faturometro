@@ -56,7 +56,12 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
   const contracts = known?.contracts ?? [];
   const contractId =
     contractChoice ??
-    defaultContractId(contracts, form.sector, base.parsed?.extraction.supplyPointId?.value);
+    defaultContractId(
+      contracts,
+      form.sector,
+      base.parsed?.extraction.supplyPointId?.value,
+      base.parsed?.extraction.insurance?.value.policyNumber,
+    );
   const current = { ...form, contractId };
 
   const set =
