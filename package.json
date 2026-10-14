@@ -22,7 +22,8 @@
     "deploy:server": "wrangler deploy -c server/wrangler.toml",
     "ai:eval": "tsx scripts/ai-eval.ts",
     "parser:generate": "tsx scripts/generate-parser.ts",
-    "contrib:keygen": "tsx scripts/contrib-keygen.ts"
+    "contrib:keygen": "tsx scripts/contrib-keygen.ts",
+    "contributions:pull": "tsx scripts/contributions-pull.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
