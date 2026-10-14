@@ -18,6 +18,11 @@
  *   PUT    /v1/files/:id/:n?total=T   (text body)         → 204, or 507 when storage is full
  *   GET    /v1/files/:id/:n                               → text body, header X-Chunks: T
  *   DELETE /v1/files/:id                                  → 204
+ *
+ * Layout contributions (anonymized, encrypted in the app for the maintainer only):
+ *   POST   /v1/contributions  {v, epk, iv, data}          → 201 {id}; 413, or 503 when full
+ *   GET    /v1/contributions  (Bearer CONTRIB_ADMIN_TOKEN) → {contributions: [{id, createdAt, envelope}]}
+ *   DELETE /v1/contributions/:id (same token)             → 204
  */
 import { z } from 'zod';
 import type { Sql } from './db';
@@ -51,6 +56,12 @@ export interface AppConfig {
   recordsTotalBytes?: number;
   /** Minimum client KDF iterations accepted (tests use fewer). */
   minIterations?: number;
+  /** Secret that lets the maintainer list and delete layout contributions. */
+  contribAdminToken?: string;
+  /** Layout contributions accepted per day (UTC). */
+  contribDailyMax?: number;
+  /** Space for stored contributions, in characters. */
+  contribTotalBytes?: number;
 }
 
 export const SESSION_DAYS = 30;
@@ -69,6 +80,11 @@ export const MAX_ACCOUNTS = 200;
 export const ADMISSION_PERCENT = 80;
 export const RECORDS_TOTAL_BYTES = 500_000_000;
 export const FILES_TOTAL_BYTES = 450_000_000;
+export const CONTRIB_DAILY_MAX = 30;
+export const CONTRIB_TOTAL_BYTES = 20_000_000;
+/** Raw request body of one contribution, in characters. */
+export const MAX_CONTRIBUTION_LENGTH = 400_000;
+const CONTRIBUTIONS_PER_PAGE = 20;
 /** Chunk of base64 ciphertext (D1 values are limited to 2 MB). */
 export const MAX_CHUNK_LENGTH = 1_000_000;
 const MAX_CHUNKS = 30;
@@ -96,6 +112,21 @@ const record = z.object({
 export type SyncRecord = z.infer<typeof record>;
 
 export const MIN_ITERATIONS = 100_000;
+
+/** Same shape as src/features/contribute/envelope.ts (the server does not import from src/). */
+const envelope = z.object({
+  v: z.literal(1),
+  epk: z
+    .object({
+      kty: z.literal('EC'),
+      crv: z.literal('P-256'),
+      x: z.string().max(100),
+      y: z.string().max(100),
+    })
+    .passthrough(),
+  iv: z.string().max(40),
+  data: z.string().max(MAX_CONTRIBUTION_LENGTH),
+});
 
 const schemas = {
   prelogin: z.object({ email }),
@@ -137,7 +168,7 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-/** Constant-time comparison of equal-length hex strings. */
+/** Constant-time comparison of equal-length hex strings (also used for the admin token). */
 function sameHex(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -256,6 +287,68 @@ export function createApp(config: AppConfig) {
     return user;
   }
 
+  function isMaintainer(request: Request): boolean {
+    const expected = config.contribAdminToken;
+    const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
+    return Boolean(expected && token && sameHex(token, expected));
+  }
+
+  async function contributions(request: Request, method: string, path: string) {
+    if (method === 'POST' && path === '/v1/contributions') {
+      const text = await request.text();
+      if (text.length > MAX_CONTRIBUTION_LENGTH) throw new HttpError(413, 'Too large');
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new HttpError(400, 'Invalid JSON');
+      }
+      if (!envelope.safeParse(parsed).success) throw new HttpError(400, 'Invalid request');
+      const stored = await sql.first<{ bytes: number }>(
+        'SELECT COALESCE(SUM(size), 0) AS bytes FROM contributions',
+      );
+      const todays = await sql.first<{ n: number }>(
+        'SELECT COUNT(*) AS n FROM contributions WHERE created_at >= ?',
+        today(),
+      );
+      if (
+        (todays?.n ?? 0) >= (config.contribDailyMax ?? CONTRIB_DAILY_MAX) ||
+        (stored?.bytes ?? 0) + text.length > (config.contribTotalBytes ?? CONTRIB_TOTAL_BYTES)
+      ) {
+        throw new HttpError(503, 'contributions_full');
+      }
+      const id = crypto.randomUUID();
+      await sql.run(
+        'INSERT INTO contributions (id, created_at, size, envelope) VALUES (?, ?, ?, ?)',
+        id,
+        now().toISOString(),
+        text.length,
+        text,
+      );
+      return json({ id }, 201);
+    }
+    if (!isMaintainer(request)) throw new HttpError(401, 'Unauthorized');
+    if (method === 'GET' && path === '/v1/contributions') {
+      const rows = await sql.all<{ id: string; created_at: string; envelope: string }>(
+        'SELECT id, created_at, envelope FROM contributions ORDER BY created_at LIMIT ?',
+        CONTRIBUTIONS_PER_PAGE,
+      );
+      return json({
+        contributions: rows.map((row) => ({
+          id: row.id,
+          createdAt: row.created_at,
+          envelope: JSON.parse(row.envelope) as unknown,
+        })),
+      });
+    }
+    const one = /^\/v1\/contributions\/([0-9a-f-]{36})$/.exec(path);
+    if (method === 'DELETE' && one) {
+      await sql.run('DELETE FROM contributions WHERE id = ?', one[1] ?? '');
+      return new Response(null, { status: 204 });
+    }
+    throw new HttpError(404, 'Not found');
+  }
+
   async function route(request: Request, url: URL): Promise<Response> {
     const path = url.pathname;
     const method = request.method;
@@ -335,6 +428,10 @@ export function createApp(config: AppConfig) {
         removedRoute[1] ?? '',
       );
       return json({ removed: row !== null });
+    }
+
+    if (path === '/v1/contributions' || path.startsWith('/v1/contributions/')) {
+      return contributions(request, method, path);
     }
 
     const user = await userFromToken(request);

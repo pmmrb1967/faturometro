@@ -115,3 +115,14 @@ describe('runMaintenance', () => {
     expect(main.db.prepare('SELECT * FROM stats').all()).toEqual([{ id: 1, ...stats }]);
   });
 });
+
+describe('contributions purge', () => {
+  it('deletes contributions older than 90 days', async () => {
+    const insert = 'INSERT INTO contributions (id, created_at, size, envelope) VALUES (?, ?, 1, ?)';
+    await main.sql.run(insert, 'old', '2026-07-01T00:00:00.000Z', '{}');
+    await main.sql.run(insert, 'new', '2026-10-03T00:00:00.000Z', '{}');
+    await runMaintenance({ sql: main.sql, now: () => clock });
+    const left = await main.sql.all<{ id: string }>('SELECT id FROM contributions');
+    expect(left.map((row) => row.id)).toEqual(['new']);
+  });
+});

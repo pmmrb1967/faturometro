@@ -36,6 +36,10 @@ RECORD_QUOTA_MB = "5"
 MAX_ACCOUNTS = "200"
 ADMISSION_PERCENT = "80"
 INACTIVE_MONTHS = "12"
+# Layout contributions (encrypted for the maintainer): per day and total stored.
+# The token to pull them is a secret: wrangler secret put CONTRIB_ADMIN_TOKEN
+CONTRIB_DAILY_MAX = "30"
+CONTRIB_TOTAL_MB = "20"
 
 [triggers]
 # Daily maintenance: inactive accounts and usage totals (src/maintenance.ts).

@@ -4,6 +4,12 @@ import { limitsFromEnv } from './env';
 const base = { DB: {} as never, PRELOGIN_SECRET: 's', ALLOWED_ORIGINS: 'https://a' };
 
 describe('limitsFromEnv', () => {
+  it('reads the contribution limits', () => {
+    expect(
+      limitsFromEnv({ ...base, CONTRIB_DAILY_MAX: '30', CONTRIB_TOTAL_MB: '20' }),
+    ).toMatchObject({ contribDailyMax: 30, contribTotalBytes: 20_000_000 });
+  });
+
   it('reads megabytes, months and counts; normalizes admin emails', () => {
     expect(
       limitsFromEnv({

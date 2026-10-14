@@ -18,6 +18,10 @@ export interface Env {
   MAX_ACCOUNTS?: string;
   ADMISSION_PERCENT?: string;
   INACTIVE_MONTHS?: string;
+  /** Secret (wrangler secret put CONTRIB_ADMIN_TOKEN): lets the maintainer pull contributions. */
+  CONTRIB_ADMIN_TOKEN?: string;
+  CONTRIB_DAILY_MAX?: string;
+  CONTRIB_TOTAL_MB?: string;
 }
 
 export interface Limits {
@@ -29,6 +33,8 @@ export interface Limits {
   maxAccounts?: number;
   admissionPercent?: number;
   inactiveMonths?: number;
+  contribDailyMax?: number;
+  contribTotalBytes?: number;
 }
 
 function positive(value: string | undefined): number | undefined {
@@ -56,6 +62,8 @@ export function limitsFromEnv(env: Env): Limits {
     ['maxAccounts', positive(env.MAX_ACCOUNTS)],
     ['admissionPercent', positive(env.ADMISSION_PERCENT)],
     ['inactiveMonths', positive(env.INACTIVE_MONTHS)],
+    ['contribDailyMax', positive(env.CONTRIB_DAILY_MAX)],
+    ['contribTotalBytes', megabytes(env.CONTRIB_TOTAL_MB)],
   ];
   for (const [name, value] of entries) if (value !== undefined) limits[name] = value;
   return limits;

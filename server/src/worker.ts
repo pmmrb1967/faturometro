@@ -13,6 +13,7 @@ export default {
       preloginSecret: env.PRELOGIN_SECRET,
       allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),
       ...limitsFromEnv(env),
+      ...(env.CONTRIB_ADMIN_TOKEN ? { contribAdminToken: env.CONTRIB_ADMIN_TOKEN } : {}),
     });
     return handle(request);
   },

@@ -7,6 +7,8 @@ import type { Sql } from './db';
 
 export const INACTIVE_MONTHS = 12;
 export const TOMBSTONE_MONTHS = 24;
+/** Layout contributions are deleted after this many days, read or not. */
+export const CONTRIB_KEEP_DAYS = 90;
 
 export interface MaintenanceConfig {
   sql: Sql;
@@ -61,6 +63,11 @@ export async function runMaintenance(config: MaintenanceConfig): Promise<Mainten
   await sql.run(
     'DELETE FROM removed_accounts WHERE removed_at < ?',
     monthsBefore(now, TOMBSTONE_MONTHS),
+  );
+
+  await sql.run(
+    'DELETE FROM contributions WHERE created_at < ?',
+    new Date(now.getTime() - CONTRIB_KEEP_DAYS * 86_400_000).toISOString(),
   );
 
   const filesBytes =

@@ -575,3 +575,70 @@ describe('admission', () => {
     expect((await signUp('ana@example.pt')).status).toBe(201);
   });
 });
+
+describe('contributions', () => {
+  const ENVELOPE = {
+    v: 1,
+    epk: { kty: 'EC', crv: 'P-256', x: 'eA', y: 'eQ' },
+    iv: 'aXY=',
+    data: 'ZGF0YQ==',
+  };
+  let open: ReturnType<typeof createApp>;
+
+  beforeEach(() => {
+    open = handle;
+    handle = createApp({
+      sql: memorySql().sql,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+      contribAdminToken: 'admin-token',
+      contribDailyMax: 2,
+      contribTotalBytes: 3000,
+    });
+  });
+
+  it('stores a valid envelope and lists it only with the admin token', async () => {
+    const posted = await call('POST', '/v1/contributions', ENVELOPE);
+    expect(posted.status).toBe(201);
+    expect((await call('GET', '/v1/contributions')).status).toBe(401);
+    expect((await call('GET', '/v1/contributions', undefined, 'wrong')).status).toBe(401);
+    const listed = await call('GET', '/v1/contributions', undefined, 'admin-token');
+    expect(listed.body).toMatchObject({
+      contributions: [{ id: posted.body!.id, envelope: ENVELOPE }],
+    });
+  });
+
+  it('deletes with the admin token', async () => {
+    const posted = await call('POST', '/v1/contributions', ENVELOPE);
+    const path = `/v1/contributions/${posted.body!.id as string}`;
+    expect((await call('DELETE', path)).status).toBe(401);
+    expect((await call('DELETE', path, undefined, 'admin-token')).status).toBe(204);
+    expect((await call('GET', '/v1/contributions', undefined, 'admin-token')).body).toEqual({
+      contributions: [],
+    });
+  });
+
+  it('refuses invalid envelopes and big bodies', async () => {
+    expect((await call('POST', '/v1/contributions', { v: 2 })).status).toBe(400);
+    const big = { ...ENVELOPE, data: 'A'.repeat(400_004) };
+    expect((await call('POST', '/v1/contributions', big)).status).toBe(413);
+  });
+
+  it('caps contributions per day and in total', async () => {
+    expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);
+    expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);
+    expect((await call('POST', '/v1/contributions', ENVELOPE)).body).toEqual({
+      error: 'contributions_full',
+    });
+    clock = new Date('2026-10-14T12:00:00Z');
+    const bigger = { ...ENVELOPE, data: 'A'.repeat(3000) };
+    expect((await call('POST', '/v1/contributions', bigger)).status).toBe(503);
+    expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);
+  });
+
+  it('without an admin token configured, the admin routes are closed', async () => {
+    handle = open;
+    expect((await call('GET', '/v1/contributions', undefined, 'anything')).status).toBe(401);
+  });
+});
