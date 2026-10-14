@@ -1,6 +1,9 @@
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { InstallButton } from '../components/InstallButton';
 import { LegalFooter } from '../components/LegalFooter';
+import { createGuest, openGuest } from '../features/auth/accounts';
+import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
 import { QrSlip } from './QrSlip';
 import './landing.css';
@@ -8,6 +11,18 @@ import './landing.css';
 const copy = t.landing;
 
 export function Landing() {
+  const { signIn } = useSession();
+  const navigate = useNavigate();
+  const [hasGuest, setHasGuest] = useState(false);
+  useEffect(() => {
+    void openGuest().then((guest) => setHasGuest(guest !== null));
+  }, []);
+
+  async function startGuest() {
+    signIn(await createGuest());
+    navigate('/app');
+  }
+
   return (
     <div className="landing">
       <p className="landing-status" role="status">
@@ -30,7 +45,14 @@ export function Landing() {
             <h1>{copy.hero.title}</h1>
             <p className="hero-lead">{copy.hero.lead}</p>
             <div className="hero-actions">
-              <Link to="/criar-conta" className="button button-primary">
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={() => void startGuest()}
+              >
+                {hasGuest ? copy.continueGuest : copy.startGuest}
+              </button>
+              <Link to="/criar-conta" className="button button-quiet">
                 {copy.createAccount}
               </Link>
               <a href="#como-funciona" className="button button-quiet">

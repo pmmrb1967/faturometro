@@ -648,6 +648,7 @@ export const t = {
       noAccounts: 'Ainda não há contas neste dispositivo.',
       createAccount: 'Criar conta',
       forgot: 'Esqueceste-te da palavra-passe?',
+      continueGuest: 'Continuar sem conta',
     },
     recover: {
       title: 'Recuperar acesso',
@@ -679,6 +680,8 @@ export const t = {
     status: 'Em desenvolvimento: algumas funções ainda não estão disponíveis.',
     signIn: 'Entrar',
     createAccount: 'Criar conta',
+    startGuest: 'Começar sem conta',
+    continueGuest: 'Continuar sem conta',
     howItWorksLink: 'Como funciona',
     hero: {
       title: 'Quanto custa a tua casa, fatura a fatura.',

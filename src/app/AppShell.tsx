@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
+import { isGuest } from '../db/profiles';
 import { useSession } from '../features/auth/session-context';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
@@ -19,17 +20,28 @@ export function AppShell() {
           {t.appName}
         </Link>
         <div className="topbar-account">
-          {session?.profile.sync?.admin && <span className="topbar-badge">{t.adminBadge}</span>}
-          <span className="topbar-email">{session?.profile.email}</span>
-          <button
-            type="button"
-            className="topbar-lock"
-            onClick={lock}
-            aria-label={t.signOutLabel}
-            title={t.signOutLabel}
-          >
-            {t.signOut}
-          </button>
+          {session && isGuest(session.profile) ? (
+            <>
+              <span className="topbar-badge">{t.guest.badge}</span>
+              <Link to="/criar-conta" className="topbar-lock">
+                {t.guest.createAccount}
+              </Link>
+            </>
+          ) : (
+            <>
+              {session?.profile.sync?.admin && <span className="topbar-badge">{t.adminBadge}</span>}
+              <span className="topbar-email">{session?.profile.email}</span>
+              <button
+                type="button"
+                className="topbar-lock"
+                onClick={lock}
+                aria-label={t.signOutLabel}
+                title={t.signOutLabel}
+              >
+                {t.signOut}
+              </button>
+            </>
+          )}
         </div>
       </header>
 

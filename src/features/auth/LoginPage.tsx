@@ -1,7 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { t } from '../../i18n/pt-PT';
-import { AccountError, listAccountEmails, unlockAccount } from './accounts';
+import {
+  AccountError,
+  listAccountEmails,
+  openGuest,
+  unlockAccount,
+  type UnlockedAccount,
+} from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
 import { useSession } from './session-context';
 import { required, validateEmail } from './validation';
@@ -19,6 +25,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const returnPath = useReturnPath();
   const [emails, setEmails] = useState<string[] | null>(null);
+  const [guest, setGuest] = useState<UnlockedAccount | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -30,7 +37,14 @@ export function LoginPage() {
       setEmails(found);
       if (found.length === 1 && found[0]) setEmail(found[0]);
     });
+    void openGuest().then(setGuest);
   }, []);
+
+  function continueGuest() {
+    if (!guest) return;
+    signIn(guest);
+    navigate(returnPath, { replace: true });
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -88,6 +102,13 @@ export function LoginPage() {
           {busy ? t.auth.working : copy.submit}
         </button>
       </form>
+      {guest && (
+        <p className="auth-alt">
+          <button type="button" className="link-button" onClick={continueGuest}>
+            {copy.continueGuest}
+          </button>
+        </p>
+      )}
       <p className="auth-alt">
         <Link to="/recuperar">{copy.forgot}</Link>
       </p>
