@@ -379,6 +379,8 @@ custo = preço_potência_dia × 365
 - Mostrar: custo atual estimado, 5 ofertas mais baratas, poupança anual, condições relevantes (fidelização, débito direto, fatura eletrónica, descontos só para novos clientes).
 - Linguagem: "estimativa", nunca "poupança garantida".
 
+**Gás (2026-10-14):** ofertas `GN` e `DUAL` da ERSE por escalão (preços do mercado livre iguais em todo o país); tarifa regulada por distribuidor (ORD), escolhido pelo utilizador; IVA em `docs/gas-vat.md`; encargos comuns (termo fixo das redes, TOS, IEC, descontos sociais) da última fatura de gás sem acertos de estimativas anteriores; separador "Luz + gás" com a melhor combinação separada e as ofertas conjuntas.
+
 ## 9. Alertas
 
 | Alerta | Regra |
@@ -510,7 +512,8 @@ Opcional e desligada por defeito.
 - [ ] Layouts P2
 - [ ] Ingestão por email (secção 12)
 - [ ] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
-- [ ] Gás no comparador; telecom com lista de ofertas mantida manualmente
+- [x] Gás no comparador e total luz + gás (`docs/superpowers/specs/2026-10-14-gas-comparator-design.md`)
+- [ ] Telecom com lista de ofertas mantida manualmente
 - [ ] Seguros (P3)
 
 ## 14. Estrutura de pastas
@@ -659,3 +662,6 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Fase 0 com React 18 e ESLint (conforme `CLAUDE.md`), TypeScript 6.0 (o typescript-eslint ainda não suporta o 7) |
 | 2026-10-14 | Sincronização sempre dentro do plano gratuito: quando aperta, quem não couber fica sem sincronização, sem custos (pago decide-se mais tarde). Originais no servidor só dos últimos 12 meses (a app apaga só o que tem localmente), quota de registos, travão à entrada a 80%, contas inativas há 12 meses apagadas (marca só com o id aleatório), administrador com quota própria e selo no cabeçalho; alerta semanal a 70% |
 | 2026-10-14 | Sem pedido de "lotação" antes de ativar a sincronização: a app só contacta o servidor depois de o utilizador a ligar (regra 1) |
+| 2026-10-14 | Gás no comparador e total luz + gás. Preços do mercado livre iguais em todo o país (só dependem do escalão, lido da fatura); o distribuidor só serve para a tarifa regulada e é perguntado ao utilizador (sem tabela oficial de concelhos) |
+| 2026-10-14 | IVA do gás: 6 % no termo fixo das redes (valor da fatura do utilizador) e nos descontos sobre ele, 23 % no resto. Assumido que o termo fixo das ofertas da ERSE inclui o das redes (a confirmar com uma fatura posterior a 1 de outubro de 2026; efeito ~6 €/ano, igual em todas as ofertas): `docs/gas-vat.md` |
+| 2026-10-14 | Ingestão por email: sem domínio próprio, só a leitura direta do Outlook preserva a privacidade; caixa Gmail partilhada e serviços como o Brevo expõem as faturas em claro. A partilha (Web Share Target) cobre o caso manual |
