@@ -1,0 +1,39 @@
+.letters .action-secondary[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.letters a.action-secondary {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.letter {
+  margin-top: 16px;
+}
+
+.letter label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.letter textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  font: inherit;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.letter textarea:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -628,13 +628,103 @@ export const t = {
       unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
       note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
     },
+    letters: {
+      title: 'Cartas',
+      intro:
+        'Modelos de cartas preenchidos com os dados deste contrato. Revê e completa o texto antes de o enviares.',
+      kinds: {
+        renegotiate: 'Pedir um preço melhor',
+        price_increase: 'Contestar um aumento',
+        estimated_reading: 'Reclamar de leituras estimadas',
+        cancel: 'Denunciar o contrato',
+      },
+      textLabel: 'Texto da carta (podes editar)',
+      copy: 'Copiar',
+      copied: 'Copiado',
+      email: 'Abrir no email',
+      placeholdersNote:
+        'Completa o que está entre parênteses retos ([NOME], [MORADA]…). Envia pelo email ou pelo formulário da área de cliente do fornecedor e guarda uma cópia.',
+      complaint:
+        'Se não te responderem ou não concordares com a resposta, podes reclamar no Livro de Reclamações Eletrónico. A reclamação segue também para a entidade reguladora do setor.',
+      complaintLink: 'Livro de Reclamações Eletrónico',
+      complaintUrl: 'https://www.livroreclamacoes.pt/',
+      placeholders: {
+        name: '[NOME]',
+        address: '[MORADA]',
+        nif: '[NIF]',
+        customerNumber: '[N.º DE CLIENTE]',
+        endDate: '[DATA DE FIM]',
+        reading: '[LEITURA]',
+        readingDate: '[DATA DA LEITURA]',
+        date: '[DATA]',
+        amount: '[VALOR]',
+      },
+      services: {
+        electricity: 'fornecimento de eletricidade',
+        gas: 'fornecimento de gás natural',
+        water: 'fornecimento de água',
+        telecom: 'serviços de telecomunicações',
+        other: 'serviço',
+      },
+      header: (nif: string, provider: string, date: string) =>
+        `[NOME]\n[MORADA]\nNIF: ${nif}\n\n${provider}\n${date}`,
+      reference: (customerNumber: string, supplyPoint?: string) =>
+        `N.º de cliente: ${customerNumber}` + (supplyPoint ? `\nCPE/CUI: ${supplyPoint}` : ''),
+      greeting: 'Exmos. Senhores,',
+      closing: 'Com os melhores cumprimentos,\n[NOME]',
+      subjects: {
+        renegotiate: 'Pedido de revisão do preço',
+        price_increase: 'Pedido de esclarecimento sobre aumento de preço',
+        estimated_reading: 'Reclamação: faturação com leituras estimadas',
+        cancel: 'Denúncia do contrato',
+      },
+      subjectLine: (subject: string) => `Assunto: ${subject}`,
+      client: (service: string, tariff?: string) =>
+        `Sou vosso cliente de ${service}` + (tariff ? `, com o tarifário ${tariff}.` : '.'),
+      average: (amount: string, count: number) =>
+        count === 1
+          ? `Na última fatura paguei ${amount}.`
+          : `Nas últimas ${count} faturas paguei em média ${amount} por mês.`,
+      loyaltyEnded: (date: string) => `O meu período de fidelização terminou a ${date}.`,
+      loyaltyEnds: (date: string) => `O meu período de fidelização termina a ${date}.`,
+      cheaperOffer: (offer: string, saving: string) =>
+        `No simulador da ERSE encontrei uma oferta mais económica (${offer}), com uma poupança estimada de ${saving} por ano.`,
+      renegotiateAsk:
+        'Gostaria de continuar como vosso cliente, mas a um preço mais competitivo. Peço que me enviem por escrito uma proposta com um preço mais baixo para o mesmo serviço, com o preço mensal, a duração e as condições de fidelização, se as houver.',
+      renegotiateElse: 'Se não for possível, vou ponderar mudar de fornecedor.',
+      increaseBaseFee: (date: string, before: string, after: string) =>
+        `Na fatura de ${date}, a mensalidade passou de ${before} para ${after}.`,
+      increaseTotal: (date: string, before: string, after: string) =>
+        `A fatura de ${date} tem o valor de ${after}, acima da média de ${before} das faturas anteriores, sem que eu tenha alterado o serviço.`,
+      increaseUnitPrice: (date: string, pct: string) =>
+        `Na fatura de ${date}, o preço da energia subiu ${pct} % em relação à fatura anterior.`,
+      increaseUnknown: (date: string, amount: string) =>
+        `Na fatura de ${date}, no valor de ${amount}, verifiquei um aumento do preço que pago.`,
+      increaseAsk:
+        'Peço que me expliquem o motivo deste aumento e a cláusula do contrato em que se baseia. Se o aumento não estiver previsto no contrato, peço que o corrijam e que me devolvam a diferença já cobrada.',
+      estimatedCount: (count: number) =>
+        `As últimas ${count} faturas foram emitidas com leituras estimadas e não com a leitura real do contador.`,
+      estimatedSome:
+        'As últimas faturas foram emitidas com leituras estimadas e não com a leitura real do contador.',
+      estimatedLatest: (date: string, amount: string) =>
+        `A mais recente, de ${date}, tem o valor de ${amount}.`,
+      estimatedAsk:
+        'Peço que corrijam a faturação com base na leitura real e que emitam uma nova fatura. A leitura atual do contador é [LEITURA], em [DATA DA LEITURA]. Peço também que me informem quando será feita a próxima leitura real.',
+      cancelStatement: (service: string) =>
+        `Venho por este meio denunciar o contrato de ${service} identificado acima, com efeitos a partir de [DATA DE FIM].`,
+      cancelAsk: (telecom: boolean) =>
+        'Peço que me confirmem por escrito a data em que o contrato termina, o valor da última fatura e se há algum encargo associado à cessação' +
+        (telecom ? ', bem como as instruções para devolver os equipamentos, se for o caso.' : '.'),
+    },
     calendar: {
       title: 'Datas no teu calendário',
       intro:
         'Descarrega um ficheiro com o fim das fidelizações e as datas-limite de pagamento, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
       export: 'Adicionar ao calendário',
       exported: (count: number) =>
-        count === 1 ? 'Ficheiro com 1 data descarregado.' : `Ficheiro com ${count} datas descarregado.`,
+        count === 1
+          ? 'Ficheiro com 1 data descarregado.'
+          : `Ficheiro com ${count} datas descarregado.`,
       empty:
         'Ainda não há datas para o calendário. Guarda o fim da fidelização na página de cada contrato.',
       note: 'O ficheiro é criado neste dispositivo e tem o nome dos contratos e o valor das faturas. Se o abrires num calendário online (Google, Outlook, iCloud), estes dados passam a estar lá. Quando mudares uma data ou guardares faturas novas, descarrega-o outra vez. Alguns calendários usam os teus lembretes habituais em vez dos do ficheiro.',

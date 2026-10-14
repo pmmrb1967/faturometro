@@ -9,6 +9,7 @@ import { formatCents } from '../../lib/money';
 import { ContractAssistant } from '../ai/ContractAssistant';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { LettersSection } from '../letters/LettersSection';
 import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
 
@@ -162,6 +163,7 @@ export function ContractPage() {
         ))}
       </ul>
 
+      <LettersSection contract={contract} />
       {invoices.length > 0 && <ContractAssistant contract={contract} />}
     </>
   );
