@@ -108,7 +108,12 @@ describe('guest profile', () => {
     expect(await openGuest()).toBeNull();
     const unlocked = await unlockAccount('ana@example.pt', 'segredo-longo');
     expect(await decryptJson(unlocked.masterKey, blob)).toBe('antes');
-    const recovered = await recoverAccount('ana@example.pt', recoveryKey, 'outra-longa', ITERATIONS);
+    const recovered = await recoverAccount(
+      'ana@example.pt',
+      recoveryKey,
+      'outra-longa',
+      ITERATIONS,
+    );
     expect(await decryptJson(recovered.masterKey, blob)).toBe('antes');
   });
 
