@@ -42,6 +42,12 @@ export interface AppConfig {
   keepMonths?: number;
   /** Per-account size of the encrypted records, in characters. */
   recordQuotaBytes?: number;
+  /** New accounts are refused at this many accounts. */
+  maxAccounts?: number;
+  /** New accounts are refused when stored usage reaches this share (%) of a database. */
+  admissionPercent?: number;
+  /** Space for records (the free D1 database holds 500 MB). */
+  recordsTotalBytes?: number;
   /** Minimum client KDF iterations accepted (tests use fewer). */
   minIterations?: number;
 }
@@ -58,6 +64,9 @@ export const FILE_QUOTA_BYTES = 30_000_000;
 export const ADMIN_FILE_QUOTA_BYTES = 100_000_000;
 export const KEEP_MONTHS = 12;
 export const RECORD_QUOTA_BYTES = 5_000_000;
+export const MAX_ACCOUNTS = 200;
+export const ADMISSION_PERCENT = 80;
+export const RECORDS_TOTAL_BYTES = 500_000_000;
 export const FILES_TOTAL_BYTES = 450_000_000;
 /** Chunk of base64 ciphertext (D1 values are limited to 2 MB). */
 export const MAX_CHUNK_LENGTH = 1_000_000;
@@ -173,6 +182,24 @@ export function createApp(config: AppConfig) {
       ? (config.adminFileQuotaBytes ?? ADMIN_FILE_QUOTA_BYTES)
       : (config.fileQuotaBytes ?? FILE_QUOTA_BYTES);
 
+  /** Room for one more account? Usage comes from the daily stats, not from a scan per request. */
+  async function admissionOpen(): Promise<boolean> {
+    const row = await sql.first<{
+      accounts: number;
+      records_bytes: number | null;
+      files_bytes: number | null;
+    }>(
+      `SELECT (SELECT COUNT(*) FROM users) AS accounts, s.records_bytes, s.files_bytes
+       FROM (SELECT 1) LEFT JOIN stats AS s ON s.id = 1`,
+    );
+    const share = (config.admissionPercent ?? ADMISSION_PERCENT) / 100;
+    return (
+      (row?.accounts ?? 0) < (config.maxAccounts ?? MAX_ACCOUNTS) &&
+      (row?.records_bytes ?? 0) < share * (config.recordsTotalBytes ?? RECORDS_TOTAL_BYTES) &&
+      (row?.files_bytes ?? 0) < share * (config.filesTotalBytes ?? FILES_TOTAL_BYTES)
+    );
+  }
+
   async function body<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
     let json: unknown;
     try {
@@ -248,6 +275,9 @@ export function createApp(config: AppConfig) {
       }
       if (await sql.first('SELECT id FROM users WHERE email = ?', input.email)) {
         throw new HttpError(409, 'Email already registered');
+      }
+      if (!isAdmin(input.email) && !(await admissionOpen())) {
+        throw new HttpError(503, 'capacity');
       }
       const id = crypto.randomUUID();
       await sql.run(

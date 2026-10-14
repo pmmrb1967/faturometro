@@ -468,3 +468,52 @@ describe('records quota', () => {
     expect(second.body).toEqual({ error: 'Record storage full' });
   });
 });
+
+describe('admission', () => {
+  function server(options: Partial<Parameters<typeof createApp>[0]> = {}) {
+    const memory = memorySql();
+    db = memory.db;
+    handle = createApp({
+      sql: memory.sql,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+      ...options,
+    });
+  }
+
+  const signUp = (email: string) =>
+    call('POST', '/v1/register', {
+      email,
+      salt: 'c2FsdHNhbHQ=',
+      iterations: 600_000,
+      authKey: AUTH,
+      wrappedKey: WRAPPED,
+    });
+
+  it('closes new accounts at the maximum, but not for administrators', async () => {
+    server({ maxAccounts: 1, adminEmails: ['admin@example.pt'] });
+    expect((await signUp('ana@example.pt')).status).toBe(201);
+    const refused = await signUp('rui@example.pt');
+    expect(refused.status).toBe(503);
+    expect(refused.body).toEqual({ error: 'capacity' });
+    expect((await signUp('admin@example.pt')).status).toBe(201);
+    // Existing accounts keep working.
+    const login = await call('POST', '/v1/login', { email: 'ana@example.pt', authKey: AUTH });
+    expect(login.status).toBe(200);
+  });
+
+  it('closes new accounts when the stored usage passes the threshold', async () => {
+    server({ filesTotalBytes: 1000, recordsTotalBytes: 1000, admissionPercent: 80 });
+    db.prepare(
+      'INSERT INTO stats (id, accounts, records_bytes, files_bytes, computed_at) VALUES (1, 0, 0, 800, ?)',
+    ).run('2026-10-13T03:17:00Z');
+    expect((await signUp('ana@example.pt')).status).toBe(503);
+
+    db.prepare('UPDATE stats SET files_bytes = 799, records_bytes = 800').run();
+    expect((await signUp('ana@example.pt')).status).toBe(503);
+
+    db.prepare('UPDATE stats SET records_bytes = 0').run();
+    expect((await signUp('ana@example.pt')).status).toBe(201);
+  });
+});
