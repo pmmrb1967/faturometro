@@ -157,6 +157,39 @@ describe('saveInvoice', () => {
     );
   });
 
+  it('keeps the escalão of the newest gas invoice, without losing the distributor', async () => {
+    const gasDraft = (docKey: string, issueDate: string, escalao: 1 | 2) =>
+      draft({
+        sector: 'gas',
+        docKey,
+        issueDate,
+        contractDetails: { gas: { escalao } },
+      });
+    const first = await saveInvoice(repos, gasDraft('g-1', '2026-06-21', 1), {
+      keepOriginalFile: false,
+    });
+    const contract = await repos.contracts.get(first.contractId);
+    await repos.contracts.put({ ...contract!, gas: { escalao: 1, distributor: 'LIS' } });
+
+    await saveInvoice(
+      repos,
+      { ...gasDraft('g-2', '2026-11-21', 2), contract: { id: first.contractId } },
+      { keepOriginalFile: false },
+    );
+    expect((await repos.contracts.get(first.contractId))?.gas).toEqual({
+      escalao: 2,
+      distributor: 'LIS',
+    });
+
+    // An older invoice saved later does not bring the old escalão back.
+    await saveInvoice(
+      repos,
+      { ...gasDraft('g-0', '2026-03-21', 1), contract: { id: first.contractId } },
+      { keepOriginalFile: false },
+    );
+    expect((await repos.contracts.get(first.contractId))?.gas?.escalao).toBe(2);
+  });
+
   it('reuses the provider and an existing contract', async () => {
     const first = await saveInvoice(repos, draft(), { keepOriginalFile: true });
     await saveInvoice(

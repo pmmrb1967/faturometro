@@ -175,6 +175,9 @@ export const t = {
       regulated: (name: string, value: string) => `Tarifa regulada (${name}): ${value}/ano`,
       missingTaxes:
         'A tua última fatura não traz a taxa de ocupação do subsolo nem o imposto especial: não estão incluídos.',
+      needsEscalao: 'Escolhe o escalão para ver a estimativa e as ofertas.',
+      cannotEstimate:
+        'Não foi possível estimar com as tuas faturas de gás: falta o preço da energia em kWh na última fatura lida.',
     },
     both: {
       current: 'Os teus contratos atuais (luz + gás, estimativa anual)',
@@ -184,6 +187,8 @@ export const t = {
       noneDual: 'Nenhuma oferta conjunta é mais barata do que os teus contratos atuais.',
       needsBoth:
         'Para comparar luz e gás juntos, precisas de um contrato de cada com faturas lidas.',
+      incomplete:
+        'Para comparar luz e gás juntos, completa primeiro os separadores Luz e Gás (por exemplo, o escalão do gás).',
     },
     loading: 'A carregar as ofertas da ERSE…',
     offersUnavailable: 'Não foi possível carregar as ofertas da ERSE. Tenta mais tarde.',

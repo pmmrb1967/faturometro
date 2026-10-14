@@ -117,6 +117,29 @@ describe('gasBreakdownFromLines', () => {
     });
   });
 
+  it('weights fixed terms by their days when the price changes within the invoice', () => {
+    const changed: Line[] = [
+      ...LINES.filter((line) => !/^Termo Fixo/.test(line.description)),
+      {
+        kind: 'power',
+        description: 'Termo Fixo (Escalão 2)',
+        amountCents: 180,
+        quantity: 15,
+        unit: 'day',
+        unitPrice: '0.12',
+      },
+      {
+        kind: 'power',
+        description: 'Termo Fixo (Escalão 2)',
+        amountCents: 195,
+        quantity: 15,
+        unit: 'day',
+        unitPrice: '0.13',
+      },
+    ];
+    expect(gasBreakdownFromLines(changed, 30)?.prices.fixedPerDay).toBeCloseTo(0.125, 10);
+  });
+
   it('tells invoices that settle earlier estimates apart (their amounts span other periods)', () => {
     expect(hasEarlierAdjustments(LINES)).toBe(false);
     expect(

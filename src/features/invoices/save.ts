@@ -96,6 +96,14 @@ export async function saveInvoice(
         ([field, value]) => value !== undefined && current[field as keyof Contract] === undefined,
       ),
     );
+    // The escalão can change from one year to the next: the newest invoice decides.
+    const escalao = draft.contractDetails?.gas?.escalao;
+    if (escalao !== undefined && current.gas !== undefined && current.gas.escalao !== escalao) {
+      const others = await repos.invoices.findBy('contractId', current.id);
+      if (others.every((invoice) => invoice.issueDate <= draft.issueDate)) {
+        missing.gas = { ...current.gas, escalao };
+      }
+    }
     if (Object.keys(missing).length > 0)
       contract = await repos.contracts.put({ ...current, ...missing });
   } else {

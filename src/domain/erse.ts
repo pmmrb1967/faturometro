@@ -104,8 +104,12 @@ export const regulatedGasSchema = z.record(
 );
 export type RegulatedGas = z.infer<typeof regulatedGasSchema>;
 
+/** Format of erse-offers.json; part of its URL so a cached older file is never used. */
+export const OFFERS_SCHEMA_VERSION = 2;
+export const OFFERS_URL = `/data/erse-offers.json?v=${OFFERS_SCHEMA_VERSION}`;
+
 export const offersFileSchema = z.object({
-  schemaVersion: z.literal(2),
+  schemaVersion: z.literal(OFFERS_SCHEMA_VERSION),
   source: z.string(),
   /** ERSE update date (from the file name), ISO. */
   dataDate: z.string(),

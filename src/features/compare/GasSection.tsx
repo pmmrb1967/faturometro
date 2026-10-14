@@ -1,5 +1,6 @@
 import { SelectField } from '../../components/Field';
 import type { GasComparison } from '../../domain/compare-gas';
+import type { GasView } from './views';
 import { distributorName, GAS_DISTRIBUTORS } from '../../domain/gas-distributors';
 import type { Contract, Provider } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -13,12 +14,14 @@ const kwh = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 
 /** Gas: escalão and distributor, current contract and the cheapest gas-only offers. */
 export function GasSection({
+  view,
   comparison,
   contract,
   provider,
   missingTaxes,
   onChange,
 }: {
+  view: GasView;
   comparison: GasComparison | null;
   contract: Contract;
   provider?: Provider;
@@ -66,7 +69,9 @@ export function GasSection({
         </SelectField>
       </div>
 
-      {comparison && (
+      {view === 'needsEscalao' && <p className="compare-note">{gasCopy.needsEscalao}</p>}
+      {view === 'cannotEstimate' && <p className="compare-note">{gasCopy.cannotEstimate}</p>}
+      {view === 'ready' && comparison && (
         <>
           <section className="compare-current" aria-labelledby="compare-gas-current">
             <h2 id="compare-gas-current">{copy.current}</h2>

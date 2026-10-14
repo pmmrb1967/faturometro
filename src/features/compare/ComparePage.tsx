@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { SelectField } from '../../components/Field';
 import { annualUsage, compareOffers } from '../../domain/compare';
 import { combineElectricityGas, compareGas } from '../../domain/compare-gas';
-import { offersFileSchema, type OffersFile } from '../../domain/erse';
+import { offersFileSchema, OFFERS_URL, type OffersFile } from '../../domain/erse';
 import { hasEarlierAdjustments } from '../../domain/gas-cost';
 import type { Contract, Invoice, InvoiceLine, Provider, Reading } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -15,6 +15,7 @@ import { BothSection } from './BothSection';
 import { recordCheaperOffer } from './cheaper-offer';
 import { ElectricitySection } from './ElectricitySection';
 import { GasSection } from './GasSection';
+import { bothView, gasView } from './views';
 import './compare.css';
 
 const copy = t.compare;
@@ -35,7 +36,7 @@ function useOffers(): OffersFile | null | 'error' {
   const [offers, setOffers] = useState<OffersFile | null | 'error'>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch('/data/erse-offers.json')
+    fetch(OFFERS_URL)
       .then((response) =>
         response.ok ? response.json() : Promise.reject(new Error(String(response.status))),
       )
@@ -212,6 +213,18 @@ export function ComparePage() {
     await session.repos.contracts.put({ ...gas.contract, gas: gasDetails });
   }
 
+  const gasState = gasView({
+    hasContract: gas !== undefined,
+    hasUsage: gasUsage !== null,
+    escalao: gas?.contract.gas?.escalao,
+    hasComparison: gasComparison !== null,
+  });
+  const bothState = bothView({
+    hasElectricity: data.electricity.length > 0,
+    hasGas: data.gas.length > 0,
+    hasBoth: both !== null,
+  });
+
   const missingTaxes =
     gas !== undefined && !gas.lines.some((line) => line.kind === 'tax' && line.amountCents !== 0);
 
@@ -281,7 +294,7 @@ export function ComparePage() {
 
       {shown === 'gas' && (
         <>
-          {data.gas.length === 0 && <p className="compare-note">{copy.gas.noContract}</p>}
+          {gasState === 'noContract' && <p className="compare-note">{copy.gas.noContract}</p>}
           {data.gas.length > 1 && (
             <SelectField
               id="compare-gas-contract"
@@ -296,9 +309,10 @@ export function ComparePage() {
               ))}
             </SelectField>
           )}
-          {gas && !gasUsage && <p className="compare-note">{copy.gas.noKwh}</p>}
-          {gas && gasUsage && (
+          {gasState === 'noKwh' && <p className="compare-note">{copy.gas.noKwh}</p>}
+          {gas && gasState !== 'noContract' && gasState !== 'noKwh' && (
             <GasSection
+              view={gasState}
               comparison={gasComparison}
               contract={gas.contract}
               {...(gas.provider ? { provider: gas.provider } : {})}
@@ -309,12 +323,12 @@ export function ComparePage() {
         </>
       )}
 
-      {shown === 'both' &&
-        (both ? (
-          <BothSection comparison={both} />
-        ) : (
-          <p className="compare-note">{copy.both.needsBoth}</p>
-        ))}
+      {shown === 'both' && both && bothState === 'ready' && <BothSection comparison={both} />}
+      {shown === 'both' && bothState !== 'ready' && (
+        <p className="compare-note">
+          {bothState === 'incomplete' ? copy.both.incomplete : copy.both.needsBoth}
+        </p>
+      )}
 
       {ready && <p className="compare-disclaimer">{copy.disclaimer}</p>}
     </>

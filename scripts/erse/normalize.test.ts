@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { OFFERS_SCHEMA_VERSION, OFFERS_URL } from '../../src/domain/erse';
 import { dataDateFromName, isUpToDate, normalize, parseCsv } from './normalize';
 
 // Synthetic rows in the ERSE format (column names as in the real CSV).
@@ -69,6 +70,11 @@ describe('ERSE normalize', () => {
       },
     });
     expect(file.schemaVersion).toBe(2);
+  });
+
+  it('asks for the file by format version, so a cached older file is not used', () => {
+    expect(OFFERS_URL).toBe(`/data/erse-offers.json?v=${OFFERS_SCHEMA_VERSION}`);
+    expect(file.schemaVersion).toBe(OFFERS_SCHEMA_VERSION);
   });
 
   it('rewrites a file of an older format even with the same ZIP', () => {

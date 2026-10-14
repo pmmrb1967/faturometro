@@ -100,6 +100,17 @@ export function hasEarlierAdjustments(lines: readonly GasLine[]): boolean {
   return lines.some((line) => line.kind === 'energy' && line.unitPrice === undefined);
 }
 
+/** €/day of the fixed-term lines, weighted by their days (all the period if not given). */
+function fixedPerDay(lines: readonly GasLine[], days: number): number {
+  const daysBilled = lines.reduce((sum, line) => sum + (line.quantity ?? days), 0);
+  if (daysBilled <= 0) return 0;
+  const cost = lines.reduce(
+    (sum, line) => sum + (line.quantity ?? days) * Number(line.unitPrice),
+    0,
+  );
+  return cost / daysBilled;
+}
+
 /** null when the invoice has no priced energy in kWh (e.g. only m³, or no parser). */
 export function gasBreakdownFromLines(
   lines: readonly GasLine[],
@@ -135,7 +146,8 @@ export function gasBreakdownFromLines(
   );
 
   const prices: GasOfferPrices = {
-    fixedPerDay: fixed.reduce((sum, line) => sum + Number(line.unitPrice), 0),
+    // Weighted by days: a price change within the invoice gives two lines.
+    fixedPerDay: fixedPerDay(fixed, days),
     perKwh: energyGross / kwh,
   };
   const discount = -offerDiscounts.reduce((sum, line) => sum + line.amountCents, 0) / 100;
