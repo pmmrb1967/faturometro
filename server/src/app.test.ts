@@ -76,6 +76,50 @@ describe('accounts', () => {
     expect(login.body?.wrappedKey).toEqual(WRAPPED);
   });
 
+  it('returns the account id on register, login and GET /v1/account', async () => {
+    const created = await call('POST', '/v1/register', {
+      email: 'ana@example.pt',
+      salt: 'c2FsdHNhbHQ=',
+      iterations: 600_000,
+      authKey: AUTH,
+      wrappedKey: WRAPPED,
+    });
+    const accountId = created.body?.accountId as string;
+    expect(accountId).toMatch(/^[0-9a-f-]{36}$/);
+    const login = await call('POST', '/v1/login', { email: 'ana@example.pt', authKey: AUTH });
+    expect(login.body?.accountId).toBe(accountId);
+    const me = await call('GET', '/v1/account', undefined, created.body?.token as string);
+    expect(me.body).toEqual({ id: accountId });
+  });
+
+  it('records the day of the last activity, writing at most once a day', async () => {
+    const token = await register();
+    const seen = () => db.prepare('SELECT last_seen_at AS day FROM users').get() as { day: string };
+    expect(seen().day).toBe('2026-10-13');
+
+    clock = new Date('2026-10-15T08:00:00Z');
+    queries = 0;
+    await call('GET', '/v1/changes', undefined, token);
+    const firstOfTheDay = queries;
+    expect(seen().day).toBe('2026-10-15');
+
+    queries = 0;
+    await call('GET', '/v1/changes', undefined, token);
+    expect(queries).toBe(firstOfTheDay - 1);
+  });
+
+  it('refreshes the size of the records once a day', async () => {
+    const token = await register();
+    await call('POST', '/v1/changes', { records: [record('r1', '2026-10-13T10:00:00Z')] }, token);
+    clock = new Date('2026-10-14T08:00:00Z');
+    await call('GET', '/v1/changes', undefined, token);
+    const row = db.prepare('SELECT records_bytes AS bytes FROM users').get() as { bytes: number };
+    const actual = db.prepare('SELECT SUM(LENGTH(enc)) AS bytes FROM records').get() as {
+      bytes: number;
+    };
+    expect(row.bytes).toBe(actual.bytes);
+  });
+
   it('refuses a second account with the same email', async () => {
     await register();
     const again = await call('POST', '/v1/register', {

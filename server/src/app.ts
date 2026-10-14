@@ -3,8 +3,9 @@
  * client-derived authentication key, wrapped keys and encrypted records.
  *
  *   POST   /v1/prelogin   {email}                         → {salt, iterations}
- *   POST   /v1/register   {email, salt, iterations, authKey, wrappedKey} → {token}
- *   POST   /v1/login      {email, authKey}                → {token, wrappedKey}
+ *   POST   /v1/register   {email, salt, iterations, authKey, wrappedKey} → {token, accountId}
+ *   POST   /v1/login      {email, authKey}                → {token, wrappedKey, accountId}
+ *   GET    /v1/account                                    → {id}
  *   POST   /v1/logout                                     → 204
  *   GET    /v1/changes?since=N                            → {records, latest}
  *   POST   /v1/changes    {records}                       → {latest}
@@ -145,11 +146,16 @@ interface UserRow {
   seq: number;
   failed_logins: number;
   locked_until: string | null;
+  /** Day of the last authenticated request (YYYY-MM-DD). */
+  last_seen_at: string;
+  /** Size of the encrypted records, refreshed daily and grown by each push. */
+  records_bytes: number;
 }
 
 export function createApp(config: AppConfig) {
   const { sql } = config;
   const now = () => (config.now ?? (() => new Date()))();
+  const today = () => now().toISOString().slice(0, 10);
 
   async function body<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
     let json: unknown;
@@ -192,6 +198,17 @@ export function createApp(config: AppConfig) {
       now().toISOString(),
     );
     if (!user) throw new HttpError(401, 'Invalid or expired token');
+    if (user.last_seen_at < today()) {
+      // At most one write per account and day (D1 free plan counts writes).
+      const fresh = await sql.first<{ records_bytes: number }>(
+        `UPDATE users SET last_seen_at = ?1,
+           records_bytes = (SELECT COALESCE(SUM(LENGTH(enc)), 0) FROM records WHERE user_id = ?2)
+         WHERE id = ?2 RETURNING records_bytes`,
+        today(),
+        user.id,
+      );
+      return { ...user, last_seen_at: today(), records_bytes: fresh?.records_bytes ?? 0 };
+    }
     return user;
   }
 
@@ -218,7 +235,7 @@ export function createApp(config: AppConfig) {
       }
       const id = crypto.randomUUID();
       await sql.run(
-        'INSERT INTO users (id, email, kdf_salt, kdf_iterations, auth_hash, wrapped_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO users (id, email, kdf_salt, kdf_iterations, auth_hash, wrapped_key, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         id,
         input.email,
         input.salt,
@@ -226,8 +243,9 @@ export function createApp(config: AppConfig) {
         await sha256Hex(input.authKey),
         JSON.stringify(input.wrappedKey),
         now().toISOString(),
+        today(),
       );
-      return json({ token: await newSession(id) }, 201);
+      return json({ token: await newSession(id), accountId: id }, 201);
     }
 
     if (method === 'POST' && path === '/v1/login') {
@@ -259,10 +277,13 @@ export function createApp(config: AppConfig) {
       return json({
         token: await newSession(user.id),
         wrappedKey: JSON.parse(user.wrapped_key) as unknown,
+        accountId: user.id,
       });
     }
 
     const user = await userFromToken(request);
+
+    if (method === 'GET' && path === '/v1/account') return json({ id: user.id });
 
     if (method === 'POST' && path === '/v1/logout') {
       const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1] ?? '';
