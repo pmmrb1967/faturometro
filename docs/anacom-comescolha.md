@@ -33,12 +33,22 @@ A configuração usada pela app está em `src/data/comescolha.json` (validada co
 
 ## Verificação semanal
 
-`pnpm comescolha:check` (`scripts/comescolha-check.ts`, workflow `.github/workflows/comescolha-check.yml`, às terças):
+A ANACOM bloqueia os servidores do GitHub (403 e depois sem resposta, com qualquer User-Agent; testado em 2026-10-14), por isso a verificação corre **no PC do responsável**, numa tarefa do Agendador de Tarefas do Windows. Não faz parte da app: os utilizadores não a têm.
+
+- Registar (uma vez): `powershell -ExecutionPolicy Bypass -File scripts/comescolha-schedule.ps1` → tarefa "Faturometro COM.escolha", às terças às 10:00; com o PC desligado, corre quando ligar.
+- Ensaiar sem push nem issue: `powershell -ExecutionPolicy Bypass -File scripts/comescolha-weekly.ps1 -DryRun`.
+- Registo: `%LOCALAPPDATA%\faturometro-comescolha\check.log`. A tarefa trabalha num clone próprio nessa pasta, nunca na pasta de desenvolvimento.
+- Precisa de Node, pnpm, Git (com acesso de escrita ao repositório) e `gh` com sessão iniciada.
+
+O que faz (`scripts/comescolha-weekly.ps1` → `pnpm comescolha:check`):
 
 1. Lê os 5 formulários e tira deles os nomes e valores dos parâmetros, pelos rótulos (`title`): "Internet", "Televisão", "Telefone fixo", "Serviços no telemóvel", "Euros", "Prefixo Código Postal" e as caixas "todos"/"todas".
 2. Confirma que cada filtro muda os resultados: limite de 1 € (deve dar menos resultados), código postal `9900` e menos serviços (pacotes).
-3. Se os parâmetros mudaram e funcionam, grava o ficheiro; o workflow faz commit e volta a publicar a app (correção automática).
-4. Se um rótulo mudou ou um filtro é ignorado, o ficheiro fica como estava e o workflow abre (ou comenta) a issue "Ligações ao COM.escolha deixaram de filtrar"; o GitHub avisa por email.
+3. Se tudo funciona, grava em `src/data/comescolha.json` a data (`checkedAt`) e, se mudaram, os parâmetros novos (`changedAt`); faz commit e push para `main`, e o CI testa e volta a publicar a app (correção automática). Uma publicação por semana.
+4. Se um rótulo mudou ou um filtro é ignorado, o ficheiro fica como estava e abre (ou comenta) a issue "Ligações ao COM.escolha deixaram de filtrar"; o GitHub avisa por email.
+5. Se não conseguir verificar (sem rede, ANACOM em baixo), fica só no registo.
+
+**Lembrete:** a conta de administrador vê um aviso na página Início quando `checkedAt` tem mais de 14 dias (PC desligado, tarefa parada, falha de rede). A app lê a data do próprio ficheiro de configuração: não faz nenhuma ligação nova.
 
 São cerca de 20 pedidos por semana a páginas públicas, um de cada vez.
 
