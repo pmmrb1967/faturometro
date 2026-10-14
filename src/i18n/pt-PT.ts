@@ -34,6 +34,13 @@ export const t = {
         ],
       },
       {
+        title: 'Contribuir com um layout (só se o fizeres)',
+        body: [
+          'Quando a app não conhece o layout de uma fatura, podes enviar a sua estrutura ao responsável do projeto para a app passar a lê-la. Antes de enviar vês exatamente o que sai: as posições do texto, as palavras típicas de faturas e números trocados ao acaso. As outras palavras vão tapadas, e os dados pessoais lidos da fatura nunca se podem destapar.',
+          'O envio vai cifrado com uma chave que só o responsável tem e passa pelo mesmo servidor da sincronização, que guarda só o conteúdo cifrado, o tamanho e a data. É apagado depois de usado e, no máximo, ao fim de 90 dias.',
+        ],
+      },
+      {
         title: 'Inteligência artificial (só se a usares)',
         body: [
           'Com uma chave tua da Anthropic, podes pedir à IA que leia uma fatura, a explique ou escreva uma carta. O pedido vai diretamente do teu dispositivo para a Anthropic, sem passar por nenhum servidor do Faturómetro, e é regido pelos termos entre ti e a Anthropic.',

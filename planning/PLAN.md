@@ -511,7 +511,7 @@ Opcional e desligada por defeito.
 ### Pós-MVP
 - [ ] Layouts P2
 - [ ] Ingestão por email (secção 12)
-- [ ] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
+- [x] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
 - [x] Gás no comparador e total luz + gás (`docs/superpowers/specs/2026-10-14-gas-comparator-design.md`)
 - [ ] Telecom com lista de ofertas mantida manualmente
 - [ ] Seguros (P3)
@@ -666,3 +666,4 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-14 | IVA do gás: 6 % no termo fixo das redes (valor da fatura do utilizador) e nos descontos sobre ele, 23 % no resto. Assumido que o termo fixo das ofertas da ERSE inclui o das redes (a confirmar com uma fatura posterior a 1 de outubro de 2026; efeito ~6 €/ano, igual em todas as ofertas): `docs/gas-vat.md` |
 | 2026-10-14 | Ingestão por email: sem domínio próprio, só a leitura direta do Outlook preserva a privacidade; caixa Gmail partilhada e serviços como o Brevo expõem as faturas em claro. A partilha (Web Share Target) cobre o caso manual |
 | 2026-10-14 | Uso sem conta: perfil com a chave mestra guardada sem palavra-passe no browser (um por browser), sem sincronização nem IA, aviso visível; "Começar sem conta" é a ação principal da página inicial; criar conta embrulha a mesma chave (sem nova cifra) |
+| 2026-10-14 | Contribuir com layout: estrutura anonimizada no browser (números ao acaso, vocabulário de faturas, pré-visualização com tapar/destapar, dados pessoais sempre tapados), cifrada com a chave pública do responsável e enviada ao Worker (30/dia, 20 MB, 90 dias); oferecida em layouts desconhecidos e em validações falhadas |

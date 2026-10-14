@@ -30,6 +30,14 @@ Um parser lê os dados de uma fatura que o código QR fiscal não tem (período,
 7. **Fixture sintética pública** em `scripts/synthetic-fixtures.ts`: mesmas etiquetas e posições, valores inventados e coerentes (as linhas somam, o QR bate). `pnpm fixtures:synthetic` reescreve-as.
 8. Confirmar sem as privadas, como no CI: `FIXTURES_PUBLIC_ONLY=1 pnpm test`.
 
+## Contribuições de utilizadores
+
+Na app, "Contribuir com este layout" envia a estrutura anonimizada de uma fatura que nenhum parser conhece (ou cujo parser falhou a validação), cifrada com a chave pública do responsável (`src/features/contribute/maintainer-key.ts`).
+
+1. Uma vez: `pnpm contrib:keygen` (a chave privada fica em `~/.faturometro/contrib-private.jwk`, fora do repositório; guarda uma cópia) e `wrangler secret put CONTRIB_ADMIN_TOKEN` no Worker.
+2. `CONTRIB_ADMIN_TOKEN=… pnpm contributions:pull` → `fixtures/private/contributions/<NIF do emitente>/<id>.json` (ignorada pelo Git); cada contribuição só sai do servidor depois de gravada.
+3. Copiar para `fixtures/private/<providerId>/` e seguir os passos acima. Os números são aleatórios (o mesmo número de origem dá o mesmo número), por isso as linhas não somam: o parser confirma-se na fixture sintética e na próxima fatura real.
+
 ## Ao corrigir um parser
 
 Subir `version` (fica guardada em cada fatura) e acrescentar às fixtures privadas a fatura que falhava.
