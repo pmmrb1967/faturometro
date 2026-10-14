@@ -129,6 +129,18 @@ export const t = {
     hide: 'Esconder palavra-passe',
   },
   adminBadge: 'Administrador',
+  guest: {
+    badge: 'Sem conta',
+    createAccount: 'Criar conta',
+    aiNeedsAccount:
+      'Cria uma conta para usar a IA: a chave da API fica protegida pela tua palavra-passe.',
+    syncNeedsAccount: 'Cria uma conta para sincronizar entre dispositivos.',
+    noticeTitle: 'Estás a usar a app sem conta',
+    notice: [
+      'Os teus dados ficam só neste browser e não estão protegidos por palavra-passe: quem usar este browser consegue vê-los.',
+      'Se limpares os dados do site, perdes tudo. Faz uma cópia de segurança (mais abaixo) ou cria uma conta.',
+    ],
+  },
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   alerts: {
     title: 'Avisos',

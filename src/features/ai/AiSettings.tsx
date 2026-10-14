@@ -1,9 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { Field, SelectField } from '../../components/Field';
 import { AI_MODELS, DEFAULT_AI_MODEL, PRICES_CHECKED, formatMicroUsd } from '../../ai/models';
 import { AiError } from '../../ai/provider';
 import { aiModelOf, providerFromSettings, recordUsage, usageSince } from '../../ai/session';
+import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { useSession } from '../auth/session-context';
@@ -32,6 +34,18 @@ export function AiSettings() {
   const [message, setMessage] = useState<{ text: string; problem?: boolean }>();
   const [busy, setBusy] = useState(false);
   if (!session || !settings) return null;
+  if (isGuest(session.profile)) {
+    return (
+      <section className="settings-section" aria-labelledby="ai-title">
+        <h2 id="ai-title">{copy.title}</h2>
+        <p>{copy.intro}</p>
+        <p>{t.guest.aiNeedsAccount}</p>
+        <Link to="/criar-conta" className="action-primary">
+          {t.guest.createAccount}
+        </Link>
+      </section>
+    );
+  }
   const { repos } = session;
   const hasKey = Boolean(settings.aiApiKey);
 

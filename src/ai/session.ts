@@ -1,4 +1,5 @@
 /** AI glue for the app: provider from the settings, local usage log. */
+import { isGuest, type Profile } from '../db/profiles';
 import type { Repositories } from '../db/repositories';
 import type { Settings } from '../domain/types';
 import { AnthropicProvider } from './anthropic';
@@ -9,6 +10,11 @@ type AiSettings = Pick<Settings, 'aiApiKey' | 'aiModel'>;
 
 export function hasAiKey(settings: AiSettings): boolean {
   return Boolean(settings.aiApiKey?.trim());
+}
+
+/** AI needs an account: a guest's key would sit unprotected in the browser. */
+export function aiAvailable(profile: Profile, settings: Pick<Settings, 'aiApiKey'>): boolean {
+  return !isGuest(profile) && hasAiKey(settings);
 }
 
 export function aiModelOf(settings: AiSettings): string {

@@ -8,7 +8,8 @@ import {
   type DocumentTarget,
 } from '../../ai/prompts/extract';
 import { AiError, type AiUsage, type InvoiceSource } from '../../ai/provider';
-import { aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import { aiAvailable, aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import type { FiscalQr } from '../../qr/parse';
 import { useSession } from '../auth/session-context';
@@ -72,7 +73,9 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
     }
   }
 
-  const auto = Boolean(settings?.aiAutoSend && settings.aiApiKey && source);
+  const auto = Boolean(
+    settings?.aiAutoSend && session && aiAvailable(session.profile, settings) && source,
+  );
   useEffect(() => {
     if (!auto) return;
     // After this render, not inside it.
@@ -83,7 +86,13 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   }, [auto]);
 
   if (!settings) return null;
-  if (!settings.aiApiKey) return <p className="muted ai-panel">{copy.noKey}</p>;
+  if (!session || !aiAvailable(session.profile, settings)) {
+    return (
+      <p className="muted ai-panel">
+        {session && isGuest(session.profile) ? t.guest.aiNeedsAccount : copy.noKey}
+      </p>
+    );
+  }
   if (!source) return <p className="muted ai-panel">{copy.cannotSend}</p>;
 
   const model = aiModelOf(settings);

@@ -13,6 +13,8 @@ import {
 } from './prompts/assist';
 import { toExtraction, type ExtractResponse } from './prompts/extract';
 import { AiError } from './provider';
+import { aiAvailable } from './session';
+import type { Profile } from '../db/profiles';
 
 function answer(overrides: Partial<ExtractResponse> = {}): ExtractResponse {
   return {
@@ -318,5 +320,17 @@ describe('explain and letter prompts', () => {
     expect(fillPlaceholders(text, { customerNumber: '123', supplyPoint: 'PT00' })).toBe(
       'Cliente 123, CPE PT00. Assina: [NOME]',
     );
+  });
+});
+
+describe('aiAvailable', () => {
+  const createdAt = '2026-10-14T00:00:00.000Z';
+  const account: Profile = { id: 'a', email: 'a@b.pt', createdAt, wrappedKey: {} as never };
+  const guest: Profile = { id: 'g', email: '', createdAt, guestKey: 'AAAA' };
+
+  it('needs an account and a key', () => {
+    expect(aiAvailable(account, { aiApiKey: 'sk-ant-x' })).toBe(true);
+    expect(aiAvailable(account, {})).toBe(false);
+    expect(aiAvailable(guest, { aiApiKey: 'sk-ant-x' })).toBe(false);
   });
 });

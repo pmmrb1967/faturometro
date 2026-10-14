@@ -9,7 +9,8 @@ import {
   type LetterKind,
 } from '../../ai/prompts/assist';
 import { AiError, type TextRequest } from '../../ai/provider';
-import { aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import { aiAvailable, aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import { isGuest } from '../../db/profiles';
 import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { useSession } from '../auth/session-context';
@@ -87,8 +88,8 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
       <h2 id="ai-assistant-title" className="section-title">
         {copy.title}
       </h2>
-      {!settings.aiApiKey ? (
-        <p className="muted">{copy.noKey}</p>
+      {!aiAvailable(session.profile, settings) ? (
+        <p className="muted">{isGuest(session.profile) ? t.guest.aiNeedsAccount : copy.noKey}</p>
       ) : (
         <>
           <p className="muted">{copy.intro}</p>
