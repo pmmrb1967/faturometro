@@ -620,6 +620,7 @@ export const t = {
     charts: {
       cost: 'Valor de cada fatura',
       consumption: 'Consumo faturado (kWh)',
+      consumptionM3: 'Consumo de água (m³)',
       table: 'Ver como tabela',
       invoice: 'Fatura',
       value: 'Valor',

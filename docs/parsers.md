@@ -25,6 +25,7 @@ Um parser lê os dados de uma fatura que o código QR fiscal não tem (período,
    - `confidence: 'high'` quando o valor vem de uma etiqueta conhecida; `'low'` quando é um palpite (ex.: formato nunca visto);
    - `linesIncludeVat` quando as linhas da fatura incluem IVA (NOS); senão as linhas somam o total sem IVA (Repsol);
    - indicar `basis` (real, estimada, acerto) nas linhas de consumo quando a fatura o diz;
+   - documento com faturas de emitentes diferentes (Indaqua + Município): `issuerName` com o nome impresso do outro emitente e `contractLabel` quando o serviço pede um contrato próprio (ex.: "Resíduos");
    - telecom: `telecomServices` (internet, TV, fixo, telemóvel) quando a fatura lista o que o pacote inclui; servem para a pesquisa no COM.escolha (`docs/anacom-comescolha.md`).
 5. **Registar** em `src/parsers/registry.ts`.
 6. **Testes** em `src/parsers/<providerId>.test.ts` contra todas as fixtures do layout, e entrada em `src/parsers/validation.test.ts`.
@@ -48,4 +49,5 @@ Subir `version` (fica guardada em cada fatura) e acrescentar às fixtures privad
 | Parser | NIF (campo A) | Notas |
 |---|---|---|
 | `nos` | 502604751 | Resumo com IVA incluído; mensalidade faturada adiantada (o período termina depois da data da fatura); serviços do bloco "Informação sobre o seu pacote" |
+| `indaqua` | 506925005, 501305912 | Indaqua Matosinhos: um PDF com duas faturas, cada uma com QR — Indaqua (água, saneamento, taxa de recursos hídricos; IVA 6 %) e Município de Matosinhos (resíduos, não sujeito a IVA, contrato "Resíduos"); faturação bimestral; linhas sem IVA, com escalão ("1º", "2º"), origem e preço unitário; leitura do contador em m³. Os valores estão alinhados à direita e o "³" é um item à parte, por isso os campos reconhecem-se pelo conteúdo e não pela coluna. As outras concessões da Indaqua só entram com faturas reais (NIF do QR) |
 | `repsol` | 500246963 | Um PDF com resumo, uma página por fatura (luz, gás; um QR cada) e dados do contrato; linhas sem IVA; acertos de estimativas anteriores |

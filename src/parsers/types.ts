@@ -35,6 +35,10 @@ export type ExtractedReading = Pick<Reading, 'quantity' | 'unit' | 'readingType'
 /** What a parser extracted for one invoice (one fiscal QR code). */
 export interface ExtractedInvoice {
   sector?: Sector;
+  /** Issuer's name as printed, when the document has invoices from several issuers. */
+  issuerName?: Field<string>;
+  /** Name for a new contract, when it differs from the sector's (e.g. "Resíduos"). */
+  contractLabel?: Field<string>;
   docId?: Field<string>;
   issueDate?: Field<string>;
   periodStart?: Field<string>;

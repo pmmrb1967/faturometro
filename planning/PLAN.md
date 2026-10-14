@@ -78,6 +78,7 @@ Faltam amostras dos restantes layouts P1.
 - Eletricidade: Plenitude, Coopérnico, Luzboa, outros com quota relevante
 - Gás natural: layouts de gás de EDP, Galp e Goldenergy (se diferirem da eletricidade)
 - Água: entidades gestoras dos utilizadores reais (só acompanhamento de consumo e custo — não há mercado)
+  - [x] Indaqua Matosinhos (parser `indaqua`, 2026-10-14; inclui a fatura de resíduos do Município de Matosinhos no mesmo documento)
 
 ### P3 — futuro
 - Apólices de seguro (auto, casa, vida associada a crédito)
@@ -701,3 +702,4 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-14 | Ingestão por email adiada. Opções avaliadas: endereço próprio + Cloudflare Email Worker (exige domínio pago e alargar a regra 1), Outlook direto pelo Microsoft Graph no browser, Gmail direto (âmbito restrito: verificação + CASA anual; em teste, 100 utilizadores e nova autorização a cada 7 dias), script do próprio utilizador no Google Apps Script. Escolhido melhorar o envio manual (vários ficheiros, arrastar, "Abrir com"), sem servidor nem ligações novas; ficheiros escolhidos, largados ou abertos ficam só em memória até serem lidos |
 | 2026-10-14 | Visão anual no Início: últimos 12 meses por mês (cada fatura no mês de emissão) e por tipo de despesa; comparação com os 12 meses anteriores só quando o histórico os cobre; previsão dos próximos 12 meses por contrato ativo (luz, gás e água com um ano de faturas repetem esse ano; os outros, custo por dia das últimas 3 faturas × 365, mensal se não houver período), sempre como estimativa. "Quanto já poupaste" adiado: sem registar a mudança de fornecedor, a diferença mistura consumo e clima com o preço |
 | 2026-10-14 | Água: não há dados abertos com os valores dos tarifários das famílias (o índice da ERSAR por concelho só tem PDFs heterogéneos; o IQS dá a acessibilidade económica em % do rendimento). Comparação entre concelhos não avança; ver `docs/ersar-agua.md` |
+| 2026-10-14 | Parser Indaqua Matosinhos (3 faturas reais cedidas pelo utilizador). A fatura de resíduos do Município, no mesmo PDF, fica no setor água com contrato próprio "Resíduos" e o nome do emitente impresso; parsers podem indicar `issuerName` e `contractLabel`. Linhas de água por escalão mantêm-se distintas na auditoria. Consumo de água em m³ no gráfico do contrato |

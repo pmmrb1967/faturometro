@@ -75,7 +75,7 @@ export function runParser(
     const extraction = parser.parse(ctx, qr);
     return {
       parserId: parser.id,
-      providerName: parser.name,
+      providerName: extraction.issuerName?.value ?? parser.name,
       parserVersion: parser.version,
       extraction,
       check: validateExtraction(extraction, qr),

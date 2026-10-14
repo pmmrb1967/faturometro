@@ -111,13 +111,13 @@ function iso(year: number, month: number, day: number): string | null {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-/** "2026-06-21", "24-09-2026", "24/09/2026", "19 out 2026" → ISO date. */
+/** "2026-06-21", "24-09-2026", "24/09/2026", "24.09.2026", "19 out 2026" → ISO date. */
 export function date(text: string | undefined): string | null {
   if (text === undefined) return null;
   const clean = normalize(text).toLowerCase();
   let match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
   if (match) return iso(Number(match[1]), Number(match[2]), Number(match[3]));
-  match = /^(\d{2})[-/](\d{2})[-/](\d{4})$/.exec(clean);
+  match = /^(\d{2})[-/.](\d{2})[-/.](\d{4})$/.exec(clean);
   if (match) return iso(Number(match[3]), Number(match[2]), Number(match[1]));
   match = /^(\d{1,2}) ([a-zç]{3})[a-zç]* (\d{4})$/.exec(clean);
   if (match) {

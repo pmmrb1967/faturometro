@@ -71,7 +71,7 @@ function fromExtraction(extraction?: ExtractedInvoice): Partial<InvoiceForm> {
   const form: Partial<InvoiceForm> = {};
   if (extraction.sector) {
     form.sector = extraction.sector;
-    form.contractLabel = t.sectors[extraction.sector];
+    form.contractLabel = extraction.contractLabel?.value ?? t.sectors[extraction.sector];
   }
   if (extraction.customerNumber) form.customerNumber = extraction.customerNumber.value;
   if (extraction.periodStart) form.periodStart = extraction.periodStart.value;

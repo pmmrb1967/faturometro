@@ -58,6 +58,8 @@ export function lineKey(line: Pick<Line, 'kind' | 'period' | 'description'>): st
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
+    // Tiers ("1º escalão") stay apart; other numbers (dates, amounts) are dropped.
+    .replace(/(\d+)\s*[ºª]/g, (_, n: string) => ` tier${'abcdefghij'[Number(n) % 10]} `)
     .replace(/[\d.,/%€:-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

@@ -53,9 +53,11 @@ export function ContractPage() {
     value: invoice.totalCents / 100,
     display: formatCents(invoice.totalCents),
   }));
+  // Water is metered in m³; electricity and gas in kWh.
+  const consumptionUnit = contract.sector === 'water' ? 'm3' : 'kWh';
   const kwhByInvoice = new Map<string, number>();
   for (const reading of readings) {
-    if (reading.unit !== 'kWh') continue;
+    if (reading.unit !== consumptionUnit) continue;
     kwhByInvoice.set(
       reading.invoiceId,
       (kwhByInvoice.get(reading.invoiceId) ?? 0) + reading.quantity,
@@ -70,7 +72,7 @@ export function ContractPage() {
         label: formatMonthShort(invoice.issueDate),
         title: copy.charts.invoiceOf(formatIsoDate(invoice.issueDate)),
         value,
-        display: `${kwh.format(value)} kWh`,
+        display: `${kwh.format(value)} ${consumptionUnit === 'm3' ? 'm³' : 'kWh'}`,
       };
     });
 
@@ -157,7 +159,7 @@ export function ContractPage() {
       />
       {consumptionBars.length > 0 && (
         <BarChart
-          title={copy.charts.consumption}
+          title={consumptionUnit === 'm3' ? copy.charts.consumptionM3 : copy.charts.consumption}
           bars={consumptionBars}
           formatTick={(value) => kwh.format(value)}
           tableLabel={copy.charts.table}
