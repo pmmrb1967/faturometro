@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { sha256Hex } from '../../lib/crypto';
 import { PdfPasswordError } from '../../pdf/text';
+import { layoutFixtures } from '../../test/fixtures';
 import { docKeyFor, ingestFile, type IngestDeps } from './ingest';
 
 // Synthetic QR codes (AT specification style); no real invoice data.
@@ -122,6 +123,21 @@ describe('ingestFile', () => {
       deps({ readPdf: async () => ({ pages: PAGES, qrs: [{ text: 'A:1*B:2*F:2026*O:x' }] }) }),
     );
     expect(outcome).toMatchObject({ kind: 'read', qrStatus: 'invalid' });
+  });
+
+  it('recognises an insurance renewal letter (no QR code, not an invoice)', async () => {
+    const letter = layoutFixtures('generali-docs').find(
+      (fixture) => fixture.name === 'synthetic-renewal.json',
+    )!;
+    const outcome = await ingestFile(
+      { bytes: PDF_BYTES, mime: 'application/pdf' },
+      deps({ readPdf: async () => ({ pages: letter.pages, qrs: [] }) }),
+    );
+    expect(outcome).toMatchObject({
+      kind: 'read',
+      qrStatus: 'missing',
+      policyDocument: { kind: 'renewal', policyNumber: '2000000001' },
+    });
   });
 
   it('rejects other file types', async () => {

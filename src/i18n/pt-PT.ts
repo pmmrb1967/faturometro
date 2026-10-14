@@ -174,6 +174,39 @@ export const t = {
     ],
   },
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
+  insurance: {
+    section: {
+      renewalTitle: (date: string) => `Renovação de ${date}`,
+      premium: (current: string, next: string, pct: string) =>
+        `O prémio passa de ${current} para ${next} (${pct} %).`,
+      factors: 'Segundo a seguradora, o que mudou o prémio:',
+      coveragesTitle: 'Coberturas',
+      coverage: 'Cobertura',
+      capital: 'Capital seguro',
+      deductible: 'Franquia',
+      coveragesNote:
+        'Das condições particulares da apólice. Usa esta lista para pedir propostas com as mesmas coberturas a outras seguradoras.',
+    },
+    document: {
+      renewalTitle: 'Carta de renovação',
+      conditionsTitle: 'Condições particulares',
+      notInvoice: (issuer: string) =>
+        `Documento da ${issuer} sem código QR: não é uma fatura. Os dados ficam no contrato do seguro.`,
+      renewal: (date: string, current: string, next: string, pct: string) =>
+        `Renova a ${date}: o prémio passa de ${current} para ${next} (${pct} %).`,
+      factor: (name: string, pct: string) => `${name}: ${pct} %`,
+      capital: (name: string, current: string, next: string) => `${name}: ${current} → ${next}`,
+      conditions: (count: number, premium?: string) =>
+        `${count === 1 ? '1 cobertura' : `${count} coberturas`}` +
+        (premium ? `, prémio anual de ${premium}.` : '.'),
+      contract: 'Contrato do seguro',
+      choose: 'Escolhe o contrato',
+      save: 'Guardar no contrato',
+      saved: (label: string) => `Guardado no contrato ${label}.`,
+      noContract:
+        'Ainda não tens nenhum seguro na app. Guarda primeiro um recibo (Fatura/Recibo) deste seguro: o contrato é criado com ele.',
+    },
+  },
   household: {
     title: 'A tua casa nos últimos 12 meses',
     total: 'Total',
@@ -219,6 +252,8 @@ export const t = {
         `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
       premiumIncrease: (label: string, before: string, after: string, pct: string) =>
         `${label}: o prémio subiu de ${before} para ${after} (+${pct}%).`,
+      premiumNotice: (label: string, date: string, before: string, after: string, pct: string) =>
+        `${label}: a ${date} o prémio passa de ${before} para ${after} (+${pct}%). Ainda podes pedir propostas a outras seguradoras antes de renovar.`,
       renewal: (label: string, date: string, days: number) =>
         `${label}: o seguro renova a ${date} (daqui a ${days} ${days === 1 ? 'dia' : 'dias'}). Bom momento para pedir propostas com as mesmas coberturas.`,
       invoiceAudit: (label: string, date: string, parts: string[]) =>
@@ -622,6 +657,8 @@ export const t = {
       insuredObject: 'Objeto seguro',
       capital: (name: string) => `Capital: ${name}`,
       renewal: 'Renova a',
+      annualPremium: 'Prémio anual',
+      bonusMalus: 'Bónus/malus',
     },
     cycles: { simple: 'Simples', bi: 'Bi-horário', tri: 'Tri-horário' },
     loyalty: {

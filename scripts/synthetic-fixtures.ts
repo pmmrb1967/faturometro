@@ -439,3 +439,108 @@ write(
     ]),
   ],
 );
+
+// Generali documents without a QR code (not invoices). Values invented.
+// Renewal letter ("Carta Ata") of a home policy: 300,00 € → 330,00 € (+10,0 %).
+write(
+  'generali-docs',
+  'synthetic-renewal',
+  [],
+  [
+    page(1, [
+      ['Carta Ata', 514, 35],
+      ['Seguro Casa', 522, 45],
+      ['Dados do Cliente', 68, 182],
+      ['Dados do Contrato', 68, 215],
+      ['N.º Apólice:', 68, 227],
+      ['2000000001', 111, 227],
+      ['Data da renovação:', 68, 240],
+      ['2026-11-01', 135, 238],
+      ['Periodicidade de Pagamento:', 68, 250],
+      ['Anual', 171, 250],
+      ['Generali Seguros, S.A. Exemplo sintético', 13, 517],
+    ]),
+    page(2, [
+      ['Informações', 72, 95],
+      [
+        'Valor da anuidade atual 300,00 €; valor da próxima anuidade 330,00 €; variação de 10,0%',
+        71,
+        178,
+      ],
+      [
+        'A variação do valor total a pagar depende de vários fatores que a seguir detalhamos:',
+        57,
+        198,
+      ],
+      ['(1)', 153, 219],
+      ['(2)', 295, 219],
+      ['Inflação de mercado', 71, 222],
+      ['5,0%; Evolução da sinistralidade', 164, 222],
+      ['3,0%; Custos de fracionamento', 306, 222],
+      ['(3)', 188, 229],
+      ['0,0%; Impostos 1,0%; Outros', 71, 232],
+      ['1,0%', 198, 232],
+      ['(1)', 71, 248],
+      ['Fonte exemplo.', 78, 248],
+      [
+        'Valor de reconstrução do Imóvel -» anuidade atual: 150 000,00 €; próxima anuidade: 155 000,00 €',
+        71,
+        322,
+      ],
+      ['Valor do Recheio -» anuidade atual: 20 000,00 €; próxima anuidade: 20 000,00 €', 71, 332],
+    ]),
+  ],
+);
+
+// Particular conditions of a car policy: coverage table with values on the name's row and
+// "Conforme Cond. Gerais e/ou / Especiais" above and below it.
+write(
+  'generali-docs',
+  'synthetic-conditions',
+  [],
+  [
+    page(1, [
+      ['Condições Particulares da', 403, 35],
+      ['Apólice', 520, 50],
+      ['Seguro Automóvel', 501, 77],
+      ['Dados do Contrato', 68, 385],
+      ['Produto:', 68, 397],
+      ['Automóvel Ligeiros', 101, 397],
+      ['Opção:', 68, 410],
+      ['Base', 95, 409],
+      ['N.º Apólice:', 68, 422],
+      ['3000000001', 109, 422],
+      ['Generali Seguros, S.A. Exemplo sintético', 13, 517],
+      ['Marca:', 68, 517],
+      ['MARCA', 96, 517],
+      ['Modelo:', 68, 530],
+      ['Modelo Exemplo', 98, 530],
+      ['Prémio do Contrato (valor anual)', 282, 630],
+      ['250,00 €', 517, 630],
+    ]),
+    page(2, [
+      ['Índice de bonus/malus:', 68, 190],
+      ['50,0%', 161, 190],
+      ['COBERTURAS', 60, 385],
+      ['CAPITAL SEGURO', 380, 385],
+      ['FRANQUIA', 497, 385],
+      ['Responsabilidade civil', 60, 399],
+      ['Responsabilidade civil danos corporais', 60, 411],
+      ['6 450 000,00 €', 384, 411],
+      ['Não Aplicável', 492, 411],
+      ['Responsabilidade civil danos materiais', 60, 422],
+      ['1 300 000,00 €', 384, 422],
+      ['Não Aplicável', 492, 422],
+      ['Assistência', 60, 433],
+      ['Conforme Cond. Gerais e/ou', 362, 445],
+      ['Conforme Cond. Gerais e/ou', 468, 445],
+      ['Assistência em viagem', 66, 449],
+      ['Especiais', 392, 453],
+      ['Especiais', 498, 453],
+      ['Quebra de vidros', 60, 465],
+      ['1 000,00 €', 390, 465],
+      ['0,00 €', 503, 465],
+      ['PERÍODO DE CARÊNCIA', 72, 490],
+    ]),
+  ],
+);

@@ -67,8 +67,12 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
       .map((invoice) => invoice.periodEnd!)
       .sort()
       .at(-1);
-    if (!end) continue;
-    const date = nextDay(end);
+    // The renewal letter's date, when it is later than the paid period.
+    const date = [end ? nextDay(end) : undefined, contract.insurance?.renewal?.date]
+      .filter((value): value is string => Boolean(value))
+      .sort()
+      .at(-1);
+    if (!date) continue;
     if (date < input.today) continue;
     events.push({
       uid: `renewal-${contract.id}@${UID_DOMAIN}`,

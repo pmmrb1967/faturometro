@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "parserId": "generali-docs",
+  "synthetic": true,
+  "qrs": [],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Carta Ata",
+          "x": 514,
+          "y": 35,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Seguro Casa",
+          "x": 522,
+          "y": 45,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Cliente",
+          "x": 68,
+          "y": 182,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Contrato",
+          "x": 68,
+          "y": 215,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Apólice:",
+          "x": 68,
+          "y": 227,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2000000001",
+          "x": 111,
+          "y": 227,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data da renovação:",
+          "x": 68,
+          "y": 240,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-11-01",
+          "x": 135,
+          "y": 238,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Periodicidade de Pagamento:",
+          "x": 68,
+          "y": 250,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Anual",
+          "x": 171,
+          "y": 250,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Generali Seguros, S.A. Exemplo sintético",
+          "x": 13,
+          "y": 517,
+          "width": 184,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Informações",
+          "x": 72,
+          "y": 95,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor da anuidade atual 300,00 €; valor da próxima anuidade 330,00 €; variação de 10,0%",
+          "x": 71,
+          "y": 178,
+          "width": 400.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "A variação do valor total a pagar depende de vários fatores que a seguir detalhamos:",
+          "x": 57,
+          "y": 198,
+          "width": 386.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)",
+          "x": 153,
+          "y": 219,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 295,
+          "y": 219,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Inflação de mercado",
+          "x": 71,
+          "y": 222,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5,0%; Evolução da sinistralidade",
+          "x": 164,
+          "y": 222,
+          "width": 147.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,0%; Custos de fracionamento",
+          "x": 306,
+          "y": 222,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(3)",
+          "x": 188,
+          "y": 229,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,0%; Impostos 1,0%; Outros",
+          "x": 71,
+          "y": 232,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,0%",
+          "x": 198,
+          "y": 232,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)",
+          "x": 71,
+          "y": 248,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fonte exemplo.",
+          "x": 78,
+          "y": 248,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor de reconstrução do Imóvel -» anuidade atual: 150 000,00 €; próxima anuidade: 155 000,00 €",
+          "x": 71,
+          "y": 322,
+          "width": 437,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor do Recheio -» anuidade atual: 20 000,00 €; próxima anuidade: 20 000,00 €",
+          "x": 71,
+          "y": 332,
+          "width": 358.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

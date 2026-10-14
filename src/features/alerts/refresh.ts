@@ -43,6 +43,14 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
       return copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
     case 'cheaper_offer':
       return copy.cheaperOffer(label, formatCents(number('savingCents')));
+    case 'premium_notice':
+      return copy.premiumNotice(
+        label,
+        formatIsoDate(text('date')),
+        formatCents(number('before')),
+        formatCents(number('after')),
+        number('increasePct').toFixed(1).replace('.', ','),
+      );
     case 'renewal':
       return copy.renewal(label, formatIsoDate(text('date')), number('daysLeft'));
     case 'invoice_audit': {

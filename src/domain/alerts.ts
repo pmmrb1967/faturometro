@@ -63,6 +63,25 @@ function addDay(iso: string): string {
   return new Date(Date.parse(`${iso}T00:00:00Z`) + DAY_MS).toISOString().slice(0, 10);
 }
 
+/** Insurance renewal letter: the premium goes up at the next renewal (before it is paid). */
+function premiumNotice(contract: Contract, input: AlertInput): AlertDraft | null {
+  const renewal = contract.insurance?.renewal;
+  if (contract.sector !== 'insurance' || !renewal || renewal.date < input.today) return null;
+  if (renewal.nextCents <= renewal.currentCents || renewal.currentCents <= 0) return null;
+  return {
+    key: `${contract.id}:premium_notice:${renewal.date}`,
+    contractId: contract.id,
+    kind: 'premium_notice',
+    severity: 'warning',
+    data: {
+      date: renewal.date,
+      before: renewal.currentCents,
+      after: renewal.nextCents,
+      increasePct: ((renewal.nextCents - renewal.currentCents) / renewal.currentCents) * 100,
+    },
+  };
+}
+
 /** Insurance: the policy renews the day after the paid period ends (same steps as loyalty). */
 function renewalAlert(
   contract: Contract,
@@ -72,6 +91,8 @@ function renewalAlert(
   const end = history.at(-1)?.periodEnd;
   if (contract.sector !== 'insurance' || !end) return null;
   const renewal = addDay(end);
+  // The renewal letter's notice already says when, and for how much.
+  if (premiumNotice(contract, input)?.data?.date === renewal) return null;
   const daysLeft = daysBetween(input.today, renewal);
   if (daysLeft < 0) return null;
   const reached = [...input.settings.loyaltyAlertDays]
@@ -246,6 +267,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
       return [
         loyaltyAlert(contract, input),
         renewalAlert(contract, history, input),
+        premiumNotice(contract, input),
         priceAlert(contract, history, linesOf, input),
         estimatedAlert(contract, history, readingsOf),
         missingAlert(contract, history, input.today),

@@ -306,3 +306,32 @@ describe('insurance', () => {
     expect(bimonthly('2026-07-25')).toContain('missing_invoice');
   });
 });
+
+describe('insurance renewal letter', () => {
+  it('warns that the premium goes up at the renewal, instead of the plain renewal alert', () => {
+    const policy = contract({
+      sector: 'insurance',
+      insurance: { renewal: { date: '2026-11-01', currentCents: 39789, nextCents: 43251 } },
+    });
+    const receipt = {
+      ...invoice('a', '2025-10-28', 39789),
+      periodStart: '2025-11-01',
+      periodEnd: '2026-10-31',
+    };
+    const alerts = computeAlerts(
+      input({ contracts: [policy], invoices: [receipt], today: '2026-10-14' }),
+    );
+    expect(alerts).toEqual([
+      expect.objectContaining({
+        kind: 'premium_notice',
+        data: expect.objectContaining({ date: '2026-11-01', before: 39789, after: 43251 }),
+      }),
+    ]);
+    // After the renewal date, the notice goes away.
+    expect(
+      kinds(
+        computeAlerts(input({ contracts: [policy], invoices: [receipt], today: '2026-11-02' })),
+      ),
+    ).not.toContain('premium_notice');
+  });
+});

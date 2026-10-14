@@ -35,6 +35,31 @@ export interface InsuranceDetails {
   insuredObject?: string;
   /** Insured capitals ("Imóvel" 285 149,24 €). */
   capitals?: { name: string; capitalCents: Cents }[];
+  /** From the renewal letter: what the next year will cost, before it is paid. */
+  renewal?: InsuranceRenewal;
+  /** From the particular conditions: every coverage, its capital and deductible. */
+  coverages?: InsuranceCoverage[];
+  annualPremiumCents?: Cents;
+  /** Car insurance bonus/malus index, in percent. */
+  bonusMalusPct?: number;
+}
+
+export interface InsuranceRenewal {
+  date: IsoDate;
+  currentCents: Cents;
+  nextCents: Cents;
+  /** What the insurer says changed the premium ("Inflação de mercado" 6,9 %). */
+  factors?: { name: string; pct: number }[];
+  /** Insured capitals now and next year. */
+  capitals?: { name: string; currentCents: Cents; nextCents: Cents }[];
+}
+
+export interface InsuranceCoverage {
+  name: string;
+  /** As printed ("6 450 000,00 €", "Conforme Cond. Gerais e/ou Especiais"). */
+  capital?: string;
+  capitalCents?: Cents;
+  deductible?: string;
 }
 
 export interface Contract extends SyncMeta {
@@ -142,7 +167,8 @@ export interface Alert extends SyncMeta {
     | 'missing_invoice'
     | 'cheaper_offer'
     | 'invoice_audit'
-    | 'renewal';
+    | 'renewal'
+    | 'premium_notice';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

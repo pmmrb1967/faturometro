@@ -1,0 +1,40 @@
+.coverage-scroll {
+  overflow-x: auto;
+}
+
+.coverage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.coverage-table th,
+.coverage-table td {
+  padding: 8px 10px 8px 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.coverage-table thead th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.coverage-table tbody th {
+  font-weight: 400;
+}
+
+.coverage-table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .coverage-table td {
+    white-space: normal;
+  }
+}
+
+.policy-document ul {
+  margin: 0 0 12px;
+}

@@ -24,6 +24,7 @@ import { AiExtractPanel } from '../ai/AiExtractPanel';
 import { ingestFile, type IngestOutcome, type ParsedDocument, type ReadQr } from './ingest';
 import { emptyForm, formFromParsed, formFromQr, type FormBase } from '../invoices/form';
 import { ReviewForm } from '../invoices/ReviewForm';
+import { PolicyDocumentCard } from '../insurance/PolicyDocumentCard';
 import './ingest.css';
 
 const copy = t.ingest;
@@ -351,6 +352,9 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
       extra={Object.values(aiParsed)}
     />
   ) : null;
+
+  // A renewal letter or particular conditions: not an invoice.
+  if (outcome.policyDocument) return <PolicyDocumentCard document={outcome.policyDocument} />;
 
   if (outcome.qrStatus !== 'ok') {
     if (status[0])

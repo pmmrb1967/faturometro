@@ -12,6 +12,7 @@ import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
 import type { Contract, Invoice } from '../../domain/types';
+import { InsuranceSection } from '../insurance/InsuranceSection';
 import { AuditSection } from './AuditSection';
 import { SwitchSection } from './SwitchSection';
 import { TelecomCompare } from './TelecomCompare';
@@ -115,7 +116,7 @@ export function ContractPage() {
 
       <SwitchSection contract={contract} />
 
-      {contract.active && (
+      {contract.active && contract.sector !== 'insurance' && (
         <LoyaltyForm
           key={`loyalty-${contract.id}`}
           initial={contract.loyaltyEndDate ?? ''}
@@ -142,6 +143,8 @@ export function ContractPage() {
           }}
         />
       )}
+
+      <InsuranceSection contract={contract} />
 
       <AuditSection contract={contract} invoices={invoices} />
 
@@ -326,6 +329,11 @@ function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, strin
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
+  // The renewal letter's date, or the day after the latest paid period, whichever is later.
+  const renewalDate = [end ? nextDay(end) : undefined, insurance?.renewal?.date]
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
   const facts = copy.facts;
   return [
     [
@@ -338,7 +346,19 @@ function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, strin
       facts.capital(capital.name),
       formatCents(capital.capitalCents),
     ]),
-    [facts.renewal, end && contract.active ? formatIsoDate(nextDay(end)) : undefined],
+    [
+      facts.annualPremium,
+      insurance?.annualPremiumCents !== undefined
+        ? formatCents(insurance.annualPremiumCents)
+        : undefined,
+    ],
+    [
+      facts.bonusMalus,
+      insurance?.bonusMalusPct !== undefined
+        ? `${insurance.bonusMalusPct.toString().replace('.', ',')} %`
+        : undefined,
+    ],
+    [facts.renewal, renewalDate && contract.active ? formatIsoDate(renewalDate) : undefined],
   ];
 }
 

@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 2,
+  "parserId": "generali-docs",
+  "synthetic": true,
+  "qrs": [],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Condições Particulares da",
+          "x": 403,
+          "y": 35,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Apólice",
+          "x": 520,
+          "y": 50,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Seguro Automóvel",
+          "x": 501,
+          "y": 77,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do Contrato",
+          "x": 68,
+          "y": 385,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Produto:",
+          "x": 68,
+          "y": 397,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Automóvel Ligeiros",
+          "x": 101,
+          "y": 397,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Opção:",
+          "x": 68,
+          "y": 410,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Base",
+          "x": 95,
+          "y": 409,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º Apólice:",
+          "x": 68,
+          "y": 422,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3000000001",
+          "x": 109,
+          "y": 422,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Generali Seguros, S.A. Exemplo sintético",
+          "x": 13,
+          "y": 517,
+          "width": 184,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Marca:",
+          "x": 68,
+          "y": 517,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "MARCA",
+          "x": 96,
+          "y": 517,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Modelo:",
+          "x": 68,
+          "y": 530,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Modelo Exemplo",
+          "x": 98,
+          "y": 530,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Prémio do Contrato (valor anual)",
+          "x": 282,
+          "y": 630,
+          "width": 147.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "250,00 €",
+          "x": 517,
+          "y": 630,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Índice de bonus/malus:",
+          "x": 68,
+          "y": 190,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "50,0%",
+          "x": 161,
+          "y": 190,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "COBERTURAS",
+          "x": 60,
+          "y": 385,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "CAPITAL SEGURO",
+          "x": 380,
+          "y": 385,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FRANQUIA",
+          "x": 497,
+          "y": 385,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Responsabilidade civil",
+          "x": 60,
+          "y": 399,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Responsabilidade civil danos corporais",
+          "x": 60,
+          "y": 411,
+          "width": 174.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6 450 000,00 €",
+          "x": 384,
+          "y": 411,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Não Aplicável",
+          "x": 492,
+          "y": 411,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Responsabilidade civil danos materiais",
+          "x": 60,
+          "y": 422,
+          "width": 174.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 300 000,00 €",
+          "x": 384,
+          "y": 422,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Não Aplicável",
+          "x": 492,
+          "y": 422,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Assistência",
+          "x": 60,
+          "y": 433,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Conforme Cond. Gerais e/ou",
+          "x": 362,
+          "y": 445,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Conforme Cond. Gerais e/ou",
+          "x": 468,
+          "y": 445,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Assistência em viagem",
+          "x": 66,
+          "y": 449,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Especiais",
+          "x": 392,
+          "y": 453,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Especiais",
+          "x": 498,
+          "y": 453,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Quebra de vidros",
+          "x": 60,
+          "y": 465,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 000,00 €",
+          "x": 390,
+          "y": 465,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,00 €",
+          "x": 503,
+          "y": 465,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PERÍODO DE CARÊNCIA",
+          "x": 72,
+          "y": 490,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

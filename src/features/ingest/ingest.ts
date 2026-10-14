@@ -6,6 +6,7 @@
  */
 import { sha256Hex } from '../../lib/crypto';
 import { PdfPasswordError, type PageText, type PasswordProblem } from '../../pdf/text';
+import { readPolicyDocument, type PolicyDocument } from '../../parsers/policy-documents';
 import { findParser } from '../../parsers/registry';
 import type { ExtractedInvoice } from '../../parsers/types';
 import { parseFiscalQr, type FiscalQr, type QrParseResult } from '../../qr/parse';
@@ -55,6 +56,8 @@ export type IngestOutcome =
       qrStatus: 'ok' | 'missing' | 'invalid';
       /** Without a usable QR code: what a parser read from the text (to prefill the form). */
       parsed?: ParsedDocument;
+      /** Without a QR code: an insurance document that updates a policy (not an invoice). */
+      policyDocument?: PolicyDocument;
       /** The password that opened the PDF, if one was needed. */
       usedPassword?: string;
     };
@@ -178,6 +181,8 @@ export async function ingestFile(
   };
   if (usedPassword !== undefined) outcome.usedPassword = usedPassword;
   if (qrStatus !== 'ok') {
+    const policyDocument = pages.length > 0 ? readPolicyDocument(pages) : null;
+    if (policyDocument) outcome.policyDocument = policyDocument;
     const parsed = runParser(pages, []);
     if (parsed) outcome.parsed = parsed;
   }
