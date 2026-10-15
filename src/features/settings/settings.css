@@ -42,3 +42,44 @@
   color: var(--danger);
   border-color: var(--danger);
 }
+
+.admin-stats {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stats th,
+.admin-stats td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-stats th {
+  width: 40%;
+  font-weight: 600;
+  background: var(--bg);
+}
+
+/* Phones: label above value, so neither wraps mid-phrase. */
+@media (max-width: 480px) {
+  .admin-stats th,
+  .admin-stats td {
+    display: block;
+    width: auto;
+  }
+  .admin-stats th {
+    border-bottom: none;
+    padding-bottom: 2px;
+  }
+  .admin-stats td {
+    border-top: none;
+    padding-top: 0;
+  }
+  .admin-stats tr + tr th {
+    border-top: none;
+  }
+}

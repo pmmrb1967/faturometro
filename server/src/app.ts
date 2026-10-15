@@ -250,6 +250,10 @@ export function createApp(config: AppConfig) {
       today(),
       now().toISOString(),
     );
+    // Originals: counted now when the files database is here (the daily stats can be a day old).
+    const files = await config.files?.first<{ used: number | null }>(
+      'SELECT SUM(size) AS used FROM chunks',
+    );
     return {
       accounts: row?.accounts ?? 0,
       maxAccounts: config.maxAccounts ?? MAX_ACCOUNTS,
@@ -258,7 +262,9 @@ export function createApp(config: AppConfig) {
       devices: row?.devices ?? 0,
       removedForInactivity30: row?.removed30 ?? 0,
       recordsBytes: row?.records_bytes ?? 0,
-      filesBytes: row?.files_bytes ?? 0,
+      recordsTotalBytes: config.recordsTotalBytes ?? RECORDS_TOTAL_BYTES,
+      filesBytes: files ? (files.used ?? 0) : (row?.files_bytes ?? 0),
+      filesTotalBytes: config.filesTotalBytes ?? FILES_TOTAL_BYTES,
       contributions: row?.contributions ?? 0,
     };
   }

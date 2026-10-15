@@ -456,15 +456,18 @@ export const t = {
     accounts: 'Contas',
     ofMax: (count: number, max: number) => `${count} de ${max} possíveis`,
     newAccounts: 'Contas novas',
-    period: (days7: number, days30: number) =>
-      `${days7} nos últimos 7 dias · ${days30} nos últimos 30`,
+    period: (days7: number, days30: number) => `${days7} em 7 dias · ${days30} em 30 dias`,
     active: 'Contas ativas',
     activeValue: (today: number, days7: number, days30: number) =>
-      `${today} hoje · ${days7} nos últimos 7 dias · ${days30} nos últimos 30`,
+      `${today} hoje · ${days7} em 7 dias · ${days30} em 30 dias`,
     devices: 'Dispositivos com sessão',
-    removed: 'Removidas por inatividade (30 dias)',
-    space: 'Espaço usado',
-    spaceValue: (records: string, files: string) => `${records} de dados · ${files} de originais`,
+    removed: 'Removidas por inatividade',
+    removedValue: (count: number) => `${count} em 30 dias`,
+    records: 'Dados',
+    files: 'Originais',
+    ofTotal: (used: string, total: string, percent: string) => `${used} de ${total} (${percent} %)`,
+    spaceNote:
+      'Dados: faturas, contratos e definições, cifrados. Originais: PDF e fotografias das faturas, só de quem ligou a sincronização dos originais. Quando um dos dois passa de 80 %, o servidor deixa de aceitar contas novas.',
     contributions: 'Contribuições por recolher',
   },
   settings: {

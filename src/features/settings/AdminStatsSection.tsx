@@ -1,11 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import type { ReactNode } from 'react';
 import { t } from '../../i18n/pt-PT';
 import { adminStats } from '../../sync/account';
 import { useSession } from '../auth/session-context';
 import { formatMegabytes } from './format';
-import '../alerts/alerts.css';
 
 const copy = t.adminStats;
+
+/** "12,3 MB de 500 MB (2,5 %)"; without a known capacity, just the size. */
+function usage(used: number, total: number | undefined): string {
+  if (!total) return formatMegabytes(used);
+  const percent = (used / total) * 100;
+  const shown =
+    used > 0 && percent < 0.1
+      ? '< 0,1'
+      : percent.toLocaleString('pt-PT', { maximumFractionDigits: 1 });
+  return copy.ofTotal(formatMegabytes(used), formatMegabytes(total), shown);
+}
 
 /** Administrator only: how the sync server is being used (totals, no accounts named). */
 export function AdminStatsSection() {
@@ -21,34 +32,40 @@ export function AdminStatsSection() {
   }, [session, admin]);
   if (!admin) return null;
 
+  const rows: [string, ReactNode][] = stats
+    ? [
+        [copy.accounts, copy.ofMax(stats.accounts, stats.maxAccounts)],
+        [copy.newAccounts, copy.period(stats.newAccounts.days7, stats.newAccounts.days30)],
+        [
+          copy.active,
+          copy.activeValue(stats.active.today, stats.active.days7, stats.active.days30),
+        ],
+        [copy.devices, stats.devices],
+        [copy.removed, copy.removedValue(stats.removedForInactivity30)],
+        [copy.records, usage(stats.recordsBytes, stats.recordsTotalBytes)],
+        [copy.files, usage(stats.filesBytes, stats.filesTotalBytes)],
+        [copy.contributions, stats.contributions],
+      ]
+    : [];
+
   return (
     <section className="settings-section" aria-labelledby="admin-stats-title">
       <h2 id="admin-stats-title">{copy.title}</h2>
       <p className="muted">{copy.intro}</p>
       {stats === undefined && <p className="ingest-problem">{copy.failed}</p>}
       {stats && (
-        <dl className="facts">
-          <dt>{copy.accounts}</dt>
-          <dd>{copy.ofMax(stats.accounts, stats.maxAccounts)}</dd>
-          <dt>{copy.newAccounts}</dt>
-          <dd>{copy.period(stats.newAccounts.days7, stats.newAccounts.days30)}</dd>
-          <dt>{copy.active}</dt>
-          <dd>{copy.activeValue(stats.active.today, stats.active.days7, stats.active.days30)}</dd>
-          <dt>{copy.devices}</dt>
-          <dd>{stats.devices}</dd>
-          <dt>{copy.removed}</dt>
-          <dd>{stats.removedForInactivity30}</dd>
-          <dt>{copy.space}</dt>
-          <dd>
-            {copy.spaceValue(
-              formatMegabytes(stats.recordsBytes),
-              formatMegabytes(stats.filesBytes),
-            )}
-          </dd>
-          <dt>{copy.contributions}</dt>
-          <dd>{stats.contributions}</dd>
-        </dl>
+        <table className="admin-stats">
+          <tbody>
+            {rows.map(([label, value]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td>{value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
+      {stats && <p className="muted">{copy.spaceNote}</p>}
     </section>
   );
 }
