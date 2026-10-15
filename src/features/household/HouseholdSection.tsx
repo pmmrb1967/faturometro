@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { BarChart, type Bar } from '../../components/BarChart';
+import { BarChart, type Bar, type Series } from '../../components/BarChart';
+import type { Sector } from '../../domain/types';
 import { householdSummary } from '../../domain/household';
 import { t } from '../../i18n/pt-PT';
 import { formatMonthShort } from '../../lib/dates';
@@ -9,6 +10,8 @@ import { useSession } from '../auth/session-context';
 import { totalSwitchSavings } from '../contracts/switch-view';
 
 const copy = t.household;
+/** Bottom to top in each month's bar. */
+const SECTOR_ORDER: Sector[] = ['electricity', 'gas', 'water', 'telecom', 'insurance', 'other'];
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 
@@ -29,7 +32,7 @@ export function HouseholdSection() {
   }, [session]);
   if (!summary) return null;
 
-  const bars: Bar[] = summary.months.map(({ month, totalCents }) => {
+  const bars: Bar[] = summary.months.map(({ month, totalCents, bySector }) => {
     const label = formatMonthShort(`${month}-01`);
     return {
       key: month,
@@ -37,8 +40,18 @@ export function HouseholdSection() {
       title: copy.monthTitle(label),
       value: totalCents / 100,
       display: formatCents(totalCents),
+      parts: SECTOR_ORDER.map((sector) => ({
+        series: sector,
+        value: (bySector[sector] ?? 0) / 100,
+        display: formatCents(bySector[sector] ?? 0),
+      })),
     };
   });
+  const series: Series[] = SECTOR_ORDER.map((sector) => ({
+    key: sector,
+    label: t.sectors[sector],
+    color: `var(--series-${sector})`,
+  }));
   const previous = summary.previousTotalCents;
   const difference = previous === undefined ? 0 : summary.totalCents - previous;
 
@@ -109,6 +122,7 @@ export function HouseholdSection() {
         tableLabel={t.contracts.charts.table}
         columnLabel={copy.month}
         valueLabel={copy.value}
+        series={series}
       />
       <p className="muted">{copy.forecastNote}</p>
     </section>

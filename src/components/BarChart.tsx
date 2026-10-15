@@ -10,6 +10,16 @@ export interface Bar {
   value: number;
   /** Formatted value ("42,79 €", "226 kWh"). */
   display: string;
+  /** Stacked parts, in the order of `series` (their values add up to `value`). */
+  parts?: { series: string; value: number; display: string }[];
+}
+
+/** One colour of a stacked chart. */
+export interface Series {
+  key: string;
+  label: string;
+  /** CSS colour (a custom property such as var(--series-energy)). */
+  color: string;
 }
 
 interface Props {
@@ -20,6 +30,8 @@ interface Props {
   tableLabel: string;
   columnLabel: string;
   valueLabel: string;
+  /** Stacked bars: the colours and their order, bottom to top. */
+  series?: Series[];
 }
 
 const WIDTH = 640;
@@ -44,7 +56,15 @@ function barPath(x: number, y: number, width: number, height: number): string {
   return `M${x},${bottom}V${y + r}Q${x},${y} ${x + r},${y}H${x + width - r}Q${x + width},${y} ${x + width},${y + r}V${bottom}Z`;
 }
 
-export function BarChart({ title, bars, formatTick, tableLabel, columnLabel, valueLabel }: Props) {
+export function BarChart({
+  title,
+  bars,
+  formatTick,
+  tableLabel,
+  columnLabel,
+  valueLabel,
+  series,
+}: Props) {
   const [active, setActive] = useState<number | null>(null);
   const titleId = useId();
   if (bars.length === 0) return null;
@@ -58,6 +78,31 @@ export function BarChart({ title, bars, formatTick, tableLabel, columnLabel, val
   const labelEvery = Math.ceil(bars.length / 8);
   const last = bars.length - 1;
   const shown = active === null ? null : bars[active];
+  // Series with a value somewhere: the legend and table leave the others out.
+  const tableSeries = (series ?? []).filter((entry) =>
+    bars.some((bar) => bar.parts?.some((part) => part.series === entry.key && part.value > 0)),
+  );
+  const colorOf = (key: string) => series?.find((entry) => entry.key === key)?.color;
+  const labelOf = (key: string) => series?.find((entry) => entry.key === key)?.label ?? key;
+
+  /** Segments bottom to top; only the top one has the rounded data end. */
+  function stack(bar: Bar, order: Series[], centre: number) {
+    const parts = order
+      .map((entry) => bar.parts?.find((part) => part.series === entry.key))
+      .filter((part): part is NonNullable<Bar['parts']>[number] => Boolean(part && part.value > 0));
+    let base = PAD.top + plotHeight;
+    return parts.map((part, index) => {
+      const height = (part.value / max) * plotHeight;
+      base -= height;
+      const x = centre - barWidth / 2;
+      const style = { fill: colorOf(part.series) };
+      return index === parts.length - 1 ? (
+        <path key={part.series} d={barPath(x, base, barWidth, height)} style={style} />
+      ) : (
+        <rect key={part.series} x={x} y={base} width={barWidth} height={height} style={style} />
+      );
+    });
+  }
 
   return (
     <figure className="chart" aria-labelledby={titleId}>
@@ -102,7 +147,10 @@ export function BarChart({ title, bars, formatTick, tableLabel, columnLabel, val
                   width={slot}
                   height={plotHeight}
                 />
-                {height > 0 && <path d={barPath(centre - barWidth / 2, top, barWidth, height)} />}
+                {height > 0 && !(series && bar.parts) && (
+                  <path d={barPath(centre - barWidth / 2, top, barWidth, height)} />
+                )}
+                {height > 0 && series && bar.parts && stack(bar, series, centre)}
                 {(index % labelEvery === 0 || index === last) && (
                   <text className="chart-axis" x={centre} y={HEIGHT - 8} textAnchor="middle">
                     {bar.label}
@@ -126,16 +174,46 @@ export function BarChart({ title, bars, formatTick, tableLabel, columnLabel, val
             }}
           >
             <span>{shown.title}</span>
+            {series &&
+              shown.parts
+                ?.filter((part) => part.value > 0)
+                .map((part) => (
+                  <span key={part.series} className="chart-tooltip-part">
+                    <i style={{ background: colorOf(part.series) }} aria-hidden="true" />
+                    {labelOf(part.series)}: {part.display}
+                  </span>
+                ))}
             <strong>{shown.display}</strong>
           </div>
         )}
       </div>
+      {series && (
+        <ul className="chart-legend">
+          {series
+            .filter((entry) =>
+              bars.some((bar) =>
+                bar.parts?.some((part) => part.series === entry.key && part.value > 0),
+              ),
+            )
+            .map((entry) => (
+              <li key={entry.key}>
+                <i style={{ background: entry.color }} aria-hidden="true" />
+                {entry.label}
+              </li>
+            ))}
+        </ul>
+      )}
       <details className="chart-table">
         <summary>{tableLabel}</summary>
         <table>
           <thead>
             <tr>
               <th scope="col">{columnLabel}</th>
+              {tableSeries.map((entry) => (
+                <th key={entry.key} scope="col">
+                  {entry.label}
+                </th>
+              ))}
               <th scope="col">{valueLabel}</th>
             </tr>
           </thead>
@@ -143,6 +221,11 @@ export function BarChart({ title, bars, formatTick, tableLabel, columnLabel, val
             {bars.map((bar) => (
               <tr key={bar.key}>
                 <td>{bar.title}</td>
+                {tableSeries.map((entry) => (
+                  <td key={entry.key}>
+                    {bar.parts?.find((part) => part.series === entry.key)?.display ?? '—'}
+                  </td>
+                ))}
                 <td>{bar.display}</td>
               </tr>
             ))}

@@ -18,8 +18,8 @@ export interface HouseholdInput {
 }
 
 export interface HouseholdSummary {
-  /** The last 12 months, oldest first ("YYYY-MM"), including the current one. */
-  months: { month: string; totalCents: Cents }[];
+  /** The last 12 months, oldest first ("YYYY-MM"), including the current one, by sector too. */
+  months: { month: string; totalCents: Cents; bySector: Partial<Record<Sector, Cents>> }[];
   totalCents: Cents;
   /** The 12 months before, only when the history covers all of them. */
   previousTotalCents?: Cents;
@@ -92,6 +92,7 @@ export function householdSummary(input: HouseholdInput): HouseholdSummary {
   const months = Array.from({ length: 12 }, (_, i) => ({
     month: addMonths(firstMonth, i),
     totalCents: 0,
+    bySector: {} as Partial<Record<Sector, Cents>>,
   }));
   const monthIndex = new Map(months.map((entry, i) => [entry.month, i]));
   const sectors = new Map<Sector, Cents>();
@@ -103,8 +104,10 @@ export function householdSummary(input: HouseholdInput): HouseholdSummary {
     if (!earliest || month < earliest) earliest = month;
     const index = monthIndex.get(month);
     if (index !== undefined) {
-      months[index]!.totalCents += invoice.totalCents;
+      const entry = months[index]!;
+      entry.totalCents += invoice.totalCents;
       const sector = sectorOf.get(invoice.contractId) ?? 'other';
+      entry.bySector[sector] = (entry.bySector[sector] ?? 0) + invoice.totalCents;
       sectors.set(sector, (sectors.get(sector) ?? 0) + invoice.totalCents);
     } else if (month >= previousFirst && month < firstMonth) {
       previousTotal += invoice.totalCents;

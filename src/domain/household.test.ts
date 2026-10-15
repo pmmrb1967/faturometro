@@ -43,9 +43,17 @@ describe('householdSummary', () => {
       today: '2026-10-14',
     });
     expect(summary.months).toHaveLength(12);
-    expect(summary.months[0]).toEqual({ month: '2025-11', totalCents: 3000 });
-    expect(summary.months.at(-2)).toEqual({ month: '2026-09', totalCents: 10000 });
-    expect(summary.months.at(-1)).toEqual({ month: '2026-10', totalCents: 4000 });
+    expect(summary.months[0]).toEqual({
+      month: '2025-11',
+      totalCents: 3000,
+      bySector: { telecom: 3000 },
+    });
+    expect(summary.months.at(-2)).toEqual({
+      month: '2026-09',
+      totalCents: 10000,
+      bySector: { telecom: 4000, electricity: 6000 },
+    });
+    expect(summary.months.at(-1)).toMatchObject({ month: '2026-10', totalCents: 4000 });
     expect(summary.totalCents).toBe(17000);
     expect(summary.bySector).toEqual([
       { sector: 'telecom', totalCents: 11000 },

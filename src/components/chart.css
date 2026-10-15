@@ -2,6 +2,13 @@
 :root {
   --chart-mark: #1f8a65;
   --chart-grid: #e3e8e4;
+  /* Stacked bars by type of expense: Okabe–Ito hues, told apart with colour-blindness too. */
+  --series-electricity: #e69f00;
+  --series-gas: #d55e00;
+  --series-water: #56b4e9;
+  --series-telecom: #0072b2;
+  --series-insurance: #cc79a7;
+  --series-other: #8b918c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -127,4 +134,37 @@
 .chart-table th:last-child {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Stacked segments: a thin gap in the surface colour keeps neighbouring colours apart. */
+.chart-bar rect,
+.chart-bar path[style] {
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.chart-legend li,
+.chart-tooltip-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-legend i,
+.chart-tooltip-part i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
 }
