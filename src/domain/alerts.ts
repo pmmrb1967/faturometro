@@ -4,6 +4,7 @@
  * Each alert has a stable key, so recomputing replaces it and a dismissed
  * alert stays dismissed.
  */
+import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
 
@@ -59,10 +60,6 @@ function loyaltyAlert(contract: Contract, input: AlertInput): AlertDraft | null 
   };
 }
 
-function addDay(iso: string): string {
-  return new Date(Date.parse(`${iso}T00:00:00Z`) + DAY_MS).toISOString().slice(0, 10);
-}
-
 /** Insurance renewal letter: the premium goes up at the next renewal (before it is paid). */
 function premiumNotice(contract: Contract, input: AlertInput): AlertDraft | null {
   const renewal = contract.insurance?.renewal;
@@ -82,15 +79,15 @@ function premiumNotice(contract: Contract, input: AlertInput): AlertDraft | null
   };
 }
 
-/** Insurance: the policy renews the day after the paid period ends (same steps as loyalty). */
+/** Insurance: before the policy renews (same steps as loyalty). */
 function renewalAlert(
   contract: Contract,
   history: Invoice[],
   input: AlertInput,
 ): AlertDraft | null {
-  const end = history.at(-1)?.periodEnd;
-  if (contract.sector !== 'insurance' || !end) return null;
-  const renewal = addDay(end);
+  if (contract.sector !== 'insurance') return null;
+  const renewal = insuranceRenewalDate(contract, history);
+  if (!renewal) return null;
   // The renewal letter's notice already says when, and for how much.
   if (premiumNotice(contract, input)?.data?.date === renewal) return null;
   const daysLeft = daysBetween(input.today, renewal);

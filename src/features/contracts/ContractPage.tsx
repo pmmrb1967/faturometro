@@ -11,6 +11,7 @@ import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
+import { insuranceRenewalDate } from '../../domain/insurance';
 import type { Contract, Invoice } from '../../domain/types';
 import { InsuranceSection } from '../insurance/InsuranceSection';
 import { AuditSection } from './AuditSection';
@@ -320,20 +321,11 @@ function MonthlyPriceForm({
   );
 }
 
-/** Policy data read from the receipts, and when it renews (the day after the paid period). */
+/** Policy data read from the receipts and documents, and when it renews. */
 function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, string | undefined][] {
   const insurance = contract.insurance;
   if (contract.sector !== 'insurance') return [];
-  const end = invoices
-    .map((invoice) => invoice.periodEnd)
-    .filter((value): value is string => Boolean(value))
-    .sort()
-    .at(-1);
-  // The renewal letter's date, or the day after the latest paid period, whichever is later.
-  const renewalDate = [end ? nextDay(end) : undefined, insurance?.renewal?.date]
-    .filter((value): value is string => Boolean(value))
-    .sort()
-    .at(-1);
+  const renewalDate = insuranceRenewalDate(contract, invoices);
   const facts = copy.facts;
   return [
     [
@@ -360,8 +352,4 @@ function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, strin
     ],
     [facts.renewal, renewalDate && contract.active ? formatIsoDate(renewalDate) : undefined],
   ];
-}
-
-function nextDay(iso: string): string {
-  return new Date(Date.parse(`${iso}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
 }

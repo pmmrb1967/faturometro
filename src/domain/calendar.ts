@@ -5,6 +5,7 @@
  * Pure: the texts come from the caller (i18n lives outside the domain).
  */
 import { daysBetween } from './alerts';
+import { insuranceRenewalDate } from './insurance';
 import type { Contract, Invoice } from './types';
 
 /** Reminders before a payment due date, in days. */
@@ -60,18 +61,11 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
     });
   }
 
-  // Insurance renews the day after the latest paid period ends.
   for (const contract of active.filter((candidate) => candidate.sector === 'insurance')) {
-    const end = input.invoices
-      .filter((invoice) => invoice.contractId === contract.id && invoice.periodEnd)
-      .map((invoice) => invoice.periodEnd!)
-      .sort()
-      .at(-1);
-    // The renewal letter's date, when it is later than the paid period.
-    const date = [end ? nextDay(end) : undefined, contract.insurance?.renewal?.date]
-      .filter((value): value is string => Boolean(value))
-      .sort()
-      .at(-1);
+    const date = insuranceRenewalDate(
+      contract,
+      input.invoices.filter((invoice) => invoice.contractId === contract.id),
+    );
     if (!date) continue;
     if (date < input.today) continue;
     events.push({

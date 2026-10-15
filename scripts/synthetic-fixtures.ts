@@ -544,3 +544,39 @@ write(
     ]),
   ],
 );
+
+// Fidelidade: monthly health insurance receipt (Fatura/Recibo), exempt from VAT. Commercial
+// premium 80,00 € + INEM 2,00 € + stamp duty 4,00 € (QR field M) = 86,00 €. Some accented
+// letters come out of the real PDFs as U+FFFD, as here. Values invented.
+write(
+  'fidelidade',
+  'synthetic-1',
+  [
+    {
+      page: 1,
+      text: 'A:500918880*B:999999990*C:PT*D:FR*E:N*F:20261005*G:FR AAA0000/000000001*H:ABCD1234-000000001*I1:PT*I2:80.00*L:2.00*M:4.00*N:4.00*O:86.00*Q:abcd*R:0000',
+    },
+  ],
+  [
+    page(1, [
+      ['FATURA/RECIBO N� FR AAA0000/000000001', 356, 37],
+      ['Ramo/Produto:', 68, 255],
+      ['SA�DE EXEMPLO INDIVIDUAL', 68, 275],
+      ['INEM', 201, 303],
+      ['2,00', 396, 303],
+      ['SELO', 201, 317],
+      ['4,00', 396, 317],
+      ['TOTAL', 479, 320],
+      ['PR�MIO', 98, 331],
+      ['86,00', 488, 345],
+      ['PR�MIO COMERCIAL:', 85, 360],
+      ['80,00', 118, 380],
+      ['Data de Cobran�a: 2026-10-01', 201, 413],
+      ['Ap�lice: 1234567', 68, 532],
+      ['N� Cliente: 1000000001', 333, 532],
+      ['Per�odo do Recibo: 2026-10-01 a 2026-10-31', 68, 544],
+      ['Lisboa, 05 de outubro de 2026', 432, 670],
+      ['Fidelidade - Companhia de Seguros, S.A. - Exemplo sintético', 37, 817],
+    ]),
+  ],
+);

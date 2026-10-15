@@ -335,3 +335,19 @@ describe('insurance renewal letter', () => {
     ).not.toContain('premium_notice');
   });
 });
+
+describe('monthly insurance instalments', () => {
+  it('does not announce a renewal every month', () => {
+    const health = contract({ sector: 'insurance' });
+    const receipt = {
+      ...invoice('m', '2026-10-06', 11095),
+      periodStart: '2026-10-01',
+      periodEnd: '2026-10-31',
+    };
+    expect(
+      kinds(
+        computeAlerts(input({ contracts: [health], invoices: [receipt], today: '2026-10-15' })),
+      ),
+    ).toEqual([]);
+  });
+});
