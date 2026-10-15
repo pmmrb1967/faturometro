@@ -21,7 +21,13 @@ import { browserIngestDeps } from './browser-deps';
 import { ContributeOffer } from '../contribute/ContributeOffer';
 import { shouldOffer } from '../contribute/eligible';
 import { AiExtractPanel } from '../ai/AiExtractPanel';
-import { ingestFile, type IngestOutcome, type ParsedDocument, type ReadQr } from './ingest';
+import {
+  addPhotoPage,
+  ingestFile,
+  type IngestOutcome,
+  type ParsedDocument,
+  type ReadQr,
+} from './ingest';
 import { emptyForm, formFromParsed, formFromQr, type FormBase } from '../invoices/form';
 import { ReviewForm } from '../invoices/ReviewForm';
 import { PolicyDocumentCard } from '../insurance/PolicyDocumentCard';
@@ -47,6 +53,9 @@ export function AddInvoice() {
   const [state, setState] = useState<State>({ step: 'idle' });
   const fileInput = useRef<HTMLInputElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
+  const pageInput = useRef<HTMLInputElement>(null);
+  /** Other pages of a photographed invoice (sent to the AI with the first one). */
+  const [morePhotos, setMorePhotos] = useState<PendingFile[]>([]);
   /** Files received with "Share → Faturómetro" still waiting to be read. */
   const [sharedLeft, setSharedLeft] = useState(0);
   /** Files chosen, dropped or opened with the app, in memory, waiting to be read. */
@@ -107,6 +116,7 @@ export function AddInvoice() {
 
   async function read(file: PendingFile, typedPassword?: string, remember = false) {
     setState({ step: 'reading' });
+    setMorePhotos([]);
     try {
       const settings = await getSettings(repos);
       const passwords = [settings.ownNif, typedPassword].filter((password): password is string =>
@@ -134,6 +144,16 @@ export function AddInvoice() {
     const files = [...(event.target.files ?? [])];
     event.target.value = '';
     enqueue(files);
+  }
+
+  async function addPage(event: ChangeEvent<HTMLInputElement>) {
+    const photo = event.target.files?.[0];
+    event.target.value = '';
+    if (!photo || state.step !== 'done' || state.outcome.kind !== 'read') return;
+    const page = { bytes: new Uint8Array(await photo.arrayBuffer()), mime: photo.type };
+    const outcome = await addPhotoPage(state.outcome, page, browserIngestDeps(repos));
+    setMorePhotos((current) => [...current, page]);
+    setState({ ...state, outcome });
   }
 
   function onDrop(event: DragEvent<HTMLElement>) {
@@ -227,7 +247,38 @@ export function AddInvoice() {
       )}
 
       {state.step === 'error' && <p className="ingest-problem">{copy.failed}</p>}
-      {state.step === 'done' && <Outcome outcome={state.outcome} file={state.file} />}
+      {state.step === 'done' &&
+        state.outcome.kind === 'read' &&
+        state.outcome.fileKind === 'image' && (
+          <div className="photo-pages">
+            <p className="muted">
+              {state.outcome.qrStatus === 'ok' ? copy.pages.hint : copy.pages.hintNoQr}
+            </p>
+            {morePhotos.length > 0 && (
+              <p role="status" className="doc-saved">
+                {copy.pages.count(morePhotos.length + 1)}
+              </p>
+            )}
+            <button
+              type="button"
+              className="action-secondary"
+              onClick={() => pageInput.current?.click()}
+            >
+              {copy.pages.add}
+            </button>
+            <input
+              ref={pageInput}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(event) => void addPage(event)}
+            />
+          </div>
+        )}
+      {state.step === 'done' && (
+        <Outcome outcome={state.outcome} file={state.file} morePhotos={morePhotos} />
+      )}
       {state.step === 'manual' && (
         <ReviewForm
           base={{ fileHash: state.fileHash }}
@@ -313,7 +364,15 @@ function PasswordForm({
 
 type DocStatus = 'saved' | 'skipped';
 
-function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile }) {
+function Outcome({
+  outcome,
+  file,
+  morePhotos = [],
+}: {
+  outcome: IngestOutcome;
+  file: PendingFile;
+  morePhotos?: PendingFile[];
+}) {
   const [status, setStatus] = useState<Record<number, DocStatus>>({});
   /** What the AI read, per document, when no parser knew the layout. */
   const [aiParsed, setAiParsed] = useState<Record<number, ParsedDocument>>({});
@@ -330,6 +389,7 @@ function Outcome({ outcome, file }: { outcome: IngestOutcome; file: PendingFile 
     mime: outcome.mime,
     fileKind: outcome.fileKind,
     protectedPdf: Boolean(outcome.usedPassword),
+    morePhotos,
   });
   const pdfPages = Math.max(1, outcome.pages.length);
   const aiDone = (index: number) => (parsed: ParsedDocument) =>

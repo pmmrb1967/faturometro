@@ -31,9 +31,13 @@ export type InvoiceSource =
   | { kind: 'pdf'; base64: string }
   | {
       kind: 'image';
-      mime: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+      mime: ImageMime;
       base64: string;
+      /** Other pages of the same invoice, photographed one by one. */
+      more?: { mime: ImageMime; base64: string }[];
     };
+
+export type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
 export type AiTask = 'extract' | 'explain' | 'letter' | 'test';
 

@@ -114,6 +114,38 @@ describe('toExtraction', () => {
   });
 });
 
+describe('several photos of one invoice', () => {
+  it('sends every page, and estimates each one', () => {
+    const one = invoiceSource({
+      pages: [],
+      bytes: new Uint8Array([1]),
+      mime: 'image/jpeg',
+      fileKind: 'image',
+      protectedPdf: false,
+    });
+    const three = invoiceSource({
+      pages: [],
+      bytes: new Uint8Array([1]),
+      mime: 'image/jpeg',
+      fileKind: 'image',
+      protectedPdf: false,
+      morePhotos: [
+        { bytes: new Uint8Array([2]), mime: 'image/png' },
+        { bytes: new Uint8Array([3]), mime: 'image/heic' },
+        { bytes: new Uint8Array([4]), mime: 'image/jpeg' },
+      ],
+    });
+    // HEIC is not sent (the API does not read it).
+    expect(three?.kind === 'image' && three.more?.map((page) => page.mime)).toEqual([
+      'image/png',
+      'image/jpeg',
+    ]);
+    const cost = (source: typeof one) =>
+      estimateExtraction('claude-haiku-5-5', source!).inputTokens;
+    expect(cost(three)).toBeGreaterThan(cost(one));
+  });
+});
+
 describe('documentText and invoiceSource', () => {
   const page = {
     items: [
@@ -210,6 +242,24 @@ describe('AnthropicProvider', () => {
         costMicroUsd: costMicroUsd('claude-haiku-5-5', 1000, 200),
       },
     ]);
+  });
+
+  it('sends one image block per photographed page', async () => {
+    const api = fakeApi([{ status: 200, body: message(JSON.stringify(answer())) }]);
+    const provider = new AnthropicProvider({
+      apiKey: 'sk-ant-test',
+      model: 'claude-haiku-5-5',
+      fetch: api.fetch,
+    });
+    await provider.extract({
+      kind: 'image',
+      mime: 'image/jpeg',
+      base64: 'AQ==',
+      more: [{ mime: 'image/png', base64: 'Ag==' }],
+    });
+    const messages = api.requests[0]?.body.messages as { content: { type: string }[] }[];
+    const images = messages[0]?.content.filter((block) => block.type === 'image');
+    expect(images).toHaveLength(2);
   });
 
   it('retries once when the answer does not match the schema, then gives up', async () => {

@@ -568,10 +568,14 @@ export const t = {
         'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). O resto preenches à mão, ou, com uma chave da Anthropic (Definições), a IA pode lê-lo por ti. Para pedir um leitor, usa "Contribuir com este layout".',
       intro:
         'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). Podes pedir à IA que leia o resto.',
+      noKeyNoQr:
+        'Sem código QR nem leitor automático: preenche os dados à mão, ou, com uma chave da Anthropic (Definições), a IA pode lê-los por ti.',
+      introNoQr: 'Sem código QR nem leitor automático: podes pedir à IA que leia a fatura.',
       willSend: 'Vai ser enviado para api.anthropic.com:',
       sendText: (chars: number) => `o texto da fatura (${chars.toLocaleString('pt-PT')} carateres)`,
       sendPdf: 'o PDF da fatura (não tem texto, é uma digitalização)',
       sendImage: 'a fotografia da fatura',
+      sendImages: (count: number) => `as ${count} fotografias da fatura`,
       showText: 'Ver o texto que vai ser enviado',
       model: (label: string) => `Modelo: ${label}.`,
       cost: (cost: string) => `Custo estimado: cerca de ${cost} (no máximo).`,
@@ -983,6 +987,13 @@ export const t = {
     intro:
       'Escolhe o PDF descarregado da área de cliente ou tira uma fotografia à fatura em papel.',
     chooseFile: 'Escolher ficheiro',
+    pages: {
+      hint: 'A fatura tem mais páginas? Fotografa-as antes de pedir à IA, para que leia tudo.',
+      hintNoQr:
+        'O código QR não estava nesta fotografia. Se a fatura tiver mais páginas, fotografa a página onde ele está.',
+      add: 'Acrescentar outra página desta fatura',
+      count: (count: number) => `${count} páginas desta fatura.`,
+    },
     nextFile: (count: number) =>
       count === 1 ? 'Ler o ficheiro que falta' : `Ler o próximo ficheiro (faltam ${count})`,
     dropHint:

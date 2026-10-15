@@ -89,7 +89,11 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   if (!session || !aiAvailable(session.profile, settings)) {
     return (
       <p className="muted ai-panel">
-        {session && isGuest(session.profile) ? t.guest.aiNeedsAccount : copy.noKey}
+        {session && isGuest(session.profile)
+          ? t.guest.aiNeedsAccount
+          : qr
+            ? copy.noKey
+            : copy.noKeyNoQr}
       </p>
     );
   }
@@ -99,14 +103,16 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   const estimate = estimateExtraction(model, source, pdfPages);
   return (
     <div className="ai-panel">
-      <p>{copy.intro}</p>
+      <p>{qr ? copy.intro : copy.introNoQr}</p>
       <p className="muted">
         {copy.willSend}{' '}
         {source.kind === 'text'
           ? copy.sendText(source.text.length)
           : source.kind === 'pdf'
             ? copy.sendPdf
-            : copy.sendImage}
+            : source.more?.length
+              ? copy.sendImages(source.more.length + 1)
+              : copy.sendImage}
         . {copy.model(findModel(model).label)} {copy.cost(formatMicroUsd(estimate.costMicroUsd))}
       </p>
       {source.kind === 'text' && (

@@ -50,9 +50,10 @@ function sourceBlocks(source: InvoiceSource): ContentBlock[] {
     ];
   }
   if (source.kind === 'image') {
-    return [
-      { type: 'image', source: { type: 'base64', media_type: source.mime, data: source.base64 } },
-    ];
+    return [source, ...(source.more ?? [])].map((page) => ({
+      type: 'image' as const,
+      source: { type: 'base64' as const, media_type: page.mime, data: page.base64 },
+    }));
   }
   return [];
 }

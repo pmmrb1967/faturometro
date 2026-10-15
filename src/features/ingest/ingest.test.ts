@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { sha256Hex } from '../../lib/crypto';
 import { PdfPasswordError } from '../../pdf/text';
 import { layoutFixtures } from '../../test/fixtures';
-import { docKeyFor, ingestFile, type IngestDeps } from './ingest';
+import { addPhotoPage, docKeyFor, ingestFile, type IngestDeps } from './ingest';
 
 // Synthetic QR codes (AT specification style); no real invoice data.
 const QR_LIGHT =
@@ -115,6 +115,27 @@ describe('ingestFile', () => {
       deps({ readImage: async () => [{ text: QR_GAS }] }),
     );
     expect(outcome).toMatchObject({ kind: 'read', fileKind: 'image', qrStatus: 'ok', pages: [] });
+  });
+
+  it('takes the QR code from another page photographed later', async () => {
+    const first = await ingestFile(
+      { bytes: new Uint8Array([0xff, 0xd8, 0xff]), mime: 'image/jpeg' },
+      deps({ readImage: async () => [] }),
+    );
+    if (first.kind !== 'read') throw new Error('not read');
+    expect(first.qrStatus).toBe('missing');
+    const page = { bytes: new Uint8Array([0xff, 0xd8, 0xfe]), mime: 'image/jpeg' };
+    const second = await addPhotoPage(
+      first,
+      page,
+      deps({ readImage: async () => [{ text: QR_GAS }] }),
+    );
+    expect(second).toMatchObject({ qrStatus: 'ok', fileHash: first.fileHash });
+    // A page without a QR code changes nothing; neither does a page after the QR was found.
+    expect(await addPhotoPage(first, page, deps({ readImage: async () => [] }))).toBe(first);
+    expect(
+      await addPhotoPage(second, page, deps({ readImage: async () => [{ text: QR_LIGHT }] })),
+    ).toBe(second);
   });
 
   it('marks unreadable QR codes as invalid', async () => {

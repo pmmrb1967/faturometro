@@ -27,7 +27,7 @@ export function estimateExtraction(model: string, source: InvoiceSource, pdfPage
     source.kind === 'text'
       ? estimateTextTokens(source.text)
       : source.kind === 'image'
-        ? IMAGE_TOKENS
+        ? IMAGE_TOKENS * (1 + (source.more?.length ?? 0))
         : PDF_PAGE_TOKENS * Math.max(1, pdfPages);
   const inputTokens = estimateTextTokens(EXTRACT_SYSTEM) + SCHEMA_OVERHEAD_TOKENS + document;
   return {

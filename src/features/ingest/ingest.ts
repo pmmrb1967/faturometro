@@ -150,17 +150,7 @@ export async function ingestFile(
     found = await deps.readImage(input.bytes, input.mime);
   }
 
-  const qrs: ReadQr[] = [];
-  for (const qr of found) {
-    const result = parseFiscalQr(qr.text);
-    const read: ReadQr = { found: qr, result };
-    if (result.ok && result.qr.docId) {
-      read.docKey = await docKeyFor(result.qr.issuerNif, result.qr.docId);
-      const duplicate = await deps.findInvoiceIdByDocKey(read.docKey);
-      if (duplicate) read.duplicateInvoiceId = duplicate;
-    }
-    qrs.push(read);
-  }
+  const qrs = await readFoundQrs(found, deps);
 
   const parsedQrs = qrs.flatMap((qr) => (qr.result.ok ? [qr.result.qr] : []));
   for (const qr of qrs) {
@@ -187,4 +177,35 @@ export async function ingestFile(
     if (parsed) outcome.parsed = parsed;
   }
   return outcome;
+}
+
+/** Parses the QR codes found in a file and flags invoices already stored. */
+async function readFoundQrs(found: FoundQr[], deps: IngestDeps): Promise<ReadQr[]> {
+  const qrs: ReadQr[] = [];
+  for (const qr of found) {
+    const result = parseFiscalQr(qr.text);
+    const read: ReadQr = { found: qr, result };
+    if (result.ok && result.qr.docId) {
+      read.docKey = await docKeyFor(result.qr.issuerNif, result.qr.docId);
+      const duplicate = await deps.findInvoiceIdByDocKey(read.docKey);
+      if (duplicate) read.duplicateInvoiceId = duplicate;
+    }
+    qrs.push(read);
+  }
+  return qrs;
+}
+
+/**
+ * Another page of a photographed invoice. Its QR code counts when the pages
+ * so far had none (it is often on the first page, sometimes on another).
+ */
+export async function addPhotoPage(
+  outcome: Extract<IngestOutcome, { kind: 'read' }>,
+  input: { bytes: Uint8Array; mime: string },
+  deps: IngestDeps,
+): Promise<Extract<IngestOutcome, { kind: 'read' }>> {
+  if (outcome.qrStatus === 'ok') return outcome;
+  const qrs = await readFoundQrs(await deps.readImage(input.bytes, input.mime), deps);
+  if (!qrs.some((qr) => qr.result.ok)) return outcome;
+  return { ...outcome, qrs, qrStatus: 'ok' };
 }

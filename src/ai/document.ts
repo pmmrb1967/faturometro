@@ -28,6 +28,8 @@ export function invoiceSource(input: {
   mime: string;
   fileKind: 'pdf' | 'image';
   protectedPdf: boolean;
+  /** Photos of the invoice's other pages. */
+  morePhotos?: { bytes: Uint8Array; mime: string }[];
 }): InvoiceSource | undefined {
   const text = documentText(input.pages);
   const hasText = input.pages.some((page) => page.items.some((item) => item.str.trim()));
@@ -36,5 +38,15 @@ export function invoiceSource(input: {
     return input.protectedPdf ? undefined : { kind: 'pdf', base64: toBase64(input.bytes) };
   }
   const mime = IMAGE_TYPES.find((type) => type === input.mime) as ImageType | undefined;
-  return mime ? { kind: 'image', mime, base64: toBase64(input.bytes) } : undefined;
+  if (!mime) return undefined;
+  const more = (input.morePhotos ?? []).flatMap((photo) => {
+    const type = IMAGE_TYPES.find((candidate) => candidate === photo.mime) as ImageType | undefined;
+    return type ? [{ mime: type, base64: toBase64(photo.bytes) }] : [];
+  });
+  return {
+    kind: 'image',
+    mime,
+    base64: toBase64(input.bytes),
+    ...(more.length > 0 ? { more } : {}),
+  };
 }
