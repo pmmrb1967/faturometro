@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
@@ -12,6 +13,10 @@ export function AppShell() {
   const { session, lock, updateProfile } = useSession();
   useAutoSync(session, updateProfile);
   const updateAvailable = useUpdateAvailable();
+  // The long title is for search results (index.html); inside the app the tab shows the name.
+  useEffect(() => {
+    document.title = 'Faturómetro';
+  }, []);
   return (
     <div className="shell">
       <header className="topbar">
