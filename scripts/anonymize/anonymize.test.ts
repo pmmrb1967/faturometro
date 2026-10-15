@@ -223,6 +223,25 @@ describe('Anonymizer.qr', () => {
   });
 });
 
+describe('Anonymizer.page', () => {
+  it('scrambles a term split across text items, in place', () => {
+    const anon = make(['Maria Sousa']);
+    const items = ['Titular:', 'M', 'A', 'R', 'I', 'A', 'Lisboa', 'A'];
+    const out = anon.page(items);
+    expect(out.slice(1, 6).join('').toLowerCase()).not.toBe('maria');
+    // Untouched elsewhere: the label, the town, and the same letter in another item.
+    expect(out[0]).toBe('Titular:');
+    expect(out[6]).toBe('Lisboa');
+    expect(out[7]).toBe('A');
+    expect(() => anon.assertNoLeaks({ items: out, joined: [out.join('')] })).not.toThrow();
+  });
+
+  it('still anonymizes each item on its own', () => {
+    const anon = make(['Maria Sousa']);
+    expect(anon.page(['Maria Sousa'])[0]).not.toMatch(/maria/i);
+  });
+});
+
 describe('Anonymizer.assertNoLeaks', () => {
   it('passes on anonymized output and fails when a sensitive value remains', () => {
     const anon = make(['Maria Sousa']);
@@ -240,6 +259,46 @@ describe('Anonymizer.assertNoLeaks', () => {
     } catch (error) {
       expect(String(error)).not.toMatch(/maria/i);
     }
+  });
+
+  it('says which term leaked and how, without the value', () => {
+    const anon = make(['Rua Exemplo 12', 'Maria Sousa']);
+    const message = (input: Parameters<typeof anon.assertNoLeaks>[0]) => {
+      try {
+        anon.assertNoLeaks(input);
+        return '';
+      } catch (error) {
+        return String(error);
+      }
+    };
+    // Split across items: only visible when the page's items are joined.
+    const split = message({ items: ['Mar', 'ia'], joined: ['Maria'] });
+    expect(split).toMatch(/word of term 2 split across text items/);
+    expect(split).not.toMatch(/maria|sousa/i);
+    expect(message({ items: ['Maria'] })).toMatch(/word of term 2 as a word in a text item/);
+    expect(message({ items: ['M a r i a'] })).toMatch(/spaced out in a text item/);
+  });
+
+  it('does not count a value inside a longer word as a leak', () => {
+    const anon = make(['Rui Matos']);
+    // "Matos" inside "Matosinhos" (a town), in an item and in the joined page.
+    expect(() =>
+      anon.assertNoLeaks({ items: ['Matosinhos', 'Porto'], joined: ['MatosinhosPorto'] }),
+    ).not.toThrow();
+    // Nor words of the text that spell it without their spaces ("es quer do").
+    const address = make(['Rua Nova 5 Esquerdo']);
+    expect(() =>
+      address.assertNoLeaks({
+        items: ['provenientes', ' quer do próprio'],
+        joined: ['provenientes quer do próprio'],
+      }),
+    ).not.toThrow();
+    expect(address.page(['provenientes', ' quer do próprio'])).toEqual([
+      'provenientes',
+      ' quer do próprio',
+    ]);
+    // But not when the page joins two items into it.
+    expect(() => anon.assertNoLeaks({ items: ['Ma', 'tos'], joined: ['Matos'] })).toThrow(/split/);
   });
 });
 

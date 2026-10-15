@@ -100,19 +100,21 @@ async function main(): Promise<void> {
     key: randomBytes(32),
   });
 
-  for (const page of extracted.pages) anonymizer.scanPage(page.items.map((item) => item.str));
-  const pages = extracted.pages.map((page) => ({
-    ...page,
-    items: page.items.map((item) => ({ ...item, str: anonymizer.text(item.str) })),
-  }));
+  const pages = extracted.pages.map((page) => {
+    const texts = anonymizer.page(page.items.map((item) => item.str));
+    return {
+      ...page,
+      items: page.items.map((item, index) => ({ ...item, str: texts[index] ?? '' })),
+    };
+  });
   const qrs = extracted.qrs.map((qr) => ({ ...qr, text: anonymizer.qr(qr.text) }));
 
-  anonymizer.assertNoLeaks([
-    ...pages.flatMap((page) => page.items.map((item) => item.str)),
+  anonymizer.assertNoLeaks({
+    items: pages.flatMap((page) => page.items.map((item) => item.str)),
     // Items are anonymized one by one; also check values split across items.
-    ...pages.map((page) => page.items.map((item) => item.str).join('')),
-    ...qrs.map((qr) => qr.text),
-  ]);
+    joined: pages.map((page) => page.items.map((item) => item.str).join('')),
+    other: qrs.map((qr) => qr.text),
+  });
 
   const fixture = {
     schemaVersion: 2,

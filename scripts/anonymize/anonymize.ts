@@ -136,9 +136,35 @@ function normalizeForLeakCheck(text: string): string {
   return stripAccents(text).toLowerCase().replace(/\s+/g, '');
 }
 
+/** Texts to check for leaks: see Anonymizer.assertNoLeaks. */
+export interface LeakCheckInput {
+  items?: readonly string[];
+  joined?: readonly string[];
+  other?: readonly string[];
+}
+
+function isTextArray(input: readonly string[] | LeakCheckInput): input is readonly string[] {
+  return Array.isArray(input);
+}
+
+/** How many times `needle` appears in `text` (non-overlapping). */
+function occurrences(text: string, needle: string): number {
+  if (!needle) return 0;
+  let count = 0;
+  for (
+    let index = text.indexOf(needle);
+    index >= 0;
+    index = text.indexOf(needle, index + needle.length)
+  ) {
+    count++;
+  }
+  return count;
+}
+
 export class Anonymizer {
   private readonly replacements = new Map<string, string>();
-  private readonly originals = new Set<string>();
+  /** Every sensitive value seen, with what it is (never the value): "term 2", "nif"… */
+  private readonly originals = new Map<string, string>();
   private readonly keepNifs: Set<string>;
   private readonly termPatterns: RegExp[];
   /** Whole text items to replace exactly (parts of values split across items). */
@@ -172,7 +198,15 @@ export class Anonymizer {
       (term) =>
         new RegExp(`(?<![\\p{L}\\p{N}])${accentInsensitiveSource(term)}(?![\\p{L}\\p{N}])`, 'giu'),
     );
-    for (const term of unique) this.originals.add(term);
+    // Labels say which line of the terms file a leaked value comes from, not the value.
+    terms.forEach((term, index) => {
+      if (!this.originals.has(term)) this.originals.set(term, `term ${index + 1}`);
+      for (const word of term.split(/[\s,;/]+/)) {
+        if (words.includes(word) && !this.originals.has(word)) {
+          this.originals.set(word, `word of term ${index + 1}`);
+        }
+      }
+    });
   }
 
   /**
@@ -186,6 +220,57 @@ export class Anonymizer {
       this.exactItems.set(four, replacement.slice(0, 4));
       this.exactItems.set(three, replacement.slice(5));
     }
+  }
+
+  /**
+   * Anonymizes a page's text items: each item, then the sensitive terms that
+   * only appear when items are read together ("MA" + "RIA", letter-by-letter
+   * text). Those letters are scrambled where they are, so the same fragment
+   * elsewhere on the page is left alone.
+   */
+  page(items: readonly string[]): string[] {
+    this.scanPage(items);
+    const out = items.map((item) => this.text(item));
+    // Letters and digits of the page, with the item and position each came from, and
+    // whether a space came just before (a split value has none: "MA" + "RIA").
+    const chars: { item: number; at: number; base: string; afterSpace: boolean }[] = [];
+    out.forEach((item, index) => {
+      let space = false;
+      [...item].forEach((char, at) => {
+        if (/\s/.test(char)) {
+          space = true;
+          return;
+        }
+        chars.push({ item: index, at, base: stripAccents(char).toLowerCase(), afterSpace: space });
+        space = false;
+      });
+    });
+    const flat = chars.map((char) => char.base).join('');
+    const marked = new Map<number, Set<number>>();
+    for (const [original, label] of this.originals) {
+      if (!label.includes('term')) continue;
+      const needle = normalizeForLeakCheck(original);
+      if (needle.length < MIN_TERM_WORD_LENGTH) continue;
+      for (let index = flat.indexOf(needle); index >= 0; index = flat.indexOf(needle, index + 1)) {
+        const span = chars.slice(index, index + needle.length);
+        if (new Set(span.map((char) => char.item)).size < 2) continue;
+        // "es" + " quer do" is not "esquerdo": words of the text, not a split value.
+        if (span.slice(1).some((char) => char.afterSpace)) continue;
+        for (const char of span) {
+          const positions = marked.get(char.item) ?? new Set<number>();
+          positions.add(char.at);
+          marked.set(char.item, positions);
+        }
+      }
+    }
+    for (const [index, positions] of marked) {
+      const letters = [...(out[index] ?? '')];
+      const scrambled = [...this.scramble(letters.join(''), positions.size)];
+      for (const at of positions) letters[at] = scrambled[at] ?? letters[at] ?? '';
+      out[index] = letters.join('');
+      this.stats.term++;
+    }
+    return out;
   }
 
   /** Anonymizes free text (a text item from the PDF). */
@@ -273,15 +358,66 @@ export class Anonymizer {
       .join('*');
   }
 
-  /** Throws if any original sensitive value is still present in the given texts. */
-  assertNoLeaks(texts: readonly string[]): void {
-    const haystack = normalizeForLeakCheck(texts.join('\n'));
-    const leaks = [...this.originals].filter((original) => {
+  /**
+   * Throws if any original sensitive value is still present. The error says
+   * what leaked and how (never the value).
+   *
+   * - `items` (anonymized one by one, with the same word boundaries): a value
+   *   as a whole word, or spelled out with spaces ("M A R I A"), is a leak; a
+   *   value only inside a longer word ("Matos" in "Matosinhos") is not.
+   * - `joined` (each page's items joined): more occurrences than the items
+   *   explain means a value split across items ("MA" + "RIA").
+   * - `other` (QR codes; also a plain array): any occurrence is a leak.
+   */
+  assertNoLeaks(input: readonly string[] | LeakCheckInput): void {
+    const {
+      items = [],
+      joined = [],
+      other = [],
+    }: LeakCheckInput = isTextArray(input) ? { other: input } : input;
+    const plain = (text: string) => stripAccents(text).toLowerCase().replace(/\s+/g, ' ');
+    const leaks = [...this.originals].flatMap(([original, label]) => {
       const needle = normalizeForLeakCheck(original);
-      return needle.length >= MIN_TERM_WORD_LENGTH && haystack.includes(needle);
+      if (needle.length < MIN_TERM_WORD_LENGTH) return [];
+      const spaced = plain(original).trim();
+      const multiword = spaced.includes(' ');
+      // Occurrences within the text's words ("es quer do" is not "esquerdo");
+      // a multi-word value is matched with its spaces.
+      const count = (text: string) =>
+        multiword
+          ? occurrences(plain(text), spaced)
+          : plain(text)
+              .split(' ')
+              .reduce((sum, word) => sum + occurrences(normalizeForLeakCheck(word), needle), 0);
+      const whole = new RegExp(
+        `(?<![\\p{L}\\p{N}])${accentInsensitiveSource(original)}(?![\\p{L}\\p{N}])`,
+        'iu',
+      );
+      // Letter by letter with spaces ("M A R I A").
+      const letterSpaced = new RegExp(
+        [...needle].map((char) => escapeRegExp(char)).join('\\s+'),
+        'iu',
+      );
+      const how: string[] = [];
+      let inItems = 0;
+      for (const item of items) {
+        if (!multiword && letterSpaced.test(plain(item))) how.push('spaced out in a text item');
+        const found = count(item);
+        if (found === 0) continue;
+        if (whole.test(item)) how.push('as a word in a text item');
+        inItems += found;
+      }
+      const inPages = joined.reduce((sum, page) => sum + count(page), 0);
+      if (inPages > inItems) how.push('split across text items');
+      if (other.some((text) => normalizeForLeakCheck(text).includes(needle))) {
+        how.push('in a QR code or other text');
+      }
+      return how.length > 0 ? [`${label} ${[...new Set(how)].join(', ')}`] : [];
     });
     if (leaks.length > 0) {
-      throw new Error(`Anonymization leak: ${leaks.length} sensitive value(s) still present`);
+      throw new Error(
+        `Anonymization leak: ${leaks.length} sensitive value(s) still present (${leaks.join('; ')})`,
+      );
     }
   }
 
@@ -305,7 +441,7 @@ export class Anonymizer {
       replacement = this.scramble(original, attempt);
     }
     this.replacements.set(original, replacement);
-    this.originals.add(original);
+    if (!this.originals.has(original)) this.originals.set(original, kind);
     this.stats[kind]++;
     return replacement;
   }
