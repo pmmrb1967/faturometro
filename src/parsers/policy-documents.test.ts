@@ -40,9 +40,47 @@ describe('insurance documents without a QR code', () => {
     }
   });
 
+  it('ignores the product general conditions (not the policy)', () => {
+    for (const fixture of layoutFixtures('fidelidade-general')) {
+      expect(readPolicyDocument(fixture.pages)).toBeNull();
+    }
+  });
+
   it('ignores other documents', () => {
     expect(readPolicyDocument([])).toBeNull();
     for (const fixture of layoutFixtures('nos'))
       expect(readPolicyDocument(fixture.pages)).toBeNull();
+  });
+});
+
+describe('Fidelidade health insurance particular conditions', () => {
+  const health = layoutFixtures('fidelidade-docs');
+
+  it('has fixtures to test against', () => {
+    expect(health.length).toBeGreaterThan(0);
+  });
+
+  it.each(health)('$name', (fixture) => {
+    const document = readPolicyDocument(fixture.pages);
+    expect(document?.kind).toBe('conditions');
+    if (document?.kind !== 'conditions') return;
+    expect(document.issuerName).toBe('Fidelidade');
+    expect(document.title).toMatch(/^Seguro Multicare /);
+    expect(document.policyNumber).toMatch(/^\d+$/);
+    const { details } = document;
+    expect(details.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(details.annualPremiumCents).toBeGreaterThan(0);
+    const coverages = details.coverages ?? [];
+    const hospital = coverages[0];
+    expect(hospital?.name).toMatch(/^Internamento Hospitalar?/);
+    expect(hospital?.capitalCents).toBeGreaterThan(0);
+    expect(hospital?.network).toMatch(/^Multicare \d+% · cliente \d+%$/);
+    expect(hospital?.waitingPeriod).toMatch(/^\d+ dias$/);
+    // The indented "Franquia por Sinistro" row is the coverage's deductible, not a coverage.
+    expect(hospital?.deductible).toMatch(/^rede /);
+    expect(coverages.some((coverage) => /^Franquia/.test(coverage.name))).toBe(false);
+    // A coverage without values is still listed; the page footer is not.
+    expect(coverages.map((coverage) => coverage.name)).toContain('Transporte De Urgência');
+    expect(coverages.some((coverage) => /Página|M-\d/.test(coverage.name))).toBe(false);
   });
 });

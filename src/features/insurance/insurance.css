@@ -29,9 +29,43 @@
   white-space: nowrap;
 }
 
+/* Phones: one card per coverage, each value with its column's name. */
 @media (max-width: 560px) {
+  .coverage-table thead {
+    display: none;
+  }
+
+  .coverage-table,
+  .coverage-table tbody,
+  .coverage-table tr,
+  .coverage-table th,
   .coverage-table td {
+    display: block;
+  }
+
+  .coverage-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .coverage-table th,
+  .coverage-table td {
+    padding: 2px 0;
+    border: 0;
     white-space: normal;
+  }
+
+  .coverage-table tbody th {
+    font-weight: 700;
+  }
+
+  .coverage-table td.is-empty {
+    display: none;
+  }
+
+  .coverage-table td::before {
+    content: attr(data-label) ': ';
+    color: var(--muted);
   }
 }
 

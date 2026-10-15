@@ -86,7 +86,7 @@ function renewalAlert(
   input: AlertInput,
 ): AlertDraft | null {
   if (contract.sector !== 'insurance') return null;
-  const renewal = insuranceRenewalDate(contract, history);
+  const renewal = insuranceRenewalDate(contract, history, input.today);
   if (!renewal) return null;
   // The renewal letter's notice already says when, and for how much.
   if (premiumNotice(contract, input)?.data?.date === renewal) return null;

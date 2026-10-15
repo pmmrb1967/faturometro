@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PolicyDocument } from '../../parsers/policy-documents';
-import { contractForDocument, withPolicyDocument } from './policy-document';
+import { contractForDocument, samePolicy, withPolicyDocument } from './policy-document';
 
 const renewal: PolicyDocument = {
   kind: 'renewal',
@@ -72,5 +72,14 @@ describe('withPolicyDocument', () => {
     });
     expect(next.coverages).toHaveLength(1);
     expect(withPolicyDocument(undefined, conditions).product).toBe('Automóvel Ligeiros');
+  });
+});
+
+describe('samePolicy', () => {
+  it('ignores leading zeros and spaces', () => {
+    expect(samePolicy('0596735', '596735')).toBe(true);
+    expect(samePolicy('596 735', '596735')).toBe(true);
+    expect(samePolicy('596735', '596736')).toBe(false);
+    expect(samePolicy(undefined, '1')).toBe(false);
   });
 });

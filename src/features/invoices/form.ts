@@ -2,6 +2,7 @@
  * Review / manual entry form: the same form is used for QR-read invoices
  * (prefilled, QR fields read-only) and for invoices typed by hand.
  */
+import { samePolicy } from '../insurance/policy-document';
 import { AI_PARSER_PREFIX } from '../../ai/prompts/extract';
 import { isValidNif } from '../../domain/nif';
 import type { Contract, Sector } from '../../domain/types';
@@ -248,7 +249,9 @@ export function defaultContractId(
 ): string {
   // Insurance: one contract per policy (car and home from the same insurer).
   if (policyNumber) {
-    const same = contracts.find((contract) => contract.insurance?.policyNumber === policyNumber);
+    const same = contracts.find((contract) =>
+      samePolicy(contract.insurance?.policyNumber, policyNumber),
+    );
     if (same) return same.id;
     const unnumbered = contracts.find(
       (contract) => contract.sector === sector && !contract.insurance?.policyNumber,

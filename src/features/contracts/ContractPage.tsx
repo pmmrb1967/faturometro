@@ -7,7 +7,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate, formatMonthShort } from '../../lib/dates';
 import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
 import { ContractAssistant } from '../ai/ContractAssistant';
-import { refreshAlerts } from '../alerts/refresh';
+import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
@@ -325,7 +325,7 @@ function MonthlyPriceForm({
 function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, string | undefined][] {
   const insurance = contract.insurance;
   if (contract.sector !== 'insurance') return [];
-  const renewalDate = insuranceRenewalDate(contract, invoices);
+  const renewalDate = insuranceRenewalDate(contract, invoices, today());
   const facts = copy.facts;
   return [
     [

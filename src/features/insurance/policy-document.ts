@@ -7,6 +7,12 @@ import type { PolicyDocument } from '../../parsers/policy-documents';
 
 type Candidate = Pick<Contract, 'id' | 'sector' | 'label' | 'insurance'>;
 
+/** "0596735" and "596735" are the same policy (documents print leading zeros differently). */
+export function samePolicy(a?: string, b?: string): boolean {
+  const key = (value?: string) => value?.replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
+  return Boolean(a && b && key(a) === key(b));
+}
+
 /**
  * The contract the document belongs to: same policy number; else the only
  * insurance contract, if it has no policy number yet (another number is
@@ -18,8 +24,8 @@ export function contractForDocument(
 ): string {
   const insurance = contracts.filter((contract) => contract.sector === 'insurance');
   if (document.policyNumber) {
-    const same = insurance.find(
-      (contract) => contract.insurance?.policyNumber === document.policyNumber,
+    const same = insurance.find((contract) =>
+      samePolicy(contract.insurance?.policyNumber, document.policyNumber),
     );
     if (same) return same.id;
   }
@@ -43,6 +49,7 @@ export function withPolicyDocument(
   if (details.annualPremiumCents !== undefined)
     next.annualPremiumCents = details.annualPremiumCents;
   if (details.bonusMalusPct !== undefined) next.bonusMalusPct = details.bonusMalusPct;
+  if (details.startDate) next.startDate = details.startDate;
   // Receipts already say what the product and object are; fill them only when missing.
   if (details.product && !next.product) next.product = details.product;
   if (details.option && !next.option) next.option = details.option;

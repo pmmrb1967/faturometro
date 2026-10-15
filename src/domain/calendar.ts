@@ -65,6 +65,7 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
     const date = insuranceRenewalDate(
       contract,
       input.invoices.filter((invoice) => invoice.contractId === contract.id),
+      input.today,
     );
     if (!date) continue;
     if (date < input.today) continue;

@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 2,
+  "parserId": "fidelidade-docs",
+  "synthetic": true,
+  "qrs": [],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "CONDIÇÕES PARTICULARES",
+          "x": 71,
+          "y": 167,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "R A M O / M O D A L I D A D E",
+          "x": 58,
+          "y": 277,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N º",
+          "x": 389,
+          "y": 277,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "DE",
+          "x": 400,
+          "y": 277,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "A P Ó L I C E",
+          "x": 411,
+          "y": 277,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "21 / MULTICARE EXEMPLO",
+          "x": 60,
+          "y": 295,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0001234",
+          "x": 390,
+          "y": 295,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "D A T A I N Í C I O",
+          "x": 126,
+          "y": 350,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "P R É M I O T O T A L",
+          "x": 355,
+          "y": 350,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/06/2026",
+          "x": 128,
+          "y": 365,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€ 900,00",
+          "x": 368,
+          "y": 365,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Prestação Direta",
+          "x": 273,
+          "y": 385,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Prestação Reembolso",
+          "x": 390,
+          "y": 385,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Coberturas",
+          "x": 62,
+          "y": 392,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Multicare",
+          "x": 254,
+          "y": 402,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cliente",
+          "x": 326,
+          "y": 402,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Multicare",
+          "x": 390,
+          "y": 402,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cliente",
+          "x": 461,
+          "y": 402,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Internamento",
+          "x": 62,
+          "y": 420,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€30.000,00",
+          "x": 181,
+          "y": 425,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100%",
+          "x": 264,
+          "y": 425,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0%",
+          "x": 336,
+          "y": 425,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "50%",
+          "x": 403,
+          "y": 425,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "50%",
+          "x": 468,
+          "y": 425,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "90 dias",
+          "x": 520,
+          "y": 425,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Hospitalar",
+          "x": 62,
+          "y": 432,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Franquia por",
+          "x": 74,
+          "y": 450,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10%/€100,00/",
+          "x": 310,
+          "y": 455,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sinistro",
+          "x": 74,
+          "y": 462,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0%/€0,00",
+          "x": 456,
+          "y": 462,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€200,00",
+          "x": 325,
+          "y": 470,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Transporte De",
+          "x": 74,
+          "y": 482,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Urgência",
+          "x": 74,
+          "y": 497,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consultas",
+          "x": 62,
+          "y": 515,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-",
+          "x": 207,
+          "y": 520,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0%",
+          "x": 270,
+          "y": 520,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100%",
+          "x": 330,
+          "y": 520,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "05/06/2026 10:00:00 EXEMPLO",
+          "x": 50,
+          "y": 760,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Página 1 de 1",
+          "x": 523,
+          "y": 785,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fidelidade - Companhia de Seguros, S.A. Exemplo sintético",
+          "x": 57,
+          "y": 800,
+          "width": 262.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

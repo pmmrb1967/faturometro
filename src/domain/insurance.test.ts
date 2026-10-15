@@ -20,3 +20,17 @@ describe('insuranceRenewalDate', () => {
     expect(insuranceRenewalDate({}, [{}])).toBeUndefined();
   });
 });
+
+describe('contract start date', () => {
+  it('renews on the next anniversary, even with monthly receipts', () => {
+    const health = { insurance: { startDate: '2026-05-01' } };
+    const monthly = [{ periodStart: '2026-10-01', periodEnd: '2026-10-31' }];
+    expect(insuranceRenewalDate(health, monthly, '2026-10-15')).toBe('2027-05-01');
+    expect(insuranceRenewalDate(health, monthly, '2027-05-01')).toBe('2027-05-01');
+    expect(insuranceRenewalDate(health, monthly, '2027-05-02')).toBe('2028-05-01');
+    // Not the start itself.
+    expect(insuranceRenewalDate(health, [], '2026-04-01')).toBe('2027-05-01');
+    // Without today, the anniversary is not used.
+    expect(insuranceRenewalDate(health, monthly)).toBeUndefined();
+  });
+});

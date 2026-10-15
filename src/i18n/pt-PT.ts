@@ -184,6 +184,9 @@ export const t = {
       coverage: 'Cobertura',
       capital: 'Capital seguro',
       deductible: 'Franquia',
+      network: 'Na rede',
+      reimbursement: 'Por reembolso',
+      waiting: 'Carência',
       coveragesNote:
         'Das condições particulares da apólice. Usa esta lista para pedir propostas com as mesmas coberturas a outras seguradoras.',
     },

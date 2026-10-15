@@ -40,6 +40,8 @@ export interface InsuranceDetails {
   /** From the particular conditions: every coverage, its capital and deductible. */
   coverages?: InsuranceCoverage[];
   annualPremiumCents?: Cents;
+  /** When the contract started: it renews every year on this day. */
+  startDate?: IsoDate;
   /** Car insurance bonus/malus index, in percent. */
   bonusMalusPct?: number;
 }
@@ -60,6 +62,12 @@ export interface InsuranceCoverage {
   capital?: string;
   capitalCents?: Cents;
   deductible?: string;
+  /** Health insurance: share paid in the insurer's network ("Seguradora 100 % · cliente 0 %"). */
+  network?: string;
+  /** Health insurance: share paid by reimbursement, outside the network. */
+  reimbursement?: string;
+  /** Waiting period before the coverage applies ("180 dias"). */
+  waitingPeriod?: string;
 }
 
 export interface Contract extends SyncMeta {

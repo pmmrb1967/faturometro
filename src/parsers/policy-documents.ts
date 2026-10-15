@@ -11,6 +11,7 @@
  */
 import type { InsuranceCoverage, InsuranceDetails, InsuranceRenewal } from '../domain/types';
 import type { PageText } from '../pdf/text';
+import { readFidelidadeConditions } from './fidelidade-documents';
 import { amount, date, findItem, normalize, quantity, rows, valueRightOf, type Row } from './utils';
 
 export type PolicyDocument =
@@ -227,6 +228,8 @@ function readConditions(pages: readonly PageText[]): PolicyDocument | null {
   if (make || model) details.insuredObject = [make, model].filter(Boolean).join(' ');
   const premium = amount(label(pages, /^Prémio do Contrato \(valor anual\)$/));
   if (premium !== null) details.annualPremiumCents = premium;
+  const start = date(label(pages, /^Data efeito:$/)?.slice(0, 10));
+  if (start) details.startDate = start;
   const bonus = percent(label(pages, /^Índice de bonus\/malus:$/) ?? '');
   if (bonus !== null) details.bonusMalusPct = bonus;
   const name = title(pages);
@@ -242,6 +245,13 @@ function readConditions(pages: readonly PageText[]): PolicyDocument | null {
 /** A renewal letter or particular conditions of a known insurer; null otherwise. */
 export function readPolicyDocument(pages: readonly PageText[]): PolicyDocument | null {
   const all = text(pages);
+  if (/Fidelidade - Companhia de Seguros/.test(all)) {
+    const isConditions = pages[0]?.items.some(
+      (item) => normalize(item.str) === 'CONDIÇÕES PARTICULARES',
+    );
+    const conditions = isConditions ? readFidelidadeConditions(pages) : null;
+    return conditions ? { kind: 'conditions', issuerName: 'Fidelidade', ...conditions } : null;
+  }
   if (!ISSUER.test(all)) return null;
   if (/Carta Ata/.test(all)) return readRenewal(pages);
   if (/Condições Particulares da/.test(all)) return readConditions(pages);
