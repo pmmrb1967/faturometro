@@ -9,12 +9,12 @@ import { useSession } from './session-context';
  * /entrar, and back to the same page after signing in.
  */
 export function RequireSession({ children }: { children: ReactNode }) {
-  const { session, signIn } = useSession();
+  const { session, restoring, signIn } = useSession();
   const location = useLocation();
   const [entry, setEntry] = useState<'checking' | 'guest' | 'login'>('checking');
 
   useEffect(() => {
-    if (session) return;
+    if (session || restoring) return;
     let active = true;
     void (async () => {
       const [guest, emails] = await Promise.all([openGuest(), listAccountEmails()]);
@@ -26,7 +26,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [session, signIn]);
+  }, [session, restoring, signIn]);
 
   if (session) return children;
   if (entry === 'login') {

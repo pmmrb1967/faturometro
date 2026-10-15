@@ -1,7 +1,8 @@
 /**
- * Service worker updates. Reloading locks the app (the key lives only in
- * memory), so inside the app a new version is offered instead of applied in
- * the middle of a task; signed out, it is applied at once (update-policy.ts).
+ * Service worker updates. Reloading keeps the session (session-store.ts) but
+ * loses what is being typed, so inside the app a new version is offered
+ * instead of applied in the middle of a task; signed out, it is applied at
+ * once (update-policy.ts).
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import { registerSW } from 'virtual:pwa-register';

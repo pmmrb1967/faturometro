@@ -175,7 +175,7 @@ export const t = {
   placeholder: 'Em construção.',
   update: {
     available: 'Há uma nova versão da app.',
-    hint: 'Ao atualizar, vais ter de voltar a entrar.',
+    hint: 'A página vai recarregar: guarda primeiro o que estiveres a escrever.',
     apply: 'Atualizar',
   },
   signOut: 'Sair',

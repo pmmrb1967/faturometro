@@ -14,6 +14,8 @@ export interface Session {
 
 export interface SessionContextValue {
   session: Session | null;
+  /** On load: still looking for a session kept across a reload of this tab. */
+  restoring: boolean;
   signIn: (account: UnlockedAccount) => void;
   lock: () => void;
   /** Keeps the session in step with a saved profile (sync state). */
