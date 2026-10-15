@@ -11,6 +11,7 @@ import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
+import { billingFrequency } from '../../domain/grouping';
 import { insuranceRenewalDate } from '../../domain/insurance';
 import type { Contract, Invoice } from '../../domain/types';
 import { InsuranceSection } from '../insurance/InsuranceSection';
@@ -86,6 +87,7 @@ export function ContractPage() {
     [copy.facts.customerNumber, contract.customerNumber],
     [copy.facts.supplyPoint, contract.supplyPointId],
     [copy.facts.tariff, contract.tariffName],
+    [copy.facts.billing, billingOf(invoices)],
     [
       copy.facts.power,
       contract.electricity
@@ -352,4 +354,13 @@ function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, strin
     ],
     [facts.renewal, renewalDate && contract.active ? formatIsoDate(renewalDate) : undefined],
   ];
+}
+
+/** How often the contract is billed, from its latest invoice with a billing period. */
+function billingOf(invoices: Invoice[]): string | undefined {
+  const latest = [...invoices]
+    .reverse()
+    .find((invoice) => invoice.periodStart && invoice.periodEnd);
+  const frequency = latest && billingFrequency(latest.periodStart, latest.periodEnd);
+  return frequency ? t.frequency[frequency] : undefined;
 }

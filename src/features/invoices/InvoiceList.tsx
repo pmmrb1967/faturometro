@@ -1,4 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { GroupBlock } from '../../components/GroupBlock';
+import { billingFrequency, byGroup } from '../../domain/grouping';
+import type { Invoice } from '../../domain/types';
+import { today } from '../alerts/refresh';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
@@ -33,6 +37,38 @@ export function InvoiceList() {
   }, [session]);
 
   if (!data) return null;
+  const yearAgo = `${Number(today().slice(0, 4)) - 1}${today().slice(4)}`;
+  const groups = byGroup(
+    data.invoices,
+    (invoice) => data.contracts.get(invoice.contractId)?.sector ?? 'other',
+  );
+
+  const row = (invoice: Invoice) => {
+    const frequency = billingFrequency(invoice.periodStart, invoice.periodEnd);
+    return (
+      <li key={invoice.id} className="list-item">
+        <strong>{data.providers.get(invoice.providerId)?.name}</strong>
+        <span className="amount">{formatCents(invoice.totalCents)}</span>
+        <span className="meta">
+          {formatIsoDate(invoice.issueDate)} · {data.contracts.get(invoice.contractId)?.label}
+          {frequency && ` · ${t.frequency[frequency]}`}
+        </span>
+        {data.originals.get(invoice.fileHash) && (
+          <OriginalButton
+            fileHash={invoice.fileHash}
+            state={data.originals.get(invoice.fileHash)!}
+          />
+        )}
+        {['local', 'uploaded'].includes(data.originals.get(invoice.fileHash) ?? '') &&
+          shouldOffer({
+            fileKind: 'pdf',
+            hasText: true,
+            ...(invoice.parserId ? { parserId: invoice.parserId } : {}),
+            validation: invoice.validation,
+          }) && <ContributeFromOriginal fileHash={invoice.fileHash} />}
+      </li>
+    );
+  };
 
   return (
     <section aria-labelledby="invoice-list-title">
@@ -42,30 +78,22 @@ export function InvoiceList() {
       {data.invoices.length === 0 ? (
         <p className="muted">{t.invoices.empty}</p>
       ) : (
-        <ul className="list">
-          {data.invoices.map((invoice) => (
-            <li key={invoice.id} className="list-item">
-              <strong>{data.providers.get(invoice.providerId)?.name}</strong>
-              <span className="amount">{formatCents(invoice.totalCents)}</span>
-              <span className="meta">
-                {formatIsoDate(invoice.issueDate)} · {data.contracts.get(invoice.contractId)?.label}
-              </span>
-              {data.originals.get(invoice.fileHash) && (
-                <OriginalButton
-                  fileHash={invoice.fileHash}
-                  state={data.originals.get(invoice.fileHash)!}
-                />
-              )}
-              {['local', 'uploaded'].includes(data.originals.get(invoice.fileHash) ?? '') &&
-                shouldOffer({
-                  fileKind: 'pdf',
-                  hasText: true,
-                  ...(invoice.parserId ? { parserId: invoice.parserId } : {}),
-                  validation: invoice.validation,
-                }) && <ContributeFromOriginal fileHash={invoice.fileHash} />}
-            </li>
-          ))}
-        </ul>
+        groups.map(({ group, items }) => (
+          <GroupBlock
+            key={group}
+            title={t.groups[group]}
+            summary={t.groups.invoices(
+              items.length,
+              formatCents(
+                items
+                  .filter((invoice) => invoice.issueDate >= yearAgo)
+                  .reduce((sum, invoice) => sum + invoice.totalCents, 0),
+              ),
+            )}
+          >
+            <ul className="list">{items.map(row)}</ul>
+          </GroupBlock>
+        ))
       )}
     </section>
   );

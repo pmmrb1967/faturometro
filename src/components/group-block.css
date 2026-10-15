@@ -1,0 +1,31 @@
+.group-block {
+  margin: 0 0 20px;
+}
+
+.group-block > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.group-block > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.group-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.group-summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+}

@@ -568,6 +568,23 @@ export const t = {
       too_large: 'O documento é demasiado grande para enviar.',
     },
   },
+  groups: {
+    energy: 'Energia',
+    telecom: 'Telecomunicações',
+    water: 'Água e resíduos',
+    insurance: 'Seguros',
+    other: 'Outras despesas',
+    invoices: (count: number, total: string) =>
+      `${count === 1 ? '1 fatura' : `${count} faturas`} · ${total} nos últimos 12 meses`,
+    contracts: (count: number) => (count === 1 ? '1 contrato' : `${count} contratos`),
+  },
+  frequency: {
+    monthly: 'Mensal',
+    bimonthly: 'Bimestral',
+    quarterly: 'Trimestral',
+    semiannual: 'Semestral',
+    annual: 'Anual',
+  },
   sectors: {
     electricity: 'Eletricidade',
     gas: 'Gás',
@@ -651,6 +668,7 @@ export const t = {
       customerNumber: 'N.º de cliente',
       supplyPoint: 'CPE / CUI',
       tariff: 'Tarifa',
+      billing: 'Faturação',
       power: 'Potência contratada',
       cycle: 'Ciclo horário',
       socialTariff: 'Tarifa social',
