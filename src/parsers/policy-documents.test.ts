@@ -70,6 +70,7 @@ describe('Fidelidade health insurance particular conditions', () => {
     const { details } = document;
     expect(details.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(details.annualPremiumCents).toBeGreaterThan(0);
+    expect(details.insuredPersons).toBeGreaterThanOrEqual(1);
     const coverages = details.coverages ?? [];
     const hospital = coverages[0];
     expect(hospital?.name).toMatch(/^Internamento Hospitalar?/);

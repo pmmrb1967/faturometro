@@ -40,6 +40,8 @@ export interface InsuranceDetails {
   /** From the particular conditions: every coverage, its capital and deductible. */
   coverages?: InsuranceCoverage[];
   annualPremiumCents?: Cents;
+  /** How many people the policy covers (health insurance); names are never kept. */
+  insuredPersons?: number;
   /** When the contract started: it renews every year on this day. */
   startDate?: IsoDate;
   /** Car insurance bonus/malus index, in percent. */

@@ -186,6 +186,33 @@ function pageCoverages(page: PageText): InsuranceCoverage[] {
   return coverages;
 }
 
+/**
+ * How many people the policy covers: rows of the "Pessoa Segura | Data
+ * Nascimento | Sexo | Data adesão" table (only counted; names and birth dates
+ * are never read).
+ */
+function insuredPersons(pages: readonly PageText[]): number | undefined {
+  for (const page of pages) {
+    const all = rows(page);
+    const header = all.findIndex((row) =>
+      row.items.some((item) => normalize(item.str) === 'Pessoa Segura'),
+    );
+    const sex = all[header]?.items.find((item) => normalize(item.str) === 'Sexo');
+    if (header < 0 || !sex) continue;
+    let count = 0;
+    let previous = all[header]!.y;
+    for (const row of all.slice(header + 1)) {
+      if (row.y - previous > 20) break;
+      const mark = row.items.find((item) => Math.abs(item.x - sex.x) <= 10);
+      if (!mark || !/^[MF]$/.test(mark.str.trim())) break;
+      count++;
+      previous = row.y;
+    }
+    if (count > 0) return count;
+  }
+  return undefined;
+}
+
 export function readFidelidadeConditions(pages: readonly PageText[]): FidelidadeConditions | null {
   const first = pages[0];
   if (!first) return null;
@@ -202,6 +229,8 @@ export function readFidelidadeConditions(pages: readonly PageText[]): Fidelidade
   if (start) details.startDate = start;
   const premium = amount(below(first, /^PRÉMIOTOTAL$/));
   if (premium !== null) details.annualPremiumCents = premium;
+  const persons = insuredPersons(pages);
+  if (persons !== undefined) details.insuredPersons = persons;
 
   return {
     ...(product ? { title: `Seguro ${sentenceCase(product)}` } : {}),

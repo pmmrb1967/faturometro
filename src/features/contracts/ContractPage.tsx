@@ -332,9 +332,15 @@ function insuranceFacts(contract: Contract, invoices: Invoice[]): [string, strin
   return [
     [
       facts.product,
-      [insurance?.product, insurance?.option].filter(Boolean).join(' · ') || undefined,
+      [insurance?.product && readable(insurance.product), insurance?.option]
+        .filter(Boolean)
+        .join(' · ') || undefined,
     ],
     [facts.policy, insurance?.policyNumber],
+    [
+      facts.insuredPersons,
+      insurance?.insuredPersons !== undefined ? String(insurance.insuredPersons) : undefined,
+    ],
     [facts.insuredObject, insurance?.insuredObject],
     ...(insurance?.capitals ?? []).map((capital): [string, string] => [
       facts.capital(capital.name),
@@ -363,4 +369,11 @@ function billingOf(invoices: Invoice[]): string | undefined {
     .find((invoice) => invoice.periodStart && invoice.periodEnd);
   const frequency = latest && billingFrequency(latest.periodStart, latest.periodEnd);
   return frequency ? t.frequency[frequency] : undefined;
+}
+
+/** "SAÚDE MULTICARE INDIVIDUAL" → "Saúde multicare individual"; mixed case is kept. */
+function readable(text: string): string {
+  if (text !== text.toLocaleUpperCase('pt-PT')) return text;
+  const lower = text.toLocaleLowerCase('pt-PT');
+  return lower.charAt(0).toLocaleUpperCase('pt-PT') + lower.slice(1);
 }

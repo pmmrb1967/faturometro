@@ -50,6 +50,7 @@ export function withPolicyDocument(
     next.annualPremiumCents = details.annualPremiumCents;
   if (details.bonusMalusPct !== undefined) next.bonusMalusPct = details.bonusMalusPct;
   if (details.startDate) next.startDate = details.startDate;
+  if (details.insuredPersons !== undefined) next.insuredPersons = details.insuredPersons;
   // Receipts already say what the product and object are; fill them only when missing.
   if (details.product && !next.product) next.product = details.product;
   if (details.option && !next.option) next.option = details.option;

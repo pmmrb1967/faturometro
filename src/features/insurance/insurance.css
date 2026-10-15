@@ -26,6 +26,15 @@
 }
 
 .coverage-table td {
+  min-width: 5.5rem;
+}
+
+/* Names need room: without it, long values squeeze them into one word per line. */
+.coverage-table tbody th {
+  min-width: 11rem;
+}
+
+.coverage-table td.is-amount {
   white-space: nowrap;
 }
 

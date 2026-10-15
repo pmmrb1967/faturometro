@@ -722,6 +722,7 @@ export const t = {
       yes: 'Sim',
       product: 'Produto',
       policy: 'N.º da apólice',
+      insuredPersons: 'Pessoas seguras',
       insuredObject: 'Objeto seguro',
       capital: (name: string) => `Capital: ${name}`,
       renewal: 'Renova a',

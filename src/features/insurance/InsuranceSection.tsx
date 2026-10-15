@@ -7,9 +7,18 @@ import './insurance.css';
 const copy = t.insurance.section;
 
 /** A table cell; empty ones are hidden on phones (one card per coverage). */
-function Cell({ label, value }: { label: string; value: string | undefined }) {
+function Cell({
+  label,
+  value,
+  amount = false,
+}: {
+  label: string;
+  value: string | undefined;
+  amount?: boolean;
+}) {
+  const classes = [value ? '' : 'is-empty', amount ? 'is-amount' : ''].filter(Boolean).join(' ');
   return (
-    <td data-label={label} className={value ? undefined : 'is-empty'}>
+    <td data-label={label} className={classes || undefined}>
       {value ?? '—'}
     </td>
   );
@@ -88,7 +97,7 @@ export function InsuranceSection({ contract }: { contract: Contract }) {
                 {coverages.map((coverage) => (
                   <tr key={coverage.name}>
                     <th scope="row">{coverage.name}</th>
-                    <Cell label={copy.capital} value={coverage.capital} />
+                    <Cell label={copy.capital} value={coverage.capital} amount />
                     {health && <Cell label={copy.network} value={coverage.network} />}
                     {health && <Cell label={copy.reimbursement} value={coverage.reimbursement} />}
                     <Cell label={copy.deductible} value={coverage.deductible} />

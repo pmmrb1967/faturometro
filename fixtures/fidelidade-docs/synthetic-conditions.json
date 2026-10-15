@@ -306,6 +306,102 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "Pessoa Segura",
+          "x": 58,
+          "y": 570,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Nascimento",
+          "x": 313,
+          "y": 570,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sexo",
+          "x": 398,
+          "y": 570,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data adesão",
+          "x": 483,
+          "y": 570,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PESSOA EXEMPLO UM",
+          "x": 58,
+          "y": 582,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/01/1980",
+          "x": 313,
+          "y": 582,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "F",
+          "x": 398,
+          "y": 582,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/06/2026",
+          "x": 483,
+          "y": 582,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PESSOA EXEMPLO DOIS",
+          "x": 58,
+          "y": 595,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/01/1982",
+          "x": 313,
+          "y": 595,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "M",
+          "x": 398,
+          "y": 595,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/06/2026",
+          "x": 483,
+          "y": 595,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "05/06/2026 10:00:00 EXEMPLO",
           "x": 50,
           "y": 760,
