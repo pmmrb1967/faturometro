@@ -1,0 +1,11 @@
+# The presentation and privacy pages are public; the app itself is personal.
+User-agent: *
+Allow: /$
+Allow: /privacidade
+Disallow: /app
+Disallow: /entrar
+Disallow: /entrar-sincronizado
+Disallow: /criar-conta
+Disallow: /recuperar
+
+Sitemap: https://app.faturometro.workers.dev/sitemap.xml
