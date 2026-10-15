@@ -198,7 +198,7 @@ export function buildDraft(
 }
 
 /** Contract data read from the invoice (CPE/CUI, tariff, power, cycle, social tariff, telecom services). */
-function contractDetails(
+export function contractDetails(
   extraction: ExtractedInvoice,
   sector: InvoiceForm['sector'],
 ): NonNullable<InvoiceDraft['contractDetails']> {

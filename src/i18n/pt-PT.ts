@@ -643,6 +643,17 @@ export const t = {
     other: 'Outras despesas',
   },
   invoices: {
+    reparse: {
+      button: (name: string) => `Ler de novo com o leitor da ${name}`,
+      working: 'A ler…',
+      done: (name: string) =>
+        `Lida de novo com o leitor da ${name}: linhas, período e contrato atualizados.`,
+      failed: {
+        no_original: 'O original já não está neste dispositivo.',
+        unreadable: 'Não foi possível abrir o original.',
+        not_found: 'O leitor não reconheceu esta fatura.',
+      },
+    },
     empty: 'Ainda não tens faturas. Adiciona a primeira acima.',
     listTitle: 'Faturas guardadas',
     original: {

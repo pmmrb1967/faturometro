@@ -96,41 +96,7 @@ export async function saveInvoice(
   if ('id' in draft.contract) {
     contract = await repos.contracts.get(draft.contract.id);
     if (!contract) throw new Error('Contract not found');
-    const current = contract;
-    const missing = Object.fromEntries(
-      Object.entries(draft.contractDetails ?? {}).filter(
-        ([field, value]) => value !== undefined && current[field as keyof Contract] === undefined,
-      ),
-    );
-    // The escalão can change from one year to the next: the newest invoice decides.
-    const escalao = draft.contractDetails?.gas?.escalao;
-    if (escalao !== undefined && current.gas !== undefined && current.gas.escalao !== escalao) {
-      const others = await repos.invoices.findBy('contractId', current.id);
-      if (others.every((invoice) => invoice.issueDate <= draft.issueDate)) {
-        missing.gas = { ...current.gas, escalao };
-      }
-    }
-    // Services read from invoices follow the newest one until the user confirms them.
-    const telecom = draft.contractDetails?.telecom;
-    if (
-      telecom &&
-      current.telecom?.fromInvoice &&
-      telecom.services.join() !== current.telecom.services.join()
-    ) {
-      const others = await repos.invoices.findBy('contractId', current.id);
-      if (others.every((invoice) => invoice.issueDate <= draft.issueDate))
-        missing.telecom = telecom;
-    }
-    // A policy's objects and capitals change at each renewal: the newest receipt decides.
-    const insurance = draft.contractDetails?.insurance;
-    if (insurance && current.insurance) {
-      const others = await repos.invoices.findBy('contractId', current.id);
-      if (others.every((invoice) => invoice.issueDate <= draft.issueDate)) {
-        missing.insurance = { ...current.insurance, ...insurance };
-      }
-    }
-    if (Object.keys(missing).length > 0)
-      contract = await repos.contracts.put({ ...current, ...missing });
+    contract = await updateContractDetails(repos, contract, draft.contractDetails, draft.issueDate);
   } else {
     const newContract: Omit<Contract, 'updatedAt'> = {
       id: crypto.randomUUID(),
@@ -182,32 +148,7 @@ export async function saveInvoice(
   }
   const saved = await repos.invoices.put(invoice);
 
-  for (const line of draft.lines ?? []) {
-    await repos.invoiceLines.put({
-      id: crypto.randomUUID(),
-      invoiceId: saved.id,
-      kind: line.kind,
-      description: line.description,
-      amountCents: line.amountCents,
-      ...(line.quantity !== undefined ? { quantity: line.quantity } : {}),
-      ...(line.unit ? { unit: line.unit } : {}),
-      ...(line.unitPrice ? { unitPrice: line.unitPrice } : {}),
-      ...(line.period ? { period: line.period } : {}),
-    });
-  }
-  for (const reading of draft.readings ?? []) {
-    await repos.readings.put({
-      id: crypto.randomUUID(),
-      invoiceId: saved.id,
-      contractId: contract.id,
-      quantity: reading.quantity,
-      unit: reading.unit,
-      readingType: reading.readingType,
-      dateFrom: draft.periodStart ?? reading.dateTo,
-      dateTo: reading.dateTo,
-      ...(reading.period ? { period: reading.period } : {}),
-    });
-  }
+  await storeLinesAndReadings(repos, saved, draft.lines ?? [], draft.readings ?? []);
   return saved;
 }
 
@@ -229,4 +170,83 @@ async function linkToEndedContract(repos: Repositories, contract: Contract, invo
     )
     .sort((a, b) => (b.endedAt ?? '').localeCompare(a.endedAt ?? ''))[0];
   if (ended) await repos.contracts.put({ ...ended, replacedById: contract.id });
+}
+
+/**
+ * Contract data read from an invoice: fills what the contract does not have
+ * yet, and for what changes over time (gas escalão, telecom services not yet
+ * confirmed, insurance details) the newest invoice decides.
+ */
+export async function updateContractDetails(
+  repos: Repositories,
+  current: Contract,
+  details: InvoiceDraft['contractDetails'],
+  issueDate: string,
+): Promise<Contract> {
+  const missing = Object.fromEntries(
+    Object.entries(details ?? {}).filter(
+      ([field, value]) => value !== undefined && current[field as keyof Contract] === undefined,
+    ),
+  );
+  const newest = async () =>
+    (await repos.invoices.findBy('contractId', current.id)).every(
+      (invoice) => invoice.issueDate <= issueDate,
+    );
+  // The escalão can change from one year to the next: the newest invoice decides.
+  const escalao = details?.gas?.escalao;
+  if (escalao !== undefined && current.gas !== undefined && current.gas.escalao !== escalao) {
+    if (await newest()) missing.gas = { ...current.gas, escalao };
+  }
+  // Services read from invoices follow the newest one until the user confirms them.
+  const telecom = details?.telecom;
+  if (
+    telecom &&
+    current.telecom?.fromInvoice &&
+    telecom.services.join() !== current.telecom.services.join()
+  ) {
+    if (await newest()) missing.telecom = telecom;
+  }
+  // A policy's objects and capitals change at each renewal: the newest receipt decides.
+  const insurance = details?.insurance;
+  if (insurance && current.insurance && (await newest())) {
+    missing.insurance = { ...current.insurance, ...insurance };
+  }
+  return Object.keys(missing).length > 0
+    ? repos.contracts.put({ ...current, ...missing })
+    : current;
+}
+
+/** Stores an invoice's lines and meter readings (what a parser or the AI read). */
+export async function storeLinesAndReadings(
+  repos: Repositories,
+  invoice: Pick<Invoice, 'id' | 'contractId' | 'periodStart'>,
+  lines: readonly ExtractedLine[],
+  readings: readonly ExtractedReading[],
+): Promise<void> {
+  for (const line of lines) {
+    await repos.invoiceLines.put({
+      id: crypto.randomUUID(),
+      invoiceId: invoice.id,
+      kind: line.kind,
+      description: line.description,
+      amountCents: line.amountCents,
+      ...(line.quantity !== undefined ? { quantity: line.quantity } : {}),
+      ...(line.unit ? { unit: line.unit } : {}),
+      ...(line.unitPrice ? { unitPrice: line.unitPrice } : {}),
+      ...(line.period ? { period: line.period } : {}),
+    });
+  }
+  for (const reading of readings) {
+    await repos.readings.put({
+      id: crypto.randomUUID(),
+      invoiceId: invoice.id,
+      contractId: invoice.contractId,
+      quantity: reading.quantity,
+      unit: reading.unit,
+      readingType: reading.readingType,
+      dateFrom: invoice.periodStart ?? reading.dateTo,
+      dateTo: reading.dateTo,
+      ...(reading.period ? { period: reading.period } : {}),
+    });
+  }
 }

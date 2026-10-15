@@ -10,6 +10,8 @@ import { useSession } from '../auth/session-context';
 import { ContributeFromOriginal } from '../contribute/ContributeFromOriginal';
 import { shouldOffer } from '../contribute/eligible';
 import { OriginalButton } from './OriginalButton';
+import { ReparseButton } from './ReparseButton';
+import { newerReader } from './reparse';
 import './invoices.css';
 
 export function InvoiceList() {
@@ -45,6 +47,10 @@ export function InvoiceList() {
 
   const row = (invoice: Invoice) => {
     const frequency = billingFrequency(invoice.periodStart, invoice.periodEnd);
+    // A reader that did not read this invoice yet, and the original is on this device.
+    const reader = ['local', 'uploaded'].includes(data.originals.get(invoice.fileHash) ?? '')
+      ? newerReader(invoice, data.providers.get(invoice.providerId))
+      : undefined;
     return (
       <li key={invoice.id} className="list-item">
         <strong>{data.providers.get(invoice.providerId)?.name}</strong>
@@ -65,7 +71,9 @@ export function InvoiceList() {
             hasText: true,
             ...(invoice.parserId ? { parserId: invoice.parserId } : {}),
             validation: invoice.validation,
-          }) && <ContributeFromOriginal fileHash={invoice.fileHash} />}
+          }) &&
+          !reader && <ContributeFromOriginal fileHash={invoice.fileHash} />}
+        {reader && <ReparseButton invoice={invoice} parser={reader} />}
       </li>
     );
   };
