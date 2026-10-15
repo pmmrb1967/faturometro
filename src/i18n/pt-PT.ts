@@ -282,7 +282,7 @@ export const t = {
     dismiss: 'Dispensar',
     admin: {
       contributions: (count: number) =>
-        `${count === 1 ? 'Há 1 contribuição de layout' : `Há ${count} contribuições de layout`} por recolher no servidor. No PC, no projeto: 1) pnpm contributions:pull (grava-as em fixtures/private/contributions e apaga-as do servidor); 2) pede ao Claude Code um leitor para esse fornecedor a partir delas; 3) revê, testa e faz push, que publica a nova versão da app. O aviso desaparece na sincronização seguinte (docs/parsers.md).`,
+        `${count === 1 ? 'Há 1 contribuição de layout' : `Há ${count} contribuições de layout`} por recolher no servidor. No PC, abre o projeto no Claude Code e escreve /novo-leitor: recolhe-as, cria o leitor com testes e pergunta antes de publicar. O aviso desaparece na sincronização seguinte.`,
       comEscolhaStale: (date: string) =>
         `Administrador: as ligações ao COM.escolha não são verificadas desde ${date}. Confirma que o PC esteve ligado e vê o registo da tarefa semanal (docs/anacom-comescolha.md).`,
     },

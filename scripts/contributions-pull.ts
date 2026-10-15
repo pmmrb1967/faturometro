@@ -3,8 +3,9 @@
  * private key and writes them as private fixtures; each one is deleted from the server
  * only after its file is written.
  *
- *   CONTRIB_ADMIN_TOKEN=… pnpm contributions:pull
+ *   pnpm contributions:pull
  *
+ * - Token: CONTRIB_ADMIN_TOKEN or ~/.faturometro/contrib-admin-token.
  * - Private key: CONTRIB_PRIVATE_KEY_FILE or ~/.faturometro/contrib-private.jwk
  *   (pnpm contrib:keygen).
  * - Server: SYNC_URL or the project's server.
@@ -12,7 +13,7 @@
  *
  * Prints counts only.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -87,8 +88,12 @@ export async function pullAll(options: {
 }
 
 async function main() {
-  const token = process.env.CONTRIB_ADMIN_TOKEN;
-  if (!token) throw new Error('Set CONTRIB_ADMIN_TOKEN');
+  const tokenFile = join(homedir(), '.faturometro', 'contrib-admin-token');
+  const token =
+    process.env.CONTRIB_ADMIN_TOKEN ??
+    (existsSync(tokenFile) ? readFileSync(tokenFile, 'utf8').trim() : undefined);
+  if (!token)
+    throw new Error('Set CONTRIB_ADMIN_TOKEN or write ~/.faturometro/contrib-admin-token');
   const keyFile =
     process.env.CONTRIB_PRIVATE_KEY_FILE ?? join(homedir(), '.faturometro', 'contrib-private.jwk');
   const { saved, discarded } = await pullAll({
