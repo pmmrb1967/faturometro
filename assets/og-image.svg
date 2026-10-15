@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Link preview (Open Graph). Rendered to public/og-image.png with sharp. -->
+  <rect width="1200" height="630" fill="#f6f7f4"/>
+  <rect x="0" y="0" width="1200" height="14" fill="#1f5c4a"/>
+  <g transform="translate(90 175) scale(0.546875)">
+    <rect width="512" height="512" rx="112" fill="#1f5c4a"/>
+    <path d="M120 330a136 136 0 0 1 272 0" fill="none" stroke="#f6f7f4" stroke-width="40" stroke-linecap="round"/>
+    <path d="M256 330 L330 228" stroke="#f2b134" stroke-width="32" stroke-linecap="round"/>
+    <circle cx="256" cy="330" r="30" fill="#f2b134"/>
+  </g>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" fill="#1b2a24">
+    <text x="440" y="270" font-size="84" font-weight="700" fill="#1f5c4a">Faturómetro</text>
+    <text x="440" y="345" font-size="38">Acompanha as faturas da casa</text>
+    <text x="440" y="395" font-size="30" fill="#4a5a53">Luz · gás · água · telecomunicações · seguros</text>
+    <text x="440" y="470" font-size="28" fill="#4a5a53">Grátis · os teus dados não saem do dispositivo</text>
+  </g>
+</svg>
