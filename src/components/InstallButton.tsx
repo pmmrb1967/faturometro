@@ -4,12 +4,15 @@ import { t } from '../i18n/pt-PT';
 
 const copy = t.install;
 
-/** Install button (Chrome/Edge) or the steps for Safari; nothing once installed. */
+/** Install button (Chrome/Edge) or the steps for this browser; a note once installed. */
 export function InstallButton({ className = 'action-primary' }: { className?: string }) {
   const state = useInstallState();
   const [showSteps, setShowSteps] = useState(false);
 
   if (state.kind === 'installed') return <p className="muted install-done">{copy.installed}</p>;
+  if (state.kind === 'installed-elsewhere') {
+    return <p className="muted install-done">{copy.installedElsewhere}</p>;
+  }
 
   if (state.kind === 'prompt') {
     return (
@@ -19,7 +22,7 @@ export function InstallButton({ className = 'action-primary' }: { className?: st
     );
   }
 
-  const steps = state.kind === 'ios' ? copy.iosSteps : copy.manualSteps;
+  const steps = copy.steps[state.browser];
   return (
     <div className="install-help">
       <button

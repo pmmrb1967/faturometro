@@ -1,8 +1,10 @@
 /**
  * "Install app": Chrome/Edge (Android and computer) fire beforeinstallprompt,
  * which is kept to show the browser's own install dialog from a button.
- * Safari on iPhone/iPad has no such event: the user adds the app from the
- * Share menu, so instructions are shown instead.
+ * Other browsers do not let a site install itself: the steps for that
+ * browser are shown instead. Chrome/Edge do not fire the event either when
+ * the app is already installed; getInstalledRelatedApps tells (the manifest's
+ * related_applications points to the app itself).
  */
 import { useSyncExternalStore } from 'react';
 
@@ -11,11 +13,20 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+/** Browsers that need steps instead of an install dialog. */
+export type ManualBrowser =
+  'ios' | 'safari-mac' | 'firefox-android' | 'firefox-desktop' | 'samsung' | 'chromium';
+
 export type InstallState =
-  { kind: 'installed' } | { kind: 'prompt' } | { kind: 'ios' } | { kind: 'manual' };
+  | { kind: 'installed' }
+  /** Installed on this device, but opened in the browser. */
+  | { kind: 'installed-elsewhere' }
+  | { kind: 'prompt' }
+  | { kind: 'manual'; browser: ManualBrowser };
 
 let deferred: BeforeInstallPromptEvent | undefined;
 let installed = false;
+let installedHere = false;
 const listeners = new Set<() => void>();
 const notify = () => {
   for (const listener of listeners) listener();
@@ -28,10 +39,32 @@ function standalone(): boolean {
   );
 }
 
-function isIos(): boolean {
-  const ua = navigator.userAgent;
+export function manualBrowser(userAgent: string, maxTouchPoints: number): ManualBrowser {
   // iPadOS reports itself as a Mac with touch.
-  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (/iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1)) {
+    return 'ios';
+  }
+  if (/SamsungBrowser/.test(userAgent)) return 'samsung';
+  if (/Firefox\//.test(userAgent)) {
+    return /Android/.test(userAgent) ? 'firefox-android' : 'firefox-desktop';
+  }
+  const safari = /Safari\//.test(userAgent) && !/Chrome|Chromium|Edg\//.test(userAgent);
+  if (/Macintosh/.test(userAgent) && safari) return 'safari-mac';
+  return 'chromium';
+}
+
+async function checkInstalledHere(): Promise<void> {
+  const nav = navigator as Navigator & {
+    getInstalledRelatedApps?: () => Promise<{ platform: string }[]>;
+  };
+  if (!nav.getInstalledRelatedApps) return;
+  try {
+    const apps = await nav.getInstalledRelatedApps();
+    installedHere = apps.some((app) => app.platform === 'webapp');
+    notify();
+  } catch {
+    // Not allowed here (e.g. in a frame): the steps stay.
+  }
 }
 
 /** Called once at start-up, before the browser fires the event. */
@@ -46,9 +79,10 @@ export function listenForInstall(): void {
     deferred = undefined;
     notify();
   });
+  void checkInstalledHere();
 }
 
-let snapshot: InstallState = { kind: 'manual' };
+let snapshot: InstallState = { kind: 'manual', browser: 'chromium' };
 
 function current(): InstallState {
   const next: InstallState =
@@ -56,10 +90,16 @@ function current(): InstallState {
       ? { kind: 'installed' }
       : deferred
         ? { kind: 'prompt' }
-        : isIos()
-          ? { kind: 'ios' }
-          : { kind: 'manual' };
-  if (next.kind !== snapshot.kind) snapshot = next;
+        : installedHere
+          ? { kind: 'installed-elsewhere' }
+          : {
+              kind: 'manual',
+              browser: manualBrowser(navigator.userAgent, navigator.maxTouchPoints),
+            };
+  const same =
+    next.kind === snapshot.kind &&
+    (next.kind !== 'manual' || (snapshot.kind === 'manual' && snapshot.browser === next.browser));
+  if (!same) snapshot = next;
   return snapshot;
 }
 

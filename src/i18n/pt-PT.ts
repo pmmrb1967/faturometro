@@ -100,16 +100,36 @@ export const t = {
     button: 'Instalar app',
     installed: 'O Faturómetro está instalado neste dispositivo.',
     version: (commit: string, built: string) => `Versão ${commit} · ${built}`,
-    iosSteps: [
-      'Abre esta página no Safari.',
-      'Toca no botão Partilhar (o quadrado com a seta para cima).',
-      'Escolhe “Adicionar ao ecrã principal” e confirma.',
-    ],
-    manualSteps: [
-      'No Chrome ou Edge: abre o menu do browser (⋮).',
-      'Escolhe “Instalar app” ou “Adicionar ao ecrã principal”.',
-      'Se o browser só oferecer “Criar atalho”, atualiza o Chrome e os Serviços do Google Play e tenta de novo; o atalho também funciona.',
-    ],
+    installedElsewhere:
+      'O Faturómetro já está instalado neste dispositivo: abre-o pelo ícone (ou pelo botão “Abrir na app” na barra de endereço).',
+    steps: {
+      ios: [
+        'Abre esta página no Safari.',
+        'Toca no botão Partilhar (o quadrado com a seta para cima).',
+        'Escolhe “Adicionar ao ecrã principal” e confirma.',
+      ],
+      'safari-mac': [
+        'No Safari, abre o menu Ficheiro (ou o botão Partilhar).',
+        'Escolhe “Adicionar à Dock” e confirma.',
+      ],
+      'firefox-android': [
+        'Abre o menu do Firefox (⋮).',
+        'Escolhe “Instalar” ou “Adicionar ao ecrã principal” e confirma.',
+      ],
+      'firefox-desktop': [
+        'O Firefox para computador não instala apps web.',
+        'Para instalar, abre esta página no Chrome ou no Edge. Também podes usar a app aqui no Firefox: funciona igual, só não tem ícone próprio.',
+      ],
+      samsung: [
+        'Abre o menu do Samsung Internet (☰).',
+        'Escolhe “Adicionar página a” → “Ecrã principal” e confirma.',
+      ],
+      chromium: [
+        'No Chrome ou Edge: abre o menu do browser (⋮).',
+        'Escolhe “Instalar app” ou “Adicionar ao ecrã principal”.',
+        'Se o browser só oferecer “Criar atalho”, atualiza o Chrome e os Serviços do Google Play e tenta de novo; o atalho também funciona.',
+      ],
+    },
     dataNote:
       'Os dados ficam neste dispositivo: desinstalar a app ou limpar os dados do site apaga-os, a não ser que tenhas a sincronização ligada ou uma exportação recente.',
   },

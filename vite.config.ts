@@ -48,6 +48,8 @@ export default defineConfig(({ mode }) => ({
         orientation: 'any',
         background_color: '#f6f7f4',
         theme_color: '#1f5c4a',
+        // Lets the app ask the browser whether it is already installed here (src/app/install.ts).
+        related_applications: [{ platform: 'webapp', url: '/manifest.webmanifest' }],
         // "Share → Faturómetro" from email or file apps (handled in public/share-target.js).
         share_target: {
           action: '/app/partilhar',
