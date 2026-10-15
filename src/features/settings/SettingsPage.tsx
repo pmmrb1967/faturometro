@@ -20,6 +20,8 @@ import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 import { InstallButton } from '../../components/InstallButton';
 import { AiSettings } from '../ai/AiSettings';
+import { AdminStatsSection } from './AdminStatsSection';
+import { formatMegabytes } from './format';
 import { BackupSection } from '../backup/BackupSection';
 import { useSession } from '../auth/session-context';
 import { validateNewPassword, type FieldErrors } from '../auth/validation';
@@ -41,6 +43,7 @@ export function SettingsPage() {
       <h1>{t.settings.title}</h1>
       <AccountSection />
       <SyncSection />
+      <AdminStatsSection />
       <AiSettings />
       <PreferencesSection />
       <AppSection />
@@ -240,11 +243,6 @@ function SyncSection() {
       )}
     </section>
   );
-}
-
-function formatMegabytes(bytes: number): string {
-  if (bytes > 0 && bytes < 100_000) return 'menos de 0,1 MB';
-  return `${(bytes / 1_000_000).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} MB`;
 }
 
 function FileSyncOption() {

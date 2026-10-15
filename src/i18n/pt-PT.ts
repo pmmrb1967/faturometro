@@ -448,6 +448,25 @@ export const t = {
     lowPowerNote:
       'Até 3,45 kVA, parte do termo fixo tem IVA a 6 %, mas as ofertas não separam essa parte: as estimativas ficam ligeiramente acima.',
   },
+  adminStats: {
+    title: 'Utilização do servidor (administrador)',
+    intro:
+      'Totais do servidor de sincronização: só contam contas com sincronização ligada. Quem usa a app sem conta, ou sem sincronização, não chega ao servidor e não é contado.',
+    failed: 'Não foi possível obter os números do servidor.',
+    accounts: 'Contas',
+    ofMax: (count: number, max: number) => `${count} de ${max} possíveis`,
+    newAccounts: 'Contas novas',
+    period: (days7: number, days30: number) =>
+      `${days7} nos últimos 7 dias · ${days30} nos últimos 30`,
+    active: 'Contas ativas',
+    activeValue: (today: number, days7: number, days30: number) =>
+      `${today} hoje · ${days7} nos últimos 7 dias · ${days30} nos últimos 30`,
+    devices: 'Dispositivos com sessão',
+    removed: 'Removidas por inatividade (30 dias)',
+    space: 'Espaço usado',
+    spaceValue: (records: string, files: string) => `${records} de dados · ${files} de originais`,
+    contributions: 'Contribuições por recolher',
+  },
   settings: {
     title: 'Definições',
     preferences: 'Preferências',

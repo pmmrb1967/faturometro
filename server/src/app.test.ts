@@ -428,6 +428,31 @@ describe('files', () => {
     expect((await call('GET', '/v1/changes', undefined, ana)).body?.admin).toBe(false);
   });
 
+  it('gives administrators, and only them, usage totals', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const admin = await register('admin@example.pt');
+    const ana = await register('ana@example.pt');
+    expect((await call('GET', '/v1/admin/stats', undefined, ana)).status).toBe(403);
+    const stats = await call('GET', '/v1/admin/stats', undefined, admin);
+    expect(stats.status).toBe(200);
+    expect(stats.body).toMatchObject({
+      accounts: 2,
+      newAccounts: { days7: 2, days30: 2 },
+      active: { today: 2, days7: 2, days30: 2 },
+      devices: 2,
+      removedForInactivity30: 0,
+      contributions: 0,
+    });
+    // Totals only: nothing that names an account.
+    expect(JSON.stringify(stats.body)).not.toContain('example.pt');
+  });
+
   it('tells administrators, and only them, how many layout contributions are waiting', async () => {
     handle = createApp({
       sql: memorySql().sql,

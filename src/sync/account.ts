@@ -231,6 +231,25 @@ export async function fileUsage(input: {
   }
 }
 
+/** Administrators: usage totals of the server. */
+export async function adminStats(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  api?: SyncApi;
+}): Promise<AdminStats> {
+  const sync = input.profile.sync;
+  if (!sync) throw new Error('Sync is not enabled');
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  try {
+    return await api.adminStats(token);
+  } catch (error) {
+    fromHttp(error, { 401: 'session_expired' });
+  }
+}
+
+export type AdminStats = Awaited<ReturnType<SyncApi['adminStats']>>;
+
 /** Fetches the original of an invoice that is only on the server (opened on demand). */
 export async function fetchOriginal(input: {
   profile: Profile;

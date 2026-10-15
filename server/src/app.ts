@@ -6,6 +6,7 @@
  *   POST   /v1/register   {email, salt, iterations, authKey, wrappedKey} → {token, accountId}
  *   POST   /v1/login      {email, authKey}                → {token, wrappedKey, accountId}
  *   GET    /v1/account                                    → {id}
+ *   GET    /v1/admin/stats                                → totals only (administrators)
  *   GET    /v1/removed/:accountId                         → {removed}  (no token; random id only)
  *   POST   /v1/logout                                     → 204
  *   GET    /v1/changes?since=N                            → {records, latest, more, admin, contributions?}
@@ -214,6 +215,53 @@ export function createApp(config: AppConfig) {
     isAdmin(user.email)
       ? (config.adminFileQuotaBytes ?? ADMIN_FILE_QUOTA_BYTES)
       : (config.fileQuotaBytes ?? FILE_QUOTA_BYTES);
+
+  /** Totals for the administrator: no emails, no per-account rows. */
+  async function adminStats() {
+    const daysAgo = (days: number) =>
+      new Date(now().getTime() - days * 86_400_000).toISOString().slice(0, 10);
+    const row = await sql.first<{
+      accounts: number;
+      new7: number;
+      new30: number;
+      active1: number;
+      active7: number;
+      active30: number;
+      devices: number;
+      removed30: number;
+      records_bytes: number | null;
+      files_bytes: number | null;
+      contributions: number;
+    }>(
+      `SELECT
+         (SELECT COUNT(*) FROM users) AS accounts,
+         (SELECT COUNT(*) FROM users WHERE created_at >= ?1) AS new7,
+         (SELECT COUNT(*) FROM users WHERE created_at >= ?2) AS new30,
+         (SELECT COUNT(*) FROM users WHERE last_seen_at >= ?3) AS active1,
+         (SELECT COUNT(*) FROM users WHERE last_seen_at >= ?1) AS active7,
+         (SELECT COUNT(*) FROM users WHERE last_seen_at >= ?2) AS active30,
+         (SELECT COUNT(*) FROM sessions WHERE expires_at > ?4) AS devices,
+         (SELECT COUNT(*) FROM removed_accounts WHERE removed_at >= ?2) AS removed30,
+         (SELECT SUM(records_bytes) FROM users) AS records_bytes,
+         (SELECT files_bytes FROM stats WHERE id = 1) AS files_bytes,
+         (SELECT COUNT(*) FROM contributions) AS contributions`,
+      daysAgo(7),
+      daysAgo(30),
+      today(),
+      now().toISOString(),
+    );
+    return {
+      accounts: row?.accounts ?? 0,
+      maxAccounts: config.maxAccounts ?? MAX_ACCOUNTS,
+      newAccounts: { days7: row?.new7 ?? 0, days30: row?.new30 ?? 0 },
+      active: { today: row?.active1 ?? 0, days7: row?.active7 ?? 0, days30: row?.active30 ?? 0 },
+      devices: row?.devices ?? 0,
+      removedForInactivity30: row?.removed30 ?? 0,
+      recordsBytes: row?.records_bytes ?? 0,
+      filesBytes: row?.files_bytes ?? 0,
+      contributions: row?.contributions ?? 0,
+    };
+  }
 
   /** Room for one more account? Usage comes from the daily stats, not from a scan per request. */
   async function admissionOpen(): Promise<boolean> {
@@ -467,6 +515,10 @@ export function createApp(config: AppConfig) {
     const user = await userFromToken(request);
 
     if (method === 'GET' && path === '/v1/account') return json({ id: user.id });
+    if (method === 'GET' && path === '/v1/admin/stats') {
+      if (!isAdmin(user.email)) throw new HttpError(403, 'Forbidden');
+      return json(await adminStats());
+    }
 
     if (method === 'POST' && path === '/v1/logout') {
       const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1] ?? '';

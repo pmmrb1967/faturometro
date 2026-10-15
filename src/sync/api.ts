@@ -147,6 +147,27 @@ export class SyncApi {
     return this.call('PUT', '/v1/keys', z.object({ token: z.string() }), { body: input, token });
   }
 
+  /** Administrators: usage totals of the server (no per-account data). */
+  adminStats(token: string) {
+    const count = z.number().int().nonnegative();
+    return this.call(
+      'GET',
+      '/v1/admin/stats',
+      z.object({
+        accounts: count,
+        maxAccounts: count,
+        newAccounts: z.object({ days7: count, days30: count }),
+        active: z.object({ today: count, days7: count, days30: count }),
+        devices: count,
+        removedForInactivity30: count,
+        recordsBytes: count,
+        filesBytes: count,
+        contributions: count,
+      }),
+      { token },
+    );
+  }
+
   fileUsage(token: string) {
     return this.call(
       'GET',
