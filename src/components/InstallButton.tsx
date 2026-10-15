@@ -11,7 +11,11 @@ export function InstallButton({ className = 'action-primary' }: { className?: st
 
   if (state.kind === 'installed') return <p className="muted install-done">{copy.installed}</p>;
   if (state.kind === 'installed-elsewhere') {
-    return <p className="muted install-done">{copy.installedElsewhere}</p>;
+    return (
+      <p className="muted install-done">
+        {state.phone ? copy.installedPhone : copy.installedComputer}
+      </p>
+    );
   }
 
   if (state.kind === 'prompt') {

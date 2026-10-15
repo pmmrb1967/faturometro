@@ -100,8 +100,10 @@ export const t = {
     button: 'Instalar app',
     installed: 'O Faturómetro está instalado neste dispositivo.',
     version: (commit: string, built: string) => `Versão ${commit} · ${built}`,
-    installedElsewhere:
-      'O Faturómetro já está instalado neste dispositivo: abre-o pelo ícone (ou pelo botão “Abrir na app” na barra de endereço).',
+    installedPhone:
+      'O Faturómetro já está instalado neste telemóvel: abre-o pelo ícone no ecrã principal. Também podes continuar aqui no browser, com “Entrar”.',
+    installedComputer:
+      'O Faturómetro já está instalado neste computador: abre-o pelo ícone, ou pelo botão “Abrir na app” que o Chrome e o Edge mostram à direita da barra de endereço.',
     steps: {
       ios: [
         'Abre esta página no Safari.',
