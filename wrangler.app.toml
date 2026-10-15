@@ -8,3 +8,6 @@ compatibility_date = "2026-10-01"
 directory = "./dist"
 # Client-side routes (/app/…, /entrar…) are served by index.html.
 not_found_handling = "single-page-application"
+# Files are served at their own name: /google….html must not redirect to
+# /google… (Search Console verification). "/" still reaches index.html.
+html_handling = "none"
