@@ -116,6 +116,7 @@ export const fidelidadeParser: Parser = {
   id: ID,
   name: 'Fidelidade',
   version: '1.0.0',
+  updated: '2026-10-15',
   sectors: ['insurance'],
   issuerNifs: [NIF],
 

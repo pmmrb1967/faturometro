@@ -246,6 +246,7 @@ export const indaquaParser: Parser = {
   id: ID,
   name: 'Indaqua Matosinhos',
   version: '1.0.0',
+  updated: '2026-10-14',
   sectors: ['water'],
   issuerNifs: [INDAQUA_NIF, MUNICIPALITY_NIF],
 

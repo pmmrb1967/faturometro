@@ -113,6 +113,52 @@ export const t = {
     dataNote:
       'Os dados ficam neste dispositivo: desinstalar a app ou limpar os dados do site apaga-os, a não ser que tenhas a sincronização ligada ou uma exportação recente.',
   },
+  providerCoverage: {
+    title: 'Que faturas a app lê sozinha?',
+    intro:
+      'Todas as faturas portuguesas têm um código QR com o fornecedor, a data, o IVA e o total: a app lê-o sempre. Para estes fornecedores, lê também o resto (linhas, consumos, períodos, contrato) sem IA.',
+    provider: 'Fornecedor',
+    type: 'Tipo',
+    documents: 'O que lê',
+    updated: 'Atualizado a',
+    invoices: 'Faturas',
+    documentsOf: {
+      nos: 'Faturas de telecomunicações',
+      repsol: 'Faturas de eletricidade e gás',
+      indaqua: 'Faturas de água e saneamento, com a de resíduos do Município de Matosinhos',
+      generali: 'Recibos, cartas de renovação e condições particulares',
+      fidelidade: 'Recibos e condições particulares (Multicare)',
+    },
+    withoutTitle: 'Ainda sem leitor automático',
+    withoutIntro:
+      'Destes, a app lê o código QR (total, IVA, data). O resto podes pedir à IA, com a tua chave da Anthropic (Definições), ou preencher à mão.',
+    andOthers: ' e outros',
+    waterNote: 'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos tem leitor)',
+    requestTitle: 'Pedir um leitor automático',
+    request:
+      'Ao carregar uma fatura de um fornecedor sem leitor, usa "Contribuir com este layout": envia só a estrutura da fatura, anonimizada e cifrada, e é o que permite fazer o leitor. Não envies faturas por email: têm o teu nome, morada e NIF.',
+  },
+  feedback: {
+    title: 'Sugestões e problemas',
+    intro:
+      'Abre o teu programa de email com uma mensagem já endereçada ao Faturómetro. Não envies faturas nem dados pessoais: para um leitor automático, usa "Contribuir com este layout" ao carregar a fatura.',
+    footer: 'Sugestões e problemas',
+    links: {
+      suggestion: 'Enviar uma sugestão',
+      problem: 'Reportar um problema',
+      parser: 'Pedir um leitor automático',
+    },
+    subjects: {
+      general: 'Sugestão ou problema',
+      suggestion: 'Sugestão',
+      problem: 'Problema',
+      parser: 'Pedido de leitor automático',
+    },
+    bodyStart: 'Escreve aqui a tua mensagem.',
+    technical: '— Informação técnica (podes apagar) —',
+    version: (commit: string, built: string) => `Versão: ${commit} (${built})`,
+    page: (page: string) => `Página: ${page}`,
+  },
   legal: {
     copyright: '© 2026 Paulo Barbosa',
     license: 'Código aberto, licença AGPL-3.0',
@@ -517,8 +563,9 @@ export const t = {
     },
     extract: {
       noKey:
-        'Esta fatura não tem um leitor automático. Com uma chave da Anthropic (Definições), a IA pode lê-la por ti.',
-      intro: 'Esta fatura não tem um leitor automático. Podes pedir à IA para a ler.',
+        'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). O resto preenches à mão, ou, com uma chave da Anthropic (Definições), a IA pode lê-lo por ti. Para pedir um leitor, usa "Contribuir com este layout".',
+      intro:
+        'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). Podes pedir à IA que leia o resto.',
       willSend: 'Vai ser enviado para api.anthropic.com:',
       sendText: (chars: number) => `o texto da fatura (${chars.toLocaleString('pt-PT')} carateres)`,
       sendPdf: 'o PDF da fatura (não tem texto, é uma digitalização)',

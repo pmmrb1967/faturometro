@@ -209,6 +209,7 @@ export const repsolParser: Parser = {
   id: ID,
   name: 'Repsol',
   version: '1.2.0',
+  updated: '2026-10-14',
   sectors: ['electricity', 'gas'],
   issuerNifs: [NIF],
 

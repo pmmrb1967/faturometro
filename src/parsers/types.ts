@@ -82,6 +82,8 @@ export interface Parser {
   name: string;
   /** Bump on every change; stored with each invoice. */
   version: string;
+  /** ISO date of the layout's last change (shown to users: "atualizado a …"). */
+  updated: string;
   sectors: Sector[];
   /** Issuer NIFs (field A of the QR code) handled by this layout. */
   issuerNifs: string[];

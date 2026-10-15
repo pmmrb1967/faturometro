@@ -207,3 +207,22 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.provider-coverage {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.provider-coverage > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.provider-coverage h3 {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+}

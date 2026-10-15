@@ -189,6 +189,7 @@ export const nosParser: Parser = {
   id: 'nos',
   name: 'NOS',
   version: '1.1.0',
+  updated: '2026-10-14',
   sectors: ['telecom'],
   issuerNifs: [NIF],
 

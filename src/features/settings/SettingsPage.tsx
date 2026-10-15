@@ -1,3 +1,4 @@
+import { FeedbackLinks } from '../../components/FeedbackLinks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
@@ -43,6 +44,7 @@ export function SettingsPage() {
       <AiSettings />
       <PreferencesSection />
       <AppSection />
+      <FeedbackSection />
       <BackupSection />
     </>
   );
@@ -472,6 +474,16 @@ function AccountSection() {
           {busy ? accountCopy.working : accountCopy.submit}
         </button>
       </form>
+    </section>
+  );
+}
+
+function FeedbackSection() {
+  return (
+    <section className="settings-section" aria-labelledby="feedback-title">
+      <h2 id="feedback-title">{t.feedback.title}</h2>
+      <p className="muted">{t.feedback.intro}</p>
+      <FeedbackLinks />
     </section>
   );
 }

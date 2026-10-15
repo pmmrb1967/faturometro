@@ -301,3 +301,10 @@ a.topbar-lock {
 .install-done {
   margin: 0;
 }
+
+/* Links that look like secondary buttons (feedback emails). */
+a.feedback-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
