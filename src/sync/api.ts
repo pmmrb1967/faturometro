@@ -132,6 +132,8 @@ export class SyncApi {
         latest: z.number(),
         more: z.boolean(),
         admin: z.boolean(),
+        /** Layout contributions waiting (administrators only). */
+        contributions: z.number().int().nonnegative().optional(),
       }),
       { token },
     );

@@ -8,7 +8,8 @@
  *   GET    /v1/account                                    → {id}
  *   GET    /v1/removed/:accountId                         → {removed}  (no token; random id only)
  *   POST   /v1/logout                                     → 204
- *   GET    /v1/changes?since=N                            → {records, latest, more, admin}
+ *   GET    /v1/changes?since=N                            → {records, latest, more, admin, contributions?}
+ *          (contributions: layout contributions waiting, for administrators only)
  *   POST   /v1/changes    {records}                       → {latest}
  *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → 204  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
@@ -501,6 +502,13 @@ export function createApp(config: AppConfig) {
         latest: rows.at(-1)?.seq ?? since,
         more: rows.length === MAX_RECORDS_PER_REQUEST,
         admin: isAdmin(user.email),
+        // The maintainer learns in the app that contributions are waiting to be pulled.
+        ...(isAdmin(user.email)
+          ? {
+              contributions:
+                (await sql.first<{ n: number }>('SELECT COUNT(*) AS n FROM contributions'))?.n ?? 0,
+            }
+          : {}),
       });
     }
 

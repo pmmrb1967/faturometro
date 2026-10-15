@@ -428,6 +428,29 @@ describe('files', () => {
     expect((await call('GET', '/v1/changes', undefined, ana)).body?.admin).toBe(false);
   });
 
+  it('tells administrators, and only them, how many layout contributions are waiting', async () => {
+    handle = createApp({
+      sql: memorySql().sql,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const admin = await register('admin@example.pt');
+    const ana = await register('ana@example.pt');
+    expect((await call('GET', '/v1/changes', undefined, admin)).body?.contributions).toBe(0);
+    await call('POST', '/v1/contributions', {
+      v: 1,
+      epk: { kty: 'EC', crv: 'P-256', x: 'eA', y: 'eQ' },
+      iv: 'aXY=',
+      data: 'ZGF0YQ==',
+    });
+    expect((await call('GET', '/v1/changes', undefined, admin)).body?.contributions).toBe(1);
+    expect((await call('GET', '/v1/changes', undefined, ana)).body).not.toHaveProperty(
+      'contributions',
+    );
+  });
+
   it('refuses what is not base64 and malformed chunk numbers', async () => {
     const token = await register();
     expect((await raw('PUT', '/v1/files/f1/0?total=1', token, 'não é base64')).status).toBe(400);

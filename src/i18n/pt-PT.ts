@@ -281,6 +281,8 @@ export const t = {
     empty: 'Sem avisos. Quando algo mudar nos teus contratos, aparece aqui.',
     dismiss: 'Dispensar',
     admin: {
+      contributions: (count: number) =>
+        `${count === 1 ? 'Há 1 contribuição de layout' : `Há ${count} contribuições de layout`} por recolher no servidor (no PC: pnpm contributions:pull).`,
       comEscolhaStale: (date: string) =>
         `Administrador: as ligações ao COM.escolha não são verificadas desde ${date}. Confirma que o PC esteve ligado e vê o registo da tarefa semanal (docs/anacom-comescolha.md).`,
     },

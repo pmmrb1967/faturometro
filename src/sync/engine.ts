@@ -35,6 +35,8 @@ export interface SyncResult extends SyncState {
   conflicts: number;
   /** The server account is an administrator (own limits). */
   admin: boolean;
+  /** Administrators: layout contributions waiting to be pulled. */
+  contributions?: number;
 }
 
 /** Splits records into pushes limited by count and by size. */
@@ -84,9 +86,11 @@ export async function syncNow(
   let received = 0;
   let conflicts = 0;
   let admin: boolean; // set by the first page (the loop runs at least once)
+  let contributions: number | undefined;
   for (;;) {
     const page = await api.pull(token, since);
     admin = page.admin;
+    contributions = page.contributions;
     for (const remote of page.records) {
       if (remote.table === 'documents') {
         // Original files: only the metadata here; contents come with syncFiles.
@@ -116,5 +120,6 @@ export async function syncNow(
     received,
     conflicts,
     admin,
+    ...(contributions !== undefined ? { contributions } : {}),
   };
 }

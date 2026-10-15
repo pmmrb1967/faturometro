@@ -41,13 +41,24 @@ export function HomePage() {
 
   if (!session) return null;
   const staleCheck = session.profile.sync?.admin ? staleComEscolhaCheck() : null;
+  const waiting = session.profile.sync?.admin ? (session.profile.sync.contributions ?? 0) : 0;
 
   return (
     <>
       <h1>{t.nav.home}</h1>
       <h2 className="section-title">{t.alerts.title}</h2>
-      {alerts?.length === 0 && !staleCheck && <p className="muted">{t.alerts.empty}</p>}
+      {alerts?.length === 0 && !staleCheck && waiting === 0 && (
+        <p className="muted">{t.alerts.empty}</p>
+      )}
       <ul className="alerts">
+        {waiting > 0 && (
+          <li className="alert alert-info">
+            <span className="alert-icon" aria-hidden="true">
+              i
+            </span>
+            <span className="alert-message">{t.alerts.admin.contributions(waiting)}</span>
+          </li>
+        )}
         {staleCheck && (
           <li className="alert alert-warning">
             <span className="alert-icon" aria-hidden="true">

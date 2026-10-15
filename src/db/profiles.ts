@@ -24,6 +24,8 @@ export interface ProfileSync {
   accountId?: string;
   /** The server says this account is an administrator (shown in the header). */
   admin?: boolean;
+  /** Administrators: layout contributions waiting on the server, at the last sync. */
+  contributions?: number;
   /** Session token, encrypted with the master key. */
   token: EncryptedBlob;
   /** Last server sequence number received. */

@@ -203,6 +203,7 @@ export async function runSync(input: {
     lastPushedAt: result.lastPushedAt,
     lastSyncAt: new Date().toISOString(),
     admin: result.admin,
+    ...(result.contributions !== undefined ? { contributions: result.contributions } : {}),
   });
   return { profile, result, ...(files ? { files } : {}) };
 }
