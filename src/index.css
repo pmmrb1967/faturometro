@@ -77,8 +77,12 @@ body {
 .content {
   grid-area: content;
   padding: 16px;
+  /* Room for the fixed tab bar on phones. */
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
   width: 100%;
   max-width: 960px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .content h1 {
@@ -97,8 +101,13 @@ body {
 
 .nav {
   grid-area: nav;
-  position: sticky;
+  /* Fixed, not sticky: mobile browsers hiding their address bar left a sticky bar off screen. */
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
+  /* Above positioned content (e.g. password fields with a show button). */
+  z-index: 20;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   min-height: var(--nav-height);
@@ -216,6 +225,7 @@ a.topbar-lock {
 
   .nav {
     position: static;
+    z-index: auto;
     display: flex;
     flex-direction: column;
     gap: 4px;
