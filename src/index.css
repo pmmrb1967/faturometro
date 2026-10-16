@@ -210,8 +210,18 @@ a.topbar-lock {
 }
 
 @media (max-width: 480px) {
-  .topbar-email {
+  .topbar-email,
+  .topbar-badge {
     display: none;
+  }
+
+  .topbar,
+  .topbar-account {
+    gap: 8px;
+  }
+
+  .topbar-lock {
+    padding: 6px 10px;
   }
 }
 

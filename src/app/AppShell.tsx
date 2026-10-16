@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
 import { useSession } from '../features/auth/session-context';
@@ -11,12 +11,20 @@ import { SECTIONS, type SectionId } from './sections';
 
 export function AppShell() {
   const { session, lock, updateProfile } = useSession();
+  const navigate = useNavigate();
   useAutoSync(session, updateProfile);
   const updateAvailable = useUpdateAvailable();
   // The long title is for search results (index.html); inside the app the tab shows the name.
   useEffect(() => {
     document.title = 'Faturómetro';
   }, []);
+
+  // A guest alone on the device reopens by itself from /app: go to the login page instead.
+  function leaveGuest() {
+    navigate('/entrar', { replace: true });
+    lock();
+  }
+
   return (
     <div className="shell">
       <header className="topbar">
@@ -31,6 +39,15 @@ export function AppShell() {
               <Link to="/criar-conta" className="topbar-lock">
                 {t.guest.createAccount}
               </Link>
+              <button
+                type="button"
+                className="topbar-lock"
+                onClick={leaveGuest}
+                aria-label={t.guest.signOutLabel}
+                title={t.guest.signOutLabel}
+              >
+                {t.signOut}
+              </button>
             </>
           ) : (
             <>

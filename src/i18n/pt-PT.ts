@@ -236,6 +236,7 @@ export const t = {
     aiNeedsAccount:
       'Cria uma conta para usar a IA: a chave da API fica protegida pela tua palavra-passe.',
     syncNeedsAccount: 'Cria uma conta para sincronizar entre dispositivos.',
+    signOutLabel: 'Sair para a página de entrada (os dados ficam neste browser)',
     noticeTitle: 'Estás a usar a app sem conta',
     notice: [
       'Os teus dados ficam só neste browser e não estão protegidos por palavra-passe: quem usar este browser consegue vê-los.',
