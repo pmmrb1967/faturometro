@@ -1,0 +1,603 @@
+{
+  "schemaVersion": 2,
+  "parserId": "meo",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 1,
+      "text": "A:504615947*B:999999990*C:PT*D:FT*E:N*F:20260605*G:FT MV/100000001*H:ABCD1234-100000001*I1:PT*I7:20.00*I8:4.60*N:4.60*O:24.60*Q:abcd*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Área de Cliente em mymeo.pt",
+          "x": 289,
+          "y": 33,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura",
+          "x": 72,
+          "y": 122,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº Fatura:",
+          "x": 72,
+          "y": 138,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FT MV/100000001",
+          "x": 184,
+          "y": 138,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de emissão:",
+          "x": 72,
+          "y": 160,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-05",
+          "x": 184,
+          "y": 160,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº Contribuinte:",
+          "x": 72,
+          "y": 171,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "999999990",
+          "x": 184,
+          "y": 171,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº Conta:",
+          "x": 72,
+          "y": 182,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1000000001",
+          "x": 184,
+          "y": 182,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº Telefone",
+          "x": 72,
+          "y": 193,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "900000001",
+          "x": 184,
+          "y": 193,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifário",
+          "x": 72,
+          "y": 204,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "M Móvel Exemplo",
+          "x": 184,
+          "y": 204,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura de:",
+          "x": 76,
+          "y": 259,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Limite de Pagamento",
+          "x": 248,
+          "y": 259,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor a Pagar",
+          "x": 425,
+          "y": 259,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "junho 2026",
+          "x": 76,
+          "y": 273,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-29",
+          "x": 339,
+          "y": 273,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€ 24, 60",
+          "x": 519,
+          "y": 273,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "SERVIÇOS DE COMUNICAÇÕES",
+          "x": 80,
+          "y": 322,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Adesões",
+          "x": 80,
+          "y": 334,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1",
+          "x": 259,
+          "y": 334,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0, 000",
+          "x": 325,
+          "y": 334,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 377,
+          "y": 334,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0, 00",
+          "x": 456,
+          "y": 334,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0, 000",
+          "x": 542,
+          "y": 334,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Mensalidades",
+          "x": 80,
+          "y": 345,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1",
+          "x": 259,
+          "y": 345,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20, 000",
+          "x": 320,
+          "y": 345,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 377,
+          "y": 345,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4, 60",
+          "x": 456,
+          "y": 345,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "24, 600",
+          "x": 537,
+          "y": 345,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor total da fatura",
+          "x": 80,
+          "y": 379,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20, 000",
+          "x": 320,
+          "y": 379,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4, 60",
+          "x": 456,
+          "y": 379,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "24, 60",
+          "x": 537,
+          "y": 379,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "MEO - Serviços de Comunicações e Multimédia, S.A. Exemplo sintético",
+          "x": 37,
+          "y": 552,
+          "width": 308.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "DETALHE DE FATURAÇÃO",
+          "x": 72,
+          "y": 246,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "QTD DESCRIÇÃO",
+          "x": 78,
+          "y": 256,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PERÍODO DE FATURAÇÃO",
+          "x": 323,
+          "y": 256,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "VALOR €",
+          "x": 464,
+          "y": 256,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 533,
+          "y": 256,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(s/ IVA)",
+          "x": 464,
+          "y": 265,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(%)",
+          "x": 533,
+          "y": 265,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ADESÕES",
+          "x": 95,
+          "y": 279,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "900000001",
+          "x": 95,
+          "y": 287,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor de Adesão",
+          "x": 103,
+          "y": 295,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "mai 2026",
+          "x": 324,
+          "y": 295,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30, 000",
+          "x": 472,
+          "y": 295,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 529,
+          "y": 295,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Crédito Valor de Adesão",
+          "x": 103,
+          "y": 303,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "mai 2026",
+          "x": 324,
+          "y": 303,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-30, 000",
+          "x": 470,
+          "y": 303,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 529,
+          "y": 303,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "MENSALIDADES",
+          "x": 95,
+          "y": 317,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "900000001",
+          "x": 95,
+          "y": 325,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifários",
+          "x": 103,
+          "y": 333,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "M móvel Exemplo",
+          "x": 103,
+          "y": 341,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01 mai a 31 mai",
+          "x": 324,
+          "y": 341,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20, 813",
+          "x": 472,
+          "y": 341,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 529,
+          "y": 341,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descontos em Mensalidades",
+          "x": 103,
+          "y": 357,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Desconto Mensal Fatura Eletrónica",
+          "x": 103,
+          "y": 365,
+          "width": 151.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01 mai a 31 mai",
+          "x": 324,
+          "y": 365,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-0, 813",
+          "x": 473,
+          "y": 365,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23, 00",
+          "x": 529,
+          "y": 365,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Arredondamento",
+          "x": 95,
+          "y": 381,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0, 000",
+          "x": 473,
+          "y": 381,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total sem IVA",
+          "x": 72,
+          "y": 402,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€ 20, 000",
+          "x": 455,
+          "y": 402,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período de fidelização a decorrer no serviço 900000001 até 01-12-2027.",
+          "x": 71,
+          "y": 553,
+          "width": 322,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

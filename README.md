@@ -20,7 +20,7 @@ PWA gratuita e local-first para acompanhar as faturas da casa em Portugal — el
 | Tipo | Fornecedores |
 |---|---|
 | Eletricidade e gás | Repsol |
-| Telecomunicações | NOS |
+| Telecomunicações | NOS, MEO |
 | Água | Indaqua Matosinhos (com resíduos do Município) |
 | Seguros | Fidelidade (recibos e condições particulares de saúde), Generali (recibos, ata de renovação e condições particulares) |
 

@@ -17,7 +17,7 @@ export const KNOWN_WITHOUT_READER: Record<SectorGroup, readonly string[]> = {
     'Coopérnico',
     'Luzboa',
   ],
-  telecom: ['MEO', 'Vodafone', 'DIGI'],
+  telecom: ['Vodafone', 'DIGI'],
   water: [],
   insurance: ['Ageas', 'Allianz', 'Zurich', 'Lusitania', 'Caravela'],
   other: ['Via Verde'],

@@ -146,6 +146,7 @@ export const t = {
     invoices: 'Faturas',
     documentsOf: {
       nos: 'Faturas de telecomunicações',
+      meo: 'Faturas de telemóvel',
       repsol: 'Faturas de eletricidade e gás',
       indaqua: 'Faturas de água e saneamento, com a de resíduos do Município de Matosinhos',
       generali: 'Recibos, cartas de renovação e condições particulares',
