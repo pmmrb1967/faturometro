@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { t } from '../../i18n/pt-PT';
 import {
   AccountError,
+  createGuest,
   listAccountEmails,
   openGuest,
   unlockAccount,
@@ -26,7 +27,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const returnPath = useReturnPath();
   const [emails, setEmails] = useState<string[] | null>(null);
-  const [guest, setGuest] = useState<UnlockedAccount | null>(null);
+  // undefined while checking; null when this device has no guest yet.
+  const [guest, setGuest] = useState<UnlockedAccount | null | undefined>(undefined);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -45,9 +47,10 @@ export function LoginPage() {
     void openGuest().then(setGuest);
   }, []);
 
-  function continueGuest() {
-    if (!guest) return;
-    signIn(guest);
+  // An installed app opens here with no profile: it must be able to start without an account.
+  async function continueGuest() {
+    if (guest === undefined) return;
+    signIn(guest ?? (await createGuest()));
     navigate(returnPath, { replace: true });
   }
 
@@ -113,10 +116,10 @@ export function LoginPage() {
           {busy ? t.auth.working : copy.submit}
         </button>
       </form>
-      {guest && (
+      {guest !== undefined && (
         <p className="auth-alt">
-          <button type="button" className="link-button" onClick={continueGuest}>
-            {copy.continueGuest}
+          <button type="button" className="link-button" onClick={() => void continueGuest()}>
+            {guest ? copy.continueGuest : copy.startGuest}
           </button>
         </p>
       )}
@@ -127,6 +130,7 @@ export function LoginPage() {
         <Link to="/criar-conta">{copy.createAccount}</Link>
       </p>
       <p className="auth-alt">
+        <span className="auth-question">{t.sync.connect.question}</span>
         <Link to="/entrar-sincronizado">{t.sync.connect.link}</Link>
       </p>
     </AuthLayout>

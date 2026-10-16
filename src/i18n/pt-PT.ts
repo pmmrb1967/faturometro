@@ -548,7 +548,8 @@ export const t = {
       working: 'A ligar…',
     },
     connect: {
-      link: 'Já usas o Faturómetro noutro dispositivo com sincronização? Entrar com essa conta',
+      question: 'Já usas o Faturómetro noutro dispositivo com sincronização?',
+      link: 'Entrar com essa conta',
       title: 'Entrar com conta sincronizada',
       intro:
         'Traz para este dispositivo as faturas que já tens sincronizadas. Usa o mesmo email e a mesma palavra-passe.',
@@ -1122,6 +1123,7 @@ export const t = {
       createAccount: 'Criar conta',
       forgot: 'Esqueceste-te da palavra-passe?',
       continueGuest: 'Continuar sem conta',
+      startGuest: 'Começar sem conta',
     },
     recover: {
       title: 'Recuperar acesso',

@@ -82,6 +82,13 @@
   text-align: center;
 }
 
+.auth-question {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .auth-alt a,
 .auth-notice a {
   color: var(--accent);
