@@ -236,6 +236,18 @@ describe('Anonymizer.page', () => {
     expect(() => anon.assertNoLeaks({ items: out, joined: [out.join('')] })).not.toThrow();
   });
 
+  it('replaces a number printed as digit groups in separate items, like the compact form', () => {
+    const anon = make();
+    const compact = anon.text(`NIF ${CUSTOMER_NIF}`).slice(4);
+    const out = anon.page(['NIF', '123', ' ', '456', '789', '/', '26']);
+    expect(out.slice(1, 5).join('').replace(/ /g, '')).toBe(compact);
+    expect(out[2]).toBe(' ');
+    expect(out.slice(5)).toEqual(['/', '26']);
+    // Two groups, or a company NIF, stay as they are.
+    expect(make().page(['123', '456', '/'])).toEqual(['123', '456', '/']);
+    expect(make().page(['500', '000', '000'])).toEqual(['500', '000', '000']);
+  });
+
   it('still anonymizes each item on its own', () => {
     const anon = make(['Maria Sousa']);
     expect(anon.page(['Maria Sousa'])[0]).not.toMatch(/maria/i);

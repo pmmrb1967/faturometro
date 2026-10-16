@@ -231,6 +231,7 @@ export class Anonymizer {
   page(items: readonly string[]): string[] {
     this.scanPage(items);
     const out = items.map((item) => this.text(item));
+    this.digitGroupsAcrossItems(items, out);
     // Letters and digits of the page, with the item and position each came from, and
     // whether a space came just before (a split value has none: "MA" + "RIA").
     const chars: { item: number; at: number; base: string; afterSpace: boolean }[] = [];
@@ -271,6 +272,43 @@ export class Anonymizer {
       this.stats.term++;
     }
     return out;
+  }
+
+  /**
+   * A number printed as digit groups in separate text items ("123", "456",
+   * "789": MEO's customer number and NIF) is replaced as a whole, with the same
+   * mapping as the compact form, and written back group by group.
+   */
+  private digitGroupsAcrossItems(items: readonly string[], out: string[]): void {
+    const group = /^\d{2,4}$/;
+    let index = 0;
+    while (index < items.length) {
+      const run: number[] = [];
+      for (let next = index; next < items.length; next++) {
+        const text = (items[next] ?? '').trim();
+        if (group.test(text)) run.push(next);
+        else if (text !== '' || run.length === 0) break;
+      }
+      if (run.length < 3) {
+        index++;
+        continue;
+      }
+      index = (run.at(-1) ?? index) + 1;
+      const parts = run.map((at) => (items[at] ?? '').trim());
+      const compact = parts.join('');
+      if (compact.length < MIN_DIGIT_RUN) continue;
+      if (this.isKeptNif(compact) || isPlausibleDate(compact)) continue;
+      const replacement = this.replaceNumber(compact);
+      let offset = 0;
+      run.forEach((at, position) => {
+        const length = parts[position]?.length ?? 0;
+        out[at] = (items[at] ?? '').replace(
+          parts[position] ?? '',
+          replacement.slice(offset, offset + length),
+        );
+        offset += length;
+      });
+    }
   }
 
   /** Anonymizes free text (a text item from the PDF). */
