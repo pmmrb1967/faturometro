@@ -12,8 +12,10 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { prepareZXingModule } from 'zxing-wasm/reader';
 import zxingWasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url';
 import { scanImageQrs, scanPdfQrs, type FoundQr } from '../qr/scan';
+import { installReadableStreamIterator } from './polyfills';
 import { extractText, toPasswordError, type PageText } from './text';
 
+installReadableStreamIterator();
 GlobalWorkerOptions.workerSrc = workerUrl;
 
 prepareZXingModule({
