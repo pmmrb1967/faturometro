@@ -149,7 +149,7 @@ export const t = {
       meo: 'Faturas de telemóvel',
       digi: 'Faturas de fibra',
       repsol: 'Faturas de eletricidade e gás',
-      indaqua: 'Faturas de água e saneamento, com a de resíduos do Município de Matosinhos',
+      indaqua: 'Faturas de água e saneamento, com a de resíduos urbanos',
       'aguas-porto': 'Faturas de água e saneamento, com a de resíduos urbanos',
       generali: 'Recibos, cartas de renovação e condições particulares',
       fidelidade: 'Recibos e condições particulares (Multicare)',

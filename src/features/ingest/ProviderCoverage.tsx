@@ -14,7 +14,7 @@ export function ProviderCoverage() {
       <summary>{copy.title}</summary>
       <p className="muted">{copy.intro}</p>
       <div className="coverage-scroll">
-        <table className="coverage-table">
+        <table className="coverage-table provider-table">
           <thead>
             <tr>
               <th scope="col">{copy.provider}</th>
@@ -27,7 +27,7 @@ export function ProviderCoverage() {
             {PARSERS.map((parser) => (
               <tr key={parser.id}>
                 <th scope="row">{parser.name}</th>
-                <td data-label={copy.type}>
+                <td data-label={copy.type} className="is-short">
                   {[...new Set(parser.sectors.map((sector) => t.groups[groupOf(sector)]))].join(
                     ', ',
                   )}
@@ -35,7 +35,7 @@ export function ProviderCoverage() {
                 <td data-label={copy.documents}>
                   {copy.documentsOf[parser.id as keyof typeof copy.documentsOf] ?? copy.invoices}
                 </td>
-                <td data-label={copy.updated}>{formatIsoDate(parser.updated)}</td>
+                <td data-label={copy.updated} className="is-short">{formatIsoDate(parser.updated)}</td>
               </tr>
             ))}
           </tbody>

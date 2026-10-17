@@ -222,6 +222,22 @@
   color: var(--accent);
 }
 
+/* Short columns on one line; what each reader covers takes the remaining width. */
+.coverage-table.provider-table {
+  font-size: 0.9rem;
+}
+
+.coverage-table.provider-table thead th,
+.coverage-table.provider-table tbody th,
+.coverage-table.provider-table td.is-short {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.coverage-table.provider-table td {
+  min-width: 0;
+}
+
 .provider-coverage h3 {
   margin: 16px 0 4px;
   font-size: 1rem;
