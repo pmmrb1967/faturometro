@@ -147,8 +147,10 @@ export const t = {
     documentsOf: {
       nos: 'Faturas de telecomunicações',
       meo: 'Faturas de telemóvel',
+      digi: 'Faturas de fibra',
       repsol: 'Faturas de eletricidade e gás',
       indaqua: 'Faturas de água e saneamento, com a de resíduos do Município de Matosinhos',
+      'aguas-porto': 'Faturas de água e saneamento, com a de resíduos urbanos',
       generali: 'Recibos, cartas de renovação e condições particulares',
       fidelidade: 'Recibos e condições particulares (Multicare)',
     },
@@ -156,7 +158,7 @@ export const t = {
     withoutIntro:
       'Destes, a app lê o código QR (total, IVA, data). O resto podes pedir à IA, com a tua chave da Anthropic (Definições), ou preencher à mão.',
     andOthers: ' e outros',
-    waterNote: 'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos tem leitor)',
+    waterNote: 'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos e a Águas do Porto têm leitor)',
     requestTitle: 'Pedir um leitor automático',
     request:
       'Ao carregar uma fatura de um fornecedor sem leitor, usa "Contribuir com este layout": envia só a estrutura da fatura, anonimizada e cifrada, e é o que permite fazer o leitor. Não envies faturas por email: têm o teu nome, morada e NIF.',

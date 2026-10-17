@@ -20,8 +20,8 @@ PWA gratuita e local-first para acompanhar as faturas da casa em Portugal — el
 | Tipo | Fornecedores |
 |---|---|
 | Eletricidade e gás | Repsol |
-| Telecomunicações | NOS, MEO |
-| Água | Indaqua Matosinhos (com resíduos do Município) |
+| Telecomunicações | NOS, MEO, DIGI |
+| Água | Indaqua Matosinhos (com resíduos do Município), Águas do Porto (com resíduos urbanos) |
 | Seguros | Fidelidade (recibos e condições particulares de saúde), Generali (recibos, ata de renovação e condições particulares) |
 
 Os outros fornecedores funcionam pelo QR fiscal (total, IVA e data), com o resto à mão ou pela IA. Na app, **"Contribuir com este layout"** envia ao responsável a estrutura anonimizada e cifrada de uma fatura sem leitor, para que se crie um — ver [`docs/parsers.md`](docs/parsers.md).

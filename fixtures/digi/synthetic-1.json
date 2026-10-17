@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 2,
+  "parserId": "digi",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 1,
+      "text": "A:516222201*B:999999990*C:PT*D:FT*E:N*F:20260615*G:FT FT.FC26/1000001*H:ABCD1234-1000001*I1:PT*I7:16.26*I8:3.74*N:3.74*O:20.00*Q:abcd*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "ATCUD: ABCD1234-1000001",
+          "x": 232,
+          "y": 13.4,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura n.º",
+          "x": 307,
+          "y": 21,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura FT FT.FC26/1000001",
+          "x": 489,
+          "y": 21,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Periodo de faturação",
+          "x": 311,
+          "y": 50.7,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "05/05/2026 a 04/06/2026",
+          "x": 444,
+          "y": 50.7,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de emissão",
+          "x": 311,
+          "y": 66,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "15/06/2026",
+          "x": 444,
+          "y": 66,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data limite de pagamento:",
+          "x": 311,
+          "y": 80.3,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01/07/2026",
+          "x": 444,
+          "y": 80.3,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Dados do cliente",
+          "x": 24,
+          "y": 90,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº cliente",
+          "x": 27,
+          "y": 106.8,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "000001",
+          "x": 267,
+          "y": 106.8,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nome Exemplo",
+          "x": 315,
+          "y": 106.8,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº contrato",
+          "x": 27,
+          "y": 121.5,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10000001",
+          "x": 261,
+          "y": 121.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Serviço(s)",
+          "x": 24,
+          "y": 266.4,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "CVP: 000000000000",
+          "x": 72,
+          "y": 266.4,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor (c/ IVA)",
+          "x": 514,
+          "y": 266.4,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "D00000000001",
+          "x": 24,
+          "y": 288.6,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fibra 500 Mb (5 Mai - 4 Jun)",
+          "x": 154,
+          "y": 288.6,
+          "width": 128.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20,00 €",
+          "x": 546,
+          "y": 288.6,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descontos associados",
+          "x": 24,
+          "y": 459.3,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,00 €",
+          "x": 552,
+          "y": 459.3,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor desta fatura (s/ IVA)",
+          "x": 24,
+          "y": 476.9,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "16,26 €",
+          "x": 548,
+          "y": 476.9,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA (23.00%)",
+          "x": 24,
+          "y": 494.1,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,74€",
+          "x": 552,
+          "y": 494.1,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor desta fatura (c/ IVA)",
+          "x": 24,
+          "y": 511.4,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20,00 €",
+          "x": 548,
+          "y": 511.4,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total a pagar",
+          "x": 24,
+          "y": 545.1,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "20,00€",
+          "x": 550,
+          "y": 545.1,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período de fidelização",
+          "x": 336,
+          "y": 579.6,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem periodo de fidelização a decorrer.",
+          "x": 336,
+          "y": 595.4,
+          "width": 174.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "DIGI Portugal, Lda. Exemplo sintético",
+          "x": 122,
+          "y": 803.9,
+          "width": 170.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

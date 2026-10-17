@@ -1,4 +1,6 @@
 import type { Parser, ParserContext } from './types';
+import { aguasPortoParser } from './aguas-porto';
+import { digiParser } from './digi';
 import { fidelidadeParser } from './fidelidade';
 import { generaliParser } from './generali';
 import { indaquaParser } from './indaqua';
@@ -10,8 +12,10 @@ import { repsolParser } from './repsol';
 export const PARSERS: readonly Parser[] = [
   nosParser,
   meoParser,
+  digiParser,
   repsolParser,
   indaquaParser,
+  aguasPortoParser,
   generaliParser,
   fidelidadeParser,
 ];

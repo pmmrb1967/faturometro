@@ -1,0 +1,1487 @@
+{
+  "schemaVersion": 2,
+  "parserId": "aguas-porto",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 2,
+      "text": "A:507718666*B:999999990*C:PT*D:FT*E:N*F:20260605*G:10000001*H:ABCD1234-10000001*I1:PT*I2:0.01*I3:8.14*I4:0.49*N:0.49*O:8.64*Q:abcd*R:0000"
+    },
+    {
+      "page": 2,
+      "text": "A:514280956*B:999999990*C:PT*D:FT*E:N*F:20260605*G:2000000001*H:EFGH5678-2000000001*I1:PT*L:4.60*N:0.00*O:4.60*Q:efgh*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Documento de Pagamento",
+          "x": 428,
+          "y": 39,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Documento:",
+          "x": 429,
+          "y": 63,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Emissão:",
+          "x": 511,
+          "y": 63,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100000000000001",
+          "x": 429,
+          "y": 73,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-05",
+          "x": 511,
+          "y": 73,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Titular da conta:",
+          "x": 31,
+          "y": 144,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "NOME EXEMPLO",
+          "x": 92,
+          "y": 144,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cliente / Conta:",
+          "x": 31,
+          "y": 155,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1000000 / 2000000",
+          "x": 92,
+          "y": 155,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "NIF:",
+          "x": 31,
+          "y": 166,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "999999990",
+          "x": 92,
+          "y": 166,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Resumo de faturação",
+          "x": 41,
+          "y": 216,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período Faturação: 2026-05-01 ~ 2026-05-30",
+          "x": 423,
+          "y": 216,
+          "width": 193.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Pagar até",
+          "x": 501,
+          "y": 240,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-25",
+          "x": 497,
+          "y": 252,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor a Pagar",
+          "x": 493,
+          "y": 270,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "13,24€",
+          "x": 505,
+          "y": 282,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "CMPEAE - Empresa de Águas e Energia do Município do Porto, EM - Exemplo sintético",
+          "x": 13,
+          "y": 541,
+          "width": 372.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Fatura",
+          "x": 203,
+          "y": 29.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Cliente",
+          "x": 327,
+          "y": 29.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Leitura",
+          "x": 450,
+          "y": 29.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10000001",
+          "x": 203,
+          "y": 37.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Domésticos",
+          "x": 327,
+          "y": 37.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Telemetria",
+          "x": 450,
+          "y": 37.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de Fatura",
+          "x": 203,
+          "y": 49.5,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa",
+          "x": 327,
+          "y": 49.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período",
+          "x": 450,
+          "y": 49.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-05",
+          "x": 203,
+          "y": 57.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "710 - Doméstico",
+          "x": 327,
+          "y": 57.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 ~ 2026-05-30",
+          "x": 450,
+          "y": 57.5,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descrição",
+          "x": 39,
+          "y": 77.5,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período",
+          "x": 210,
+          "y": 77.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Faturado",
+          "x": 293,
+          "y": 77.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor Unit.",
+          "x": 365,
+          "y": 77.5,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor",
+          "x": 426,
+          "y": 77.5,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 450,
+          "y": 77.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ATCUD:ABCD1234-10000001",
+          "x": 479,
+          "y": 77.5,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Contador Nº",
+          "x": 39,
+          "y": 82,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Diâmetro / Caudal",
+          "x": 112,
+          "y": 82,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Consumo",
+          "x": 174,
+          "y": 82,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data",
+          "x": 239,
+          "y": 82,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Origem",
+          "x": 292,
+          "y": 82,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura",
+          "x": 349,
+          "y": 82,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fator Multipl.",
+          "x": 401,
+          "y": 82,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumo",
+          "x": 456,
+          "y": 82,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "X00EX000000",
+          "x": 39,
+          "y": 89,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "15 mm / 2.5 m3/h",
+          "x": 112,
+          "y": 89,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumo de Água",
+          "x": 174,
+          "y": 89,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-04-30",
+          "x": 239,
+          "y": 89,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "96",
+          "x": 349,
+          "y": 89,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-30",
+          "x": 239,
+          "y": 96,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Empresa",
+          "x": 292,
+          "y": 96,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100",
+          "x": 349,
+          "y": 96,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,00000",
+          "x": 401,
+          "y": 96,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 456,
+          "y": 96,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,00",
+          "x": 500,
+          "y": 96,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "M3",
+          "x": 514,
+          "y": 96,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Estimado",
+          "x": 456,
+          "y": 103,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,00 M3",
+          "x": 500,
+          "y": 103,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ÁGUA",
+          "x": 53,
+          "y": 139.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5,00",
+          "x": 428,
+          "y": 139.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 Esc. Consumo Água",
+          "x": 53,
+          "y": 145.5,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0 - 5 M3 em 30 dias",
+          "x": 119,
+          "y": 145.5,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 145.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,0000",
+          "x": 293,
+          "y": 145.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "m3 em 30 dias",
+          "x": 316,
+          "y": 145.5,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,500000",
+          "x": 369,
+          "y": 145.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,00",
+          "x": 429,
+          "y": 145.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 145.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "B0R-Tar. Disponibilidade",
+          "x": 53,
+          "y": 153.5,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 153.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30 dias",
+          "x": 293,
+          "y": 153.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,100000",
+          "x": 369,
+          "y": 153.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,00",
+          "x": 429,
+          "y": 153.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 153.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ÁGUAS RESIDUAIS",
+          "x": 53,
+          "y": 165.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,94",
+          "x": 428,
+          "y": 165.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 Esc. Saneamento Dom.",
+          "x": 53,
+          "y": 171.5,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0 - 5 M3 em 30 dias",
+          "x": 119,
+          "y": 171.5,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 171.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,6000",
+          "x": 293,
+          "y": 171.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "m3 em 30 dias",
+          "x": 316,
+          "y": 171.5,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,400000",
+          "x": 369,
+          "y": 171.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,44",
+          "x": 429,
+          "y": 171.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 171.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "B0S-Disp Saneamento",
+          "x": 53,
+          "y": 179.5,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 179.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30 dias",
+          "x": 293,
+          "y": 179.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,050000",
+          "x": 369,
+          "y": 179.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,50",
+          "x": 429,
+          "y": 179.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 179.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TAXA DE RECURSOS HÍDRICOS",
+          "x": 53,
+          "y": 191.5,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,20",
+          "x": 428,
+          "y": 191.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxa Recursos Hídricos Água",
+          "x": 53,
+          "y": 197.5,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 197.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4 m3 em 30 dias",
+          "x": 293,
+          "y": 197.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,040000",
+          "x": 369,
+          "y": 197.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,16",
+          "x": 429,
+          "y": 197.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 197.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TRH Saneamento Dom",
+          "x": 53,
+          "y": 205.5,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 205.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3.6 m3",
+          "x": 293,
+          "y": 205.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,010000",
+          "x": 369,
+          "y": 205.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,04",
+          "x": 429,
+          "y": 205.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)",
+          "x": 453,
+          "y": 205.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "OUTROS SERVIÇOS",
+          "x": 53,
+          "y": 224.3,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,01",
+          "x": 428,
+          "y": 224.3,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "abcd- Processado por programa",
+          "x": 480,
+          "y": 224.3,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(4)",
+          "x": 453,
+          "y": 229.9,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "certificado nº.0000/AT",
+          "x": 492,
+          "y": 229.9,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Juros de Mora",
+          "x": 53,
+          "y": 232.9,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 232.9,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "12345678",
+          "x": 293,
+          "y": 232.9,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,010000",
+          "x": 369,
+          "y": 232.9,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,01",
+          "x": 429,
+          "y": 232.9,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 53,
+          "y": 243.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,49",
+          "x": 428,
+          "y": 243.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(2)IVA 6%",
+          "x": 53,
+          "y": 250.9,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 250.9,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8,14",
+          "x": 293,
+          "y": 250.9,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,49",
+          "x": 429,
+          "y": 250.9,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(4)ARTº 16º, N.º 6 do CIVA",
+          "x": 53,
+          "y": 258.9,
+          "width": 119.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 258.9,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,01",
+          "x": 293,
+          "y": 258.9,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,0",
+          "x": 433,
+          "y": 258.9,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total sem IVA",
+          "x": 41,
+          "y": 270.9,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8,15€",
+          "x": 425,
+          "y": 270.9,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TOTAL",
+          "x": 40,
+          "y": 283.3,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8,64€",
+          "x": 422,
+          "y": 283.3,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fatura",
+          "x": 203,
+          "y": 335.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Cliente",
+          "x": 327,
+          "y": 335.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo de Leitura",
+          "x": 450,
+          "y": 335.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2000000001",
+          "x": 203,
+          "y": 343.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Domésticos",
+          "x": 327,
+          "y": 343.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Telemetria",
+          "x": 450,
+          "y": 343.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de Fatura",
+          "x": 203,
+          "y": 355.5,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa",
+          "x": 327,
+          "y": 355.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período",
+          "x": 450,
+          "y": 355.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-05",
+          "x": 203,
+          "y": 363.5,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "710 - Doméstico",
+          "x": 327,
+          "y": 363.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 ~ 2026-05-30",
+          "x": 450,
+          "y": 363.5,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descrição",
+          "x": 39,
+          "y": 383.5,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período",
+          "x": 210,
+          "y": 383.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Faturado",
+          "x": 293,
+          "y": 383.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor Unit.",
+          "x": 365,
+          "y": 383.5,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor",
+          "x": 426,
+          "y": 383.5,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 450,
+          "y": 383.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ATCUD:EFGH5678-2000000001",
+          "x": 479,
+          "y": 383.5,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "RESÍDUOS URBANOS",
+          "x": 53,
+          "y": 396.5,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,40",
+          "x": 428,
+          "y": 396.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 Esc. EA1 - Resíduos Sólidos",
+          "x": 53,
+          "y": 402.5,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": ">= 0 em 30 dias",
+          "x": 119,
+          "y": 402.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 402.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,0000",
+          "x": 293,
+          "y": 402.5,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "m3 em 30 dias",
+          "x": 316,
+          "y": 402.5,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,500000",
+          "x": 369,
+          "y": 402.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,00",
+          "x": 429,
+          "y": 402.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)",
+          "x": 453,
+          "y": 402.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "EB5 - Tarif. Dispon. Residuos",
+          "x": 53,
+          "y": 410.5,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 410.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30 dias",
+          "x": 293,
+          "y": 410.5,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,080000",
+          "x": 369,
+          "y": 410.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,40",
+          "x": 429,
+          "y": 410.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)",
+          "x": 453,
+          "y": 410.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TAXA GESTÃO RESÍDUOS",
+          "x": 53,
+          "y": 422.5,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,20",
+          "x": 428,
+          "y": 422.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "EA9 - Tx Gestão Resíduos",
+          "x": 53,
+          "y": 428.5,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 428.5,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4 m3 em 30 dias",
+          "x": 293,
+          "y": 428.5,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,050000",
+          "x": 369,
+          "y": 428.5,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,20",
+          "x": 429,
+          "y": 428.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)",
+          "x": 453,
+          "y": 428.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 53,
+          "y": 440.5,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,00",
+          "x": 428,
+          "y": 440.5,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(1)IVA N Suj. (Art.2º nº2 CIVA)",
+          "x": 53,
+          "y": 447.9,
+          "width": 142.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-05-01 2026-05-30",
+          "x": 210,
+          "y": 447.9,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,60",
+          "x": 293,
+          "y": 447.9,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,0",
+          "x": 433,
+          "y": 447.9,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total sem IVA",
+          "x": 41,
+          "y": 459.9,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,60€",
+          "x": 428,
+          "y": 459.9,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TOTAL",
+          "x": 40,
+          "y": 472.3,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,60€",
+          "x": 426,
+          "y": 472.3,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}
