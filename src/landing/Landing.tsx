@@ -70,6 +70,16 @@ export function Landing() {
                   {action === 'continueGuest' ? copy.continueGuest : copy.startGuest}
                 </button>
               )}
+              {action === 'signIn' && (
+                // Accounts here but no guest: starting without one stays possible.
+                <button
+                  type="button"
+                  className="button button-quiet"
+                  onClick={() => void startGuest()}
+                >
+                  {copy.startGuest}
+                </button>
+              )}
               {action !== 'open' && (
                 <Link to="/criar-conta" className="button button-quiet">
                   {copy.createAccount}
