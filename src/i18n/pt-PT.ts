@@ -428,7 +428,7 @@ export const t = {
       estimatedReadings: (label: string, count: number) =>
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
       oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
-        `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato.`,
+        `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato. Se já pagaste, podes dispensar este aviso.`,
       meterReading: (label: string, start: string, end: string) =>
         `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
