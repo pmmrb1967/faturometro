@@ -435,6 +435,8 @@ export const t = {
         `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
         `${label}: a última fatura é de ${date}, há ${days} dias. Confirma se chegou alguma nova.`,
+      missingUsual: (label: string, expected: string, due?: string) =>
+        `${label}: a fatura costuma chegar por volta de ${expected}${due ? ` e o pagamento costuma ser até ${due}` : ''}. Ainda não está na app: vê se chegou por email ou na área de cliente e acrescenta-a.`,
       cheaperOffer: (label: string, saving: string) =>
         `${label}: há uma oferta que pode poupar cerca de ${saving} por ano (estimativa).`,
       premiumIncrease: (label: string, before: string, after: string, pct: string) =>

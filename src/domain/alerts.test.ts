@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeAlerts, type AlertInput } from './alerts';
+import { computeAlerts, invoiceRhythm, type AlertInput } from './alerts';
 import type { Contract, Invoice, InvoiceLine, Reading } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
@@ -255,6 +255,58 @@ describe('missing invoice', () => {
         input({ contracts: [contract({ active: false })], invoices, today: '2026-07-01' }),
       ),
     ).toEqual([]);
+  });
+});
+
+describe('missing invoice, by the usual rhythm', () => {
+  const due = (id: string, issueDate: string, dueDate: string) => ({
+    ...invoice(id, issueDate, 3000),
+    dueDate,
+  });
+  // Issued around the 23rd, due 15 days later.
+  const invoices = [
+    due('a', '2026-06-23', '2026-07-08'),
+    due('b', '2026-07-23', '2026-08-07'),
+    due('c', '2026-08-23', '2026-09-07'),
+  ];
+
+  it('reads the usual interval and due delay (medians)', () => {
+    expect(invoiceRhythm(invoices)).toEqual({ intervalDays: 31, dueAfterDays: 15 });
+    expect(invoiceRhythm(invoices.slice(1))).toBeNull();
+    // Documents a few days apart do not count.
+    expect(
+      invoiceRhythm([...invoices.slice(0, 2), due('x', '2026-07-25', '2026-08-09')]),
+    ).toBeNull();
+  });
+
+  it('warns a few days after the usual arrival, naming the usual due date', () => {
+    const at = (today: string) => computeAlerts(input({ invoices, today }));
+    // Expected on 23-09; warns from 28-09 (5 days later), before 40 days.
+    expect(kinds(at('2026-09-27'))).toEqual([]);
+    expect(at('2026-09-28')).toEqual([
+      expect.objectContaining({
+        key: 'c1:missing_invoice:c',
+        kind: 'missing_invoice',
+        data: {
+          lastIssueDate: '2026-08-23',
+          days: 36,
+          expectedIssueDate: '2026-09-23',
+          expectedDueDate: '2026-10-08',
+        },
+      }),
+    ]);
+  });
+
+  it('warns earlier when the invoice is usually due soon after it arrives', () => {
+    const quick = invoices.map((item) => ({
+      ...item,
+      dueDate: item.issueDate.replace(/..$/, '27'),
+    }));
+    // Expected on 23-09, due on 27-09: warns from 24-09 (3 days before, never on the day it is expected).
+    expect(kinds(computeAlerts(input({ invoices: quick, today: '2026-09-23' })))).toEqual([]);
+    expect(kinds(computeAlerts(input({ invoices: quick, today: '2026-09-24' })))).toEqual([
+      'missing_invoice',
+    ]);
   });
 });
 

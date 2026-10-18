@@ -18,6 +18,14 @@ export const OLD_CHARGES_RECENT_DAYS = 60;
 export const ESTIMATED_IN_A_ROW = 3;
 /** Days after a billing period's length before an invoice counts as missing. */
 const MISSING_INVOICE_SLACK_DAYS = 10;
+/** Invoice intervals looked at for the usual rhythm. */
+const RHYTHM_INVOICES = 6;
+/** Shorter intervals are not the rhythm (credit notes, split documents). */
+const MIN_INTERVAL_DAYS = 7;
+/** With a usual rhythm: days after the usual arrival before an invoice counts as missing… */
+export const MISSING_AFTER_USUAL_DAYS = 5;
+/** …or days before the usual due date, whichever comes first. */
+export const MISSING_BEFORE_DUE_DAYS = 3;
 const PRICE_HISTORY = 3;
 /** Total-based price rule only where the total does not depend on consumption. */
 const FIXED_PRICE_SECTORS: readonly Sector[] = ['telecom', 'other'];
@@ -269,23 +277,78 @@ function socialTariffLostAlert(
   };
 }
 
+/** How often a contract's invoices arrive and how long after they are due (both medians). */
+export interface InvoiceRhythm {
+  intervalDays: number;
+  dueAfterDays?: number;
+}
+
+/** Usual rhythm from the latest invoices; null with fewer than three. */
+export function invoiceRhythm(history: readonly Invoice[]): InvoiceRhythm | null {
+  const recent = history.slice(-(RHYTHM_INVOICES + 1));
+  // Invoices a few days apart (a credit note, two documents of one bill) are not the rhythm.
+  const intervals = recent
+    .slice(1)
+    .map((invoice, index) => daysBetween(recent[index]!.issueDate, invoice.issueDate))
+    .filter((days) => days >= MIN_INTERVAL_DAYS);
+  if (intervals.length < 2) return null;
+  const dueAfter = recent
+    .filter((invoice) => invoice.dueDate && invoice.dueDate >= invoice.issueDate)
+    .map((invoice) => daysBetween(invoice.issueDate, invoice.dueDate!));
+  return {
+    intervalDays: median(intervals),
+    ...(dueAfter.length >= 2 ? { dueAfterDays: median(dueAfter) } : {}),
+  };
+}
+
+/** Upper median: with an even count, the later of the two, so a warning never comes early. */
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)]!;
+}
+
+function addDays(date: string, days: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * The next invoice has not been added. With a usual rhythm: a few days after
+ * it usually arrives, or a few days before it is usually due, whichever comes
+ * first. Without one: after 40 days, or the billed period plus 10 days.
+ */
 function missingAlert(contract: Contract, history: Invoice[], today: string): AlertDraft | null {
   const latest = history.at(-1);
   if (!contract.active || !latest) return null;
   const days = daysBetween(latest.issueDate, today);
+  const draft = (extra: Record<string, unknown> = {}): AlertDraft => ({
+    key: `${contract.id}:missing_invoice:${latest.id}`,
+    contractId: contract.id,
+    kind: 'missing_invoice',
+    severity: 'info',
+    data: { lastIssueDate: latest.issueDate, days, ...extra },
+  });
+
+  const rhythm = invoiceRhythm(history);
+  if (rhythm) {
+    const expectedIssueDate = addDays(latest.issueDate, rhythm.intervalDays);
+    let from = addDays(expectedIssueDate, MISSING_AFTER_USUAL_DAYS);
+    if (rhythm.dueAfterDays === undefined) {
+      return today >= from ? draft({ expectedIssueDate }) : null;
+    }
+    const expectedDueDate = addDays(expectedIssueDate, rhythm.dueAfterDays);
+    const beforeDue = addDays(expectedDueDate, -MISSING_BEFORE_DUE_DAYS);
+    if (beforeDue < from)
+      from = beforeDue > expectedIssueDate ? beforeDue : addDays(expectedIssueDate, 1);
+    return today >= from ? draft({ expectedIssueDate, expectedDueDate }) : null;
+  }
+
   // Invoices for longer periods (bimonthly water, yearly insurance) come less often.
   const period =
     latest.periodStart && latest.periodEnd
       ? daysBetween(latest.periodStart, latest.periodEnd) + 1
       : 0;
   if (days <= Math.max(MISSING_INVOICE_DAYS, period + MISSING_INVOICE_SLACK_DAYS)) return null;
-  return {
-    key: `${contract.id}:missing_invoice:${latest.id}`,
-    contractId: contract.id,
-    kind: 'missing_invoice',
-    severity: 'info',
-    data: { lastIssueDate: latest.issueDate, days },
-  };
+  return draft();
 }
 
 /** Discounts gone, new charges or above the contracted price (price rises have their own alert). */

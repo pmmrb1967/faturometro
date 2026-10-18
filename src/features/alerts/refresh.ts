@@ -56,7 +56,13 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
     case 'meter_reading':
       return copy.meterReading(label, formatIsoDate(text('start')), formatIsoDate(text('end')));
     case 'missing_invoice':
-      return copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
+      return data.expectedIssueDate
+        ? copy.missingUsual(
+            label,
+            formatIsoDate(text('expectedIssueDate')),
+            data.expectedDueDate ? formatIsoDate(text('expectedDueDate')) : undefined,
+          )
+        : copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
     case 'cheaper_offer':
       return copy.cheaperOffer(label, formatCents(number('savingCents')));
     case 'premium_notice':
