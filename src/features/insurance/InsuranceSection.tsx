@@ -2,6 +2,7 @@ import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
+import { ProposalsSection } from './ProposalsSection';
 import './insurance.css';
 
 const copy = t.insurance.section;
@@ -110,6 +111,7 @@ export function InsuranceSection({ contract }: { contract: Contract }) {
           <p className="muted">{copy.coveragesNote}</p>
         </section>
       )}
+      <ProposalsSection contract={contract} />
     </>
   );
 }

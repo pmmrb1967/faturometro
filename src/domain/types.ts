@@ -46,6 +46,8 @@ export interface InsuranceDetails {
   startDate?: IsoDate;
   /** Car insurance bonus/malus index, in percent. */
   bonusMalusPct?: number;
+  /** Proposals from other insurers, typed by the user to compare. */
+  proposals?: InsuranceProposal[];
 }
 
 export interface InsuranceRenewal {
@@ -56,6 +58,23 @@ export interface InsuranceRenewal {
   factors?: { name: string; pct: number }[];
   /** Insured capitals now and next year. */
   capitals?: { name: string; currentCents: Cents; nextCents: Cents }[];
+}
+
+/** One coverage of a proposal from another insurer, typed by the user. */
+export interface ProposalCoverage {
+  /** Name of the current policy's coverage this answers to. */
+  name: string;
+  included: boolean;
+  capitalCents?: Cents;
+  deductibleCents?: Cents;
+}
+
+export interface InsuranceProposal {
+  id: string;
+  insurer: string;
+  annualPremiumCents: Cents;
+  coverages: ProposalCoverage[];
+  createdAt: IsoDateTime;
 }
 
 export interface InsuranceCoverage {

@@ -516,7 +516,7 @@ Opcional e desligada por defeito.
 - [x] "Contribuir com este layout": o utilizador envia, com consentimento explícito, só a estrutura anonimizada de um layout desconhecido
 - [x] Gás no comparador e total luz + gás (`docs/superpowers/specs/2026-10-14-gas-comparator-design.md`)
 - [x] Telecom: comparar no COM.escolha da ANACOM, com a pesquisa preenchida (serviços lidos da fatura, limite = média do que pagas); verificação semanal das ligações no PC do responsável (`docs/anacom-comescolha.md`)
-- [ ] Seguros (P3) — fases 1 e 2 feitas (recibos; ata de renovação com aviso antes de pagar; condições particulares com coberturas e franquias); falta comparar propostas de outras seguradoras
+- [x] Seguros (P3) — fases 1 e 2 feitas (recibos; ata de renovação com aviso antes de pagar; condições particulares com coberturas e franquias) e comparação de propostas escritas à mão (2026-10-18)
 
 ### Próximas ações (seleção de 2026-10-14)
 
@@ -542,7 +542,7 @@ Escolhidas depois de comparar a app com os simuladores de energia (ERSE, DECO, S
 **Onda 3 — novos setores e apoios**
 - [x] Seguros, versão mínima (2026-10-14: setor `insurance`, parser `generali` do Fatura/Recibo, aviso e calendário de renovação, subida do prémio, auditoria; a ata de renovação e as condições particulares ficam para a fase 2): apólice como contrato (seguradora, ramo, prémio, data de renovação, capitais e franquias principais), histórico de prémios, alertas de renovação e de aumento, entrada na exportação `.ics`. Sem lista de ofertas (não há fonte pública) e sem afiliados. *Dados a confirmar:* se os recibos de prémio têm QR fiscal (regra 5) — precisa de amostras reais
 - [x] Seguros, fase 2 (2026-10-14): carta de renovação e condições particulares lidas sem IA (`src/parsers/policy-documents.ts`), guardadas no contrato da apólice; aviso "o prémio passa de X para Y a dd-mm" antes de renovar; coberturas, capitais e franquias na página do contrato
-- [ ] Seguros, comparar propostas: o utilizador carrega propostas recebidas e a app compara-as com a apólice cobertura a cobertura (o que falta, o que é inferior, diferença de preço); kit de simulação com o resumo das coberturas para usar nos simuladores externos
+- [x] Seguros, comparar propostas (2026-10-18; `src/domain/insurance-proposals.ts`, na página do seguro com coberturas): o utilizador escreve cada proposta (seguradora, prémio, capital e franquia por cobertura), guardada no contrato; a app assinala o que falta, o capital mais baixo e a franquia mais alta e a diferença de preço; "Copiar o resumo das coberturas" para os simuladores. Ler propostas em PDF fica para quando houver amostras
 - [x] Tarifa social (2026-10-18; `src/domain/social-tariff.ts`, página `/app/tarifa-social` com ligação no Início): questionário local (respostas não guardadas) com os critérios do folheto da ERSE de outubro de 2026 (luz e gás) e da ANACOM (Internet); notas dos contratos da app (já tem o desconto, potência acima de 6,9 kVA, gás acima do 2.º escalão). Água: depende do município. Valores a rever todos os anos
 - [ ] Água: comparar o tarifário do município com outros — **investigado** (`docs/ersar-agua.md`): a ERSAR só publica os PDFs de cada entidade, sem formato comum, e a acessibilidade económica em % do rendimento; sem dados para comparar. Alternativa: ligação ao tarifário oficial do concelho e aos tarifários sociais/famílias numerosas. Original: *Dados a confirmar:* que dados a ERSAR publica e com que licença
 - [ ] Layouts P2 — dependem de amostras reais (ou de contribuições de layout)

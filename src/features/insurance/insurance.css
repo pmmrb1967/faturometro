@@ -81,3 +81,73 @@
 .policy-document ul {
   margin: 0 0 12px;
 }
+
+.proposal {
+  margin: 20px 0;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.proposal h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.proposal p {
+  margin: 0 0 8px;
+}
+
+.proposal-cheaper,
+.proposal-ok {
+  color: var(--accent);
+}
+
+.proposal-worse {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.proposal-form {
+  margin: 16px 0;
+}
+
+.proposal-coverages {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.proposal-coverages li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.proposal-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.4;
+}
+
+.proposal-check input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.proposal-amounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0 12px;
+  margin-top: 8px;
+}
+
+.proposal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

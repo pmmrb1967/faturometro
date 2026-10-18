@@ -263,6 +263,49 @@ export const t = {
       coveragesNote:
         'Das condições particulares da apólice. Usa esta lista para pedir propostas com as mesmas coberturas a outras seguradoras.',
     },
+    proposals: {
+      title: 'Comparar propostas',
+      intro:
+        'Escreve aqui as propostas que outras seguradoras te enviarem: comparamos cada cobertura com a tua apólice e o preço com o que pagas. Ficam guardadas neste contrato.',
+      summary: 'Copiar o resumo das coberturas',
+      summaryHint:
+        'Para preencheres os simuladores das seguradoras ou para pedires propostas com as mesmas coberturas.',
+      copied: 'Resumo copiado.',
+      summaryPremium: (amount: string) => `Prémio anual atual: ${amount}`,
+      add: 'Acrescentar proposta',
+      insurer: 'Seguradora',
+      premium: 'Prémio anual, em euros',
+      included: 'Incluída',
+      capital: 'Capital (€)',
+      deductible: 'Franquia (€)',
+      save: 'Guardar proposta',
+      cancel: 'Cancelar',
+      remove: 'Apagar proposta',
+      errors: {
+        insurer: 'Escreve o nome da seguradora.',
+        amount: 'Escreve um valor em euros, por exemplo 250,00.',
+      },
+      header: (insurer: string, premium: string) => `${insurer}: ${premium} por ano`,
+      cheaper: (amount: string) => `${amount} mais barata do que o que pagas.`,
+      dearer: (amount: string) => `${amount} mais cara do que o que pagas.`,
+      samePrice: 'O mesmo preço que pagas.',
+      worse: (count: number) =>
+        count === 0
+          ? 'Nas coberturas que dá para comparar, nenhuma fica pior.'
+          : count === 1
+            ? '1 cobertura fica pior ou falta.'
+            : `${count} coberturas ficam piores ou faltam.`,
+      current: 'Agora',
+      proposed: 'Proposta',
+      result: 'Resultado',
+      verdicts: {
+        missing: 'Não incluída',
+        lower_capital: 'Capital mais baixo',
+        higher_deductible: 'Franquia mais alta',
+        ok: 'Igual ou melhor',
+      } as Record<string, string>,
+      note: 'Compara também as exclusões e as condições gerais de cada proposta: aqui só entram capitais e franquias.',
+    },
     document: {
       renewalTitle: 'Carta de renovação',
       conditionsTitle: 'Condições particulares',
