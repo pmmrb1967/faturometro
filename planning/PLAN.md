@@ -537,6 +537,8 @@ Escolhidas depois de comparar a app com os simuladores de energia (ERSE, DECO, S
 
 - [x] Lembrete para comunicar a leitura do contador (2026-10-18): os leitores da Indaqua e da Águas do Porto leem o período impresso na fatura da água; aviso no Início 3 dias antes até ao fim do período e evento no calendário `.ics`. A Repsol não imprime o período
 
+- [x] Consumos fora do pacote nas telecomunicações (2026-10-18): o leitor da NOS lê os "Consumos adicionais" (roaming, tráfego extra), que entram na auditoria da fatura e no alerta; carta "Bloquear serviços pagos à parte" (barramento de serviços de valor acrescentado e, se possível, do roaming de dados), sem citar leis. MEO e DIGI quando houver faturas com estes consumos
+
 **Onda 3 — novos setores e apoios**
 - [x] Seguros, versão mínima (2026-10-14: setor `insurance`, parser `generali` do Fatura/Recibo, aviso e calendário de renovação, subida do prémio, auditoria; a ata de renovação e as condições particulares ficam para a fase 2): apólice como contrato (seguradora, ramo, prémio, data de renovação, capitais e franquias principais), histórico de prémios, alertas de renovação e de aumento, entrada na exportação `.ics`. Sem lista de ofertas (não há fonte pública) e sem afiliados. *Dados a confirmar:* se os recibos de prémio têm QR fiscal (regra 5) — precisa de amostras reais
 - [x] Seguros, fase 2 (2026-10-14): carta de renovação e condições particulares lidas sem IA (`src/parsers/policy-documents.ts`), guardadas no contrato da apólice; aviso "o prémio passa de X para Y a dd-mm" antes de renovar; coberturas, capitais e franquias na página do contrato

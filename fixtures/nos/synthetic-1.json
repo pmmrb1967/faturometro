@@ -460,6 +460,86 @@
           "width": 59.8,
           "height": 8,
           "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(900000001)",
+          "x": 61,
+          "y": 360,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumos adicionais",
+          "x": 63,
+          "y": 380,
+          "width": 87.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Roaming",
+          "x": 69,
+          "y": 397,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23 mai - 22 jun",
+          "x": 202,
+          "y": 397,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€4,065",
+          "x": 277,
+          "y": 397,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tráfego de dados",
+          "x": 69,
+          "y": 414,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "23 mai - 22 jun",
+          "x": 202,
+          "y": 414,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€0,000",
+          "x": 277,
+          "y": 414,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Total telemóvel",
+          "x": 61,
+          "y": 433,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "€5,00",
+          "x": 281,
+          "y": 433,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
         }
       ]
     }

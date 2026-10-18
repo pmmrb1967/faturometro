@@ -101,6 +101,21 @@ describe('auditInvoice', () => {
     expect(auditInvoice(input({ invoice, lines })).findings).toEqual([]);
   });
 
+  it('lists usage outside the package (roaming) for its own alert, not as an increase', () => {
+    const invoice = {
+      id: 'i2',
+      issueDate: '2026-10-01',
+      totalCents: 4299,
+      extraUsage: [{ description: 'Tráfego de dados em roaming', amountCents: 453 }],
+    };
+    const audit = auditInvoice(input({ invoice }));
+    expect(audit.findings).toEqual([
+      { kind: 'extra_usage', description: 'Tráfego de dados em roaming', amountCents: 453 },
+    ]);
+    expect(audit.increased).toBe(false);
+    expect(needsAuditAlert(audit)).toBe(true);
+  });
+
   it('compares unit prices, not amounts, and ignores taxes', () => {
     const energy = (price: string, quantity: number, tax: string): Line[] => [
       {

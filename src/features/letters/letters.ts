@@ -18,6 +18,7 @@ export const LETTER_KINDS = [
   'renegotiate',
   'price_increase',
   'estimated_reading',
+  'block_extras',
   'cancel',
 ] as const;
 export type LetterKind = (typeof LETTER_KINDS)[number];
@@ -26,9 +27,11 @@ const METERED: readonly Sector[] = ['electricity', 'gas', 'water'];
 
 /** Letters that make sense for this contract (estimated readings only with a meter). */
 export function letterKinds(contract: Pick<Contract, 'sector'>): LetterKind[] {
-  return LETTER_KINDS.filter(
-    (kind) => kind !== 'estimated_reading' || METERED.includes(contract.sector),
-  );
+  return LETTER_KINDS.filter((kind) => {
+    if (kind === 'estimated_reading') return METERED.includes(contract.sector);
+    if (kind === 'block_extras') return contract.sector === 'telecom';
+    return true;
+  });
 }
 
 export interface LetterData {
@@ -55,6 +58,8 @@ export interface LetterData {
   auditDetails?: string[];
   /** From the cheaper-offer alert. */
   cheaperOffer?: { name: string; yearlySavingCents: Cents };
+  /** Usage outside the package on the latest invoice (telecom). */
+  extraUsage?: { issueDate: string; items: { description: string; amountCents: Cents }[] };
 }
 
 function paragraphs(...items: (string | false | undefined)[]): string {
@@ -127,6 +132,22 @@ function bodyOf(kind: LetterKind, data: LetterData, today: string): string[] {
         ),
         copy.estimatedAsk,
       ];
+    case 'block_extras':
+      return [
+        copy.client(service, data.contract.tariffName),
+        ...(data.extraUsage
+          ? [
+              [
+                copy.extraUsage(formatIsoDate(data.extraUsage.issueDate)),
+                ...data.extraUsage.items.map(
+                  (item) =>
+                    `- ${copy.extraUsageItem(item.description, formatCents(item.amountCents))}`,
+                ),
+              ].join('\n'),
+            ]
+          : []),
+        copy.blockAsk,
+      ];
     case 'cancel':
       return [
         paragraphs(copy.cancelStatement(service), loyaltyText(data, today)),
@@ -178,6 +199,7 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
   const offer = latestOf('cheaper_offer');
   const average = monthlyAverage(invoices);
   const latest = invoices[0];
+  const extraUsage = latest?.extraUsage?.filter((item) => item.amountCents > 0) ?? [];
 
   return {
     providerName: provider?.name ?? '',
@@ -187,6 +209,9 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
     ...(average ? { average } : {}),
     ...(latest
       ? { latestInvoice: { issueDate: latest.issueDate, totalCents: latest.totalCents } }
+      : {}),
+    ...(latest && extraUsage.length > 0
+      ? { extraUsage: { issueDate: latest.issueDate, items: extraUsage } }
       : {}),
     ...(increaseData && increaseInvoice
       ? {

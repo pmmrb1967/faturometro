@@ -5,6 +5,7 @@ import type {
   InvoiceLine,
   Reading,
   ReadingWindow,
+  ExtraUsage,
   Sector,
   TelecomService,
 } from '../domain/types';
@@ -65,6 +66,8 @@ export interface ExtractedInvoice {
   readingType?: Field<Reading['readingType']>;
   /** When the supplier asks for the next meter reading, as printed on the invoice. */
   readingWindow?: Field<ReadingWindow>;
+  /** Telecom usage billed outside the package (roaming, extra traffic…), without VAT. */
+  extraUsage?: ExtraUsage[];
   lines: ExtractedLine[];
   /** True when line amounts include VAT (they then add up to the total, not the net). */
   linesIncludeVat?: boolean;

@@ -4,7 +4,7 @@
  * per service. Layout studied on 2026 invoices.
  */
 import { TELECOM_SERVICES, type InvoiceLine, type TelecomService } from '../domain/types';
-import { sumCents } from '../lib/money';
+import { sumCents, type Cents } from '../lib/money';
 import type { PageText } from '../pdf/text';
 import type { FiscalQr } from '../qr/parse';
 import { emptyExtraction, type ExtractedInvoice, type Parser, type ParserContext } from './types';
@@ -185,11 +185,48 @@ function parseServices(pages: PageText[], result: ExtractedInvoice) {
   }
 }
 
+/** "€4,534" (three decimal places, without VAT) → cents, rounded half up. */
+function milliAmount(text: string): Cents | null {
+  const match = /^€(-?)(\d+),(\d{3})$/.exec(normalize(text));
+  if (!match) return null;
+  const milli = Number(match[2]) * 1000 + Number(match[3]);
+  return (match[1] ? -1 : 1) * Math.round(milli / 10);
+}
+
+/**
+ * "Consumos adicionais" under each mobile number: usage outside the package
+ * ("Tráfego de dados em roaming | 23 ago - 22 set | €4,534"), without VAT.
+ * Only non-zero amounts, added up by description.
+ */
+function parseExtraUsage(pages: PageText[], result: ExtractedInvoice) {
+  const totals = new Map<string, Cents>();
+  for (const page of pages) {
+    const all = rows(page);
+    all.forEach((header, index) => {
+      if (!/^Consumos adicionais$/.test(normalize(header.items[0]?.str ?? ''))) return;
+      for (const row of all.slice(index + 1)) {
+        const label = normalize(row.items[0]?.str ?? '');
+        if (/^Consumos adicionais$|^Total/.test(label)) break;
+        const value = row.items.map((item) => milliAmount(item.str)).find((cents) => cents !== null);
+        const description = row.items.find((item) => item.x > header.items[0]!.x + 2 && item.x < 200);
+        if (value === undefined || value === null || !description) break;
+        if (value === 0) continue;
+        const key = normalize(description.str);
+        totals.set(key, (totals.get(key) ?? 0) + value);
+      }
+    });
+  }
+  const usage = [...totals]
+    .filter(([, cents]) => cents !== 0)
+    .map(([description, amountCents]) => ({ description, amountCents }));
+  if (usage.length > 0) result.extraUsage = usage;
+}
+
 export const nosParser: Parser = {
   id: 'nos',
   name: 'NOS',
-  version: '1.1.0',
-  updated: '2026-10-14',
+  version: '1.2.0',
+  updated: '2026-10-18',
   sectors: ['telecom'],
   issuerNifs: [NIF],
 
@@ -210,6 +247,7 @@ export const nosParser: Parser = {
     parseSummary(first, result);
     parseDetail(ctx.pages.slice(1), result);
     parseServices(ctx.pages, result);
+    parseExtraUsage(ctx.pages.slice(1), result);
     if (qr?.docId && result.docId && result.docId.value !== normalize(qr.docId)) {
       result.warnings.push('Document number differs from the QR code');
     }

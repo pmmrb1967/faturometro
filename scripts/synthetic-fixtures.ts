@@ -149,7 +149,8 @@ write(
   ],
 );
 
-// NOS: 4-service package (internet, TV, landline, one mobile plan) with a discount and mobile usage. Total 35,00 € with VAT (23 %: 6,54 €).
+// NOS: 4-service package (internet, TV, landline, one mobile plan) with a discount and mobile usage
+// (roaming, 4,065 € without VAT). Total 35,00 € with VAT (23 %: 6,54 €).
 write(
   'nos',
   'synthetic-1',
@@ -218,6 +219,16 @@ write(
       ['Data fim', 202, 321],
       ['Valor com IVA', 255, 321],
       ['Não aplicável', 202, 336],
+      ['(900000001)', 61, 360],
+      ['Consumos adicionais', 63, 380],
+      ['Roaming', 69, 397],
+      ['23 mai - 22 jun', 202, 397],
+      ['€4,065', 277, 397],
+      ['Tráfego de dados', 69, 414],
+      ['23 mai - 22 jun', 202, 414],
+      ['€0,000', 277, 414],
+      ['Total telemóvel', 61, 433],
+      ['€5,00', 281, 433],
     ]),
   ],
 );

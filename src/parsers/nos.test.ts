@@ -44,5 +44,13 @@ describe('nos parser', () => {
     expect(Math.abs(Date.parse(result.periodStart!.value) - Date.parse(qr.date))).toBeLessThan(
       40 * 86_400_000,
     );
+    // Usage outside the package: only non-zero amounts, without VAT.
+    for (const usage of result.extraUsage ?? []) {
+      expect(usage.amountCents).toBeGreaterThan(0);
+      expect(usage.description).toMatch(/^\p{Lu}/u);
+    }
+    if (fixture.name.includes('synthetic-1')) {
+      expect(result.extraUsage).toEqual([{ description: 'Roaming', amountCents: 407 }]);
+    }
   });
 });

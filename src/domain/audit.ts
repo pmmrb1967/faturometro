@@ -24,7 +24,9 @@ export type AuditFinding =
   /** A charge that was not on the previous invoice. */
   | { kind: 'new_charge'; description: string; amountCents: Cents }
   /** Recurring charges above the monthly price the user entered for the contract. */
-  | { kind: 'above_contracted'; contractedCents: Cents; chargedCents: Cents };
+  | { kind: 'above_contracted'; contractedCents: Cents; chargedCents: Cents }
+  /** Telecom usage outside the package (roaming, extra traffic…), without VAT. */
+  | { kind: 'extra_usage'; description: string; amountCents: Cents };
 
 export interface InvoiceAudit {
   invoiceId: string;
@@ -106,7 +108,7 @@ export function recurringCents(invoice: Pick<Invoice, 'totalCents'>, lines: read
 
 export interface AuditInput {
   contract: Pick<Contract, 'sector' | 'loyaltyEndDate' | 'monthlyPriceCents'>;
-  invoice: Pick<Invoice, 'id' | 'issueDate' | 'totalCents'>;
+  invoice: Pick<Invoice, 'id' | 'issueDate' | 'totalCents' | 'extraUsage'>;
   lines: readonly Line[];
   previous?: Pick<Invoice, 'id' | 'totalCents'>;
   previousLines?: readonly Line[];
@@ -210,8 +212,14 @@ export function auditInvoice(input: AuditInput): InvoiceAudit {
     }
   }
 
+  for (const usage of invoice.extraUsage ?? []) {
+    if (usage.amountCents > 0) findings.push({ kind: 'extra_usage', ...usage });
+  }
+
   const increased = findings.some((finding) => {
     switch (finding.kind) {
+      case 'extra_usage':
+        return false;
       case 'price_changed':
         return Number(finding.after) > Number(finding.before);
       case 'fee_changed':
@@ -234,6 +242,12 @@ export function auditInvoice(input: AuditInput): InvoiceAudit {
 /** Findings that the price-increase alert does not already cover (for their own alert). */
 export function needsAuditAlert(audit: InvoiceAudit): boolean {
   return audit.findings.some((finding) =>
-    ['discount_ended', 'discount_reduced', 'new_charge', 'above_contracted'].includes(finding.kind),
+    [
+      'discount_ended',
+      'discount_reduced',
+      'new_charge',
+      'above_contracted',
+      'extra_usage',
+    ].includes(finding.kind),
   );
 }

@@ -403,6 +403,7 @@ export const t = {
         discount_reduced: 'um desconto ficou mais pequeno',
         new_charge: 'há uma cobrança nova',
         above_contracted: 'pagas mais do que a mensalidade contratada',
+        extra_usage: 'há consumos fora do pacote',
       } as Record<string, string>,
     },
   },
@@ -966,6 +967,8 @@ export const t = {
         `${description}: cobrança nova de ${amount}.`,
       aboveContracted: (charged: string, contracted: string) =>
         `Pagas ${charged} de mensalidade, acima dos ${contracted} contratados.`,
+      extraUsage: (description: string, amount: string) =>
+        `${description}: ${amount} sem IVA, fora do pacote.`,
       duringLoyalty:
         'Esta fatura é do período de fidelização. Confirma no contrato se estas alterações estão previstas.',
       letter: 'Se não concordares, usa a carta "Contestar um aumento" mais abaixo.',
@@ -982,6 +985,7 @@ export const t = {
         renegotiate: 'Pedir um preço melhor',
         price_increase: 'Contestar um aumento',
         estimated_reading: 'Reclamar de leituras estimadas',
+        block_extras: 'Bloquear serviços pagos à parte',
         cancel: 'Denunciar o contrato',
       },
       textLabel: 'Texto da carta (podes editar)',
@@ -1023,6 +1027,7 @@ export const t = {
         renegotiate: 'Pedido de revisão do preço',
         price_increase: 'Pedido de esclarecimento sobre aumento de preço',
         estimated_reading: 'Reclamação: faturação com leituras estimadas',
+        block_extras: 'Pedido de barramento de serviços de valor acrescentado',
         cancel: 'Denúncia do contrato',
       },
       subjectLine: (subject: string) => `Assunto: ${subject}`,
@@ -1048,6 +1053,10 @@ export const t = {
       increaseUnknown: (date: string, amount: string) =>
         `Na fatura de ${date}, no valor de ${amount}, verifiquei um aumento do preço que pago.`,
       auditDetails: 'Comparando com a fatura anterior:',
+      extraUsage: (date: string) => `Na fatura de ${date} foram cobrados consumos fora do pacote:`,
+      extraUsageItem: (description: string, amount: string) => `${description}: ${amount} sem IVA`,
+      blockAsk:
+        'Peço que barrem nas minhas linhas o acesso a serviços de valor acrescentado (chamadas e mensagens para números de valor acrescentado e subscrições de conteúdos) e, se for possível, o roaming de dados, e que me confirmem por escrito quando o barramento estiver ativo.',
       increaseAsk:
         'Peço que me expliquem o motivo deste aumento e a cláusula do contrato em que se baseia. Se o aumento não estiver previsto no contrato, peço que o corrijam e que me devolvam a diferença já cobrada.',
       estimatedCount: (count: number) =>

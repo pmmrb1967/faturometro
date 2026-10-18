@@ -41,6 +41,8 @@ export function findingText(finding: AuditFinding): string {
         formatCents(finding.chargedCents),
         formatCents(finding.contractedCents),
       );
+    case 'extra_usage':
+      return copy.extraUsage(finding.description, formatCents(finding.amountCents));
   }
 }
 

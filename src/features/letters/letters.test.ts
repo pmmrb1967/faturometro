@@ -22,6 +22,31 @@ describe('letterKinds', () => {
     expect(letterKinds({ sector: 'telecom' })).not.toContain('estimated_reading');
     expect(letterKinds({ sector: 'electricity' })).toContain('estimated_reading');
   });
+
+  it('offers the barring letter only for telecom', () => {
+    expect(letterKinds({ sector: 'telecom' })).toContain('block_extras');
+    expect(letterKinds({ sector: 'water' })).not.toContain('block_extras');
+  });
+});
+
+describe('block_extras letter', () => {
+  it('asks to bar value-added services and lists the usage outside the package', () => {
+    const { subject, text } = buildLetter(
+      'block_extras',
+      data({
+        extraUsage: {
+          issueDate: '2026-09-23',
+          items: [{ description: 'Tráfego de dados em roaming', amountCents: 453 }],
+        },
+      }),
+      TODAY,
+    );
+    expect(subject).toBe('Pedido de barramento de serviços de valor acrescentado');
+    expect(text).toContain(
+      'Na fatura de 23-09-2026 foram cobrados consumos fora do pacote:\n- Tráfego de dados em roaming: 4,53',
+    );
+    expect(text).toContain('serviços de valor acrescentado');
+  });
 });
 
 describe('buildLetter', () => {

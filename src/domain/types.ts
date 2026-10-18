@@ -115,6 +115,13 @@ export interface ReadingWindow {
   end: IsoDate;
 }
 
+/** One kind of telecom usage outside the package ("Tráfego de dados em roaming"). */
+export interface ExtraUsage {
+  description: string;
+  /** Without VAT, rounded to the cent. */
+  amountCents: Cents;
+}
+
 export interface Invoice extends SyncMeta {
   contractId: string;
   providerId: string;
@@ -131,6 +138,8 @@ export interface Invoice extends SyncMeta {
   dueDate?: IsoDate;
   /** Days to send the next meter reading, as printed on the invoice. */
   readingWindow?: ReadingWindow;
+  /** Telecom usage billed outside the package, without VAT (only the non-zero ones). */
+  extraUsage?: ExtraUsage[];
   totalCents: Cents;
   vatCents?: Cents;
   qrStatus: 'ok' | 'missing' | 'invalid';
