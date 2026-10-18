@@ -158,7 +158,8 @@ export const t = {
     withoutIntro:
       'Destes, a app lê o código QR (total, IVA, data). O resto podes pedir à IA, com a tua chave da Anthropic (Definições), ou preencher à mão.',
     andOthers: ' e outros',
-    waterNote: 'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos e a Águas do Porto têm leitor)',
+    waterNote:
+      'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos e a Águas do Porto têm leitor)',
     requestTitle: 'Pedir um leitor automático',
     request:
       'Ao carregar uma fatura de um fornecedor sem leitor, usa "Contribuir com este layout": envia só a estrutura da fatura, anonimizada e cifrada, e é o que permite fazer o leitor. Não envies faturas por email: têm o teu nome, morada e NIF.',
@@ -280,6 +281,66 @@ export const t = {
       saved: (label: string) => `Guardado no contrato ${label}.`,
       noContract:
         'Ainda não tens nenhum seguro na app. Guarda primeiro um recibo (Fatura/Recibo) deste seguro: o contrato é criado com ele.',
+    },
+  },
+  socialTariff: {
+    title: 'Tarifa social',
+    homeLink: 'Tens direito à tarifa social da luz, do gás ou da Internet? Verifica aqui.',
+    back: 'Voltar ao início',
+    intro:
+      'Responde às perguntas para saber se a tua casa pode ter a tarifa social da luz, do gás natural e da Internet. As respostas ficam só neste ecrã: não são guardadas nem enviadas.',
+    benefitsLegend: 'Recebes (ou podes receber) alguma destas prestações sociais?',
+    benefits: {
+      csi: 'Complemento solidário para idosos',
+      rsi: 'Rendimento social de inserção',
+      unemployment: 'Prestação de desemprego',
+      family_allowance_1: 'Abono de família, 1.º escalão',
+      family_allowance_other: 'Abono de família, outro escalão',
+      invalidity:
+        'Pensão social de invalidez (regime especial de proteção na invalidez ou complemento da prestação social para a inclusão)',
+      old_age: 'Pensão social de velhice',
+    },
+    income: 'Rendimento anual do agregado, em euros (opcional)',
+    incomeHint: 'Só conta para a luz e a Internet, se ninguém receber as prestações acima.',
+    incomeError: 'Escreve um valor em euros, por exemplo 6500.',
+    members: 'Pessoas do agregado sem nenhum rendimento (contigo, se for o caso)',
+    membersHint: 'Cada uma aumenta o limite de rendimento em 50 %, até 10 pessoas.',
+    services: { electricity: 'Luz', gas: 'Gás natural', internet: 'Internet' },
+    eligibleBenefit:
+      'Pelas tuas respostas, tens direito: recebes uma das prestações que dão acesso.',
+    eligibleIncome: (limit: string) =>
+      `Pelas tuas respostas, tens direito: o rendimento está dentro do limite para a tua casa (${limit} por ano).`,
+    notEligible: (limit: string) =>
+      `Pelas tuas respostas, não tens direito. Sem prestações, o limite de rendimento para a tua casa é ${limit} por ano.`,
+    notEligibleGas:
+      'Pelas tuas respostas, não tens direito: no gás natural só contam as prestações sociais.',
+    conditions: {
+      electricity:
+        'Condições: o contrato tem de estar em teu nome, ser só para consumo doméstico na habitação permanente e ter potência até 6,9 kVA. O desconto médio é de 33,8 % (sem taxas e impostos), com isenção do IEC.',
+      gas: 'Condições: o contrato tem de estar em teu nome, ser só para consumo doméstico na habitação permanente, em baixa pressão, com consumo até 500 m³ por ano (1.º e 2.º escalão). O desconto médio é de 31,2 % (sem taxas e impostos), com isenção do ISPGN.',
+      internet: (price: string, activation: string) =>
+        `Custa ${price} + IVA por mês, com pelo menos 15 GB de tráfego; a ativação ou o equipamento podem custar até ${activation} + IVA. Só uma por agregado.`,
+    },
+    how: {
+      energy:
+        'É atribuída automaticamente pela DGEG e o teu comercializador avisa-te. Se achas que tens direito e não recebeste nada, pede um comprovativo à Segurança Social ou às Finanças e entrega-o ao comercializador.',
+      internet:
+        'Pede-a a um operador de Internet. A ANACOM confirma se tens direito e o operador tem até 10 dias para ativar o serviço.',
+    },
+    notes: {
+      already: 'A tua fatura de luz já mostra o desconto da tarifa social.',
+      power_too_high:
+        'O teu contrato de luz tem mais de 6,9 kVA: com esta potência não há tarifa social.',
+      gas_tier_too_high:
+        'O teu contrato de gás está acima do 2.º escalão: a tarifa social só cobre consumos até 500 m³ por ano.',
+    } as Record<string, string>,
+    water:
+      'Água e resíduos: não há uma tarifa social nacional, depende do município. Vê o tarifário da tua entidade gestora.',
+    sources: 'Critérios da ERSE (outubro de 2026) e da ANACOM. Confirma sempre junto de:',
+    links: {
+      dgeg: 'DGEG, tarifa social de energia',
+      energy: 'Folheto da ERSE',
+      internet: 'ANACOM, tarifa social de Internet',
     },
   },
   household: {

@@ -85,6 +85,9 @@ export function HomePage() {
           </li>
         ))}
       </ul>
+      <p className="home-link">
+        <Link to="/app/tarifa-social">{t.socialTariff.homeLink}</Link>
+      </p>
       <HouseholdSection />
     </>
   );

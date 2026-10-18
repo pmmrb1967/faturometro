@@ -11,6 +11,7 @@ import { ConnectPage } from '../features/sync/ConnectPage';
 import { ContractPage } from '../features/contracts/ContractPage';
 import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
+import { SocialTariffPage } from '../features/social-tariff/SocialTariffPage';
 import { Landing } from '../landing/Landing';
 import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
 import { SECTIONS, type SectionId } from './sections';
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
           : { path: section.path, element: sectionElement(section.id) },
       ),
       { path: '/app/contratos/:id', element: <ContractPage /> },
+      { path: '/app/tarifa-social', element: <SocialTariffPage /> },
     ],
   },
   { path: '*', element: <NotFound /> },

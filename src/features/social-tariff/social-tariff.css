@@ -1,0 +1,78 @@
+.social-form fieldset {
+  margin: 20px 0;
+  padding: 0;
+  border: 0;
+}
+
+.social-form legend {
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.social-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.social-check input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.social-results {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+}
+
+.social-result {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 10px;
+}
+
+.social-result.is-eligible {
+  border-left-color: var(--accent);
+}
+
+.social-result h2 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.social-result p {
+  margin: 0 0 8px;
+}
+
+.social-result p:last-child {
+  margin-bottom: 0;
+}
+
+.social-verdict {
+  font-weight: 700;
+}
+
+.social-result.is-eligible .social-verdict {
+  color: var(--accent);
+}
+
+.social-note {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+
+.social-links {
+  margin: 0 0 24px;
+  padding-left: 20px;
+}
