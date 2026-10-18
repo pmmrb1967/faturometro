@@ -12,6 +12,7 @@ import {
   type ContractContext,
 } from './prompts/assist';
 import { toExtraction, type ExtractResponse } from './prompts/extract';
+import { toProposalReading } from './prompts/proposal';
 import { AiError } from './provider';
 import { aiAvailable } from './session';
 import type { Profile } from '../db/profiles';
@@ -390,5 +391,90 @@ describe('aiAvailable', () => {
     expect(aiAvailable(account, { aiApiKey: 'sk-ant-x' })).toBe(true);
     expect(aiAvailable(account, {})).toBe(false);
     expect(aiAvailable(guest, { aiApiKey: 'sk-ant-x' })).toBe(false);
+  });
+});
+
+describe('insurance proposals', () => {
+  const current = ['Incêndio', 'Danos por água', 'Fenómenos sísmicos'];
+
+  it('keeps coverages of the current policy once each, in cents; the rest is listed apart', () => {
+    const reading = toProposalReading(
+      {
+        insurer: ' Seguradora Exemplo ',
+        annualPremium: '298.40',
+        coverages: [
+          {
+            name: 'Incêndio, raio e explosão',
+            current: 'Incêndio',
+            included: true,
+            capital: '285149.24',
+            deductible: '150.00',
+          },
+          {
+            name: 'Incêndio (anexos)',
+            current: 'Incêndio',
+            included: true,
+            capital: '',
+            deductible: '',
+          },
+          {
+            name: 'Fenómenos sísmicos',
+            current: 'Fenómenos sísmicos',
+            included: false,
+            capital: '',
+            deductible: '',
+          },
+          { name: 'Assistência ao lar', current: '', included: true, capital: '', deductible: '' },
+          {
+            name: 'Inventada',
+            current: 'Responsabilidade civil',
+            included: true,
+            capital: '10',
+            deductible: '5 %',
+          },
+        ],
+      },
+      current,
+    );
+    expect(reading.insurer).toBe('Seguradora Exemplo');
+    expect(reading.annualPremiumCents).toBe(29840);
+    expect(reading.coverages).toEqual({
+      Incêndio: { included: true, capitalCents: 28514924, deductibleCents: 15000 },
+      'Fenómenos sísmicos': { included: false },
+    });
+    expect(reading.extra).toEqual(['Incêndio (anexos)', 'Assistência ao lar', 'Inventada']);
+  });
+
+  it('no premium when only the instalment is printed', () => {
+    const reading = toProposalReading({ insurer: 'X', annualPremium: '', coverages: [] }, current);
+    expect(reading.annualPremiumCents).toBeUndefined();
+  });
+
+  it('sends the coverage names with the proposal and records the usage as a proposal', async () => {
+    const body = { insurer: 'Seguradora Exemplo', annualPremium: '298.40', coverages: [] };
+    const api = fakeApi([
+      { status: 200, body: message('não é JSON') },
+      { status: 200, body: message(JSON.stringify(body)) },
+    ]);
+    const provider = new AnthropicProvider({
+      apiKey: 'sk-ant-test',
+      model: 'claude-haiku-5-5',
+      fetch: api.fetch,
+    });
+    const result = await provider.readProposal(
+      { kind: 'text', text: 'Proposta | 298,40 €' },
+      current,
+    );
+    expect(result.reading.annualPremiumCents).toBe(29840);
+    expect(result.usage.map((usage) => [usage.task, usage.promptVersion])).toEqual([
+      ['proposal', 'proposal-v1'],
+      ['proposal', 'proposal-v1'],
+    ]);
+    const messages = api.requests[0]?.body.messages as {
+      content: { type: string; text?: string }[];
+    }[];
+    const prompt = messages[0]?.content.at(-1)?.text ?? '';
+    expect(prompt).toContain('- Danos por água');
+    expect(prompt).toContain('Proposta | 298,40 €');
   });
 });

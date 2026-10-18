@@ -281,7 +281,7 @@ export interface Payment extends SyncMeta {
 /** One AI request, kept on this device only (PLAN.md §10: tokens per call, locally). */
 export interface AiUsageRecord extends SyncMeta {
   createdAt: IsoDateTime;
-  task: 'extract' | 'explain' | 'letter' | 'test';
+  task: 'extract' | 'proposal' | 'explain' | 'letter' | 'test';
   model: string;
   promptVersion: string;
   inputTokens: number;

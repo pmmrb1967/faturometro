@@ -15,6 +15,14 @@ import {
   toExtraction,
 } from './prompts/extract';
 import {
+  PROPOSAL_PROMPT_VERSION,
+  PROPOSAL_SCHEMA,
+  PROPOSAL_SYSTEM,
+  proposalResponseSchema,
+  proposalUserPrompt,
+  toProposalReading,
+} from './prompts/proposal';
+import {
   AiError,
   type AiProvider,
   type AiUsage,
@@ -126,34 +134,34 @@ export class AnthropicProvider implements AiProvider {
     }
   }
 
-  private extractionParams(source: InvoiceSource, target?: DocumentTarget) {
+  /** A document and a prompt, answered in a JSON schema and checked with zod; one retry at most. */
+  private async structured<T>(request: {
+    task: 'extract' | 'proposal';
+    promptVersion: string;
+    system: string;
+    source: InvoiceSource;
+    prompt: string;
+    schema: Record<string, unknown>;
+    validator: { safeParse(value: unknown): { success: true; data: T } | { success: false } };
+  }): Promise<{ data: T; usage: AiUsage[] }> {
+    const { source } = request;
     if (source.kind === 'text' && source.text.length > MAX_TEXT_LENGTH) {
       throw new AiError('too_large');
     }
-    return {
+    const params = {
       model: this.model,
-      system: EXTRACT_SYSTEM,
+      system: request.system,
       messages: [
         {
           role: 'user' as const,
-          content: [
-            ...sourceBlocks(source),
-            {
-              type: 'text' as const,
-              text: extractUserPrompt(source.kind === 'text' ? source.text : undefined, target),
-            },
-          ],
+          content: [...sourceBlocks(source), { type: 'text' as const, text: request.prompt }],
         },
       ],
       output_config: {
         effort: this.effort,
-        format: { type: 'json_schema' as const, schema: EXTRACT_SCHEMA },
+        format: { type: 'json_schema' as const, schema: request.schema },
       },
     };
-  }
-
-  async extract(source: InvoiceSource, target?: DocumentTarget) {
-    const params = this.extractionParams(source, target);
     const usage: AiUsage[] = [];
     for (let attempt = 0; attempt < 2; attempt++) {
       let response: Anthropic.Message;
@@ -162,15 +170,15 @@ export class AnthropicProvider implements AiProvider {
       } catch (error) {
         throw toAiError(error);
       }
-      usage.push(this.usage('extract', EXTRACT_PROMPT_VERSION, response));
+      usage.push(this.usage(request.task, request.promptVersion, response));
       if (response.stop_reason === 'refusal') throw new AiError('refused');
       const text = response.content
         .filter((block): block is Anthropic.TextBlock => block.type === 'text')
         .map((block) => block.text)
         .join('');
       try {
-        const parsed = extractResponseSchema.safeParse(JSON.parse(text));
-        if (parsed.success) return { ...toExtraction(parsed.data), usage };
+        const parsed = request.validator.safeParse(JSON.parse(text));
+        if (parsed.success) return { data: parsed.data, usage };
       } catch {
         // Not JSON (e.g. cut by max_tokens): one more attempt.
       }
@@ -178,6 +186,32 @@ export class AnthropicProvider implements AiProvider {
     const error = new AiError('invalid_output');
     Object.assign(error, { usage });
     throw error;
+  }
+
+  async extract(source: InvoiceSource, target?: DocumentTarget) {
+    const { data, usage } = await this.structured({
+      task: 'extract',
+      promptVersion: EXTRACT_PROMPT_VERSION,
+      system: EXTRACT_SYSTEM,
+      source,
+      prompt: extractUserPrompt(source.kind === 'text' ? source.text : undefined, target),
+      schema: EXTRACT_SCHEMA,
+      validator: extractResponseSchema,
+    });
+    return { ...toExtraction(data), usage };
+  }
+
+  async readProposal(source: InvoiceSource, coverages: string[]) {
+    const { data, usage } = await this.structured({
+      task: 'proposal',
+      promptVersion: PROPOSAL_PROMPT_VERSION,
+      system: PROPOSAL_SYSTEM,
+      source,
+      prompt: proposalUserPrompt(source.kind === 'text' ? source.text : undefined, coverages),
+      schema: PROPOSAL_SCHEMA,
+      validator: proposalResponseSchema,
+    });
+    return { reading: toProposalReading(data, coverages), usage };
   }
 
   private textParams(request: TextRequest) {

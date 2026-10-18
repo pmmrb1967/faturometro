@@ -306,6 +306,26 @@ export const t = {
         ok: 'Igual ou melhor',
       } as Record<string, string>,
       note: 'Compara também as exclusões e as condições gerais de cada proposta: aqui só entram capitais e franquias.',
+      ai: {
+        choose: 'Ler o PDF da proposta com IA',
+        intro:
+          'A IA lê a seguradora, o prémio anual e cada cobertura, e preenche o formulário. Revês os valores antes de guardar. Além da proposta, só vão os nomes das coberturas da tua apólice, para as fazer corresponder.',
+        noKey:
+          'Com uma chave da Anthropic (Definições), a IA pode ler o PDF da proposta e preencher o formulário por ti.',
+        sendText: (chars: number) =>
+          `o texto da proposta (${chars.toLocaleString('pt-PT')} carateres) e os nomes das coberturas da tua apólice`,
+        sendPdf:
+          'o PDF da proposta (não tem texto, é uma digitalização) e os nomes das coberturas da tua apólice',
+        sendImage: 'a fotografia da proposta e os nomes das coberturas da tua apólice',
+        send: 'Ler com IA',
+        sending: 'A ler com IA…',
+        done: 'A IA preencheu o formulário. Confirma cada valor com a proposta antes de guardar: as coberturas que não encontrou ficam desmarcadas.',
+        extra: (names: string) => `Na proposta há também: ${names}.`,
+        unreadable:
+          'Não foi possível abrir este PDF (pode ter palavra-passe). Preenche à mão ou usa uma fotografia.',
+        cannotSend:
+          'Este ficheiro não pode ser enviado: usa um PDF, ou uma fotografia em JPEG ou PNG.',
+      },
     },
     document: {
       renewalTitle: 'Carta de renovação',

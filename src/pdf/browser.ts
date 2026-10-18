@@ -40,6 +40,19 @@ export async function readPdf(
   }
 }
 
+/** Only the text, for documents without a fiscal QR code (insurance proposals). */
+export async function readPdfText(
+  data: Uint8Array,
+): Promise<{ pages: PageText[]; pageCount: number }> {
+  const task = getDocument({ data: data.slice() });
+  try {
+    const pdf: PDFDocumentProxy = await task.promise.catch(toPasswordError);
+    return { pages: await extractText(pdf), pageCount: pdf.numPages };
+  } finally {
+    await task.destroy();
+  }
+}
+
 export async function readImage(data: Uint8Array, mime: string): Promise<FoundQr[]> {
   return scanImageQrs(new Blob([data.slice()], { type: mime }));
 }

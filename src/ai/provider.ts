@@ -4,6 +4,7 @@
  * tests can use a fake one.
  */
 import type { AiExtraction, DocumentTarget } from './prompts/extract';
+import type { ProposalReading } from './prompts/proposal';
 
 export type AiErrorCode =
   | 'no_key'
@@ -39,7 +40,7 @@ export type InvoiceSource =
 
 export type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
 
-export type AiTask = 'extract' | 'explain' | 'letter' | 'test';
+export type AiTask = 'extract' | 'proposal' | 'explain' | 'letter' | 'test';
 
 export interface AiUsage {
   task: AiTask;
@@ -58,7 +59,7 @@ export interface AiEstimate {
 }
 
 export interface TextRequest {
-  task: Exclude<AiTask, 'extract' | 'test'>;
+  task: Exclude<AiTask, 'extract' | 'proposal' | 'test'>;
   promptVersion: string;
   system: string;
   user: string;
@@ -77,5 +78,10 @@ export interface AiProvider {
     source: InvoiceSource,
     target?: DocumentTarget,
   ): Promise<AiExtraction & { usage: AiUsage[] }>;
+  /** An insurance proposal, its coverages matched to the current policy's (by name). */
+  readProposal(
+    source: InvoiceSource,
+    coverages: string[],
+  ): Promise<{ reading: ProposalReading; usage: AiUsage[] }>;
   writeText(request: TextRequest): Promise<{ text: string; usage: AiUsage }>;
 }

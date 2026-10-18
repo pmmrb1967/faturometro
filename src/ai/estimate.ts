@@ -8,6 +8,7 @@
  */
 import { costMicroUsd } from './models';
 import { EXTRACT_SYSTEM } from './prompts/extract';
+import { PROPOSAL_SYSTEM } from './prompts/proposal';
 import type { AiEstimate, InvoiceSource } from './provider';
 
 const CHARS_PER_TOKEN = 3;
@@ -22,19 +23,29 @@ export function estimateTextTokens(text: string): number {
   return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
-export function estimateExtraction(model: string, source: InvoiceSource, pdfPages = 1): AiEstimate {
+export function estimateExtraction(
+  model: string,
+  source: InvoiceSource,
+  pdfPages = 1,
+  system = EXTRACT_SYSTEM,
+): AiEstimate {
   const document =
     source.kind === 'text'
       ? estimateTextTokens(source.text)
       : source.kind === 'image'
         ? IMAGE_TOKENS * (1 + (source.more?.length ?? 0))
         : PDF_PAGE_TOKENS * Math.max(1, pdfPages);
-  const inputTokens = estimateTextTokens(EXTRACT_SYSTEM) + SCHEMA_OVERHEAD_TOKENS + document;
+  const inputTokens = estimateTextTokens(system) + SCHEMA_OVERHEAD_TOKENS + document;
   return {
     inputTokens,
     outputTokens: EXTRACT_EXPECTED_OUTPUT,
     costMicroUsd: costMicroUsd(model, inputTokens, EXTRACT_EXPECTED_OUTPUT),
   };
+}
+
+/** An insurance proposal: like an invoice, with its own prompt. */
+export function estimateProposal(model: string, source: InvoiceSource, pdfPages = 1): AiEstimate {
+  return estimateExtraction(model, source, pdfPages, PROPOSAL_SYSTEM);
 }
 
 export function estimateText(

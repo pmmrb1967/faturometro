@@ -7,8 +7,10 @@ import {
 } from '../../domain/insurance-proposals';
 import type { Contract, InsuranceProposal, ProposalCoverage } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
-import { formatCents, parsePtAmount, type Cents } from '../../lib/money';
+import type { ProposalReading } from '../../ai/prompts/proposal';
+import { centsToPtInput, formatCents, parsePtAmount, type Cents } from '../../lib/money';
 import { useSession } from '../auth/session-context';
+import { ProposalReader } from './ProposalReader';
 
 const copy = t.insurance.proposals;
 
@@ -68,6 +70,25 @@ function ProposalForm({
     typeof premiumCents !== 'number' ||
     parsed.some((row) => row.capital === null || row.deductible === null);
 
+  function fill(reading: ProposalReading) {
+    if (reading.insurer) setInsurer(reading.insurer);
+    setPremium(
+      reading.annualPremiumCents !== undefined ? centsToPtInput(reading.annualPremiumCents) : '',
+    );
+    setRows(
+      names.map((name) => {
+        const coverage = reading.coverages[name];
+        return {
+          included: coverage?.included ?? false,
+          capital:
+            coverage?.capitalCents !== undefined ? centsToPtInput(coverage.capitalCents) : '',
+          deductible:
+            coverage?.deductibleCents !== undefined ? centsToPtInput(coverage.deductibleCents) : '',
+        };
+      }),
+    );
+  }
+
   const update = (index: number, change: Partial<CoverageDraft>) =>
     setRows((current) => current.map((row, i) => (i === index ? { ...row, ...change } : row)));
 
@@ -96,6 +117,7 @@ function ProposalForm({
 
   return (
     <form className="proposal-form" onSubmit={(event) => void submit(event)} noValidate>
+      <ProposalReader coverages={names} onRead={fill} />
       <Field
         id="proposal-insurer"
         label={copy.insurer}
