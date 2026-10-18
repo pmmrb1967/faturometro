@@ -311,6 +311,38 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "Número da autorização:",
+          "x": 66,
+          "y": 540,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "000 000 000 00",
+          "x": 66,
+          "y": 549,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Débito direto a partir do dia:",
+          "x": 259,
+          "y": 540,
+          "width": 138,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30 jun 2026",
+          "x": 259,
+          "y": 549,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "NOS Comunicações, S.A. Exemplo sintético",
           "x": 14,
           "y": 594,

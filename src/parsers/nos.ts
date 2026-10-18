@@ -47,6 +47,13 @@ function parseHeader(page: PageText, result: ExtractedInvoice) {
   if (dueValue) result.dueDate = { value: dueValue, confidence: 'high' };
 }
 
+/** "Débito direto a partir do dia:" over "23 out 2026", only when the invoice is paid that way. */
+function parseDirectDebit(page: PageText, result: ExtractedInvoice) {
+  const label = findItem(page, /^Débito direto a partir do dia:$/);
+  const value = date(label && valueBelow(page, label)?.str);
+  if (value) result.directDebitDate = { value, confidence: 'high' };
+}
+
 /** "Nesta fatura" table: service | qty | VAT | service c/ IVA | discount c/ IVA | total c/ IVA. */
 function parseSummary(page: PageText, result: ExtractedInvoice) {
   const header = findItem(page, /^Desconto$/);
@@ -225,7 +232,7 @@ function parseExtraUsage(pages: PageText[], result: ExtractedInvoice) {
 export const nosParser: Parser = {
   id: 'nos',
   name: 'NOS',
-  version: '1.2.0',
+  version: '1.3.0',
   updated: '2026-10-18',
   sectors: ['telecom'],
   issuerNifs: [NIF],
@@ -248,6 +255,9 @@ export const nosParser: Parser = {
     parseDetail(ctx.pages.slice(1), result);
     parseServices(ctx.pages, result);
     parseExtraUsage(ctx.pages.slice(1), result);
+    for (const page of ctx.pages) {
+      if (!result.directDebitDate) parseDirectDebit(page, result);
+    }
     if (qr?.docId && result.docId && result.docId.value !== normalize(qr.docId)) {
       result.warnings.push('Document number differs from the QR code');
     }

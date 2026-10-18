@@ -38,6 +38,8 @@ describe('indaqua parser', () => {
     expect(result.periodStart!.value < result.periodEnd!.value).toBe(true);
     expect(result.dueDate?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.customerNumber?.value).toBeTruthy();
+    // Paid by direct debit: debited on or after the invoice date.
+    if (result.directDebitDate) expect(result.directDebitDate.value >= qr.date).toBe(true);
     for (const line of result.lines) {
       expect(line.unitPrice).toMatch(/^\d+\.\d+$/);
       expect(line.quantity).toBeGreaterThan(0);
@@ -71,6 +73,7 @@ describe('indaqua parser', () => {
       expect(window!.start > result.periodEnd!.value).toBe(true);
       if (fixture.name.includes('synthetic-1')) {
         expect(window).toEqual({ start: '2026-08-28', end: '2026-09-02' });
+        expect(result.directDebitDate?.value).toBe('2026-07-25');
       }
     } else {
       // Município: urban waste, not subject to VAT, in its own contract.

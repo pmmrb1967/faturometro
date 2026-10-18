@@ -199,6 +199,10 @@ write(
       ['Valor desta fatura com IVA', 58, 345],
       ['€35,00', 419, 345],
       ['Total a pagar até 30 jun 2026', 63, 369],
+      ['Número da autorização:', 66, 540],
+      ['000 000 000 00', 66, 549],
+      ['Débito direto a partir do dia:', 259, 540],
+      ['30 jun 2026', 259, 549],
       ['NOS Comunicações, S.A. Exemplo sintético', 14, 594],
     ]),
     page(2, [
@@ -304,6 +308,7 @@ write(
       ['PAGAR', 478, 304],
       ['33,18 €', 478, 316],
       ['Até: 25.07.2026', 465, 328],
+      ['Data de Débito em Conta: A partir de: 25.07.2026', 32, 600],
       ['N.º fatura: E1000FE/00000002 *', 48, 330],
       ['Período de faturação: 01.05.2026 a 30.06.2026', 164, 330],
       ['Data de emissão: 05.07.2026', 301, 330],

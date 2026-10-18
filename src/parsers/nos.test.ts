@@ -51,6 +51,9 @@ describe('nos parser', () => {
     }
     if (fixture.name.includes('synthetic-1')) {
       expect(result.extraUsage).toEqual([{ description: 'Roaming', amountCents: 407 }]);
+      expect(result.directDebitDate?.value).toBe('2026-06-30');
     }
+    // Paid by direct debit: debited on or after the invoice date.
+    if (result.directDebitDate) expect(result.directDebitDate.value >= qr.date).toBe(true);
   });
 });

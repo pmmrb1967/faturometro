@@ -45,6 +45,14 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
         formatIsoDate(text('issueDate')),
         formatIsoDate(text('periodStart')),
         formatIsoDate(text('oldUntil')),
+        data.debitDate ? formatIsoDate(text('debitDate')) : undefined,
+      );
+    case 'direct_debit_soon':
+      return copy.directDebitSoon(
+        label,
+        formatCents(number('totalCents')),
+        formatIsoDate(text('debitDate')),
+        number('daysLeft'),
       );
     case 'social_tariff_suggestion':
       return copy.socialTariffSuggestion[text('suggestion')]?.(label) ?? '';

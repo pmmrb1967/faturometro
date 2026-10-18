@@ -568,3 +568,39 @@ describe('social tariff suggestions', () => {
     });
   });
 });
+
+describe('direct debit', () => {
+  const debited = {
+    ...invoice('b', '2026-05-20', 5051),
+    dueDate: '2026-06-03',
+    directDebitDate: '2026-06-03',
+  };
+  const at = (today: string, payments: AlertInput['payments'] = []) =>
+    computeAlerts(input({ invoices: [debited], payments, today }));
+
+  it('says the debit is coming, for everyone, instead of "not marked as paid"', () => {
+    expect(kinds(at('2026-05-30'))).not.toContain('direct_debit_soon');
+    expect(at('2026-06-02').find((alert) => alert.kind === 'direct_debit_soon')).toMatchObject({
+      key: 'c1:direct_debit_soon:b',
+      data: { debitDate: '2026-06-03', totalCents: 5051, daysLeft: 1 },
+    });
+    expect(kinds(at('2026-06-02'))).not.toContain('payment_due');
+    // After the debit: paid, nothing to say.
+    expect(kinds(at('2026-06-04'))).not.toContain('direct_debit_soon');
+  });
+
+  it('old charges: names the debit date while it is still ahead', () => {
+    const old = { ...debited, periodStart: '2025-09-01', periodEnd: '2026-04-30' };
+    const electricity = contract({ sector: 'electricity' });
+    const alert = computeAlerts(
+      input({ contracts: [electricity], invoices: [old], today: '2026-05-25' }),
+    ).find((candidate) => candidate.kind === 'old_charges');
+    expect(alert?.data).toMatchObject({ debitDate: '2026-06-03' });
+    // Once debited it counts as paid: the warning goes away.
+    expect(
+      kinds(
+        computeAlerts(input({ contracts: [electricity], invoices: [old], today: '2026-06-05' })),
+      ),
+    ).not.toContain('old_charges');
+  });
+});

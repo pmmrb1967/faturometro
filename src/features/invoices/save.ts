@@ -24,6 +24,7 @@ export interface InvoiceDraft {
   periodEnd?: string;
   dueDate?: string;
   readingWindow?: Invoice['readingWindow'];
+  directDebitDate?: Invoice['directDebitDate'];
   extraUsage?: Invoice['extraUsage'];
   totalCents: Cents;
   vatCents?: Cents;
@@ -145,6 +146,7 @@ export async function saveInvoice(
   }
   if (draft.vatCents !== undefined) invoice.vatCents = draft.vatCents;
   if (draft.readingWindow) invoice.readingWindow = draft.readingWindow;
+  if (draft.directDebitDate) invoice.directDebitDate = draft.directDebitDate;
   if (draft.extraUsage?.length) invoice.extraUsage = draft.extraUsage;
   if (draft.parser) {
     invoice.parserId = draft.parser.id;

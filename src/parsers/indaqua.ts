@@ -226,6 +226,13 @@ function parseSummary(page: PageText, printed: string, result: ExtractedInvoice)
 
   const due = date(/^Até: (\S+)$/.exec(normalize(findItem(page, /^Até: /)?.str ?? ''))?.[1]);
   if (due) result.dueDate = { value: due, confidence: 'high' };
+  // Only on invoices paid by direct debit (the others advertise it in other words).
+  const debit = date(
+    /^Data de Débito em Conta: A partir de: (\S+)$/.exec(
+      normalize(findItem(page, /^Data de Débito em Conta:/)?.str ?? ''),
+    )?.[1],
+  );
+  if (debit) result.directDebitDate = { value: debit, confidence: 'high' };
   const account = /N\.º de conta contrato: (\S+)/.exec(
     normalize(findItem(page, /N\.º de conta contrato:/)?.str ?? ''),
   )?.[1];
@@ -260,7 +267,7 @@ function issuerName(page: PageText, nif: string): string | undefined {
 export const indaquaParser: Parser = {
   id: ID,
   name: 'Indaqua Matosinhos',
-  version: '1.1.0',
+  version: '1.2.0',
   updated: '2026-10-18',
   sectors: ['water'],
   issuerNifs: [INDAQUA_NIF, MUNICIPALITY_NIF],

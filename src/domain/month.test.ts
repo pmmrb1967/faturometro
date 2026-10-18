@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMonthsTo,
+  debitDateOf,
   expenseActive,
   expenseAmount,
   expenseDueDate,
+  invoicePaid,
   monthSummary,
   paymentId,
   withAmountFrom,
@@ -127,5 +129,42 @@ describe('monthSummary', () => {
     ]);
     expect(summary.items.find((item) => item.invoiceId === 'b')?.hasDueDate).toBe(false);
     expect(summary).toMatchObject({ totalCents: 72499, paidCents: 4999, toPayCents: 67500 });
+  });
+});
+
+describe('direct debit', () => {
+  const debited = {
+    ...invoice('d', '2026-10-01', 5051, '2026-10-20'),
+    directDebitDate: '2026-10-23',
+  };
+
+  it('the debit date printed on the invoice, else the due date on a contract marked by the user', () => {
+    expect(debitDateOf(debited)).toBe('2026-10-23');
+    expect(debitDateOf(invoice('x', '2026-10-01', 100, '2026-10-20'))).toBeUndefined();
+    expect(debitDateOf(invoice('x', '2026-10-01', 100, '2026-10-20'), { directDebit: true })).toBe(
+      '2026-10-20',
+    );
+  });
+
+  it('paid automatically from the debit day, unless the user said it failed', () => {
+    expect(invoicePaid(undefined, '2026-10-23', '2026-10-22')).toBeNull();
+    expect(invoicePaid(undefined, '2026-10-23', '2026-10-23')).toEqual({
+      paidOn: '2026-10-23',
+      auto: true,
+    });
+    expect(invoicePaid({ unpaid: true }, '2026-10-23', '2026-10-30')).toBeNull();
+    expect(invoicePaid({ paidOn: '2026-10-21' }, '2026-10-23', '2026-10-30')).toEqual({
+      paidOn: '2026-10-21',
+      auto: false,
+    });
+  });
+
+  it('shows on the month of the debit, paid once it has passed', () => {
+    const before = monthSummary('2026-10', [debited], [], [], { today: '2026-10-22' });
+    expect(before.items[0]).toMatchObject({ date: '2026-10-23', debitDate: '2026-10-23' });
+    expect(before.items[0]?.paidOn).toBeUndefined();
+    const after = monthSummary('2026-10', [debited], [], [], { today: '2026-10-24' });
+    expect(after.items[0]).toMatchObject({ paidOn: '2026-10-23', autoPaid: true });
+    expect(after.paidCents).toBe(5051);
   });
 });

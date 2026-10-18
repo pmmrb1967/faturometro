@@ -121,6 +121,8 @@ export interface Contract extends SyncMeta {
     fromInvoice?: boolean;
   };
   active: boolean;
+  /** Paid by direct debit, said by the user (for invoices that do not print the debit date). */
+  directDebit?: boolean;
   /** Date the user changed supplier (the contract ended). */
   endedAt?: IsoDate;
   /** The contract that replaced this one (same sector, new supplier). */
@@ -157,6 +159,8 @@ export interface Invoice extends SyncMeta {
   dueDate?: IsoDate;
   /** Days to send the next meter reading, as printed on the invoice. */
   readingWindow?: ReadingWindow;
+  /** Paid by direct debit on this day, as printed on the invoice. */
+  directDebitDate?: IsoDate;
   /** Telecom usage billed outside the package, without VAT (only the non-zero ones). */
   extraUsage?: ExtraUsage[];
   totalCents: Cents;
@@ -219,7 +223,8 @@ export interface Alert extends SyncMeta {
     | 'old_charges'
     | 'social_tariff_lost'
     | 'payment_due'
-    | 'social_tariff_suggestion';
+    | 'social_tariff_suggestion'
+    | 'direct_debit_soon';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;
@@ -267,7 +272,10 @@ export interface Payment extends SyncMeta {
   expenseId?: string;
   /** YYYY-MM, for a recurring expense. */
   month?: string;
-  paidOn: IsoDate;
+  /** Set when the user marks it as paid. */
+  paidOn?: IsoDate;
+  /** The user says it is not paid (a direct debit that failed): no automatic mark. */
+  unpaid?: true;
 }
 
 /** One AI request, kept on this device only (PLAN.md §10: tokens per call, locally). */

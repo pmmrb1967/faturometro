@@ -71,7 +71,11 @@ export function MonthPage() {
 
   if (!session || !data) return null;
   const repos = session.repos;
-  const summary = monthSummary(month, [...data.invoices.values()], data.expenses, data.payments);
+  const date = today();
+  const summary = monthSummary(month, [...data.invoices.values()], data.expenses, data.payments, {
+    today: date,
+    contracts: [...data.contracts.values()],
+  });
   // Expenses between their first and last month (due this month or not).
   const active = data.expenses
     .filter((expense) => expenseActive(expense, month))
@@ -88,13 +92,17 @@ export function MonthPage() {
   };
 
   async function setPaid(item: MonthItem, paid: boolean) {
+    const target = {
+      id: item.paymentId,
+      ...(item.invoiceId ? { invoiceId: item.invoiceId } : {}),
+      ...(item.expenseId ? { expenseId: item.expenseId, month } : {}),
+    };
     if (paid) {
-      const payment: Omit<Payment, 'updatedAt'> = {
-        id: item.paymentId,
-        paidOn: today(),
-        ...(item.invoiceId ? { invoiceId: item.invoiceId } : {}),
-        ...(item.expenseId ? { expenseId: item.expenseId, month } : {}),
-      };
+      const payment: Omit<Payment, 'updatedAt'> = { ...target, paidOn: date };
+      await repos.payments.put(payment);
+    } else if (item.debitDate && item.debitDate <= date) {
+      // The direct debit failed: say so, or the app marks it as paid again.
+      const payment: Omit<Payment, 'updatedAt'> = { ...target, unpaid: true };
       await repos.payments.put(payment);
     } else {
       await repos.payments.remove(item.paymentId);
@@ -190,10 +198,13 @@ export function MonthPage() {
                 <strong>{name}</strong>
                 <span className="amount">{formatCents(item.amountCents)}</span>
                 <span className="meta">
-                  {item.hasDueDate
-                    ? copy.due(formatIsoDate(item.date))
-                    : copy.issued(formatIsoDate(item.date))}
-                  {item.paidOn && ` · ${copy.paidOn(formatIsoDate(item.paidOn))}`}
+                  {item.debitDate
+                    ? copy.debit(formatIsoDate(item.debitDate))
+                    : item.hasDueDate
+                      ? copy.due(formatIsoDate(item.date))
+                      : copy.issued(formatIsoDate(item.date))}
+                  {item.paidOn &&
+                    ` · ${item.autoPaid ? copy.autoPaid : copy.paidOn(formatIsoDate(item.paidOn))}`}
                   {item.kind === 'expense' && ` · ${copy.expenseTag}`}
                 </span>
                 {expense && (

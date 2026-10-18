@@ -131,6 +131,14 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "Data de Débito em Conta: A partir de: 25.07.2026",
+          "x": 32,
+          "y": 600,
+          "width": 220.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "N.º fatura: E1000FE/00000002 *",
           "x": 48,
           "y": 330,

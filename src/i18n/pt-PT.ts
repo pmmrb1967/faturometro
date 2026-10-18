@@ -340,6 +340,8 @@ export const t = {
     paidLabel: (name: string) => `${name}: paga`,
     paidOn: (date: string) => `paga a ${date}`,
     due: (date: string) => `Vence a ${date}`,
+    debit: (date: string) => `Débito direto a ${date}`,
+    autoPaid: 'paga por débito direto (automático; desmarca se o débito falhou)',
     issued: (date: string) => `Emitida a ${date}, sem data de pagamento`,
     expenseTag: 'Sem fatura',
     expenses: {
@@ -529,8 +531,17 @@ export const t = {
         `${label}: o preço da energia subiu ${pct}% em relação à fatura anterior.`,
       estimatedReadings: (label: string, count: number) =>
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
-      oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
-        `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato. Se já pagaste, podes dispensar este aviso.`,
+      oldCharges: (
+        label: string,
+        date: string,
+        start: string,
+        oldUntil: string,
+        debitDate?: string,
+      ) =>
+        `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato.` +
+        (debitDate
+          ? ` Esta fatura é paga por débito direto a ${debitDate}: envia a carta antes dessa data. Um débito direto já feito pode ser devolvido pelo banco até 8 semanas depois (Banco de Portugal).`
+          : ' Se já pagaste, podes dispensar este aviso.'),
       socialTariffSuggestion: {
         electricity_missing: (label: string) =>
           `${label}: o gás tem tarifa social e a luz não. Quem tem direito no gás tem também na luz, se for o titular dos dois contratos. Vê como pedir na página do contrato.`,
@@ -545,6 +556,8 @@ export const t = {
         `${label}: a fatura de ${total} vence ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} e ainda não está marcada como paga. Se já pagaste, marca-a em "Este mês".`,
       socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>
         `${label}: a fatura de ${date} já não tem o desconto da tarifa social (na de ${previousDate} foi de ${discount}). Confirma com o fornecedor se a tarifa social se mantém.`,
+      directDebitSoon: (label: string, total: string, date: string, daysLeft: number) =>
+        `${label}: a fatura de ${total} vai ser debitada na tua conta ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} (débito direto). Confirma que tens saldo.`,
       meterReading: (label: string, start: string, end: string) =>
         `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
@@ -1027,6 +1040,10 @@ export const t = {
       bonusMalus: 'Bónus/malus',
     },
     cycles: { simple: 'Simples', bi: 'Bi-horário', tri: 'Tri-horário' },
+    directDebit: {
+      label: 'Pago por débito direto',
+      hint: 'As faturas deste contrato não dizem a data do débito: a app conta-as como pagas na data-limite de pagamento.',
+    },
     loyalty: {
       title: 'Fim da fidelização',
       hint: 'Normalmente não vem na fatura: vê no contrato ou na área de cliente. Avisamos 60, 30 e 7 dias antes.',

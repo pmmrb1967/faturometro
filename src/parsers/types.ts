@@ -66,6 +66,8 @@ export interface ExtractedInvoice {
   readingType?: Field<Reading['readingType']>;
   /** When the supplier asks for the next meter reading, as printed on the invoice. */
   readingWindow?: Field<ReadingWindow>;
+  /** Paid by direct debit: the day the bank account is debited, as printed on the invoice. */
+  directDebitDate?: Field<string>;
   /** Telecom usage billed outside the package (roaming, extra traffic…), without VAT. */
   extraUsage?: ExtraUsage[];
   lines: ExtractedLine[];

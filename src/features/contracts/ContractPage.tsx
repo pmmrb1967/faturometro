@@ -154,6 +154,26 @@ export function ContractPage() {
         />
       )}
 
+      {contract.active && !invoices.some((invoice) => invoice.directDebitDate) && (
+        <label className="direct-debit-check">
+          <input
+            type="checkbox"
+            checked={contract.directDebit === true}
+            onChange={async (event) => {
+              const next = { ...contract };
+              if (event.target.checked) next.directDebit = true;
+              else delete next.directDebit;
+              await session.repos.contracts.put(next);
+              await refreshAlerts(session.repos);
+            }}
+          />
+          <span>
+            {copy.directDebit.label}
+            <span className="field-hint">{copy.directDebit.hint}</span>
+          </span>
+        </label>
+      )}
+
       {contract.active && MONTHLY_PRICE_SECTORS.includes(contract.sector) && (
         <MonthlyPriceForm
           key={`monthly-${contract.id}`}

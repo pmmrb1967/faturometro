@@ -180,3 +180,23 @@
   border: 1px dashed var(--accent);
   color: var(--accent);
 }
+
+.direct-debit-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 24px;
+  max-width: 28rem;
+}
+
+.direct-debit-check input {
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.direct-debit-check .field-hint {
+  display: block;
+}

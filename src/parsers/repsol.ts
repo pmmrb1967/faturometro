@@ -208,8 +208,8 @@ export function escalaoOf(page: PageText): 1 | 2 | 3 | 4 | undefined {
 export const repsolParser: Parser = {
   id: ID,
   name: 'Repsol',
-  version: '1.2.0',
-  updated: '2026-10-14',
+  version: '1.3.0',
+  updated: '2026-10-18',
   sectors: ['electricity', 'gas'],
   issuerNifs: [NIF],
 
@@ -256,7 +256,11 @@ export const repsolParser: Parser = {
     if (customer) result.customerNumber = { value: normalize(customer.str), confidence: 'high' };
     const debit = labelValue(summary, /^Débito a partir de$/, 'below');
     const due = date(debit?.str);
-    if (due) result.dueDate = { value: due, confidence: 'high' };
+    if (due) {
+      result.dueDate = { value: due, confidence: 'high' };
+      // "Débito a partir de": the invoice is presented to the bank on that day.
+      result.directDebitDate = { value: due, confidence: 'high' };
+    }
 
     // Contract data page: CPE (electricity) or CUI (gas).
     const contractPage = ctx.pages.find((candidate) => findItem(candidate, /^Dados da Conta$/));

@@ -85,6 +85,7 @@ export async function reparseInvoice(
   if (extraction.periodEnd) updated.periodEnd = extraction.periodEnd.value;
   if (extraction.dueDate) updated.dueDate = extraction.dueDate.value;
   if (extraction.readingWindow) updated.readingWindow = extraction.readingWindow.value;
+  if (extraction.directDebitDate) updated.directDebitDate = extraction.directDebitDate.value;
   if (extraction.extraUsage?.length) updated.extraUsage = extraction.extraUsage;
   else delete updated.extraUsage;
   for (const field of ['periodStart', 'periodEnd', 'dueDate'] as const) {

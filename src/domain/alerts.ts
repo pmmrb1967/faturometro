@@ -8,7 +8,7 @@ import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import { oldCharges, prescriptionApplies } from './prescription';
 import { isSocialDiscount, socialTariffState, socialTariffSuggestions } from './social-tariff';
-import { paymentId } from './month';
+import { debitDateOf, invoicePaid, paymentId } from './month';
 import type {
   Alert,
   Contract,
@@ -265,27 +265,48 @@ function oldChargesAlerts(
     if (daysBetween(invoice.issueDate, today) > OLD_CHARGES_RECENT_DAYS) return [];
     const old = oldCharges(invoice);
     if (!old) return [];
+    // Paid by direct debit: it pays itself on that day.
+    const debitDate = debitDateOf(invoice, contract);
     return [
       {
         key: `${contract.id}:old_charges:${invoice.id}`,
         contractId: contract.id,
         kind: 'old_charges' as const,
         severity: 'warning' as const,
-        data: { ...old },
+        data: { ...old, ...(debitDate && debitDate >= today ? { debitDate } : {}) },
       },
     ];
   });
 }
 
-/** Invoices due in the next days and not marked as paid. */
+/**
+ * Invoices due in the next days and not paid: the direct debit coming (for
+ * everyone), or the due date (only for users who mark payments).
+ */
 function paymentDueAlerts(
   contract: Contract,
   history: Invoice[],
   today: string,
   isPaid: (invoice: Invoice) => boolean,
+  marksPayments: boolean,
 ): AlertDraft[] {
-  return history.flatMap((invoice) => {
-    if (!invoice.dueDate || invoice.totalCents <= 0 || isPaid(invoice)) return [];
+  return history.flatMap((invoice): AlertDraft[] => {
+    if (invoice.totalCents <= 0 || isPaid(invoice)) return [];
+    const debitDate = debitDateOf(invoice, contract);
+    if (debitDate) {
+      const daysLeft = daysBetween(today, debitDate);
+      if (daysLeft < 0 || daysLeft > PAYMENT_DUE_DAYS) return [];
+      return [
+        {
+          key: `${contract.id}:direct_debit_soon:${invoice.id}`,
+          contractId: contract.id,
+          kind: 'direct_debit_soon' as const,
+          severity: 'info' as const,
+          data: { invoiceId: invoice.id, debitDate, totalCents: invoice.totalCents, daysLeft },
+        },
+      ];
+    }
+    if (!marksPayments || !invoice.dueDate) return [];
     const daysLeft = daysBetween(today, invoice.dueDate);
     if (daysLeft < 0 || daysLeft > PAYMENT_DUE_DAYS) return [];
     return [
@@ -438,10 +459,16 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
   const invoicesByContract = groupBy(input.invoices, (invoice) => invoice.contractId);
   const linesOf = (invoice: Invoice) => linesByInvoice.get(invoice.id) ?? [];
   const readingsOf = (invoice: Invoice) => readingsByInvoice.get(invoice.id) ?? [];
-  const paidIds = new Set((input.payments ?? []).map((payment) => payment.id));
-  const isPaid = (invoice: Invoice) => paidIds.has(paymentId({ invoiceId: invoice.id }));
-  // Users who never mark payments would get this alert for every invoice.
-  const marksPayments = paidIds.size > 0;
+  const payments = new Map((input.payments ?? []).map((payment) => [payment.id, payment]));
+  const contractById = new Map(input.contracts.map((contract) => [contract.id, contract]));
+  const isPaid = (invoice: Invoice) =>
+    invoicePaid(
+      payments.get(paymentId({ invoiceId: invoice.id })),
+      debitDateOf(invoice, contractById.get(invoice.contractId)),
+      input.today,
+    ) !== null;
+  // Users who never mark payments would get the due-date alert for every invoice.
+  const marksPayments = [...payments.values()].some((payment) => payment.paidOn);
 
   const withSocialTariff = new Set(
     input.contracts
@@ -478,7 +505,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         auditAlert(contract, history, linesOf),
         socialTariffLostAlert(contract, history, linesOf),
         ...oldChargesAlerts(contract, history, input.today, isPaid),
-        ...(marksPayments ? paymentDueAlerts(contract, history, input.today, isPaid) : []),
+        ...paymentDueAlerts(contract, history, input.today, isPaid, marksPayments),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
   return [...perContract, ...suggestions];

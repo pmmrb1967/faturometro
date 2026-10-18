@@ -2,10 +2,11 @@
  * "Este mês": what the household pays in a month. Invoices count in the month
  * they are due (or issued, when the due date is unknown); recurring expenses
  * typed by the user count in the months they are due. Each item can be marked
- * as paid. Pure: no React, no database.
+ * as paid; invoices paid by direct debit count as paid from the debit day on.
+ * Pure: no React, no database.
  */
 import type { Cents } from '../lib/money';
-import type { Invoice, Payment, RecurringExpense } from './types';
+import type { Contract, Invoice, Payment, RecurringExpense } from './types';
 
 export interface MonthItem {
   /** Stable key, also the id of its "paid" mark. */
@@ -13,12 +14,16 @@ export interface MonthItem {
   kind: 'invoice' | 'expense';
   invoiceId?: string;
   expenseId?: string;
-  /** Due date, or the issue date of an invoice without one. */
+  /** Direct debit date, else due date, else the issue date of an invoice without one. */
   date: string;
-  /** True when `date` is the due date. */
+  /** True when `date` is the due (or debit) date. */
   hasDueDate: boolean;
+  /** Paid by direct debit on this day. */
+  debitDate?: string;
   amountCents: Cents;
   paidOn?: string;
+  /** Marked as paid by the app, from the direct debit date. */
+  autoPaid?: boolean;
 }
 
 export interface MonthSummary {
@@ -99,33 +104,63 @@ export function withAmountFrom<
   return { ...rest, amountChanges: changes } as T;
 }
 
+/**
+ * Day the bank account is debited: printed on the invoice, else the due date
+ * when the user said the contract is paid by direct debit.
+ */
+export function debitDateOf(
+  invoice: Pick<Invoice, 'directDebitDate' | 'dueDate'>,
+  contract?: Pick<Contract, 'directDebit'>,
+): string | undefined {
+  return invoice.directDebitDate ?? (contract?.directDebit ? invoice.dueDate : undefined);
+}
+
+/**
+ * Whether an invoice is paid: the user's mark, else automatically from the
+ * direct debit day on, unless the user said it was not paid (debit failed).
+ */
+export function invoicePaid(
+  payment: Pick<Payment, 'paidOn' | 'unpaid'> | undefined,
+  debitDate: string | undefined,
+  today: string,
+): { paidOn: string; auto: boolean } | null {
+  if (payment?.paidOn) return { paidOn: payment.paidOn, auto: false };
+  if (payment?.unpaid) return null;
+  return debitDate && debitDate <= today ? { paidOn: debitDate, auto: true } : null;
+}
+
 export function monthSummary(
   month: string,
   invoices: readonly Invoice[],
   expenses: readonly RecurringExpense[],
   payments: readonly Payment[],
+  options: { today?: string; contracts?: readonly Contract[] } = {},
 ): MonthSummary {
-  const paid = new Map(payments.map((payment) => [payment.id, payment.paidOn]));
+  const byId = new Map(payments.map((payment) => [payment.id, payment]));
+  const contracts = new Map((options.contracts ?? []).map((contract) => [contract.id, contract]));
   const withPaid = (item: Omit<MonthItem, 'paidOn'>): MonthItem => {
-    const paidOn = paid.get(item.paymentId);
+    const paidOn = byId.get(item.paymentId)?.paidOn;
     return paidOn ? { ...item, paidOn } : item;
   };
 
   const items: MonthItem[] = [];
   for (const invoice of invoices) {
-    const date = invoice.dueDate ?? invoice.issueDate;
+    const debitDate = debitDateOf(invoice, contracts.get(invoice.contractId));
+    const date = debitDate ?? invoice.dueDate ?? invoice.issueDate;
     if (monthOf(date) !== month) continue;
-    items.push(
-      withPaid({
-        paymentId: paymentId({ invoiceId: invoice.id }),
-        kind: 'invoice',
-        invoiceId: invoice.id,
-        date,
-        hasDueDate: invoice.dueDate !== undefined,
-        // Credit notes take money off the month.
-        amountCents: invoice.totalCents,
-      }),
-    );
+    const id = paymentId({ invoiceId: invoice.id });
+    const paid = invoicePaid(byId.get(id), debitDate, options.today ?? '');
+    items.push({
+      paymentId: id,
+      kind: 'invoice',
+      invoiceId: invoice.id,
+      date,
+      hasDueDate: debitDate !== undefined || invoice.dueDate !== undefined,
+      ...(debitDate ? { debitDate } : {}),
+      // Credit notes take money off the month.
+      amountCents: invoice.totalCents,
+      ...(paid ? { paidOn: paid.paidOn, ...(paid.auto ? { autoPaid: true } : {}) } : {}),
+    });
   }
   for (const expense of expenses) {
     const date = expenseDueDate(expense, month);

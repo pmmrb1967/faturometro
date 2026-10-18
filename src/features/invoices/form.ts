@@ -195,6 +195,7 @@ export function buildDraft(
     draft.confidence = base.parsed.check.confidence;
     draft.contractDetails = contractDetails(extraction, form.sector);
     if (extraction.readingWindow) draft.readingWindow = extraction.readingWindow.value;
+    if (extraction.directDebitDate) draft.directDebitDate = extraction.directDebitDate.value;
     if (extraction.extraUsage?.length) draft.extraUsage = extraction.extraUsage;
   }
   return { ok: true, draft };
