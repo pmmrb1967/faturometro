@@ -214,8 +214,12 @@ function parseExtraUsage(pages: PageText[], result: ExtractedInvoice) {
       for (const row of all.slice(index + 1)) {
         const label = normalize(row.items[0]?.str ?? '');
         if (/^Consumos adicionais$|^Total/.test(label)) break;
-        const value = row.items.map((item) => milliAmount(item.str)).find((cents) => cents !== null);
-        const description = row.items.find((item) => item.x > header.items[0]!.x + 2 && item.x < 200);
+        const value = row.items
+          .map((item) => milliAmount(item.str))
+          .find((cents) => cents !== null);
+        const description = row.items.find(
+          (item) => item.x > header.items[0]!.x + 2 && item.x < 200,
+        );
         if (value === undefined || value === null || !description) break;
         if (value === 0) continue;
         const key = normalize(description.str);
