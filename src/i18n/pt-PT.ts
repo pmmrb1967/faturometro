@@ -1198,6 +1198,7 @@ export const t = {
         'Modelos de cartas preenchidos com os dados deste contrato. Revê e completa o texto antes de o enviares.',
       kinds: {
         renegotiate: 'Pedir um preço melhor',
+        request_quote: 'Pedir proposta a outro fornecedor',
         price_increase: 'Contestar um aumento',
         estimated_reading: 'Reclamar de leituras estimadas',
         block_extras: 'Bloquear serviços pagos à parte',
@@ -1232,6 +1233,47 @@ export const t = {
         invoiceNumber: '[N.º DA FATURA]',
         date: '[DATA]',
         amount: '[VALOR]',
+        provider: '[FORNECEDOR]',
+        annualKwh: '[CONSUMO ANUAL]',
+        power: '[POTÊNCIA]',
+        services: '[SERVIÇOS]',
+      },
+      recipient: 'A quem pedes a proposta',
+      recipientHint: 'O nome do fornecedor ou da seguradora; fica no topo da carta.',
+      quoteNote:
+        'A carta não leva o teu n.º de cliente, o CPE nem o n.º de apólice: o outro fornecedor não precisa deles para fazer a proposta.',
+      quoteInsuranceNote:
+        'Quando receberes a proposta, escreve-a em “Comparar propostas” para a comparares cobertura a cobertura.',
+      quote: {
+        header: (provider: string, date: string) => `[NOME]\n[MORADA]\n\n${provider}\n${date}`,
+        intro: (service: string) =>
+          `Estou a ponderar mudar de fornecedor de ${service} e gostaria de receber uma proposta vossa para um serviço equivalente ao que tenho hoje.`,
+        introInsurance:
+          'Estou a ponderar mudar de seguradora e gostaria de receber uma proposta vossa para um seguro equivalente ao que tenho hoje.',
+        current: 'O que tenho atualmente:',
+        power: (kva: string) => `Potência contratada: ${kva} kVA`,
+        cycle: (cycle: string) => `Opção horária: ${cycle}`,
+        escalao: (escalao: number) => `Escalão de consumo: ${escalao}`,
+        annualKwh: (value: string) => `Consumo anual: cerca de ${value} kWh`,
+        services: (services: string) => `Serviços: ${services}`,
+        average: (amount: string) => `Pago em média ${amount} por mês`,
+        product: (product: string) => `Seguro: ${product}`,
+        insuredObject: (object: string) => `Objeto seguro: ${object}`,
+        insuredPersons: (count: number) => `Pessoas seguras: ${count}`,
+        coverages: 'Coberturas:',
+        coverage: (name: string, capital?: string, deductible?: string) =>
+          `  - ${name}` +
+          (capital ? `: capital ${capital}` : '') +
+          (deductible ? `${capital ? ',' : ':'} franquia ${deductible}` : ''),
+        capital: (name: string, amount: string) => `${name}: capital ${amount}`,
+        premium: (amount: string) => `Prémio anual atual: ${amount}`,
+        placeholderInsurance: '[TIPO DE SEGURO, OBJETO SEGURO E COBERTURAS]',
+        placeholderService: '[DESCRIÇÃO DO SERVIÇO]',
+        loyalty: (date: string) =>
+          `O meu contrato atual tem fidelização até ${date}; a mudança seria a partir dessa data.`,
+        ask: 'Peço que me enviem por escrito uma proposta com o preço mensal, o que está incluído, a duração do contrato e as condições de fidelização, se as houver.',
+        askInsurance:
+          'Peço que me enviem por escrito uma proposta com o prémio anual, as coberturas, os capitais seguros e as franquias, para a poder comparar com a apólice atual.',
       },
       services: {
         electricity: 'fornecimento de eletricidade',
@@ -1249,6 +1291,7 @@ export const t = {
       closing: 'Com os melhores cumprimentos,\n[NOME]',
       subjects: {
         renegotiate: 'Pedido de revisão do preço',
+        request_quote: 'Pedido de proposta',
         price_increase: 'Pedido de esclarecimento sobre aumento de preço',
         estimated_reading: 'Reclamação: faturação com leituras estimadas',
         block_extras: 'Pedido de barramento de serviços de valor acrescentado',

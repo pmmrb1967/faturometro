@@ -15,13 +15,24 @@ export function LettersSection({ contract }: { contract: Contract }) {
   const { session } = useSession();
   const [letter, setLetter] = useState<{ kind: LetterKind; subject: string; text: string }>();
   const [copied, setCopied] = useState(false);
+  const [recipient, setRecipient] = useState('');
   if (!session) return null;
   const { repos } = session;
 
   async function open(kind: LetterKind) {
     const data = await loadLetterData(repos, contract);
-    setLetter({ kind, ...buildLetter(kind, data, today()) });
+    setLetter({ kind, ...buildLetter(kind, { ...data, recipient: recipient.trim() }, today()) });
     setCopied(false);
+  }
+
+  /** The recipient's line in the header; whatever else the user edited stays. */
+  function changeRecipient(next: string) {
+    if (letter) {
+      const before = recipient.trim() || copy.placeholders.provider;
+      const after = next.trim() || copy.placeholders.provider;
+      setLetter({ ...letter, text: letter.text.replace(`\n\n${before}\n`, `\n\n${after}\n`) });
+    }
+    setRecipient(next);
   }
 
   async function copyText() {
@@ -56,6 +67,21 @@ export function LettersSection({ contract }: { contract: Contract }) {
       </div>
       {letter && (
         <div className="letter">
+          {letter.kind === 'request_quote' && (
+            <div className="letter-recipient">
+              <label htmlFor="letter-recipient">{copy.recipient}</label>
+              <input
+                id="letter-recipient"
+                type="text"
+                value={recipient}
+                aria-describedby="letter-recipient-hint"
+                onChange={(event) => changeRecipient(event.target.value)}
+              />
+              <p id="letter-recipient-hint" className="muted">
+                {copy.recipientHint}
+              </p>
+            </div>
+          )}
           <label htmlFor="letter-text">{copy.textLabel}</label>
           <textarea
             id="letter-text"
@@ -64,6 +90,12 @@ export function LettersSection({ contract }: { contract: Contract }) {
             onChange={(event) => setLetter({ ...letter, text: event.target.value })}
           />
           <p className="muted">{copy.placeholdersNote}</p>
+          {letter.kind === 'request_quote' && (
+            <p className="muted">
+              {copy.quoteNote}
+              {contract.sector === 'insurance' && ` ${copy.quoteInsuranceNote}`}
+            </p>
+          )}
           {letter.kind === 'prescription' && PRESCRIPTION_SOURCES[contract.sector] && (
             <p className="letter-warning">
               {copy.prescriptionNote}{' '}

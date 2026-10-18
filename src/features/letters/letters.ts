@@ -5,8 +5,9 @@
  */
 import type { Repositories } from '../../db/repositories';
 import { monthlyAverage } from '../../domain/comescolha';
+import { annualUsage } from '../../domain/compare';
 import { oldCharges, prescriptionApplies } from '../../domain/prescription';
-import type { Contract, Sector } from '../../domain/types';
+import type { Contract, InsuranceDetails, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents, type Cents } from '../../lib/money';
@@ -17,6 +18,7 @@ const copy = t.contracts.letters;
 
 export const LETTER_KINDS = [
   'renegotiate',
+  'request_quote',
   'price_increase',
   'estimated_reading',
   'block_extras',
@@ -36,6 +38,8 @@ export function letterKinds(contract: Pick<Contract, 'sector'>): LetterKind[] {
     if (kind === 'block_extras') return contract.sector === 'telecom';
     if (kind === 'prescription') return prescriptionApplies(contract.sector);
     if (kind === 'social_tariff') return ENERGY.includes(contract.sector);
+    // Water has a single operator per municipality: there is no one else to ask.
+    if (kind === 'request_quote') return contract.sector !== 'water';
     return true;
   });
 }
@@ -45,7 +49,12 @@ export interface LetterData {
   contract: Pick<
     Contract,
     'sector' | 'customerNumber' | 'supplyPointId' | 'tariffName' | 'loyaltyEndDate'
-  >;
+  > &
+    Partial<Pick<Contract, 'electricity' | 'gas' | 'telecom' | 'insurance'>>;
+  /** Another provider the quote is asked from (request_quote). */
+  recipient?: string;
+  /** kWh per year, from the readings of the last 12 months (energy). */
+  annualKwh?: number;
   ownNif?: string;
   average?: { cents: Cents; count: number };
   latestInvoice?: { issueDate: string; totalCents: Cents };
@@ -195,12 +204,97 @@ function bodyOf(kind: LetterKind, data: LetterData, today: string): string[] {
         copy.socialTariffAsk(gas),
       ];
     }
+    case 'request_quote':
+      return quoteBody(data, today);
     case 'cancel':
       return [
         paragraphs(copy.cancelStatement(service), loyaltyText(data, today)),
         copy.cancelAsk(data.contract.sector === 'telecom'),
       ];
   }
+}
+
+const kwh = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
+
+function insuranceLines(insurance: InsuranceDetails | undefined): string[] {
+  if (!insurance) return [copy.quote.placeholderInsurance];
+  const product = [insurance.product, insurance.option].filter(Boolean).join(' — ');
+  const premium = insurance.annualPremiumCents ?? insurance.renewal?.nextCents;
+  const lines = [
+    product && copy.quote.product(product),
+    insurance.insuredObject && copy.quote.insuredObject(insurance.insuredObject),
+    insurance.insuredPersons !== undefined && copy.quote.insuredPersons(insurance.insuredPersons),
+    ...(insurance.coverages?.length
+      ? [
+          copy.quote.coverages,
+          ...insurance.coverages.map((coverage) =>
+            copy.quote.coverage(coverage.name, coverage.capital, coverage.deductible),
+          ),
+        ]
+      : (insurance.capitals ?? []).map((capital) =>
+          copy.quote.capital(capital.name, formatCents(capital.capitalCents)),
+        )),
+    premium !== undefined && copy.quote.premium(formatCents(premium)),
+  ].filter((line): line is string => Boolean(line));
+  return lines.length > 0 ? lines : [copy.quote.placeholderInsurance];
+}
+
+/** What the other provider needs to quote the same service; no customer number, CPE or policy. */
+function quoteLines(data: LetterData): string[] {
+  const { contract } = data;
+  const usage = copy.quote.annualKwh(
+    data.annualKwh !== undefined
+      ? kwh.format(Math.round(data.annualKwh))
+      : copy.placeholders.annualKwh,
+  );
+  const average = data.average && copy.quote.average(formatCents(data.average.cents));
+  const known = (lines: (string | false | undefined)[]) =>
+    lines.filter((line): line is string => Boolean(line));
+  switch (contract.sector) {
+    case 'electricity':
+      return known([
+        copy.quote.power(
+          contract.electricity
+            ? String(contract.electricity.powerKva).replace('.', ',')
+            : copy.placeholders.power,
+        ),
+        contract.electricity && copy.quote.cycle(t.contracts.cycles[contract.electricity.cycle]),
+        usage,
+        average,
+      ]);
+    case 'gas':
+      return known([
+        contract.gas?.escalao !== undefined && copy.quote.escalao(contract.gas.escalao),
+        usage,
+        average,
+      ]);
+    case 'telecom':
+      return known([
+        copy.quote.services(
+          contract.telecom?.services.length
+            ? contract.telecom.services
+                .map((name) => t.contracts.telecom.serviceNames[name])
+                .join(', ')
+            : copy.placeholders.services,
+        ),
+        average,
+      ]);
+    case 'insurance':
+      return insuranceLines(contract.insurance);
+    default:
+      return known([copy.quote.placeholderService, average]);
+  }
+}
+
+function quoteBody(data: LetterData, today: string): string[] {
+  const insurance = data.contract.sector === 'insurance';
+  const end = data.contract.loyaltyEndDate;
+  return [
+    insurance ? copy.quote.introInsurance : copy.quote.intro(copy.services[data.contract.sector]),
+    [copy.quote.current, ...quoteLines(data).map((line) => `- ${line}`)].join('\n'),
+    ...(end && end >= today ? [copy.quote.loyalty(formatIsoDate(end))] : []),
+    insurance ? copy.quote.askInsurance : copy.quote.ask,
+  ];
 }
 
 /** The letter's subject and full text (header, reference, body, closing). */
@@ -210,6 +304,17 @@ export function buildLetter(
   today: string,
 ): { subject: string; text: string } {
   const subject = copy.subjects[kind];
+  if (kind === 'request_quote') {
+    // Addressed to another provider: nothing that identifies the current contract.
+    const text = [
+      copy.quote.header(data.recipient || copy.placeholders.provider, formatIsoDate(today)),
+      copy.subjectLine(subject),
+      copy.greeting,
+      ...bodyOf(kind, data, today),
+      copy.closing,
+    ].join('\n\n');
+    return { subject, text };
+  }
   const supplyPoint = METERED.includes(data.contract.sector)
     ? data.contract.supplyPointId
     : undefined;
@@ -226,13 +331,15 @@ export function buildLetter(
 
 /** Gathers what the letters use from the stored contract, invoices, alerts and settings. */
 export async function loadLetterData(repos: Repositories, contract: Contract): Promise<LetterData> {
-  const [provider, invoices, alerts, settings, audit] = await Promise.all([
+  const [provider, invoices, alerts, settings, audit, readings] = await Promise.all([
     repos.providers.get(contract.providerId),
     repos.invoices.findBy('contractId', contract.id),
     repos.alerts.list(),
     getSettings(repos),
     latestAudit(repos, contract),
+    ENERGY.includes(contract.sector) ? repos.readings.findBy('contractId', contract.id) : [],
   ]);
+  const usage = annualUsage(invoices, readings, new Date().toISOString().slice(0, 10));
   const auditDetails = audit?.audit.findings.map(findingText) ?? [];
   invoices.sort((a, b) => b.issueDate.localeCompare(a.issueDate));
   const own = alerts
@@ -255,6 +362,7 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
     providerName: provider?.name ?? '',
     contract,
     ...(settings.ownNif ? { ownNif: settings.ownNif } : {}),
+    ...(usage && usage.total > 0 ? { annualKwh: usage.total } : {}),
     ...(auditDetails.length > 0 ? { auditDetails } : {}),
     ...(average ? { average } : {}),
     ...(latest

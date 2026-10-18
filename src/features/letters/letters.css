@@ -19,6 +19,23 @@
   font-weight: 600;
 }
 
+.letter-recipient input {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.letter-recipient p {
+  margin-top: 4px;
+}
+
 .letter textarea {
   display: block;
   width: 100%;

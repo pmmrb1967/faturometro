@@ -70,6 +70,86 @@ describe('social tariff letter', () => {
   });
 });
 
+describe('request_quote letter', () => {
+  it('everywhere but water, which has no other operator', () => {
+    expect(letterKinds({ sector: 'telecom' })).toContain('request_quote');
+    expect(letterKinds({ sector: 'insurance' })).toContain('request_quote');
+    expect(letterKinds({ sector: 'water' })).not.toContain('request_quote');
+  });
+
+  it('to the other provider, with the service but nothing that identifies the contract', () => {
+    const { subject, text } = buildLetter(
+      'request_quote',
+      data({
+        recipient: 'EDP Comercial',
+        ownNif: '123456789',
+        contract: {
+          sector: 'electricity',
+          customerNumber: '998877',
+          supplyPointId: 'PT0002000012345678AB',
+          electricity: { powerKva: 6.9, cycle: 'bi', socialTariff: false },
+          loyaltyEndDate: '2027-03-31',
+        },
+        annualKwh: 3204.6,
+        average: { cents: 6150, count: 6 },
+      }),
+      TODAY,
+    );
+    expect(subject).toBe('Pedido de proposta');
+    expect(text).toContain('\n\nEDP Comercial\n14-10-2026');
+    expect(text).toContain('- Potência contratada: 6,9 kVA');
+    expect(text).toContain('- Opção horária: Bi-horário');
+    expect(text).toMatch(/- Consumo anual: cerca de 3\s?205 kWh/);
+    expect(text).toContain('- Pago em média 61,50');
+    expect(text).toContain('fidelização até 31-03-2027');
+    for (const secret of ['998877', 'PT0002000012345678AB', '123456789', 'N.º de cliente']) {
+      expect(text).not.toContain(secret);
+    }
+  });
+
+  it('placeholders for what the app does not know', () => {
+    const { text } = buildLetter(
+      'request_quote',
+      data({ contract: { sector: 'telecom', loyaltyEndDate: '2026-01-31' } }),
+      TODAY,
+    );
+    expect(text).toContain('[FORNECEDOR]');
+    expect(text).toContain('- Serviços: [SERVIÇOS]');
+    expect(text).not.toContain('fidelização até');
+  });
+
+  it('insurance: the coverages with capitals and deductibles, but not the policy number', () => {
+    const { text } = buildLetter(
+      'request_quote',
+      data({
+        providerName: 'Fidelidade',
+        contract: {
+          sector: 'insurance',
+          insurance: {
+            product: 'Multirriscos Habitação',
+            policyNumber: '0596735',
+            insuredObject: 'Recheio e imóvel',
+            coverages: [
+              { name: 'Incêndio', capital: '285 149,24 €', deductible: '150,00 €' },
+              { name: 'Fenómenos sísmicos', deductible: '5 % do capital' },
+            ],
+            annualPremiumCents: 31245,
+          },
+        },
+      }),
+      TODAY,
+    );
+    expect(text).toContain('mudar de seguradora');
+    expect(text).toContain('- Seguro: Multirriscos Habitação');
+    expect(text).toContain('  - Incêndio: capital 285 149,24 €, franquia 150,00 €');
+    expect(text).toContain('  - Fenómenos sísmicos: franquia 5 % do capital');
+    expect(text).toContain('- Prémio anual atual: 312,45');
+    expect(text).toContain('franquias');
+    expect(text).not.toContain('0596735');
+    expect(text).not.toContain('Fidelidade');
+  });
+});
+
 describe('block_extras letter', () => {
   it('asks to bar value-added services and lists the usage outside the package', () => {
     const { subject, text } = buildLetter(
