@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
@@ -9,11 +9,23 @@ import { NavIcon } from './NavIcon';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
 
+/** Per-device choice: side menu reduced to its icons (wide screens only). */
+const NAV_COLLAPSED_KEY = 'faturometro.nav.collapsed';
+
+function savedCollapsed(): boolean {
+  try {
+    return localStorage.getItem(NAV_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function AppShell() {
   const { session, lock, updateProfile } = useSession();
   const navigate = useNavigate();
   useAutoSync(session, updateProfile);
   const updateAvailable = useUpdateAvailable();
+  const [collapsed, setCollapsed] = useState(savedCollapsed);
   // The long title is for search results (index.html); inside the app the tab shows the name.
   useEffect(() => {
     document.title = 'Faturómetro';
@@ -25,8 +37,18 @@ export function AppShell() {
     lock();
   }
 
+  function toggleNav() {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(NAV_COLLAPSED_KEY, next ? '1' : '0');
+    } catch {
+      // Not remembered on this device; the choice still applies now.
+    }
+  }
+
   return (
-    <div className="shell">
+    <div className={collapsed ? 'shell is-nav-collapsed' : 'shell'}>
       <header className="topbar">
         <Link to="/" className="brand">
           <img src="/icon.svg" alt="" width={28} height={28} />
@@ -68,8 +90,36 @@ export function AppShell() {
       </header>
 
       <nav className="nav" aria-label={t.appName}>
+        <button
+          type="button"
+          className="nav-toggle"
+          onClick={toggleNav}
+          {...(collapsed ? { title: t.navToggle.expand } : {})}
+        >
+          <svg
+            className="nav-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+          <span>{collapsed ? t.navToggle.expand : t.navToggle.collapse}</span>
+        </button>
         {SECTIONS.map((section) => (
-          <NavLink key={section.id} to={section.path} end className="nav-item">
+          <NavLink
+            key={section.id}
+            to={section.path}
+            end
+            className="nav-item"
+            {...(collapsed ? { title: t.nav[section.id] } : {})}
+          >
             <NavIcon section={section.id} />
             <span>{t.nav[section.id]}</span>
           </NavLink>

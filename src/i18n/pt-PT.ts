@@ -199,6 +199,10 @@ export const t = {
     compare: 'Comparar',
     settings: 'Definições',
   },
+  navToggle: {
+    collapse: 'Recolher menu',
+    expand: 'Expandir menu',
+  },
   placeholder: 'Em construção.',
   update: {
     available: 'Há uma nova versão da app.',
