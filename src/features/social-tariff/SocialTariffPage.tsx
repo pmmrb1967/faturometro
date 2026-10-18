@@ -5,6 +5,7 @@ import { Field } from '../../components/Field';
 import {
   BENEFITS,
   checkSocialTariff,
+  contractsWithSocialTariff,
   INTERNET_ACTIVATION_MAX_CENTS,
   INTERNET_PRICE_CENTS,
   SOCIAL_TARIFF_SOURCES,
@@ -32,7 +33,15 @@ function verdict(check: ServiceCheck): string {
 /** "Tenho direito à tarifa social?": answers stay in this screen only. */
 export function SocialTariffPage() {
   const { session } = useSession();
-  const contracts = useLiveQuery(async () => session?.repos.contracts.list() ?? [], [session]);
+  const data = useLiveQuery(async () => {
+    if (!session) return null;
+    const [contracts, invoices, lines] = await Promise.all([
+      session.repos.contracts.list(),
+      session.repos.invoices.list(),
+      session.repos.invoiceLines.list(),
+    ]);
+    return { contracts, withSocialTariff: contractsWithSocialTariff(contracts, invoices, lines) };
+  }, [session]);
   const [benefits, setBenefits] = useState<Benefit[]>([]);
   const [income, setIncome] = useState('');
   const [members, setMembers] = useState('0');
@@ -46,7 +55,8 @@ export function SocialTariffPage() {
         : {}),
       membersWithoutIncome: Number(members) || 0,
     },
-    contracts ?? [],
+    data?.contracts ?? [],
+    data?.withSocialTariff,
   );
 
   const toggle = (benefit: Benefit, on: boolean) =>

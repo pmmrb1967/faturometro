@@ -7,6 +7,7 @@
 import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import { oldCharges, prescriptionApplies } from './prescription';
+import { isSocialDiscount, socialTariffState } from './social-tariff';
 import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
 
 export const MISSING_INVOICE_DAYS = 40;
@@ -247,6 +248,27 @@ function oldChargesAlerts(contract: Contract, history: Invoice[], today: string)
   });
 }
 
+/** The previous invoice had the social tariff discount and the latest one does not. */
+function socialTariffLostAlert(
+  contract: Contract,
+  history: Invoice[],
+  linesOf: (invoice: Invoice) => InvoiceLine[],
+): AlertDraft | null {
+  const social = socialTariffState(contract, history, linesOf);
+  if (social?.state !== 'lost') return null;
+  return {
+    key: `${contract.id}:social_tariff_lost:${social.invoice.id}`,
+    contractId: contract.id,
+    kind: 'social_tariff_lost',
+    severity: 'warning',
+    data: {
+      issueDate: social.invoice.issueDate,
+      previousIssueDate: social.previous.issueDate,
+      previousDiscountCents: social.previousDiscountCents,
+    },
+  };
+}
+
 function missingAlert(contract: Contract, history: Invoice[], today: string): AlertDraft | null {
   const latest = history.at(-1);
   if (!contract.active || !latest) return null;
@@ -281,8 +303,14 @@ function auditAlert(
     lines: linesOf(latest),
     ...(previous ? { previous, previousLines: linesOf(previous) } : {}),
   });
-  if (!needsAuditAlert(audit)) return null;
-  const kinds = [...new Set(audit.findings.map((finding: AuditFinding) => finding.kind))];
+  // A social tariff discount that ended has its own alert.
+  const findings = audit.findings.filter(
+    (finding: AuditFinding) =>
+      finding.kind !== 'discount_ended' ||
+      !isSocialDiscount({ kind: 'discount', description: finding.description }),
+  );
+  if (!needsAuditAlert({ ...audit, findings })) return null;
+  const kinds = [...new Set(findings.map((finding) => finding.kind))];
   return {
     key: `${contract.id}:invoice_audit:${latest.id}`,
     contractId: contract.id,
@@ -312,6 +340,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         meterReadingAlert(contract, history, input.today),
         missingAlert(contract, history, input.today),
         auditAlert(contract, history, linesOf),
+        socialTariffLostAlert(contract, history, linesOf),
         ...oldChargesAlerts(contract, history, input.today),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });

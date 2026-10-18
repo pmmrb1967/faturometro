@@ -2,8 +2,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
 import { GroupBlock } from '../../components/GroupBlock';
 import { byGroup } from '../../domain/grouping';
+import { linesByInvoiceId, socialTariffState } from '../../domain/social-tariff';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
+import type { Invoice } from '../../domain/types';
 import { formatCents } from '../../lib/money';
 import { useSession } from '../auth/session-context';
 import { CalendarExport } from './CalendarExport';
@@ -13,11 +15,14 @@ export function ContractsPage() {
   const { session } = useSession();
   const rows = useLiveQuery(async () => {
     if (!session) return null;
-    const [contracts, providers, invoices] = await Promise.all([
+    const [contracts, providers, invoices, lines] = await Promise.all([
       session.repos.contracts.list(),
       session.repos.providers.list(),
       session.repos.invoices.list(),
+      session.repos.invoiceLines.list(),
     ]);
+    const linesByInvoice = linesByInvoiceId(lines);
+    const linesOf = (invoice: Invoice) => linesByInvoice.get(invoice.id) ?? [];
     const providerById = new Map(providers.map((provider) => [provider.id, provider]));
     return (
       contracts
@@ -30,6 +35,7 @@ export function ContractsPage() {
             provider: providerById.get(contract.providerId),
             count: own.length,
             last: own[0],
+            social: socialTariffState(contract, own, linesOf)?.state,
           };
         })
         // Active contracts first, then by latest invoice.
@@ -53,7 +59,7 @@ export function ContractsPage() {
             summary={t.groups.contracts(items.length)}
           >
             <ul className="list">
-              {items.map(({ contract, provider, count, last }) => (
+              {items.map(({ contract, provider, count, last, social }) => (
                 <li key={contract.id} className="list-item">
                   <Link to={`/app/contratos/${contract.id}`} className="list-link">
                     {contract.label} — {provider?.name}
@@ -65,6 +71,11 @@ export function ContractsPage() {
                       ` · ${t.contracts.switch.listEnded(formatIsoDate(contract.endedAt))}`}
                     {last && ` · ${t.contracts.lastInvoice} ${formatIsoDate(last.issueDate)}`}
                   </span>
+                  {social && (
+                    <span className={`list-badge${social === 'lost' ? ' is-warning' : ''}`}>
+                      {social === 'active' ? t.contracts.socialBadge : t.contracts.socialLostBadge}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

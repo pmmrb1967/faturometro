@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GroupBlock } from '../../components/GroupBlock';
 import { billingFrequency, byGroup } from '../../domain/grouping';
+import { linesByInvoiceId, socialDiscountCents } from '../../domain/social-tariff';
 import type { Invoice } from '../../domain/types';
 import { today } from '../alerts/refresh';
 import { t } from '../../i18n/pt-PT';
@@ -18,11 +19,15 @@ export function InvoiceList() {
   const { session } = useSession();
   const data = useLiveQuery(async () => {
     if (!session) return null;
-    const [invoices, providers, contracts] = await Promise.all([
+    const [invoices, providers, contracts, lines] = await Promise.all([
       session.repos.invoices.list(),
       session.repos.providers.list(),
       session.repos.contracts.list(),
+      session.repos.invoiceLines.list(),
     ]);
+    const socialDiscounts = new Map(
+      [...linesByInvoiceId(lines)].map(([invoiceId, own]) => [invoiceId, socialDiscountCents(own)]),
+    );
     const originals = new Map(
       await Promise.all(
         [...new Set(invoices.map((invoice) => invoice.fileHash))].map(
@@ -32,6 +37,7 @@ export function InvoiceList() {
     );
     return {
       originals,
+      socialDiscounts,
       invoices: invoices.sort((a, b) => b.issueDate.localeCompare(a.issueDate)),
       providers: new Map(providers.map((provider) => [provider.id, provider])),
       contracts: new Map(contracts.map((contract) => [contract.id, contract])),
@@ -59,6 +65,11 @@ export function InvoiceList() {
           {formatIsoDate(invoice.issueDate)} · {data.contracts.get(invoice.contractId)?.label}
           {frequency && ` · ${t.frequency[frequency]}`}
         </span>
+        {(data.socialDiscounts.get(invoice.id) ?? 0) > 0 && (
+          <span className="list-badge">
+            {t.invoices.socialDiscount(formatCents(data.socialDiscounts.get(invoice.id)!))}
+          </span>
+        )}
         {data.originals.get(invoice.fileHash) && (
           <OriginalButton
             fileHash={invoice.fileHash}

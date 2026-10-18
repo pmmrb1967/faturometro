@@ -63,6 +63,22 @@
   font-size: 0.9rem;
 }
 
+.list-badge {
+  grid-column: 1;
+  justify-self: start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.list-badge.is-warning {
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
 .section-title {
   font-family: var(--font-display);
   font-size: 1.25rem;

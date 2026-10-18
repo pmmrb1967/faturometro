@@ -13,6 +13,7 @@ import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
 import { billingFrequency } from '../../domain/grouping';
 import { insuranceRenewalDate } from '../../domain/insurance';
+import { socialTariffState } from '../../domain/social-tariff';
 import type { Contract, Invoice } from '../../domain/types';
 import { InsuranceSection } from '../insurance/InsuranceSection';
 import { AuditSection } from './AuditSection';
@@ -38,7 +39,16 @@ export function ContractPage() {
       session.repos.readings.findBy('contractId', id),
     ]);
     invoices.sort((a, b) => a.issueDate.localeCompare(b.issueDate));
-    return { contract, provider, invoices, readings };
+    const lines = new Map(
+      await Promise.all(
+        invoices.map(
+          async (invoice) =>
+            [invoice.id, await session.repos.invoiceLines.findBy('invoiceId', invoice.id)] as const,
+        ),
+      ),
+    );
+    const social = socialTariffState(contract, invoices, (invoice) => lines.get(invoice.id) ?? []);
+    return { contract, provider, invoices, readings, social };
   }, [session, id]);
 
   if (!data || !session) return null;
@@ -50,7 +60,7 @@ export function ContractPage() {
       </>
     );
   }
-  const { contract, provider, invoices = [], readings = [] } = data;
+  const { contract, provider, invoices = [], readings = [], social } = data;
 
   const costBars: Bar[] = invoices.map((invoice) => ({
     key: invoice.id,
@@ -96,7 +106,14 @@ export function ContractPage() {
         : undefined,
     ],
     [copy.facts.cycle, contract.electricity ? copy.cycles[contract.electricity.cycle] : undefined],
-    [copy.facts.socialTariff, contract.electricity?.socialTariff ? copy.facts.yes : undefined],
+    [
+      copy.facts.socialTariff,
+      social?.state === 'active'
+        ? copy.facts.socialActive(formatCents(social.discountCents))
+        : social?.state === 'lost'
+          ? copy.facts.socialLost
+          : undefined,
+    ],
     ...insuranceFacts(contract, invoices),
   ];
 

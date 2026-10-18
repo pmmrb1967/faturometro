@@ -9,7 +9,7 @@
  *   https://www.anacom-consumidor.pt/faq-tarifa-social-de-internet-tsi
  */
 import type { Cents } from '../lib/money';
-import type { Contract } from './types';
+import type { Contract, Invoice, InvoiceLine } from './types';
 
 export const SOCIAL_TARIFF_SOURCES = {
   energy: 'https://www.erse.pt/media/xvtbbuq4/tarifa-social_eletricidade_gas_out2026_pt.pdf',
@@ -111,11 +111,15 @@ export function incomeLimit(baseCents: Cents, membersWithoutIncome: number): Cen
   return Math.round(baseCents * (1 + members / 2));
 }
 
-function notesFor(service: SocialTariffService, contracts: readonly Contract[]): ContractNote[] {
+function notesFor(
+  service: SocialTariffService,
+  contracts: readonly Contract[],
+  withSocialTariff: ReadonlySet<string>,
+): ContractNote[] {
   const notes = new Set<ContractNote>();
   for (const contract of contracts.filter((candidate) => candidate.active)) {
+    if (contract.sector === service && withSocialTariff.has(contract.id)) notes.add('already');
     if (service === 'electricity' && contract.electricity) {
-      if (contract.electricity.socialTariff) notes.add('already');
       if (contract.electricity.powerKva > MAX_POWER_KVA) notes.add('power_too_high');
     }
     if (service === 'gas' && contract.gas?.escalao && contract.gas.escalao > MAX_GAS_ESCALAO) {
@@ -125,16 +129,21 @@ function notesFor(service: SocialTariffService, contracts: readonly Contract[]):
   return [...notes];
 }
 
+/**
+ * @param withSocialTariff ids of the contracts whose latest invoice shows the
+ *   social tariff discount (see {@link socialTariffState}).
+ */
 export function checkSocialTariff(
   answers: SocialTariffAnswers,
   contracts: readonly Contract[] = [],
+  withSocialTariff: ReadonlySet<string> = new Set(),
 ): ServiceCheck[] {
   return (['electricity', 'gas', 'internet'] as const).map((service) => {
     const rule = RULES[service];
     const check: ServiceCheck = {
       service,
       eligible: false,
-      contractNotes: notesFor(service, contracts),
+      contractNotes: notesFor(service, contracts, withSocialTariff),
     };
     if (rule.incomeLimitCents !== undefined) {
       check.incomeLimitCents = incomeLimit(rule.incomeLimitCents, answers.membersWithoutIncome);
@@ -152,4 +161,78 @@ export function checkSocialTariff(
     }
     return check;
   });
+}
+
+/**
+ * A social tariff discount on an energy invoice (Repsol: "Desc. Social Redes
+ * Energia"). The "Financ. T. Social" charge that every customer pays to fund
+ * the tariff is not a discount, so it does not count.
+ */
+export function isSocialDiscount(line: Pick<InvoiceLine, 'kind' | 'description'>): boolean {
+  return line.kind === 'discount' && /social/i.test(line.description);
+}
+
+/** What the social tariff took off an invoice, in positive cents (0 when none). */
+export function socialDiscountCents(lines: readonly InvoiceLine[]): Cents {
+  const sum = lines.filter(isSocialDiscount).reduce((total, line) => total + line.amountCents, 0);
+  return sum < 0 ? -sum : 0;
+}
+
+export type SocialTariffState =
+  | { state: 'active'; invoice: Invoice; discountCents: Cents }
+  /** The previous invoice had the discount and the latest one does not. */
+  | { state: 'lost'; invoice: Invoice; previous: Invoice; previousDiscountCents: Cents };
+
+/**
+ * Social tariff of an electricity or gas contract, from its two latest
+ * invoices with lines (invoices typed by hand without lines say nothing).
+ */
+export function socialTariffState(
+  contract: Pick<Contract, 'sector'>,
+  history: readonly Invoice[],
+  linesOf: (invoice: Invoice) => readonly InvoiceLine[],
+): SocialTariffState | null {
+  if (contract.sector !== 'electricity' && contract.sector !== 'gas') return null;
+  const withLines = history
+    .filter((invoice) => linesOf(invoice).length > 0)
+    .sort(
+      (a, b) => a.issueDate.localeCompare(b.issueDate) || a.createdAt.localeCompare(b.createdAt),
+    );
+  const invoice = withLines.at(-1);
+  if (!invoice) return null;
+  const discountCents = socialDiscountCents(linesOf(invoice));
+  if (discountCents > 0) return { state: 'active', invoice, discountCents };
+  const previous = withLines.at(-2);
+  const previousDiscountCents = previous ? socialDiscountCents(linesOf(previous)) : 0;
+  return previous && previousDiscountCents > 0
+    ? { state: 'lost', invoice, previous, previousDiscountCents }
+    : null;
+}
+
+/** Ids of the contracts whose latest invoice shows the social tariff discount. */
+export function contractsWithSocialTariff(
+  contracts: readonly Contract[],
+  invoices: readonly Invoice[],
+  lines: readonly InvoiceLine[],
+): Set<string> {
+  const linesByInvoice = linesByInvoiceId(lines);
+  const linesOf = (invoice: Invoice) => linesByInvoice.get(invoice.id) ?? [];
+  return new Set(
+    contracts
+      .filter((contract) => {
+        const history = invoices.filter((invoice) => invoice.contractId === contract.id);
+        return socialTariffState(contract, history, linesOf)?.state === 'active';
+      })
+      .map((contract) => contract.id),
+  );
+}
+
+export function linesByInvoiceId(lines: readonly InvoiceLine[]): Map<string, InvoiceLine[]> {
+  const byInvoice = new Map<string, InvoiceLine[]>();
+  for (const line of lines) {
+    const own = byInvoice.get(line.invoiceId);
+    if (own) own.push(line);
+    else byInvoice.set(line.invoiceId, [line]);
+  }
+  return byInvoice;
 }

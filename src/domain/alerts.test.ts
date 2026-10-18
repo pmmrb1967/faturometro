@@ -411,3 +411,49 @@ describe('monthly insurance instalments', () => {
     ).toEqual([]);
   });
 });
+
+describe('social tariff lost', () => {
+  const energy = (id: string, social: boolean) => [
+    line(id, { kind: 'energy', description: 'Energia', amountCents: 3000 }),
+    ...(social
+      ? [
+          line(id, {
+            kind: 'discount',
+            description: 'Desc. Social Redes Energia',
+            amountCents: -820,
+          }),
+        ]
+      : []),
+  ];
+
+  it('warns when the latest invoice no longer has the discount', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [contract({ sector: 'gas', label: 'Gás' })],
+        invoices: [invoice('i1', '2026-04-01', 5000), invoice('i2', '2026-05-01', 5800)],
+        lines: [...energy('i1', true), ...energy('i2', false)],
+      }),
+    );
+    const lost = alerts.find((alert) => alert.kind === 'social_tariff_lost');
+    expect(lost).toMatchObject({
+      key: 'c1:social_tariff_lost:i2',
+      severity: 'warning',
+      data: {
+        issueDate: '2026-05-01',
+        previousIssueDate: '2026-04-01',
+        previousDiscountCents: 820,
+      },
+    });
+  });
+
+  it('says nothing while the discount is there', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [contract({ sector: 'electricity' })],
+        invoices: [invoice('i1', '2026-04-01', 5000), invoice('i2', '2026-05-01', 5000)],
+        lines: [...energy('i1', true), ...energy('i2', true)],
+      }),
+    );
+    expect(kinds(alerts)).not.toContain('social_tariff_lost');
+  });
+});

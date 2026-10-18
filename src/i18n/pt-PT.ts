@@ -371,7 +371,7 @@ export const t = {
         'Pede-a a um operador de Internet. A ANACOM confirma se tens direito e o operador tem até 10 dias para ativar o serviço.',
     },
     notes: {
-      already: 'A tua fatura de luz já mostra o desconto da tarifa social.',
+      already: 'A tua última fatura já mostra o desconto da tarifa social.',
       power_too_high:
         'O teu contrato de luz tem mais de 6,9 kVA: com esta potência não há tarifa social.',
       gas_tier_too_high:
@@ -429,6 +429,8 @@ export const t = {
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
       oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
         `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato. Se já pagaste, podes dispensar este aviso.`,
+      socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>
+        `${label}: a fatura de ${date} já não tem o desconto da tarifa social (na de ${previousDate} foi de ${discount}). Confirma com o fornecedor se a tarifa social se mantém.`,
       meterReading: (label: string, start: string, end: string) =>
         `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
@@ -818,6 +820,7 @@ export const t = {
     },
     empty: 'Ainda não tens faturas. Adiciona a primeira acima.',
     listTitle: 'Faturas guardadas',
+    socialDiscount: (discount: string) => `Tarifa social −${discount}`,
     original: {
       open: 'Abrir original',
       openRemote: 'Abrir original (descarregar)',
@@ -882,6 +885,8 @@ export const t = {
       'Ainda não tens contratos. São criados quando guardas a primeira fatura de cada fornecedor.',
     invoiceCount: (count: number) => (count === 1 ? '1 fatura' : `${count} faturas`),
     lastInvoice: 'Última fatura',
+    socialBadge: 'Tarifa social',
+    socialLostBadge: 'Tarifa social em falta',
     back: 'Contratos',
     notFound: 'Este contrato não existe.',
     facts: {
@@ -894,7 +899,8 @@ export const t = {
       power: 'Potência contratada',
       cycle: 'Ciclo horário',
       socialTariff: 'Tarifa social',
-      yes: 'Sim',
+      socialActive: (discount: string) => `Sim (desconto de ${discount} na última fatura)`,
+      socialLost: 'Não aparece na última fatura',
       product: 'Produto',
       policy: 'N.º da apólice',
       insuredPersons: 'Pessoas seguras',

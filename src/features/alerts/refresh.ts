@@ -46,6 +46,13 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
         formatIsoDate(text('periodStart')),
         formatIsoDate(text('oldUntil')),
       );
+    case 'social_tariff_lost':
+      return copy.socialTariffLost(
+        label,
+        formatIsoDate(text('issueDate')),
+        formatIsoDate(text('previousIssueDate')),
+        formatCents(number('previousDiscountCents')),
+      );
     case 'meter_reading':
       return copy.meterReading(label, formatIsoDate(text('start')), formatIsoDate(text('end')));
     case 'missing_invoice':

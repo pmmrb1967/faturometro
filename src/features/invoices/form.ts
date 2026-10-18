@@ -5,6 +5,7 @@
 import { samePolicy } from '../insurance/policy-document';
 import { AI_PARSER_PREFIX } from '../../ai/prompts/extract';
 import { isValidNif } from '../../domain/nif';
+import { isSocialDiscount } from '../../domain/social-tariff';
 import type { Contract, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { parsePtAmount, type Cents } from '../../lib/money';
@@ -222,7 +223,7 @@ export function contractDetails(
     details.electricity = {
       powerKva: extraction.powerKva.value,
       cycle,
-      socialTariff: extraction.lines.some((line) => /social/i.test(line.description)),
+      socialTariff: extraction.lines.some(isSocialDiscount),
     };
   }
   if (sector === 'gas' && extraction.gasEscalao) {
