@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { addMonthsTo, expenseDueDate, monthSummary, paymentId } from './month';
+import {
+  addMonthsTo,
+  expenseActive,
+  expenseAmount,
+  expenseDueDate,
+  monthSummary,
+  paymentId,
+  withAmountFrom,
+} from './month';
 import type { Invoice, Payment, RecurringExpense } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
@@ -59,6 +67,41 @@ describe('expenseDueDate', () => {
 
   it('uses the last day of shorter months', () => {
     expect(expenseDueDate(expense({ dueDay: 31 }), '2026-02')).toBe('2026-02-28');
+  });
+});
+
+describe('expenseActive', () => {
+  it('only between the first and the last month', () => {
+    const condominium = expense({ startMonth: '2026-03', endMonth: '2026-09' });
+    expect(expenseActive(condominium, '2026-02')).toBe(false);
+    expect(expenseActive(condominium, '2026-03')).toBe(true);
+    expect(expenseActive(condominium, '2026-09')).toBe(true);
+    expect(expenseActive(condominium, '2026-10')).toBe(false);
+    expect(expenseActive(expense({ startMonth: '2026-03' }), '2030-01')).toBe(true);
+  });
+});
+
+describe('amount changes', () => {
+  it('a new amount from a month on; earlier months keep theirs', () => {
+    const rent = withAmountFrom(expense({ amountCents: 65000 }), '2027-01', 67000);
+    expect(expenseAmount(rent, '2026-12')).toBe(65000);
+    expect(expenseAmount(rent, '2027-01')).toBe(67000);
+    const again = withAmountFrom(rent, '2028-01', 69000);
+    expect(expenseAmount(again, '2027-06')).toBe(67000);
+    expect(expenseAmount(again, '2028-03')).toBe(69000);
+    expect(monthSummary('2028-01', [], [again], []).totalCents).toBe(69000);
+  });
+
+  it('replaces the changes from that month on, and the base from the first month', () => {
+    const rent = withAmountFrom(
+      withAmountFrom(expense({ amountCents: 65000 }), '2027-01', 67000),
+      '2026-06',
+      66000,
+    );
+    expect(rent.amountChanges).toEqual([{ fromMonth: '2026-06', amountCents: 66000 }]);
+    const fixed = withAmountFrom(rent, '2026-01', 60000);
+    expect(fixed.amountCents).toBe(60000);
+    expect(fixed.amountChanges).toBeUndefined();
   });
 });
 

@@ -2,7 +2,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
 import type { BillingFrequency } from '../../domain/grouping';
-import { addMonthsTo, monthOf, monthSummary, type MonthItem } from '../../domain/month';
+import {
+  addMonthsTo,
+  expenseActive,
+  expenseAmount,
+  monthOf,
+  monthSummary,
+  withAmountFrom,
+  type MonthItem,
+} from '../../domain/month';
 import type { Payment, RecurringExpense } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -35,10 +43,14 @@ function frequencyOf(months: RecurringExpense['everyMonths']): string {
   return t.frequency[EVERY.find((every) => every.months === months)?.frequency ?? 'monthly'];
 }
 
+type SavedExpense = Omit<RecurringExpense, 'updatedAt'>;
+
 /** "Este mês": what is due in a month, marked as paid or not, and expenses without an invoice. */
 export function MonthPage() {
   const { session } = useSession();
   const [month, setMonth] = useState(monthOf(today()));
+  // Expense being changed, in its line of the month or in the expenses section.
+  const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const [invoices, contracts, providers, expenses, payments] = await Promise.all([
@@ -58,7 +70,12 @@ export function MonthPage() {
   }, [session]);
 
   if (!session || !data) return null;
+  const repos = session.repos;
   const summary = monthSummary(month, [...data.invoices.values()], data.expenses, data.payments);
+  // Expenses between their first and last month (due this month or not).
+  const active = data.expenses
+    .filter((expense) => expenseActive(expense, month))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
 
   const nameOf = (item: MonthItem): string => {
     if (item.kind === 'expense') {
@@ -71,7 +88,6 @@ export function MonthPage() {
   };
 
   async function setPaid(item: MonthItem, paid: boolean) {
-    if (!session) return;
     if (paid) {
       const payment: Omit<Payment, 'updatedAt'> = {
         id: item.paymentId,
@@ -79,13 +95,23 @@ export function MonthPage() {
         ...(item.invoiceId ? { invoiceId: item.invoiceId } : {}),
         ...(item.expenseId ? { expenseId: item.expenseId, month } : {}),
       };
-      await session.repos.payments.put(payment);
+      await repos.payments.put(payment);
     } else {
-      await session.repos.payments.remove(item.paymentId);
+      await repos.payments.remove(item.paymentId);
     }
     // The prescription and payment alerts depend on it.
-    await refreshAlerts(session.repos);
+    await refreshAlerts(repos);
   }
+
+  async function saveExpense(expense: SavedExpense | null) {
+    if (expense) await repos.expenses.put(expense);
+    setEditing(null);
+  }
+
+  const goTo = (next: string) => {
+    setEditing(null);
+    setMonth(next);
+  };
 
   return (
     <>
@@ -98,7 +124,7 @@ export function MonthPage() {
           className="action-secondary"
           aria-label={copy.previous}
           title={copy.previous}
-          onClick={() => setMonth(addMonthsTo(month, -1))}
+          onClick={() => goTo(addMonthsTo(month, -1))}
         >
           ←
         </button>
@@ -110,7 +136,7 @@ export function MonthPage() {
           className="action-secondary"
           aria-label={copy.next}
           title={copy.next}
-          onClick={() => setMonth(addMonthsTo(month, 1))}
+          onClick={() => goTo(addMonthsTo(month, 1))}
         >
           →
         </button>
@@ -139,6 +165,14 @@ export function MonthPage() {
         <ul className="list">
           {summary.items.map((item) => {
             const name = nameOf(item);
+            const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
+            if (expense && editing?.id === expense.id && editing.place === 'line') {
+              return (
+                <li key={item.paymentId}>
+                  <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                </li>
+              );
+            }
             return (
               <li
                 key={item.paymentId}
@@ -162,114 +196,147 @@ export function MonthPage() {
                   {item.paidOn && ` · ${copy.paidOn(formatIsoDate(item.paidOn))}`}
                   {item.kind === 'expense' && ` · ${copy.expenseTag}`}
                 </span>
+                {expense && (
+                  <ExpenseActions
+                    expense={expense}
+                    onEdit={() => setEditing({ id: expense.id, place: 'line' })}
+                  />
+                )}
               </li>
             );
           })}
         </ul>
       )}
 
-      <ExpensesSection month={month} expenses={data.expenses} />
+      <section aria-labelledby="expenses-title">
+        <h2 id="expenses-title" className="section-title">
+          {copy.expenses.title}
+        </h2>
+        <p className="muted">{copy.expenses.intro}</p>
+        {active.length === 0 && (
+          <p className="muted">
+            {data.expenses.length === 0 ? copy.expenses.empty : copy.expenses.emptyMonth}
+          </p>
+        )}
+        <ul className="list">
+          {active.map((expense) =>
+            editing?.id === expense.id && editing.place === 'section' ? (
+              <li key={expense.id}>
+                <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+              </li>
+            ) : (
+              <li key={expense.id} className="list-item month-expense">
+                <strong>{expense.name}</strong>
+                <span className="meta">
+                  {copy.expenses.summary(
+                    formatCents(expenseAmount(expense, month)),
+                    frequencyOf(expense.everyMonths),
+                    expense.dueDay,
+                  )}
+                  {' · '}
+                  {expense.endMonth
+                    ? copy.expenses.between(
+                        formatMonth(expense.startMonth),
+                        formatMonth(expense.endMonth),
+                      )
+                    : copy.expenses.since(formatMonth(expense.startMonth))}
+                </span>
+                <ExpenseActions
+                  expense={expense}
+                  stopFrom={month}
+                  onEdit={() => setEditing({ id: expense.id, place: 'section' })}
+                />
+              </li>
+            ),
+          )}
+        </ul>
+        {editing?.id === 'new' ? (
+          <ExpenseForm month={month} onDone={saveExpense} />
+        ) : (
+          <p>
+            <button
+              type="button"
+              className="action-primary"
+              onClick={() => setEditing({ id: 'new', place: 'section' })}
+            >
+              {copy.expenses.add}
+            </button>
+          </p>
+        )}
+      </section>
     </>
   );
 }
 
-function ExpensesSection({
-  month,
-  expenses,
+/** Change, stop or delete a recurring expense; deleting asks first. */
+function ExpenseActions({
+  expense,
+  stopFrom,
+  onEdit,
 }: {
-  month: string;
-  expenses: readonly RecurringExpense[];
+  expense: RecurringExpense;
+  /** Month from which "Já não pago" stops it (only in the expenses section). */
+  stopFrom?: string;
+  onEdit: () => void;
 }) {
   const { session } = useSession();
-  const [editing, setEditing] = useState<RecurringExpense | 'new' | null>(null);
-  // Expenses that ended before this month are not shown.
-  const shown = expenses
-    .filter((expense) => !expense.endMonth || expense.endMonth >= month)
-    .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
-
+  const [confirming, setConfirming] = useState(false);
   if (!session) return null;
   const repos = session.repos;
 
-  async function stop(expense: RecurringExpense) {
+  async function remove() {
+    const payments = await repos.payments.list();
+    for (const payment of payments.filter((candidate) => candidate.expenseId === expense.id)) {
+      await repos.payments.remove(payment.id);
+    }
+    await repos.expenses.remove(expense.id);
+  }
+
+  async function stop(month: string) {
     const endMonth = addMonthsTo(month, -1);
-    if (endMonth < expense.startMonth) await repos.expenses.remove(expense.id);
+    if (endMonth < expense.startMonth) setConfirming(true);
     else await repos.expenses.put({ ...expense, endMonth });
   }
 
-  return (
-    <section aria-labelledby="expenses-title">
-      <h2 id="expenses-title" className="section-title">
-        {copy.expenses.title}
-      </h2>
-      <p className="muted">{copy.expenses.intro}</p>
-      {shown.length === 0 && <p className="muted">{copy.expenses.empty}</p>}
-      <ul className="list">
-        {shown.map((expense) =>
-          editing !== 'new' && editing?.id === expense.id ? (
-            <li key={expense.id}>
-              <ExpenseForm
-                initial={expense}
-                month={month}
-                onDone={async (saved) => {
-                  if (saved) await repos.expenses.put(saved);
-                  setEditing(null);
-                }}
-              />
-            </li>
-          ) : (
-            <li key={expense.id} className="list-item month-expense">
-              <strong>{expense.name}</strong>
-              <span className="meta">
-                {copy.expenses.summary(
-                  formatCents(expense.amountCents),
-                  frequencyOf(expense.everyMonths),
-                  expense.dueDay,
-                )}
-              </span>
-              <div className="month-actions">
-                <button
-                  type="button"
-                  className="action-secondary"
-                  onClick={() => setEditing(expense)}
-                >
-                  {copy.expenses.edit}
-                </button>
-                <button
-                  type="button"
-                  className="action-secondary"
-                  aria-label={copy.expenses.stopLabel(expense.name, formatMonth(month))}
-                  onClick={() => void stop(expense)}
-                >
-                  {copy.expenses.stop}
-                </button>
-                <button
-                  type="button"
-                  className="action-secondary danger"
-                  onClick={() => void repos.expenses.remove(expense.id)}
-                >
-                  {copy.expenses.remove}
-                </button>
-              </div>
-            </li>
-          ),
-        )}
-      </ul>
-      {editing === 'new' ? (
-        <ExpenseForm
-          month={month}
-          onDone={async (saved) => {
-            if (saved) await repos.expenses.put(saved);
-            setEditing(null);
-          }}
-        />
-      ) : (
-        <p>
-          <button type="button" className="action-primary" onClick={() => setEditing('new')}>
-            {copy.expenses.add}
+  if (confirming) {
+    return (
+      <div className="month-confirm" role="alert">
+        <p>{copy.expenses.confirmRemove(expense.name)}</p>
+        <div className="month-actions">
+          <button type="button" className="action-secondary danger" onClick={() => void remove()}>
+            {copy.expenses.confirm}
           </button>
-        </p>
+          <button type="button" className="action-secondary" onClick={() => setConfirming(false)}>
+            {copy.expenses.cancel}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="month-actions">
+      <button type="button" className="action-secondary" onClick={onEdit}>
+        {copy.expenses.edit}
+      </button>
+      {stopFrom && (
+        <button
+          type="button"
+          className="action-secondary"
+          aria-label={copy.expenses.stopLabel(expense.name, formatMonth(stopFrom))}
+          onClick={() => void stop(stopFrom)}
+        >
+          {copy.expenses.stop}
+        </button>
       )}
-    </section>
+      <button
+        type="button"
+        className="action-secondary danger"
+        aria-label={`${copy.expenses.remove}: ${expense.name}`}
+        onClick={() => setConfirming(true)}
+      >
+        {copy.expenses.remove}
+      </button>
+    </div>
   );
 }
 
@@ -280,41 +347,55 @@ function ExpenseForm({
 }: {
   initial?: RecurringExpense;
   month: string;
-  onDone: (expense: Omit<RecurringExpense, 'updatedAt'> | null) => Promise<void>;
+  onDone: (expense: SavedExpense | null) => Promise<void>;
 }) {
+  const shownAmount = initial ? expenseAmount(initial, month) : undefined;
   const [name, setName] = useState(initial?.name ?? '');
-  const [amount, setAmount] = useState(initial ? centsToPtInput(initial.amountCents) : '');
+  const [amount, setAmount] = useState(
+    shownAmount !== undefined ? centsToPtInput(shownAmount) : '',
+  );
+  const [fromMonth, setFromMonth] = useState(month);
   const [every, setEvery] = useState<RecurringExpense['everyMonths']>(initial?.everyMonths ?? 1);
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
+  const [endMonth, setEndMonth] = useState(initial?.endMonth ?? '');
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
   );
   const id = initial?.id ?? 'new';
+  const amountCents = parsePtAmount(amount);
+  // A new amount on an existing expense: from which month (earlier ones keep theirs).
+  const amountChanged =
+    shownAmount !== undefined && amountCents !== null && amountCents !== shownAmount;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const amountCents = parsePtAmount(amount);
     const day = Number(dueDay);
     const found: typeof errors = {};
     if (!name.trim()) found.name = copy.expenses.errors.name;
     if (amountCents === null || amountCents <= 0) found.amount = copy.expenses.errors.amount;
     if (!Number.isInteger(day) || day < 1 || day > 31) found.dueDay = copy.expenses.errors.dueDay;
     if (!MONTH.test(startMonth)) found.startMonth = copy.expenses.errors.startMonth;
+    if (endMonth && (!MONTH.test(endMonth) || endMonth < startMonth)) {
+      found.endMonth = copy.expenses.errors.endMonth;
+    }
+    if (amountChanged && (!MONTH.test(fromMonth) || fromMonth < startMonth)) {
+      found.fromMonth = copy.expenses.errors.fromMonth;
+    }
     setErrors(found);
     if (Object.keys(found).length > 0 || amountCents === null) return;
-    const { endMonth, ...kept } = initial ?? { endMonth: undefined };
-    await onDone({
-      ...kept,
-      ...(endMonth && endMonth >= startMonth ? { endMonth } : {}),
+    const expense: SavedExpense = {
       id: initial?.id ?? crypto.randomUUID(),
       name: name.trim(),
-      amountCents,
+      amountCents: initial?.amountCents ?? amountCents,
+      ...(initial?.amountChanges ? { amountChanges: initial.amountChanges } : {}),
       everyMonths: every,
       dueDay: day,
       startMonth,
+      ...(endMonth ? { endMonth } : {}),
       createdAt: initial?.createdAt ?? new Date().toISOString(),
-    });
+    };
+    await onDone(amountChanged ? withAmountFrom(expense, fromMonth, amountCents) : expense);
   }
 
   return (
@@ -335,6 +416,17 @@ function ExpenseForm({
         error={errors.amount}
         onChange={(event) => setAmount(event.target.value)}
       />
+      {amountChanged && (
+        <Field
+          id={`expense-from-${id}`}
+          label={copy.expenses.fromMonth}
+          hint={copy.expenses.fromMonthHint}
+          type="month"
+          value={fromMonth}
+          error={errors.fromMonth}
+          onChange={(event) => setFromMonth(event.target.value)}
+        />
+      )}
       <SelectField
         id={`expense-every-${id}`}
         label={copy.expenses.every}
@@ -369,6 +461,15 @@ function ExpenseForm({
         value={startMonth}
         error={errors.startMonth}
         onChange={(event) => setStartMonth(event.target.value)}
+      />
+      <Field
+        id={`expense-end-${id}`}
+        label={copy.expenses.endMonth}
+        hint={copy.expenses.endMonthHint}
+        type="month"
+        value={endMonth}
+        error={errors.endMonth}
+        onChange={(event) => setEndMonth(event.target.value)}
       />
       <div className="month-actions">
         <button type="submit" className="action-primary">

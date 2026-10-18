@@ -59,13 +59,44 @@ function lastDay(month: string): number {
   return new Date(Date.UTC(year, number, 0)).getUTCDate();
 }
 
+/** Between its first and last month (whether or not it is due in this one). */
+export function expenseActive(expense: RecurringExpense, month: string): boolean {
+  return month >= expense.startMonth && (!expense.endMonth || month <= expense.endMonth);
+}
+
 /** Due date of a recurring expense in a month, or null when it is not due then. */
 export function expenseDueDate(expense: RecurringExpense, month: string): string | null {
-  const offset = monthIndex(month) - monthIndex(expense.startMonth);
-  if (offset < 0 || offset % expense.everyMonths !== 0) return null;
-  if (expense.endMonth && month > expense.endMonth) return null;
+  if (!expenseActive(expense, month)) return null;
+  if ((monthIndex(month) - monthIndex(expense.startMonth)) % expense.everyMonths !== 0) return null;
   const day = Math.min(Math.max(Math.trunc(expense.dueDay), 1), lastDay(month));
   return `${month}-${String(day).padStart(2, '0')}`;
+}
+
+/** Amount of a recurring expense in a month (the latest change already started). */
+export function expenseAmount(expense: RecurringExpense, month: string): Cents {
+  let amount = expense.amountCents;
+  for (const change of [...(expense.amountChanges ?? [])].sort((a, b) =>
+    a.fromMonth.localeCompare(b.fromMonth),
+  )) {
+    if (change.fromMonth <= month) amount = change.amountCents;
+  }
+  return amount;
+}
+
+/**
+ * A new amount from a month on: earlier months keep theirs; changes planned
+ * from that month on are replaced. From the first month, it is the base amount.
+ */
+export function withAmountFrom<
+  T extends Pick<RecurringExpense, 'amountCents' | 'amountChanges' | 'startMonth'>,
+>(expense: T, fromMonth: string, amountCents: Cents): T {
+  const { amountChanges = [], ...rest } = expense;
+  if (fromMonth <= expense.startMonth) return { ...rest, amountCents } as T;
+  const changes = [
+    ...amountChanges.filter((change) => change.fromMonth < fromMonth),
+    { fromMonth, amountCents },
+  ];
+  return { ...rest, amountChanges: changes } as T;
 }
 
 export function monthSummary(
@@ -106,7 +137,7 @@ export function monthSummary(
         expenseId: expense.id,
         date,
         hasDueDate: true,
-        amountCents: expense.amountCents,
+        amountCents: expenseAmount(expense, month),
       }),
     );
   }

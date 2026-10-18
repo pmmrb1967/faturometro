@@ -241,7 +241,10 @@ export interface FieldCorrection extends SyncMeta {
  */
 export interface RecurringExpense extends SyncMeta {
   name: string;
+  /** Amount from `startMonth`, until the first of `amountChanges`. */
   amountCents: Cents;
+  /** Later amounts (a yearly update…), by the month they start; earlier months keep theirs. */
+  amountChanges?: { fromMonth: string; amountCents: Cents }[];
   /** Due every this many months. */
   everyMonths: 1 | 2 | 3 | 6 | 12;
   /** Day of the month it is due (shorter months use their last day). */
