@@ -155,6 +155,22 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "Período de Comunicação",
+          "x": 322,
+          "y": 401,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-06-26 ~ 2026-06-29",
+          "x": 412,
+          "y": 401,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "CMPEAE - Empresa de Águas e Energia do Município do Porto, EM - Exemplo sintético",
           "x": 13,
           "y": 541,

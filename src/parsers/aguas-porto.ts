@@ -27,6 +27,7 @@ import {
   quantity,
   rows,
   valueBelow,
+  valueRightOf,
   type Row,
 } from './utils';
 
@@ -250,11 +251,24 @@ function parseSummary(page: PageText, result: ExtractedInvoice) {
   if (due) result.dueDate = { value: due, confidence: 'high' };
 }
 
+/** Page 1: "Período de Comunicação | 2026-10-09 ~ 2026-10-12" (days to send the meter reading). */
+function parseReadingWindow(pages: PageText[], result: ExtractedInvoice) {
+  for (const page of pages) {
+    const label = findItem(page, /^Período de Comunicação$/);
+    const value = label && valueRightOf(page, label);
+    const match = BLOCK_PERIOD.exec(normalize(value?.str ?? ''));
+    if (match && match[1]! <= match[2]!) {
+      result.readingWindow = { value: { start: match[1]!, end: match[2]! }, confidence: 'high' };
+      return;
+    }
+  }
+}
+
 export const aguasPortoParser: Parser = {
   id: ID,
   name: 'Águas do Porto',
-  version: '1.0.0',
-  updated: '2026-10-17',
+  version: '1.1.0',
+  updated: '2026-10-18',
   sectors: ['water'],
   issuerNifs: [WATER_NIF, WASTE_NIF],
 
@@ -291,6 +305,7 @@ export const aguasPortoParser: Parser = {
       // "710 - Doméstico".
       const tariff = headerValue(block, /^Tarifa$/)?.replace(/^\d+ - /, '');
       if (tariff) result.tariffName = { value: tariff, confidence: 'high' };
+      parseReadingWindow(ctx.pages, result);
     } else if (/RES[IÍ]DUOS/i.test(section)) {
       // Urban waste billed in the same document: its own contract.
       result.contractLabel = { value: 'Resíduos', confidence: 'high' };

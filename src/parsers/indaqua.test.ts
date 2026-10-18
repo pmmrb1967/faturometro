@@ -65,12 +65,20 @@ describe('indaqua parser', () => {
       });
       expect(result.readings[0]?.dateTo).toBe(result.periodEnd?.value);
       expect(result.readings[0]?.meterReading).toBeGreaterThan(0);
+      // "Período ideal" to send the next reading, after the billed period.
+      const window = result.readingWindow?.value;
+      expect(window && window.start <= window.end).toBe(true);
+      expect(window!.start > result.periodEnd!.value).toBe(true);
+      if (fixture.name.includes('synthetic-1')) {
+        expect(window).toEqual({ start: '2026-08-28', end: '2026-09-02' });
+      }
     } else {
       // Município: urban waste, not subject to VAT, in its own contract.
       expect(result.vatCents?.value).toBe(0);
       expect(result.contractLabel?.value).toBe('Resíduos');
       expect(result.issuerName?.value).toBe('Município de Matosinhos');
       expect(result.readings).toEqual([]);
+      expect(result.readingWindow).toBeUndefined();
     }
   });
 

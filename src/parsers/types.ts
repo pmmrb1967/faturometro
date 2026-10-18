@@ -4,6 +4,7 @@ import type {
   ConsumptionPeriod,
   InvoiceLine,
   Reading,
+  ReadingWindow,
   Sector,
   TelecomService,
 } from '../domain/types';
@@ -62,6 +63,8 @@ export interface ExtractedInvoice {
   /** Services of a telecom contract, in TELECOM_SERVICES order. */
   telecomServices?: Field<TelecomService[]>;
   readingType?: Field<Reading['readingType']>;
+  /** When the supplier asks for the next meter reading, as printed on the invoice. */
+  readingWindow?: Field<ReadingWindow>;
   lines: ExtractedLine[];
   /** True when line amounts include VAT (they then add up to the total, not the net). */
   linesIncludeVat?: boolean;

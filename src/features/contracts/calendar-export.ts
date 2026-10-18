@@ -47,6 +47,15 @@ export async function buildCalendarFile(
         reminder: copy.renewalReminder(name),
       };
     }
+    if (event.kind === 'meter_reading') {
+      return {
+        ...base,
+        ...(event.endDate ? { endDate: event.endDate } : {}),
+        summary: copy.readingSummary(name),
+        description: copy.readingDescription,
+        reminder: copy.readingReminder(name),
+      };
+    }
     if (event.kind === 'loyalty_end' || !event.invoice) {
       return {
         ...base,

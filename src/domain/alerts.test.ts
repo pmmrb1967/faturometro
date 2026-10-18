@@ -183,6 +183,36 @@ describe('estimated readings', () => {
   });
 });
 
+describe('meter reading', () => {
+  const window = { start: '2026-06-04', end: '2026-06-07' };
+  const latest = { ...invoice('i2', '2026-05-20', 1000), readingWindow: window };
+
+  it('reminds from 3 days before the window until it closes', () => {
+    const at = (today: string) =>
+      kinds(computeAlerts(input({ invoices: [latest], today }))).includes('meter_reading');
+    expect(at('2026-05-31')).toBe(false);
+    expect(at('2026-06-01')).toBe(true);
+    expect(at('2026-06-07')).toBe(true);
+    expect(at('2026-06-08')).toBe(false);
+    const [alert] = computeAlerts(input({ invoices: [latest] }));
+    expect(alert).toMatchObject({
+      key: 'c1:meter_reading:2026-06-04',
+      severity: 'info',
+      data: { start: '2026-06-04', end: '2026-06-07' },
+    });
+  });
+
+  it('follows the newest invoice that prints a window', () => {
+    const older = {
+      ...invoice('i1', '2026-04-20', 1000),
+      readingWindow: { start: '2026-05-04', end: '2026-05-07' },
+    };
+    const newer = invoice('i3', '2026-05-25', 1000);
+    const alerts = computeAlerts(input({ invoices: [newer, latest, older] }));
+    expect(alerts.find((alert) => alert.kind === 'meter_reading')?.data).toEqual(window);
+  });
+});
+
 describe('missing invoice', () => {
   it('alerts when an active contract has had no invoice for more than 40 days', () => {
     const invoices = [invoice('a', '2026-04-15', 1000)];

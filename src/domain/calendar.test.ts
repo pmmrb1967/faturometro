@@ -99,6 +99,32 @@ describe('calendarEvents', () => {
   });
 });
 
+describe('meter readings', () => {
+  it('adds the window of the newest invoice, with a reminder on its first day', () => {
+    const old = {
+      ...invoice('old', undefined),
+      issueDate: '2026-08-01',
+      readingWindow: { start: '2026-09-01', end: '2026-09-04' },
+    };
+    const latest = {
+      ...invoice('new', undefined),
+      readingWindow: { start: '2026-10-28', end: '2026-10-31' },
+    };
+    const events = calendarEvents(input({ contracts: [contract()], invoices: [old, latest] }));
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      uid: 'reading-c1@faturometro',
+      kind: 'meter_reading',
+      date: '2026-10-28',
+      endDate: '2026-10-31',
+      remindDaysBefore: [0],
+    });
+    expect(
+      calendarEvents(input({ contracts: [contract()], invoices: [latest], today: '2026-11-01' })),
+    ).toEqual([]);
+  });
+});
+
 describe('insurance renewals', () => {
   it('adds the day after the latest paid period, for insurance contracts', () => {
     const policy = contract({ id: 'ins', sector: 'insurance' });
@@ -197,5 +223,24 @@ describe('toICalendar', () => {
     );
     expect(ics).toContain('DTEND;VALUE=DATE:20270101');
     expect(ics).not.toContain('VALARM');
+  });
+
+  it('ends an event over several days the day after its last day', () => {
+    const ics = toICalendar(
+      [
+        {
+          uid: 'u',
+          date: '2026-10-28',
+          endDate: '2026-10-31',
+          summary: 's',
+          remindDaysBefore: [],
+          reminder: 'r',
+        },
+      ],
+      'c',
+      '2026-10-14T00:00:00Z',
+    );
+    expect(ics).toContain('DTSTART;VALUE=DATE:20261028');
+    expect(ics).toContain('DTEND;VALUE=DATE:20261101');
   });
 });

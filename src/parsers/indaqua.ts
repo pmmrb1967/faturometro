@@ -232,6 +232,21 @@ function parseSummary(page: PageText, printed: string, result: ExtractedInvoice)
   if (account) result.customerNumber = { value: account, confidence: 'high' };
 }
 
+/** "COMUNICAÇÃO DA LEITURA" box: "Período ideal: de 30.07.2026 às 17h30 de 04.08.2026". */
+function parseReadingWindow(pages: PageText[], result: ExtractedInvoice) {
+  for (const page of pages) {
+    const match = /^Período ideal: de (\S+) .*\bde (\S+)$/.exec(
+      normalize(findItem(page, /^Período ideal: /)?.str ?? ''),
+    );
+    const start = date(match?.[1]);
+    const end = date(match?.[2]);
+    if (start && end && start <= end) {
+      result.readingWindow = { value: { start, end }, confidence: 'high' };
+      return;
+    }
+  }
+}
+
 /** The issuer's name as printed in the page 1 footer ("Município de Matosinhos | … | N.I.P.C. 501 305 912"). */
 function issuerName(page: PageText, nif: string): string | undefined {
   const spaced = nif.replace(/(\d{3})(?=\d)/g, '$1 ');
@@ -245,8 +260,8 @@ function issuerName(page: PageText, nif: string): string | undefined {
 export const indaquaParser: Parser = {
   id: ID,
   name: 'Indaqua Matosinhos',
-  version: '1.0.0',
-  updated: '2026-10-14',
+  version: '1.1.0',
+  updated: '2026-10-18',
   sectors: ['water'],
   issuerNifs: [INDAQUA_NIF, MUNICIPALITY_NIF],
 
@@ -282,6 +297,7 @@ export const indaquaParser: Parser = {
         normalize(findItem(detailPage, /^Tarifa: /)?.str ?? ''),
       )?.[1];
       if (tariff) result.tariffName = { value: tariff, confidence: 'high' };
+      parseReadingWindow(ctx.pages, result);
     } else if (section) {
       // Another service billed in the same document (urban waste): its own contract.
       result.contractLabel = { value: section, confidence: 'high' };

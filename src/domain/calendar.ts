@@ -1,6 +1,7 @@
 /**
- * Calendar export (.ics, RFC 5545): the end of each loyalty period and the
- * payment due dates still ahead, as all-day events with reminders. Built on the
+ * Calendar export (.ics, RFC 5545): the end of each loyalty period, the
+ * payment due dates and the meter reading windows still ahead, as all-day
+ * events with reminders. Built on the
  * device and downloaded by the user; the app never sends it anywhere.
  * Pure: the texts come from the caller (i18n lives outside the domain).
  */
@@ -13,7 +14,7 @@ export const PAYMENT_REMINDER_DAYS = [3];
 /** Reminders fire at this local hour. */
 const REMINDER_HOUR = 9;
 
-export type CalendarEventKind = 'loyalty_end' | 'payment_due' | 'renewal';
+export type CalendarEventKind = 'loyalty_end' | 'payment_due' | 'renewal' | 'meter_reading';
 
 export interface CalendarEvent {
   /** Stable across exports, so importing again updates the event. */
@@ -21,6 +22,8 @@ export interface CalendarEvent {
   kind: CalendarEventKind;
   /** ISO date of the all-day event. */
   date: string;
+  /** Last day, for events over several days (ISO date, included). */
+  endDate?: string;
   /** Days before the event when a reminder fires (only those still ahead). */
   remindDaysBefore: number[];
   contract: Contract;
@@ -78,6 +81,29 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
     });
   }
 
+  // Only the newest invoice of each contract says when to send the next reading.
+  const newest = new Map<string, Invoice>();
+  for (const invoice of input.invoices) {
+    const current = newest.get(invoice.contractId);
+    if (invoice.readingWindow && (!current || current.issueDate < invoice.issueDate)) {
+      newest.set(invoice.contractId, invoice);
+    }
+  }
+  for (const invoice of newest.values()) {
+    const contract = contractById.get(invoice.contractId);
+    const window = invoice.readingWindow;
+    if (!contract || !window || window.end < input.today) continue;
+    events.push({
+      uid: `reading-${contract.id}@${UID_DOMAIN}`,
+      kind: 'meter_reading',
+      date: window.start,
+      endDate: window.end,
+      remindDaysBefore: remindersAhead([0], window.start, input.today),
+      contract,
+      invoice,
+    });
+  }
+
   for (const invoice of input.invoices) {
     const contract = contractById.get(invoice.contractId);
     const date = invoice.dueDate;
@@ -98,6 +124,8 @@ export function calendarEvents(input: CalendarInput): CalendarEvent[] {
 export interface CalendarEntry {
   uid: string;
   date: string;
+  /** Last day of an event over several days (included). */
+  endDate?: string;
   summary: string;
   description?: string;
   url?: string;
@@ -170,7 +198,7 @@ export function toICalendar(entries: CalendarEntry[], calendarName: string, now:
       `UID:${entry.uid}`,
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${basicDate(entry.date)}`,
-      `DTEND;VALUE=DATE:${basicDate(nextDay(entry.date))}`,
+      `DTEND;VALUE=DATE:${basicDate(nextDay(entry.endDate ?? entry.date))}`,
       `SUMMARY:${escapeText(entry.summary)}`,
     );
     if (entry.description) lines.push(`DESCRIPTION:${escapeText(entry.description)}`);

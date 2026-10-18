@@ -193,6 +193,7 @@ export function buildDraft(
     draft.validation = fromQr ? base.parsed.check.validation : 'not_checked';
     draft.confidence = base.parsed.check.confidence;
     draft.contractDetails = contractDetails(extraction, form.sector);
+    if (extraction.readingWindow) draft.readingWindow = extraction.readingWindow.value;
   }
   return { ok: true, draft };
 }

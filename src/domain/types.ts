@@ -109,6 +109,12 @@ export interface Contract extends SyncMeta {
   createdAt: IsoDateTime;
 }
 
+/** First and last day to send a meter reading (both included). */
+export interface ReadingWindow {
+  start: IsoDate;
+  end: IsoDate;
+}
+
 export interface Invoice extends SyncMeta {
   contractId: string;
   providerId: string;
@@ -123,6 +129,8 @@ export interface Invoice extends SyncMeta {
   periodStart?: IsoDate;
   periodEnd?: IsoDate;
   dueDate?: IsoDate;
+  /** Days to send the next meter reading, as printed on the invoice. */
+  readingWindow?: ReadingWindow;
   totalCents: Cents;
   vatCents?: Cents;
   qrStatus: 'ok' | 'missing' | 'invalid';
@@ -178,7 +186,8 @@ export interface Alert extends SyncMeta {
     | 'cheaper_offer'
     | 'invoice_audit'
     | 'renewal'
-    | 'premium_notice';
+    | 'premium_notice'
+    | 'meter_reading';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

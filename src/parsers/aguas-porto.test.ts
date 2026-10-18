@@ -58,12 +58,17 @@ describe('aguas-porto parser', () => {
       });
       expect(result.readings[0]?.meterReading).toBeGreaterThan(0);
       expect(result.readingType?.value).toBe('real');
+      // "Período de Comunicação" for the next reading, after the billed period.
+      const window = result.readingWindow?.value;
+      expect(window && window.start <= window.end).toBe(true);
+      expect(window!.start > result.periodEnd!.value).toBe(true);
     } else {
       // Urban waste, not subject to VAT, in its own contract.
       expect(result.vatCents?.value).toBe(0);
       expect(result.contractLabel?.value).toBe('Resíduos');
       expect(result.readings).toEqual([]);
       expect(result.lines.every((line) => line.vatRate === undefined)).toBe(true);
+      expect(result.readingWindow).toBeUndefined();
     }
   });
 
@@ -102,6 +107,7 @@ describe('aguas-porto parser', () => {
       // Late interest: exempt (note 4), no quantity.
       ['other', 1, undefined, undefined, undefined],
     ]);
+    expect(water.readingWindow?.value).toEqual({ start: '2026-06-26', end: '2026-06-29' });
     expect(water.readings).toEqual([
       { quantity: 4, unit: 'm3', readingType: 'real', dateTo: '2026-05-30', meterReading: 100 },
     ]);

@@ -84,6 +84,7 @@ export async function reparseInvoice(
   if (extraction.periodStart) updated.periodStart = extraction.periodStart.value;
   if (extraction.periodEnd) updated.periodEnd = extraction.periodEnd.value;
   if (extraction.dueDate) updated.dueDate = extraction.dueDate.value;
+  if (extraction.readingWindow) updated.readingWindow = extraction.readingWindow.value;
   for (const field of ['periodStart', 'periodEnd', 'dueDate'] as const) {
     if (extraction[field]) updated.sources = { ...updated.sources, [field]: 'parser' };
   }

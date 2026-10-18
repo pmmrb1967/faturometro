@@ -323,6 +323,8 @@ export const t = {
         `${label}: o preço da energia subiu ${pct}% em relação à fatura anterior.`,
       estimatedReadings: (label: string, count: number) =>
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
+      meterReading: (label: string, start: string, end: string) =>
+        `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
         `${label}: a última fatura é de ${date}, há ${days} dias. Confirma se chegou alguma nova.`,
       cheaperOffer: (label: string, saving: string) =>
@@ -1004,7 +1006,7 @@ export const t = {
     calendar: {
       title: 'Datas no teu calendário',
       intro:
-        'Descarrega um ficheiro com o fim das fidelizações, as renovações dos seguros e as datas-limite de pagamento, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
+        'Descarrega um ficheiro com o fim das fidelizações, as renovações dos seguros, as datas-limite de pagamento e os dias para comunicar a leitura do contador, com lembretes, e abre-o no calendário do telemóvel ou do PC.',
       export: 'Adicionar ao calendário',
       exported: (count: number) =>
         count === 1
@@ -1024,6 +1026,10 @@ export const t = {
       renewalDescription:
         'O seguro renova hoje por mais um período. Antes disso, podes pedir propostas a outras seguradoras com as mesmas coberturas e comparar no Faturómetro.',
       renewalReminder: (name: string) => `O seguro ${name} está a renovar`,
+      readingSummary: (name: string) => `Comunicar a leitura do contador: ${name}`,
+      readingDescription:
+        'Período para comunicar a leitura do contador, indicado na última fatura. Com a leitura real, a próxima fatura não usa uma estimativa.',
+      readingReminder: (name: string) => `Comunica hoje a leitura do contador de ${name}`,
       paymentSummary: (name: string, amount: string) => `Pagar fatura: ${name} (${amount})`,
       paymentDescription: (issueDate: string) =>
         `Data-limite de pagamento da fatura de ${issueDate}. Se pagas por débito direto, não precisas de fazer nada.`,

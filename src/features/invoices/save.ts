@@ -23,6 +23,7 @@ export interface InvoiceDraft {
   periodStart?: string;
   periodEnd?: string;
   dueDate?: string;
+  readingWindow?: Invoice['readingWindow'];
   totalCents: Cents;
   vatCents?: Cents;
   qrStatus: Invoice['qrStatus'];
@@ -142,6 +143,7 @@ export async function saveInvoice(
     if (value) invoice[field] = value;
   }
   if (draft.vatCents !== undefined) invoice.vatCents = draft.vatCents;
+  if (draft.readingWindow) invoice.readingWindow = draft.readingWindow;
   if (draft.parser) {
     invoice.parserId = draft.parser.id;
     invoice.parserVersion = draft.parser.version;

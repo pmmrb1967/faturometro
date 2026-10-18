@@ -9,6 +9,8 @@ import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
 
 export const MISSING_INVOICE_DAYS = 40;
+/** The meter reading reminder shows this many days before the window opens. */
+export const READING_NOTICE_DAYS = 3;
 export const ESTIMATED_IN_A_ROW = 3;
 /** Days after a billing period's length before an invoice counts as missing. */
 const MISSING_INVOICE_SLACK_DAYS = 10;
@@ -205,6 +207,24 @@ function estimatedAlert(
   };
 }
 
+/** The newest invoice says when to send the next meter reading: remind until the window closes. */
+function meterReadingAlert(
+  contract: Contract,
+  history: Invoice[],
+  today: string,
+): AlertDraft | null {
+  const window = history.findLast((invoice) => invoice.readingWindow)?.readingWindow;
+  if (!window || today > window.end) return null;
+  if (daysBetween(today, window.start) > READING_NOTICE_DAYS) return null;
+  return {
+    key: `${contract.id}:meter_reading:${window.start}`,
+    contractId: contract.id,
+    kind: 'meter_reading',
+    severity: 'info',
+    data: { start: window.start, end: window.end },
+  };
+}
+
 function missingAlert(contract: Contract, history: Invoice[], today: string): AlertDraft | null {
   const latest = history.at(-1);
   if (!contract.active || !latest) return null;
@@ -267,6 +287,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         premiumNotice(contract, input),
         priceAlert(contract, history, linesOf, input),
         estimatedAlert(contract, history, readingsOf),
+        meterReadingAlert(contract, history, input.today),
         missingAlert(contract, history, input.today),
         auditAlert(contract, history, linesOf),
       ].filter((alert): alert is AlertDraft => alert !== null);

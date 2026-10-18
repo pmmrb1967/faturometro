@@ -43,6 +43,22 @@
           "fontName": "g_d0_f1"
         },
         {
+          "str": "COMUNICAÇÃO DA LEITURA",
+          "x": 75,
+          "y": 159,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período ideal: de 28.08.2026 às 17h30 de 02.09.2026",
+          "x": 74,
+          "y": 168,
+          "width": 234.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
           "str": "N.º fatura: K1000FA/00000001 *",
           "x": 48,
           "y": 238,

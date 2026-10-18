@@ -282,6 +282,8 @@ write(
       ['DADOS DO SEU CONTRATO', 309, 28],
       ['Titular: NOME EXEMPLO', 309, 44],
       ['N.º de conta contrato: 1234567 N.º contribuinte: PT999999990', 309, 58],
+      ['COMUNICAÇÃO DA LEITURA', 75, 159],
+      ['Período ideal: de 28.08.2026 às 17h30 de 02.09.2026', 74, 168],
       ['N.º fatura: K1000FA/00000001 *', 48, 238],
       ['Período de faturação: 01.05.2026 a 30.06.2026', 164, 238],
       ['Data de emissão: 05.07.2026', 301, 238],
@@ -815,6 +817,8 @@ write(
       ['2026-06-25', 497, 252],
       ['Valor a Pagar', 493, 270],
       ['13,24€', 505, 282],
+      ['Período de Comunicação', 322, 401],
+      ['2026-06-26 ~ 2026-06-29', 412, 401],
       [
         'CMPEAE - Empresa de Águas e Energia do Município do Porto, EM - Exemplo sintético',
         13,
