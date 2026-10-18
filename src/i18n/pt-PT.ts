@@ -877,6 +877,37 @@ export const t = {
       invoiceOf: (date: string) => `Fatura de ${date}`,
     },
     invoicesTitle: 'Faturas deste contrato',
+    earlyExit: {
+      title: 'Vale a pena sair já?',
+      intro:
+        'Compara o que uma oferta mais barata te poupa até ao fim da fidelização com o máximo que o operador pode cobrar por saíres antes. É uma estimativa: confirma o valor com o operador antes de decidir.',
+      start: 'Início da fidelização',
+      startHint: 'Se não souberes, contamos 24 meses antes do fim.',
+      kind: 'Tipo de fidelização',
+      kinds: {
+        initial: 'Primeira, ou nova com mudança na instalação',
+        renewal_same_installation: 'Nova, sem mudança na instalação',
+      },
+      monthly: 'O que pagas por mês, com IVA',
+      monthlyHint: 'Preenchido com a mensalidade contratada ou a média das últimas faturas.',
+      newMonthly: 'Mensalidade da oferta nova, com IVA',
+      stated: 'Valor para sair agora, se a fatura ou o operador o indicar (opcional)',
+      amountError: 'Escreve um valor em euros, por exemplo 25,90.',
+      monthsLeft: (count: number, fees: string) =>
+        `Faltam ${count === 1 ? '1 mensalidade' : `${count} mensalidades`} até ao fim da fidelização (${fees}).`,
+      cap: (year: number, pct: number, max: string) =>
+        `No ${year}.º ano da fidelização, o operador pode cobrar no máximo ${pct} % das mensalidades que faltam: ${max}.`,
+      oldContract:
+        'A fidelização começou antes de 14-11-2022: o valor a pagar é o da vantagem que falta recuperar, como diz o contrato. Escreve-o acima para comparar.',
+      usingStated: (amount: string) => `Na comparação usamos o valor indicado: ${amount}.`,
+      saving: (amount: string) => `Com a oferta nova poupas ${amount} até ao fim da fidelização.`,
+      noSaving: 'A oferta nova não é mais barata do que o que pagas agora.',
+      worth: (amount: string) =>
+        `Sair já compensa: mesmo pagando para sair, ficas com cerca de ${amount} a mais.`,
+      notWorth: (amount: string, date: string) =>
+        `Sair já não compensa: perdes cerca de ${amount}. Pondera mudar quando a fidelização acabar, a ${date}.`,
+      source: 'Limites da ANACOM para os encargos de saída antecipada',
+    },
     telecom: {
       title: 'Comparar com outras ofertas',
       services: 'Serviços incluídos',

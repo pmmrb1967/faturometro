@@ -16,6 +16,7 @@ import { insuranceRenewalDate } from '../../domain/insurance';
 import type { Contract, Invoice } from '../../domain/types';
 import { InsuranceSection } from '../insurance/InsuranceSection';
 import { AuditSection } from './AuditSection';
+import { EarlyExitSection } from './EarlyExitSection';
 import { SwitchSection } from './SwitchSection';
 import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
@@ -150,6 +151,17 @@ export function ContractPage() {
       <InsuranceSection contract={contract} />
 
       <AuditSection contract={contract} invoices={invoices} />
+
+      {contract.active &&
+        contract.sector === 'telecom' &&
+        contract.loyaltyEndDate &&
+        contract.loyaltyEndDate > today() && (
+          <EarlyExitSection
+            key={`exit-${contract.id}-${contract.loyaltyEndDate}`}
+            contract={{ ...contract, loyaltyEndDate: contract.loyaltyEndDate }}
+            invoices={invoices}
+          />
+        )}
 
       {contract.active && contract.sector === 'telecom' && (
         <TelecomCompare

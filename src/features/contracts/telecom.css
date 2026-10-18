@@ -42,3 +42,23 @@
   margin-top: 12px;
   font-size: 0.9rem;
 }
+
+.early-exit-result {
+  margin: 16px 0 8px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.early-exit-result p {
+  margin: 0 0 8px;
+}
+
+.early-exit-result p:last-child {
+  margin-bottom: 0;
+}
+
+.early-exit-verdict {
+  font-weight: 700;
+}
