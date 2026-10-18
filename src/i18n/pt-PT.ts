@@ -1155,7 +1155,7 @@ export const t = {
     back: 'Voltar ao início',
   },
   landing: {
-    status: 'Em desenvolvimento: algumas funções ainda não estão disponíveis.',
+    status: 'Versão beta',
     signIn: 'Entrar',
     createAccount: 'Criar conta',
     startGuest: 'Começar sem conta',
