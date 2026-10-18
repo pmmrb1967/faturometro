@@ -21,11 +21,13 @@ export const LETTER_KINDS = [
   'estimated_reading',
   'block_extras',
   'prescription',
+  'social_tariff',
   'cancel',
 ] as const;
 export type LetterKind = (typeof LETTER_KINDS)[number];
 
 const METERED: readonly Sector[] = ['electricity', 'gas', 'water'];
+const ENERGY: readonly Sector[] = ['electricity', 'gas'];
 
 /** Letters that make sense for this contract (estimated readings only with a meter). */
 export function letterKinds(contract: Pick<Contract, 'sector'>): LetterKind[] {
@@ -33,6 +35,7 @@ export function letterKinds(contract: Pick<Contract, 'sector'>): LetterKind[] {
     if (kind === 'estimated_reading') return METERED.includes(contract.sector);
     if (kind === 'block_extras') return contract.sector === 'telecom';
     if (kind === 'prescription') return prescriptionApplies(contract.sector);
+    if (kind === 'social_tariff') return ENERGY.includes(contract.sector);
     return true;
   });
 }
@@ -183,6 +186,13 @@ function bodyOf(kind: LetterKind, data: LetterData, today: string): string[] {
           old ? formatIsoDate(old.oldUntil) : copy.placeholders.date,
         ),
         copy.prescriptionAsk,
+      ];
+    }
+    case 'social_tariff': {
+      const gas = data.contract.sector === 'gas';
+      return [
+        paragraphs(copy.client(service, data.contract.tariffName), copy.socialTariffHolder(gas)),
+        copy.socialTariffAsk(gas),
       ];
     }
     case 'cancel':

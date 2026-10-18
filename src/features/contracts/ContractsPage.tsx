@@ -2,7 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
 import { GroupBlock } from '../../components/GroupBlock';
 import { byGroup } from '../../domain/grouping';
-import { linesByInvoiceId, socialTariffState } from '../../domain/social-tariff';
+import {
+  linesByInvoiceId,
+  socialTariffState,
+  socialTariffSuggestions,
+} from '../../domain/social-tariff';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import type { Invoice } from '../../domain/types';
@@ -24,6 +28,21 @@ export function ContractsPage() {
     const linesByInvoice = linesByInvoiceId(lines);
     const linesOf = (invoice: Invoice) => linesByInvoice.get(invoice.id) ?? [];
     const providerById = new Map(providers.map((provider) => [provider.id, provider]));
+    const withSocialTariff = new Set(
+      contracts
+        .filter(
+          (contract) =>
+            socialTariffState(
+              contract,
+              invoices.filter((invoice) => invoice.contractId === contract.id),
+              linesOf,
+            )?.state === 'active',
+        )
+        .map((contract) => contract.id),
+    );
+    const suggested = new Set(
+      socialTariffSuggestions(contracts, withSocialTariff).map(({ contractId }) => contractId),
+    );
     return (
       contracts
         .map((contract) => {
@@ -35,7 +54,9 @@ export function ContractsPage() {
             provider: providerById.get(contract.providerId),
             count: own.length,
             last: own[0],
-            social: socialTariffState(contract, own, linesOf)?.state,
+            social:
+              socialTariffState(contract, own, linesOf)?.state ??
+              (suggested.has(contract.id) ? ('suggested' as const) : undefined),
           };
         })
         // Active contracts first, then by latest invoice.
@@ -72,8 +93,14 @@ export function ContractsPage() {
                     {last && ` · ${t.contracts.lastInvoice} ${formatIsoDate(last.issueDate)}`}
                   </span>
                   {social && (
-                    <span className={`list-badge${social === 'lost' ? ' is-warning' : ''}`}>
-                      {social === 'active' ? t.contracts.socialBadge : t.contracts.socialLostBadge}
+                    <span
+                      className={`list-badge${social === 'lost' ? ' is-warning' : ''}${social === 'suggested' ? ' is-question' : ''}`}
+                    >
+                      {social === 'active'
+                        ? t.contracts.socialBadge
+                        : social === 'lost'
+                          ? t.contracts.socialLostBadge
+                          : t.socialTariff.badge}
                     </span>
                   )}
                 </li>

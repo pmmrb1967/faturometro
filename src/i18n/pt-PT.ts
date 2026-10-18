@@ -436,12 +436,46 @@ export const t = {
         'O teu contrato de gás está acima do 2.º escalão: a tarifa social só cobre consumos até 500 m³ por ano.',
     } as Record<string, string>,
     water:
-      'Água e resíduos: não há uma tarifa social nacional, depende do município. Vê o tarifário da tua entidade gestora.',
+      'Água e resíduos: não há uma tarifa social nacional. Cada município decide se a tem, para quem e como se pede (Decreto-Lei n.º 147/2017): pergunta à entidade que te fatura a água ou à câmara municipal.',
     sources: 'Critérios da ERSE (outubro de 2026) e da ANACOM. Confirma sempre junto de:',
     links: {
       dgeg: 'DGEG, tarifa social de energia',
       energy: 'Folheto da ERSE',
       internet: 'ANACOM, tarifa social de Internet',
+      water: 'Decreto-Lei n.º 147/2017 (água)',
+    },
+    badge: 'Tarifa social?',
+    advice: {
+      title: 'Podes ter direito à tarifa social',
+      why: {
+        electricity_missing:
+          'O teu contrato de gás tem a tarifa social e este não. As prestações sociais que dão direito no gás também dão direito na luz. Se fores o titular deste contrato, se a casa for a tua habitação permanente e se a potência for até 6,9 kVA, devias ter o desconto também aqui.',
+        gas_missing:
+          'O teu contrato de luz tem a tarifa social e este não. No gás as regras são mais estreitas: só contam o complemento solidário para idosos, o rendimento social de inserção, a prestação de desemprego, o 1.º escalão do abono de família e a pensão social de invalidez. O rendimento e a pensão social de velhice não contam, e o consumo tem de ser até 500 m³ por ano (1.º e 2.º escalão).',
+        internet:
+          'Tens tarifa social na energia. A tarifa social de Internet conta as mesmas prestações sociais, ou um rendimento anual até 5 808 €, mas não é automática: tens de a pedir. É um tarifário próprio, de 5 € + IVA por mês com pelo menos 15 GB, e só há uma por agregado; vê se te serve antes de mudar.',
+        water:
+          'Na água não há uma tarifa social igual em todo o país: cada município decide se a tem, para quem e como se pede (Decreto-Lei n.º 147/2017). Muitos usam critérios parecidos com os da energia, como as mesmas prestações sociais ou um limite de rendimento, mas costuma ser preciso fazer um pedido.',
+      } as Record<string, string>,
+      steps: {
+        energy: [
+          'Pede um comprovativo à Segurança Social (da prestação social) ou às Finanças (do rendimento).',
+          'Envia-o ao fornecedor com a carta "Pedir a tarifa social", em Cartas, mais abaixo.',
+          'Se não resolverem, contacta a DGEG, Tarifa Social: 210 308 536, nos dias úteis, ou o formulário da página da DGEG.',
+        ],
+        internet: [
+          'Confirma as condições na página da ANACOM.',
+          'Pede a tarifa social de Internet a um operador, que pode ser o teu. A ANACOM confirma se tens direito e o operador tem até 10 dias para a ativar.',
+        ],
+        water: [
+          'Pergunta à entidade que te fatura a água, ou à câmara municipal, se há tarifa social no teu município e como se pede.',
+          'Podem pedir a declaração de IRS do agregado ou o comprovativo da prestação social. Pergunta também se há tarifa para famílias numerosas.',
+          'Guarda a data do pedido: em alguns municípios tem de ser renovado todos os anos.',
+        ],
+      },
+      holder:
+        'A app não sabe quem é o titular de cada contrato: a tarifa social só se aplica ao titular, na habitação permanente. Se não for o teu caso, dispensa o aviso no Início.',
+      more: 'Mais informação:',
     },
   },
   household: {
@@ -497,6 +531,16 @@ export const t = {
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
       oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
         `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato. Se já pagaste, podes dispensar este aviso.`,
+      socialTariffSuggestion: {
+        electricity_missing: (label: string) =>
+          `${label}: o gás tem tarifa social e a luz não. Quem tem direito no gás tem também na luz, se for o titular dos dois contratos. Vê como pedir na página do contrato.`,
+        gas_missing: (label: string) =>
+          `${label}: a luz tem tarifa social e o gás não. No gás só contam algumas prestações sociais (não conta o rendimento): vê na página do contrato se tens direito e como pedir.`,
+        internet: (label: string) =>
+          `${label}: tens tarifa social na energia, por isso podes ter direito à tarifa social de Internet. Não é automática: vê na página do contrato as condições e como pedir.`,
+        water: (label: string) =>
+          `${label}: a tarifa social da água depende do município e muitas vezes tem de ser pedida. Vê na página do contrato como saber se o teu tem.`,
+      } as Record<string, ((label: string) => string) | undefined>,
       paymentDue: (label: string, total: string, date: string, daysLeft: number) =>
         `${label}: a fatura de ${total} vence ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} e ainda não está marcada como paga. Se já pagaste, marca-a em "Este mês".`,
       socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>
@@ -1141,6 +1185,7 @@ export const t = {
         estimated_reading: 'Reclamar de leituras estimadas',
         block_extras: 'Bloquear serviços pagos à parte',
         prescription: 'Invocar a prescrição',
+        social_tariff: 'Pedir a tarifa social',
         cancel: 'Denunciar o contrato',
       },
       textLabel: 'Texto da carta (podes editar)',
@@ -1191,6 +1236,7 @@ export const t = {
         estimated_reading: 'Reclamação: faturação com leituras estimadas',
         block_extras: 'Pedido de barramento de serviços de valor acrescentado',
         prescription: 'Invocação da prescrição de consumos com mais de seis meses',
+        social_tariff: 'Pedido de aplicação da tarifa social',
         cancel: 'Denúncia do contrato',
       },
       subjectLine: (subject: string) => `Assunto: ${subject}`,
@@ -1228,6 +1274,10 @@ export const t = {
         `Recebi a fatura n.º ${number}, de ${date}, no valor de ${amount}, que cobra consumos do período de ${start} a ${end}.`,
       prescriptionInvoke: (start: string, end: string) =>
         `Os serviços prestados de ${start} a ${end} foram-no há mais de seis meses. Ao abrigo do artigo 10.º, n.º 1, da Lei n.º 23/96, de 26 de julho, invoco expressamente a prescrição do direito ao pagamento desses consumos.`,
+      socialTariffHolder: (gas: boolean) =>
+        `Sou titular deste contrato, para consumo doméstico na minha habitação permanente, e sou beneficiário(a) de [PRESTAÇÃO SOCIAL]${gas ? '' : ' (ou tenho um rendimento anual dentro do limite da tarifa social)'}.`,
+      socialTariffAsk: (gas: boolean) =>
+        `Junto o comprovativo emitido pela [SEGURANÇA SOCIAL / AUTORIDADE TRIBUTÁRIA]. Peço que apliquem a tarifa social a este contrato, nos termos do Decreto-Lei n.º ${gas ? '101/2011' : '138-A/2010'}, e que me confirmem por escrito a data a partir da qual o desconto é aplicado.`,
       prescriptionAsk:
         'Peço que anulem a cobrança desses valores e me enviem uma fatura corrigida, só com os consumos dos últimos seis meses. Até lá, não pagarei a parte prescrita.',
       blockAsk:

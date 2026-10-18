@@ -236,3 +236,72 @@ export function linesByInvoiceId(lines: readonly InvoiceLine[]): Map<string, Inv
   }
   return byInvoice;
 }
+
+/**
+ * Water: no national social tariff. Under Decreto-Lei n.º 147/2017 each
+ * municipality chooses whether to have one and how it is asked for (e.g.
+ * Trofa, Aviso n.º 18662/2023: request with IRS or proof of the benefit,
+ * renewed every year). Read 2026-10-18.
+ */
+export const WATER_SOCIAL_TARIFF_SOURCE =
+  'https://diariodarepublica.pt/dr/detalhe/decreto-lei/147-2017-114303791';
+
+/**
+ * Energy: Decreto-Lei n.º 138-A/2010 (electricity) and n.º 101/2011 (natural
+ * gas); DGEG contacts as on its page (read 2026-10-18).
+ */
+export const DGEG_CONTACT = { phone: '210 308 536' } as const;
+
+export type SocialTariffSuggestion =
+  /** Gas has it and electricity does not: whoever qualifies for gas qualifies for electricity. */
+  | 'electricity_missing'
+  /** Electricity has it and gas does not: possible, the gas criteria are narrower. */
+  | 'gas_missing'
+  /** Energy has it: the internet social tariff (asked for, not automatic) may apply. */
+  | 'internet'
+  /** Energy has it: the water one depends on the municipality. */
+  | 'water';
+
+/**
+ * Contracts that may also have a social tariff, given the ones that show it
+ * (ERSE leaflet, October 2026; ANACOM; Decreto-Lei 147/2017). The app does not
+ * know who holds each contract: the texts say it only applies to the holder.
+ */
+export function socialTariffSuggestions(
+  contracts: readonly Contract[],
+  withSocialTariff: ReadonlySet<string>,
+): { contractId: string; suggestion: SocialTariffSuggestion }[] {
+  const active = contracts.filter((contract) => contract.active);
+  const has = (sector: Contract['sector']) =>
+    active.some((contract) => contract.sector === sector && withSocialTariff.has(contract.id));
+  const without = (sector: Contract['sector']) =>
+    active.filter((contract) => contract.sector === sector && !withSocialTariff.has(contract.id));
+  const energy = has('electricity') || has('gas');
+  const result: { contractId: string; suggestion: SocialTariffSuggestion }[] = [];
+
+  if (has('gas')) {
+    for (const contract of without('electricity')) {
+      if ((contract.electricity?.powerKva ?? 0) > MAX_POWER_KVA) continue;
+      result.push({ contractId: contract.id, suggestion: 'electricity_missing' });
+    }
+  }
+  if (has('electricity')) {
+    for (const contract of without('gas')) {
+      if ((contract.gas?.escalao ?? 0) > MAX_GAS_ESCALAO) continue;
+      result.push({ contractId: contract.id, suggestion: 'gas_missing' });
+    }
+  }
+  if (energy) {
+    // One internet social tariff per household: suggest it on one contract with internet.
+    const internet = active.find(
+      (contract) =>
+        contract.sector === 'telecom' &&
+        (!contract.telecom || contract.telecom.services.includes('internet')),
+    );
+    if (internet) result.push({ contractId: internet.id, suggestion: 'internet' });
+    for (const contract of active.filter((candidate) => candidate.sector === 'water')) {
+      result.push({ contractId: contract.id, suggestion: 'water' });
+    }
+  }
+  return result;
+}

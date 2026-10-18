@@ -7,7 +7,7 @@
 import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import { oldCharges, prescriptionApplies } from './prescription';
-import { isSocialDiscount, socialTariffState } from './social-tariff';
+import { isSocialDiscount, socialTariffState, socialTariffSuggestions } from './social-tariff';
 import { paymentId } from './month';
 import type {
   Alert,
@@ -443,7 +443,27 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
   // Users who never mark payments would get this alert for every invoice.
   const marksPayments = paidIds.size > 0;
 
-  return input.contracts
+  const withSocialTariff = new Set(
+    input.contracts
+      .filter(
+        (contract) =>
+          socialTariffState(contract, invoicesByContract.get(contract.id) ?? [], linesOf)?.state ===
+          'active',
+      )
+      .map((contract) => contract.id),
+  );
+  const suggestions: AlertDraft[] = socialTariffSuggestions(input.contracts, withSocialTariff).map(
+    ({ contractId, suggestion }) => ({
+      key: `${contractId}:social_tariff_suggestion:${suggestion}`,
+      contractId,
+      kind: 'social_tariff_suggestion',
+      // Gas has it and electricity not: very likely a right not applied.
+      severity: suggestion === 'electricity_missing' ? 'warning' : 'info',
+      data: { suggestion },
+    }),
+  );
+
+  const perContract = input.contracts
     .filter((contract) => contract.active)
     .flatMap((contract) => {
       const history = [...(invoicesByContract.get(contract.id) ?? [])].sort(byDate);
@@ -461,6 +481,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         ...(marksPayments ? paymentDueAlerts(contract, history, input.today, isPaid) : []),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
+  return [...perContract, ...suggestions];
 }
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {

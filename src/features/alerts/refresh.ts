@@ -46,6 +46,8 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
         formatIsoDate(text('periodStart')),
         formatIsoDate(text('oldUntil')),
       );
+    case 'social_tariff_suggestion':
+      return copy.socialTariffSuggestion[text('suggestion')]?.(label) ?? '';
     case 'payment_due':
       return copy.paymentDue(
         label,

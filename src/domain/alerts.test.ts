@@ -539,3 +539,32 @@ describe('social tariff lost', () => {
     expect(kinds(alerts)).not.toContain('social_tariff_lost');
   });
 });
+
+describe('social tariff suggestions', () => {
+  it('a warning on electricity when only gas has it', () => {
+    const alerts = computeAlerts(
+      input({
+        contracts: [
+          contract({ id: 'luz', sector: 'electricity', label: 'Luz' }),
+          contract({ id: 'gas', sector: 'gas', label: 'Gás' }),
+        ],
+        invoices: [
+          invoice('g1', '2026-05-20', 2000, 'gas'),
+          invoice('l1', '2026-05-20', 4000, 'luz'),
+        ],
+        lines: [
+          line('g1', {
+            kind: 'discount',
+            description: 'Desc. Social Redes Energia',
+            amountCents: -500,
+          }),
+          line('l1', { kind: 'energy', description: 'Energia', amountCents: 4000 }),
+        ],
+      }),
+    );
+    expect(alerts.find((alert) => alert.kind === 'social_tariff_suggestion')).toMatchObject({
+      key: 'luz:social_tariff_suggestion:electricity_missing',
+      severity: 'warning',
+    });
+  });
+});

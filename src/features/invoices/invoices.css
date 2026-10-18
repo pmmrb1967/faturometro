@@ -174,3 +174,9 @@
   gap: 8px;
   margin: 4px 0 0;
 }
+
+.list-badge.is-question {
+  background: transparent;
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+}

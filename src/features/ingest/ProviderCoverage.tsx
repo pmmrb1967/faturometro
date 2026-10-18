@@ -35,7 +35,9 @@ export function ProviderCoverage() {
                 <td data-label={copy.documents}>
                   {copy.documentsOf[parser.id as keyof typeof copy.documentsOf] ?? copy.invoices}
                 </td>
-                <td data-label={copy.updated} className="is-short">{formatIsoDate(parser.updated)}</td>
+                <td data-label={copy.updated} className="is-short">
+                  {formatIsoDate(parser.updated)}
+                </td>
               </tr>
             ))}
           </tbody>

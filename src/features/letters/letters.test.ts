@@ -56,6 +56,20 @@ describe('prescription letter', () => {
   });
 });
 
+describe('social tariff letter', () => {
+  it('only for energy, citing the decree of the sector', () => {
+    expect(letterKinds({ sector: 'gas' })).toContain('social_tariff');
+    expect(letterKinds({ sector: 'telecom' })).not.toContain('social_tariff');
+    const gas = buildLetter('social_tariff', data({ contract: { sector: 'gas' } }), TODAY);
+    expect(gas.subject).toBe('Pedido de aplicação da tarifa social');
+    expect(gas.text).toContain('Decreto-Lei n.º 101/2011');
+    expect(gas.text).not.toContain('rendimento');
+    const luz = buildLetter('social_tariff', data({ contract: { sector: 'electricity' } }), TODAY);
+    expect(luz.text).toContain('Decreto-Lei n.º 138-A/2010');
+    expect(luz.text).toContain('[PRESTAÇÃO SOCIAL]');
+  });
+});
+
 describe('block_extras letter', () => {
   it('asks to bar value-added services and lists the usage outside the package', () => {
     const { subject, text } = buildLetter(

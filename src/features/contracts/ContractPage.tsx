@@ -16,6 +16,7 @@ import { insuranceRenewalDate } from '../../domain/insurance';
 import { socialTariffState } from '../../domain/social-tariff';
 import type { Contract, Invoice } from '../../domain/types';
 import { InsuranceSection } from '../insurance/InsuranceSection';
+import { SocialTariffAdvice } from '../social-tariff/SocialTariffAdvice';
 import { AuditSection } from './AuditSection';
 import { EarlyExitSection } from './EarlyExitSection';
 import { SwitchSection } from './SwitchSection';
@@ -134,6 +135,8 @@ export function ContractPage() {
             </div>
           ))}
       </dl>
+
+      {contract.active && <SocialTariffAdvice contract={contract} />}
 
       <SwitchSection contract={contract} />
 

@@ -6,6 +6,7 @@ import {
   isSocialDiscount,
   socialDiscountCents,
   socialTariffState,
+  socialTariffSuggestions,
 } from './social-tariff';
 import type { Contract, Invoice, InvoiceLine } from './types';
 
@@ -201,5 +202,44 @@ describe('socialTariffState', () => {
     const invoices = [invoice('i1', '2026-09-01'), invoice('i2', '2026-09-01', 'c2')];
     const lines = [...withDiscount('i1'), ...withoutDiscount('i2')];
     expect([...contractsWithSocialTariff(contracts, invoices, lines)]).toEqual(['c1']);
+  });
+});
+
+describe('socialTariffSuggestions', () => {
+  const luz = contract({
+    id: 'luz',
+    electricity: { powerKva: 3.45, cycle: 'simple', socialTariff: false },
+  });
+  const gas = contract({ id: 'gas', sector: 'gas', gas: { escalao: 1 } });
+  const net = contract({ id: 'net', sector: 'telecom', telecom: { services: ['internet', 'tv'] } });
+  const tv = contract({ id: 'tv', sector: 'telecom', telecom: { services: ['tv'] } });
+  const agua = contract({ id: 'agua', sector: 'water' });
+  const all = [luz, gas, tv, net, agua];
+  const of = (withSocial: string[], contracts = all) =>
+    socialTariffSuggestions(contracts, new Set(withSocial)).map(
+      ({ contractId, suggestion }) => `${contractId}:${suggestion}`,
+    );
+
+  it('gas without electricity: the electricity one is missing', () => {
+    expect(of(['gas'])).toEqual(['luz:electricity_missing', 'net:internet', 'agua:water']);
+  });
+
+  it('electricity without gas: the gas one may apply', () => {
+    expect(of(['luz'])).toEqual(['gas:gas_missing', 'net:internet', 'agua:water']);
+  });
+
+  it('both energy contracts: internet and water only', () => {
+    expect(of(['luz', 'gas'])).toEqual(['net:internet', 'agua:water']);
+  });
+
+  it('nothing without any energy social tariff, nor above the power or gas tier limits', () => {
+    expect(of([])).toEqual([]);
+    const big = contract({
+      id: 'luz',
+      electricity: { powerKva: 10.35, cycle: 'simple', socialTariff: false },
+    });
+    expect(of(['gas'], [big, gas])).toEqual([]);
+    const tier3 = contract({ id: 'gas', sector: 'gas', gas: { escalao: 3 } });
+    expect(of(['luz'], [luz, tier3])).toEqual([]);
   });
 });

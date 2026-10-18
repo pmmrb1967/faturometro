@@ -218,7 +218,8 @@ export interface Alert extends SyncMeta {
     | 'meter_reading'
     | 'old_charges'
     | 'social_tariff_lost'
-    | 'payment_due';
+    | 'payment_due'
+    | 'social_tariff_suggestion';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;
