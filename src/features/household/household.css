@@ -1,0 +1,19 @@
+.household-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.household-toggle input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* Amounts only: keep "8681,88 €" on one line. */
+.household-facts dd {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}

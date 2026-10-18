@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, contractForecast, householdSummary, type HouseholdInput } from './household';
+import {
+  addMonths,
+  contractForecast,
+  expensesYear,
+  householdSummary,
+  type HouseholdInput,
+} from './household';
+import type { RecurringExpense } from './types';
 
 type Inv = HouseholdInput['invoices'][number];
 const inv = (
@@ -118,5 +125,40 @@ describe('contractForecast', () => {
 
   it('returns null without invoices', () => {
     expect(contractForecast('gas', [], '2025-11')).toBeNull();
+  });
+});
+
+describe('expensesYear', () => {
+  const expense = (overrides: Partial<RecurringExpense>): RecurringExpense => ({
+    id: 'e1',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    name: 'Renda',
+    amountCents: 65000,
+    everyMonths: 1,
+    dueDay: 8,
+    startMonth: '2026-03',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  });
+
+  it('the same 12 months, from the first month, and the next 12 with the planned changes', () => {
+    const rent = expense({ amountChanges: [{ fromMonth: '2027-03', amountCents: 67000 }] });
+    const condominium = expense({
+      id: 'e2',
+      amountCents: 4500,
+      everyMonths: 3,
+      startMonth: '2026-01',
+      endMonth: '2026-12',
+    });
+    const year = expensesYear([rent, condominium], '2026-10-18');
+    expect(year.months.map((entry) => entry.month)).toEqual(
+      Array.from({ length: 12 }, (_, i) => addMonths('2025-11', i)),
+    );
+    expect(year.months.find((entry) => entry.month === '2026-02')?.totalCents).toBe(0);
+    expect(year.months.find((entry) => entry.month === '2026-04')?.totalCents).toBe(69500);
+    // Rent March–October 2026 (8 months) + condominium Jan, Apr, Jul, Oct.
+    expect(year.totalCents).toBe(8 * 65000 + 4 * 4500);
+    // November 2026 to October 2027: 4 × 650 + 8 × 670; the condominium ended.
+    expect(year.forecastCents).toBe(4 * 65000 + 8 * 67000);
   });
 });

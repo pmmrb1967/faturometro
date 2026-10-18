@@ -456,6 +456,16 @@ export const t = {
     month: 'Mês',
     value: 'Valor',
     monthTitle: (month: string) => `Faturas emitidas em ${month}`,
+    monthTitleWithExpenses: (month: string) => `Faturas emitidas e despesas sem fatura de ${month}`,
+    withExpenses: 'Incluir despesas sem fatura',
+    expensesSeries: 'Sem fatura',
+    invoicesTotal: 'Faturas',
+    totalWithExpenses: 'Com as despesas sem fatura',
+    forecastWithExpenses: 'Próximos 12 meses, com as despesas sem fatura',
+    previousInvoicesOnly: '(só faturas)',
+    chartWithExpenses: 'Faturas e despesas sem fatura de cada mês',
+    expensesNote:
+      'As despesas sem fatura contam no mês em que vencem, com os valores e o último mês que escreveste em "Este mês".',
     forecast: 'Próximos 12 meses (estimativa)',
     switchSaving: (amount: string) =>
       `Com as mudanças de fornecedor, poupaste cerca de ${amount} até agora (estimativa).`,

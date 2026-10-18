@@ -9,6 +9,7 @@
   --series-telecom: #0072b2;
   --series-insurance: #cc79a7;
   --series-other: #8b918c;
+  --series-expenses: #009e73;
 }
 
 @media (prefers-color-scheme: dark) {

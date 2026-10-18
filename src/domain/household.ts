@@ -5,7 +5,8 @@
  * paid that month). Pure, no React.
  */
 import type { Cents } from '../lib/money';
-import type { Contract, Invoice, Sector } from './types';
+import { expenseAmount, expenseDueDate } from './month';
+import type { Contract, Invoice, RecurringExpense, Sector } from './types';
 
 export interface HouseholdInput {
   contracts: Pick<Contract, 'id' | 'sector' | 'active'>[];
@@ -81,6 +82,41 @@ export function contractForecast(
   );
   const paid = recent.reduce((sum, invoice) => sum + invoice.totalCents, 0);
   return Math.round((paid / covered) * DAYS_IN_YEAR);
+}
+
+export interface ExpensesYear {
+  /** The same 12 months as {@link HouseholdSummary.months}, oldest first. */
+  months: { month: string; totalCents: Cents }[];
+  totalCents: Cents;
+  /** The next 12 months, with the amounts and last months the user typed. */
+  forecastCents: Cents;
+}
+
+/**
+ * Recurring expenses without an invoice over the same 12 months, and the next
+ * 12. Kept apart from the invoices: they are optional on the chart and left
+ * out of the comparison with the year before (typed later, they would look
+ * like an increase).
+ */
+export function expensesYear(expenses: readonly RecurringExpense[], today: string): ExpensesYear {
+  const current = monthOf(today);
+  const inMonth = (month: string) =>
+    expenses.reduce(
+      (sum, expense) => sum + (expenseDueDate(expense, month) ? expenseAmount(expense, month) : 0),
+      0,
+    );
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = addMonths(current, i - 11);
+    return { month, totalCents: inMonth(month) };
+  });
+  const forecastCents = Array.from({ length: 12 }, (_, i) =>
+    inMonth(addMonths(current, i + 1)),
+  ).reduce((sum, value) => sum + value, 0);
+  return {
+    months,
+    totalCents: months.reduce((sum, entry) => sum + entry.totalCents, 0),
+    forecastCents,
+  };
 }
 
 export function householdSummary(input: HouseholdInput): HouseholdSummary {
