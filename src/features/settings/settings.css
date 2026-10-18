@@ -1,5 +1,4 @@
 .settings-section {
-  max-width: 40rem;
   margin: 16px 0 24px;
   padding: 16px;
   background: var(--surface);
@@ -20,6 +19,11 @@
 
 .settings-section p {
   margin: 0 0 12px;
+}
+
+/* The cards take the page's width; a single input that wide is hard to read. */
+.settings-section .field {
+  max-width: 32rem;
 }
 
 .settings-check {
