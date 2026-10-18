@@ -109,7 +109,7 @@ body {
   /* Above positioned content (e.g. password fields with a show button). */
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   min-height: var(--nav-height);
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);

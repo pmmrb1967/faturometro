@@ -46,6 +46,13 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
         formatIsoDate(text('periodStart')),
         formatIsoDate(text('oldUntil')),
       );
+    case 'payment_due':
+      return copy.paymentDue(
+        label,
+        formatCents(number('totalCents')),
+        formatIsoDate(text('dueDate')),
+        number('daysLeft'),
+      );
     case 'social_tariff_lost':
       return copy.socialTariffLost(
         label,
@@ -88,16 +95,25 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
  * removed, and dismissed alerts are kept (so they do not come back).
  */
 export async function refreshAlerts(repos: Repositories, date = today()): Promise<void> {
-  const [contracts, invoices, lines, readings, settings, existing] = await Promise.all([
+  const [contracts, invoices, lines, readings, payments, settings, existing] = await Promise.all([
     repos.contracts.list(),
     repos.invoices.list(),
     repos.invoiceLines.list(),
     repos.readings.list(),
+    repos.payments.list(),
     getSettings(repos),
     repos.alerts.list(),
   ]);
   const contractById = new Map(contracts.map((contract) => [contract.id, contract]));
-  const drafts = computeAlerts({ contracts, invoices, lines, readings, settings, today: date });
+  const drafts = computeAlerts({
+    contracts,
+    invoices,
+    lines,
+    readings,
+    payments,
+    settings,
+    today: date,
+  });
   const wanted = new Map(drafts.map((draft) => [draft.key, draft]));
   const current = new Map(existing.map((alert) => [alert.id, alert]));
 

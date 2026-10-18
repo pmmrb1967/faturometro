@@ -217,7 +217,8 @@ export interface Alert extends SyncMeta {
     | 'premium_notice'
     | 'meter_reading'
     | 'old_charges'
-    | 'social_tariff_lost';
+    | 'social_tariff_lost'
+    | 'payment_due';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;
@@ -232,6 +233,37 @@ export interface FieldCorrection extends SyncMeta {
   corrected: unknown;
   source: Source;
   createdAt: IsoDateTime;
+}
+
+/**
+ * A household expense paid without an invoice in the app (rent, condominium,
+ * school), typed by the user once and shown in the months it is due.
+ */
+export interface RecurringExpense extends SyncMeta {
+  name: string;
+  amountCents: Cents;
+  /** Due every this many months. */
+  everyMonths: 1 | 2 | 3 | 6 | 12;
+  /** Day of the month it is due (shorter months use their last day). */
+  dueDay: number;
+  /** First month (YYYY-MM); with `everyMonths`, it also sets which months. */
+  startMonth: string;
+  /** Last month (YYYY-MM), when it stopped. */
+  endMonth?: string;
+  createdAt: IsoDateTime;
+}
+
+/**
+ * "Paid" mark the user sets on an invoice or on one month of a recurring
+ * expense. The id is derived from what is paid ({@link paymentId}), so two
+ * devices marking the same thing write the same record.
+ */
+export interface Payment extends SyncMeta {
+  invoiceId?: string;
+  expenseId?: string;
+  /** YYYY-MM, for a recurring expense. */
+  month?: string;
+  paidOn: IsoDate;
 }
 
 /** One AI request, kept on this device only (PLAN.md §10: tokens per call, locally). */

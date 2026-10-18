@@ -241,6 +241,36 @@ describe('old charges', () => {
       'old_charges',
     );
   });
+
+  it('not once the invoice is marked as paid', () => {
+    const payments = [{ ...META, id: 'invoice-i1', invoiceId: 'i1', paidOn: '2026-05-25' }];
+    expect(
+      kinds(computeAlerts(input({ contracts: [electricity], invoices: [old], payments }))),
+    ).not.toContain('old_charges');
+  });
+});
+
+describe('payment due', () => {
+  const due = { ...invoice('b', '2026-05-20', 4999), dueDate: '2026-06-03' };
+  const marked = [{ ...META, id: 'invoice-a', invoiceId: 'a', paidOn: '2026-05-01' }];
+  const at = (today: string, payments = marked) =>
+    computeAlerts(input({ invoices: [invoice('a', '2026-04-20', 4999), due], payments, today }));
+
+  it('flags an unpaid invoice from three days before it is due, until the day', () => {
+    expect(kinds(at('2026-05-30'))).not.toContain('payment_due');
+    expect(at('2026-05-31').find((alert) => alert.kind === 'payment_due')).toMatchObject({
+      key: 'c1:payment_due:b',
+      data: { dueDate: '2026-06-03', totalCents: 4999, daysLeft: 3 },
+    });
+    expect(kinds(at('2026-06-03'))).toContain('payment_due');
+    expect(kinds(at('2026-06-04'))).not.toContain('payment_due');
+  });
+
+  it('not when it is paid, nor for users who never mark payments', () => {
+    const paid = [...marked, { ...META, id: 'invoice-b', invoiceId: 'b', paidOn: '2026-05-30' }];
+    expect(kinds(at('2026-06-01', paid))).not.toContain('payment_due');
+    expect(kinds(at('2026-06-01', []))).not.toContain('payment_due');
+  });
 });
 
 describe('missing invoice', () => {

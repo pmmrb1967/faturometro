@@ -193,6 +193,7 @@ export const t = {
   },
   nav: {
     home: 'Início',
+    month: 'Este mês',
     contracts: 'Contratos',
     invoices: 'Faturas',
     compare: 'Comparar',
@@ -326,6 +327,50 @@ export const t = {
         'Ainda não tens nenhum seguro na app. Guarda primeiro um recibo (Fatura/Recibo) deste seguro: o contrato é criado com ele.',
     },
   },
+  month: {
+    intro:
+      'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
+    previous: 'Mês anterior',
+    next: 'Mês seguinte',
+    total: 'Total',
+    paid: 'Pago',
+    toPay: 'Por pagar',
+    empty: 'Não há nada a pagar neste mês.',
+    paidCheck: 'Paga',
+    paidLabel: (name: string) => `${name}: paga`,
+    paidOn: (date: string) => `paga a ${date}`,
+    due: (date: string) => `Vence a ${date}`,
+    issued: (date: string) => `Emitida a ${date}, sem data de pagamento`,
+    expenseTag: 'Sem fatura',
+    expenses: {
+      title: 'Despesas sem fatura',
+      intro:
+        'Despesas certas que não passam pela app, como a renda ou o condomínio. Escreves uma vez e aparecem nos meses em que vencem.',
+      empty: 'Ainda não acrescentaste nenhuma.',
+      add: 'Acrescentar despesa',
+      name: 'Nome',
+      namePlaceholder: 'Ex.: Renda',
+      amount: 'Valor, em euros',
+      every: 'Periodicidade',
+      dueDay: 'Dia de pagamento',
+      dueDayHint: 'Nos meses mais curtos, conta o último dia.',
+      startMonth: 'Primeiro mês',
+      startMonthHint: 'Por exemplo 2026-10. Nas despesas que não são mensais, também define os meses.',
+      save: 'Guardar despesa',
+      cancel: 'Cancelar',
+      edit: 'Alterar',
+      stop: 'Já não pago',
+      stopLabel: (name: string, month: string) => `${name}: deixar de pagar a partir de ${month}`,
+      remove: 'Apagar',
+      summary: (amount: string, every: string, day: number) => `${amount} · ${every} · dia ${day}`,
+      errors: {
+        name: 'Escreve um nome.',
+        amount: 'Escreve um valor maior que zero, por exemplo 650,00.',
+        dueDay: 'Escolhe um dia entre 1 e 31.',
+        startMonth: 'Escreve o mês como 2026-10.',
+      },
+    },
+  },
   socialTariff: {
     title: 'Tarifa social',
     homeLink: 'Tens direito à tarifa social da luz, do gás ou da Internet? Verifica aqui.',
@@ -429,6 +474,8 @@ export const t = {
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
       oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
         `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato. Se já pagaste, podes dispensar este aviso.`,
+      paymentDue: (label: string, total: string, date: string, daysLeft: number) =>
+        `${label}: a fatura de ${total} vence ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} e ainda não está marcada como paga. Se já pagaste, marca-a em "Este mês".`,
       socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>
         `${label}: a fatura de ${date} já não tem o desconto da tarifa social (na de ${previousDate} foi de ${discount}). Confirma com o fornecedor se a tarifa social se mantém.`,
       meterReading: (label: string, start: string, end: string) =>

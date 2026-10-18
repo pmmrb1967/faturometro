@@ -72,7 +72,13 @@ export function HomePage() {
             <span className="alert-icon" aria-hidden="true">
               {alert.severity === 'warning' ? '!' : 'i'}
             </span>
-            <Link to={`/app/contratos/${alert.contractId}`} className="alert-message">
+            <Link
+              to={
+                // Paid marks are set on "Este mês".
+                alert.kind === 'payment_due' ? '/app/mes' : `/app/contratos/${alert.contractId}`
+              }
+              className="alert-message"
+            >
               {alert.message}
             </Link>
             <button

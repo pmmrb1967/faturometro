@@ -6,7 +6,9 @@ import type {
   Invoice,
   InvoiceLine,
   Provider,
+  Payment,
   Reading,
+  RecurringExpense,
   Settings,
 } from '../domain/types';
 import { DocumentStore } from './documents';
@@ -34,6 +36,8 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     alerts: new EncryptedTable<Alert>(db.alerts, key, ['contractId', 'kind']),
     fieldCorrections: new EncryptedTable<FieldCorrection>(db.fieldCorrections, key, ['invoiceId']),
     settings: new EncryptedTable<Settings>(db.settings, key, []),
+    expenses: new EncryptedTable<RecurringExpense>(db.expenses, key, []),
+    payments: new EncryptedTable<Payment>(db.payments, key, []),
     documents: new DocumentStore(db.documents, key),
   };
 }

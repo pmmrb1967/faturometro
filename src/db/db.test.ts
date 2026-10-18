@@ -11,6 +11,7 @@ import {
   SCHEMA_V1,
   SCHEMA_V2,
   SCHEMA_V3,
+  SCHEMA_V4,
   type TableName,
 } from './schema';
 
@@ -172,9 +173,27 @@ describe('schema migrations', () => {
     v3.close();
 
     const current = new ProfileDb(id);
-    expect(current.verno).toBe(4);
+    expect(current.verno).toBeGreaterThanOrEqual(4);
     expect(await current.contracts.count()).toBe(1);
     expect(await current.aiUsage.count()).toBe(0);
+    await current.delete();
+  });
+
+  it('upgrades v4 to v5 with recurring expenses and payments', async () => {
+    const id = crypto.randomUUID();
+    const v4 = new Dexie(profileDbName(id));
+    v4.version(1).stores(SCHEMA_V1);
+    v4.version(2).stores(SCHEMA_V2);
+    v4.version(3).stores(SCHEMA_V3);
+    v4.version(4).stores(SCHEMA_V4);
+    await v4.table('invoices').add({ id: 'i', docKey: 'd', updatedAt: 'x', enc: {} });
+    v4.close();
+
+    const current = new ProfileDb(id);
+    expect(current.verno).toBe(5);
+    expect(await current.invoices.count()).toBe(1);
+    expect(await current.expenses.count()).toBe(0);
+    expect(await current.payments.count()).toBe(0);
     await current.delete();
   });
 

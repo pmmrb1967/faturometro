@@ -11,6 +11,7 @@ import { ConnectPage } from '../features/sync/ConnectPage';
 import { ContractPage } from '../features/contracts/ContractPage';
 import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
+import { MonthPage } from '../features/month/MonthPage';
 import { SocialTariffPage } from '../features/social-tariff/SocialTariffPage';
 import { Landing } from '../landing/Landing';
 import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
@@ -22,6 +23,7 @@ function sectionElement(id: SectionId) {
   if (id === 'settings') return <SettingsPage />;
   if (id === 'invoices') return <InvoicesPage />;
   if (id === 'contracts') return <ContractsPage />;
+  if (id === 'month') return <MonthPage />;
   return <SectionPlaceholder section={id} />;
 }
 

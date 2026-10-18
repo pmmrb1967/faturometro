@@ -8,13 +8,25 @@ import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import { oldCharges, prescriptionApplies } from './prescription';
 import { isSocialDiscount, socialTariffState } from './social-tariff';
-import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
+import { paymentId } from './month';
+import type {
+  Alert,
+  Contract,
+  Invoice,
+  InvoiceLine,
+  Payment,
+  Reading,
+  Sector,
+  Settings,
+} from './types';
 
 export const MISSING_INVOICE_DAYS = 40;
 /** The meter reading reminder shows this many days before the window opens. */
 export const READING_NOTICE_DAYS = 3;
 /** Old charges are flagged on invoices issued in the last days, while they may be unpaid. */
 export const OLD_CHARGES_RECENT_DAYS = 60;
+/** An invoice not marked as paid is flagged this many days before it is due. */
+export const PAYMENT_DUE_DAYS = 3;
 export const ESTIMATED_IN_A_ROW = 3;
 /** Days after a billing period's length before an invoice counts as missing. */
 const MISSING_INVOICE_SLACK_DAYS = 10;
@@ -41,6 +53,8 @@ export interface AlertInput {
   invoices: Invoice[];
   lines: InvoiceLine[];
   readings: Reading[];
+  /** "Paid" marks; the due-payment alert only shows for users who mark payments. */
+  payments?: Payment[];
   settings: Pick<Settings, 'priceIncreaseThresholdPct' | 'loyaltyAlertDays'>;
   /** ISO date. */
   today: string;
@@ -238,9 +252,16 @@ function meterReadingAlert(
 }
 
 /** Recent invoices that bill services from more than six months before: invoke before paying. */
-function oldChargesAlerts(contract: Contract, history: Invoice[], today: string): AlertDraft[] {
+function oldChargesAlerts(
+  contract: Contract,
+  history: Invoice[],
+  today: string,
+  isPaid: (invoice: Invoice) => boolean,
+): AlertDraft[] {
   if (!prescriptionApplies(contract.sector)) return [];
   return history.flatMap((invoice) => {
+    // Once paid, the right to invoke it is gone: nothing to say.
+    if (isPaid(invoice)) return [];
     if (daysBetween(invoice.issueDate, today) > OLD_CHARGES_RECENT_DAYS) return [];
     const old = oldCharges(invoice);
     if (!old) return [];
@@ -251,6 +272,34 @@ function oldChargesAlerts(contract: Contract, history: Invoice[], today: string)
         kind: 'old_charges' as const,
         severity: 'warning' as const,
         data: { ...old },
+      },
+    ];
+  });
+}
+
+/** Invoices due in the next days and not marked as paid. */
+function paymentDueAlerts(
+  contract: Contract,
+  history: Invoice[],
+  today: string,
+  isPaid: (invoice: Invoice) => boolean,
+): AlertDraft[] {
+  return history.flatMap((invoice) => {
+    if (!invoice.dueDate || invoice.totalCents <= 0 || isPaid(invoice)) return [];
+    const daysLeft = daysBetween(today, invoice.dueDate);
+    if (daysLeft < 0 || daysLeft > PAYMENT_DUE_DAYS) return [];
+    return [
+      {
+        key: `${contract.id}:payment_due:${invoice.id}`,
+        contractId: contract.id,
+        kind: 'payment_due' as const,
+        severity: 'info' as const,
+        data: {
+          invoiceId: invoice.id,
+          dueDate: invoice.dueDate,
+          totalCents: invoice.totalCents,
+          daysLeft,
+        },
       },
     ];
   });
@@ -389,6 +438,10 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
   const invoicesByContract = groupBy(input.invoices, (invoice) => invoice.contractId);
   const linesOf = (invoice: Invoice) => linesByInvoice.get(invoice.id) ?? [];
   const readingsOf = (invoice: Invoice) => readingsByInvoice.get(invoice.id) ?? [];
+  const paidIds = new Set((input.payments ?? []).map((payment) => payment.id));
+  const isPaid = (invoice: Invoice) => paidIds.has(paymentId({ invoiceId: invoice.id }));
+  // Users who never mark payments would get this alert for every invoice.
+  const marksPayments = paidIds.size > 0;
 
   return input.contracts
     .filter((contract) => contract.active)
@@ -404,7 +457,8 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         missingAlert(contract, history, input.today),
         auditAlert(contract, history, linesOf),
         socialTariffLostAlert(contract, history, linesOf),
-        ...oldChargesAlerts(contract, history, input.today),
+        ...oldChargesAlerts(contract, history, input.today, isPaid),
+        ...(marksPayments ? paymentDueAlerts(contract, history, input.today, isPaid) : []),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
 }

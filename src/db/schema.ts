@@ -69,7 +69,14 @@ export const SCHEMA_V4 = {
   aiUsage: 'id, createdAt, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V4;
+/** v5: recurring expenses without an invoice and "paid" marks (page "Este mês"). New tables only. */
+export const SCHEMA_V5 = {
+  ...SCHEMA_V4,
+  expenses: 'id, updatedAt',
+  payments: 'id, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V5;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -84,6 +91,8 @@ export class ProfileDb extends Dexie {
   fieldCorrections!: Table<StoredRow, string>;
   settings!: Table<StoredRow, string>;
   aiUsage!: Table<StoredRow, string>;
+  expenses!: Table<StoredRow, string>;
+  payments!: Table<StoredRow, string>;
 
   constructor(profileId: string) {
     super(profileDbName(profileId));
@@ -100,6 +109,7 @@ export class ProfileDb extends Dexie {
           }),
       );
     this.version(4).stores(SCHEMA_V4);
+    this.version(5).stores(SCHEMA_V5);
   }
 }
 
