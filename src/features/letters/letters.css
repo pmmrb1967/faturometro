@@ -37,3 +37,10 @@
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+
+.letter-warning {
+  padding: 10px 12px;
+  border-left: 4px solid #b26a00;
+  border-radius: 8px;
+  background: var(--surface);
+}

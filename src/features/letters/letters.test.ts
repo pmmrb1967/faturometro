@@ -29,6 +29,33 @@ describe('letterKinds', () => {
   });
 });
 
+describe('prescription letter', () => {
+  it('names the invoice and the old period, and invokes article 10 of Lei 23/96', () => {
+    expect(letterKinds({ sector: 'electricity' })).toContain('prescription');
+    expect(letterKinds({ sector: 'water' })).not.toContain('prescription');
+    const { subject, text } = buildLetter(
+      'prescription',
+      data({
+        contract: { sector: 'electricity', customerNumber: '123456' },
+        oldCharges: {
+          docId: 'FT 1/2',
+          issueDate: '2026-10-15',
+          totalCents: 12000,
+          periodStart: '2026-01-01',
+          periodEnd: '2026-09-30',
+          oldUntil: '2026-04-14',
+        },
+      }),
+      TODAY,
+    );
+    expect(subject).toBe('Invocação da prescrição de consumos com mais de seis meses');
+    expect(text).toContain('fatura n.º FT 1/2, de 15-10-2026');
+    expect(text).toContain('período de 01-01-2026 a 30-09-2026');
+    expect(text).toContain('de 01-01-2026 a 14-04-2026');
+    expect(text).toContain('artigo 10.º, n.º 1, da Lei n.º 23/96');
+  });
+});
+
 describe('block_extras letter', () => {
   it('asks to bar value-added services and lists the usage outside the package', () => {
     const { subject, text } = buildLetter(

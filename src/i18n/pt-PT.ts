@@ -427,6 +427,8 @@ export const t = {
         `${label}: o preço da energia subiu ${pct}% em relação à fatura anterior.`,
       estimatedReadings: (label: string, count: number) =>
         `${label}: ${count} faturas seguidas com leituras estimadas. Comunica uma leitura real para evitar acertos.`,
+      oldCharges: (label: string, date: string, start: string, oldUntil: string) =>
+        `${label}: a fatura de ${date} cobra consumos de ${start} a ${oldUntil}, com mais de 6 meses. Segundo o regulador, podes invocar a prescrição antes de pagar; se pagares, perdes esse direito. Usa a carta "Invocar a prescrição" na página do contrato.`,
       meterReading: (label: string, start: string, end: string) =>
         `${label}: comunica a leitura do contador entre ${start} e ${end}, como pede a última fatura. Assim a próxima é feita com o consumo real.`,
       missingInvoice: (label: string, date: string, days: number) =>
@@ -1060,6 +1062,7 @@ export const t = {
         price_increase: 'Contestar um aumento',
         estimated_reading: 'Reclamar de leituras estimadas',
         block_extras: 'Bloquear serviços pagos à parte',
+        prescription: 'Invocar a prescrição',
         cancel: 'Denunciar o contrato',
       },
       textLabel: 'Texto da carta (podes editar)',
@@ -1071,6 +1074,12 @@ export const t = {
       complaint:
         'Se não te responderem ou não concordares com a resposta, podes reclamar no Livro de Reclamações Eletrónico. A reclamação segue também para a entidade reguladora do setor.',
       complaintLink: 'Livro de Reclamações Eletrónico',
+      prescriptionNote:
+        'Envia a carta antes de pagares e guarda o comprovativo: a prescrição só conta se a invocares, e o que já pagaste não é devolvido. Explicação do regulador:',
+      regulators: {
+        energy: 'ERSE, as faturas prescrevem?',
+        telecom: 'ANACOM, faturas com mais de 6 meses',
+      },
       complaintUrl: 'https://www.livroreclamacoes.pt/',
       placeholders: {
         name: '[NOME]',
@@ -1080,6 +1089,7 @@ export const t = {
         endDate: '[DATA DE FIM]',
         reading: '[LEITURA]',
         readingDate: '[DATA DA LEITURA]',
+        invoiceNumber: '[N.º DA FATURA]',
         date: '[DATA]',
         amount: '[VALOR]',
       },
@@ -1102,6 +1112,7 @@ export const t = {
         price_increase: 'Pedido de esclarecimento sobre aumento de preço',
         estimated_reading: 'Reclamação: faturação com leituras estimadas',
         block_extras: 'Pedido de barramento de serviços de valor acrescentado',
+        prescription: 'Invocação da prescrição de consumos com mais de seis meses',
         cancel: 'Denúncia do contrato',
       },
       subjectLine: (subject: string) => `Assunto: ${subject}`,
@@ -1129,6 +1140,18 @@ export const t = {
       auditDetails: 'Comparando com a fatura anterior:',
       extraUsage: (date: string) => `Na fatura de ${date} foram cobrados consumos fora do pacote:`,
       extraUsageItem: (description: string, amount: string) => `${description}: ${amount} sem IVA`,
+      prescriptionInvoice: (
+        number: string,
+        date: string,
+        amount: string,
+        start: string,
+        end: string,
+      ) =>
+        `Recebi a fatura n.º ${number}, de ${date}, no valor de ${amount}, que cobra consumos do período de ${start} a ${end}.`,
+      prescriptionInvoke: (start: string, end: string) =>
+        `Os serviços prestados de ${start} a ${end} foram-no há mais de seis meses. Ao abrigo do artigo 10.º, n.º 1, da Lei n.º 23/96, de 26 de julho, invoco expressamente a prescrição do direito ao pagamento desses consumos.`,
+      prescriptionAsk:
+        'Peço que anulem a cobrança desses valores e me enviem uma fatura corrigida, só com os consumos dos últimos seis meses. Até lá, não pagarei a parte prescrita.',
       blockAsk:
         'Peço que barrem nas minhas linhas o acesso a serviços de valor acrescentado (chamadas e mensagens para números de valor acrescentado e subscrições de conteúdos) e, se for possível, o roaming de dados, e que me confirmem por escrito quando o barramento estiver ativo.',
       increaseAsk:

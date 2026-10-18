@@ -5,6 +5,7 @@
  */
 import type { Repositories } from '../../db/repositories';
 import { monthlyAverage } from '../../domain/comescolha';
+import { oldCharges, prescriptionApplies } from '../../domain/prescription';
 import type { Contract, Sector } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -19,6 +20,7 @@ export const LETTER_KINDS = [
   'price_increase',
   'estimated_reading',
   'block_extras',
+  'prescription',
   'cancel',
 ] as const;
 export type LetterKind = (typeof LETTER_KINDS)[number];
@@ -30,6 +32,7 @@ export function letterKinds(contract: Pick<Contract, 'sector'>): LetterKind[] {
   return LETTER_KINDS.filter((kind) => {
     if (kind === 'estimated_reading') return METERED.includes(contract.sector);
     if (kind === 'block_extras') return contract.sector === 'telecom';
+    if (kind === 'prescription') return prescriptionApplies(contract.sector);
     return true;
   });
 }
@@ -58,6 +61,15 @@ export interface LetterData {
   auditDetails?: string[];
   /** From the cheaper-offer alert. */
   cheaperOffer?: { name: string; yearlySavingCents: Cents };
+  /** The newest invoice that bills services from more than six months before it. */
+  oldCharges?: {
+    docId?: string;
+    issueDate: string;
+    totalCents: Cents;
+    periodStart: string;
+    periodEnd: string;
+    oldUntil: string;
+  };
   /** Usage outside the package on the latest invoice (telecom). */
   extraUsage?: { issueDate: string; items: { description: string; amountCents: Cents }[] };
 }
@@ -148,6 +160,31 @@ function bodyOf(kind: LetterKind, data: LetterData, today: string): string[] {
           : []),
         copy.blockAsk,
       ];
+    case 'prescription': {
+      const old = data.oldCharges;
+      return [
+        old
+          ? copy.prescriptionInvoice(
+              old.docId ?? copy.placeholders.invoiceNumber,
+              formatIsoDate(old.issueDate),
+              formatCents(old.totalCents),
+              formatIsoDate(old.periodStart),
+              formatIsoDate(old.periodEnd),
+            )
+          : copy.prescriptionInvoice(
+              copy.placeholders.invoiceNumber,
+              copy.placeholders.date,
+              copy.placeholders.amount,
+              copy.placeholders.date,
+              copy.placeholders.date,
+            ),
+        copy.prescriptionInvoke(
+          old ? formatIsoDate(old.periodStart) : copy.placeholders.date,
+          old ? formatIsoDate(old.oldUntil) : copy.placeholders.date,
+        ),
+        copy.prescriptionAsk,
+      ];
+    }
     case 'cancel':
       return [
         paragraphs(copy.cancelStatement(service), loyaltyText(data, today)),
@@ -200,6 +237,9 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
   const average = monthlyAverage(invoices);
   const latest = invoices[0];
   const extraUsage = latest?.extraUsage?.filter((item) => item.amountCents > 0) ?? [];
+  // Invoices are sorted newest first.
+  const withOld = invoices.find((invoice) => oldCharges(invoice));
+  const old = withOld ? oldCharges(withOld) : null;
 
   return {
     providerName: provider?.name ?? '',
@@ -209,6 +249,18 @@ export async function loadLetterData(repos: Repositories, contract: Contract): P
     ...(average ? { average } : {}),
     ...(latest
       ? { latestInvoice: { issueDate: latest.issueDate, totalCents: latest.totalCents } }
+      : {}),
+    ...(withOld && old
+      ? {
+          oldCharges: {
+            ...(withOld.docId ? { docId: withOld.docId } : {}),
+            issueDate: old.issueDate,
+            totalCents: withOld.totalCents,
+            periodStart: old.periodStart,
+            periodEnd: old.periodEnd,
+            oldUntil: old.oldUntil,
+          },
+        }
       : {}),
     ...(latest && extraUsage.length > 0
       ? { extraUsage: { issueDate: latest.issueDate, items: extraUsage } }

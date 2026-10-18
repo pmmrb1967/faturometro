@@ -215,7 +215,8 @@ export interface Alert extends SyncMeta {
     | 'invoice_audit'
     | 'renewal'
     | 'premium_notice'
-    | 'meter_reading';
+    | 'meter_reading'
+    | 'old_charges';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

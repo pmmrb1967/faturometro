@@ -6,11 +6,14 @@
  */
 import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
+import { oldCharges, prescriptionApplies } from './prescription';
 import type { Alert, Contract, Invoice, InvoiceLine, Reading, Sector, Settings } from './types';
 
 export const MISSING_INVOICE_DAYS = 40;
 /** The meter reading reminder shows this many days before the window opens. */
 export const READING_NOTICE_DAYS = 3;
+/** Old charges are flagged on invoices issued in the last days, while they may be unpaid. */
+export const OLD_CHARGES_RECENT_DAYS = 60;
 export const ESTIMATED_IN_A_ROW = 3;
 /** Days after a billing period's length before an invoice counts as missing. */
 const MISSING_INVOICE_SLACK_DAYS = 10;
@@ -225,6 +228,25 @@ function meterReadingAlert(
   };
 }
 
+/** Recent invoices that bill services from more than six months before: invoke before paying. */
+function oldChargesAlerts(contract: Contract, history: Invoice[], today: string): AlertDraft[] {
+  if (!prescriptionApplies(contract.sector)) return [];
+  return history.flatMap((invoice) => {
+    if (daysBetween(invoice.issueDate, today) > OLD_CHARGES_RECENT_DAYS) return [];
+    const old = oldCharges(invoice);
+    if (!old) return [];
+    return [
+      {
+        key: `${contract.id}:old_charges:${invoice.id}`,
+        contractId: contract.id,
+        kind: 'old_charges' as const,
+        severity: 'warning' as const,
+        data: { ...old },
+      },
+    ];
+  });
+}
+
 function missingAlert(contract: Contract, history: Invoice[], today: string): AlertDraft | null {
   const latest = history.at(-1);
   if (!contract.active || !latest) return null;
@@ -290,6 +312,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         meterReadingAlert(contract, history, input.today),
         missingAlert(contract, history, input.today),
         auditAlert(contract, history, linesOf),
+        ...oldChargesAlerts(contract, history, input.today),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PRESCRIPTION_SOURCES } from '../../domain/prescription';
 import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { today } from '../alerts/refresh';
@@ -63,6 +64,18 @@ export function LettersSection({ contract }: { contract: Contract }) {
             onChange={(event) => setLetter({ ...letter, text: event.target.value })}
           />
           <p className="muted">{copy.placeholdersNote}</p>
+          {letter.kind === 'prescription' && PRESCRIPTION_SOURCES[contract.sector] && (
+            <p className="letter-warning">
+              {copy.prescriptionNote}{' '}
+              <a
+                href={PRESCRIPTION_SOURCES[contract.sector]}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {contract.sector === 'telecom' ? copy.regulators.telecom : copy.regulators.energy}
+              </a>
+            </p>
+          )}
           <div className="ingest-actions">
             <button type="button" className="action-primary" onClick={() => void copyText()}>
               {copied ? copy.copied : copy.copy}

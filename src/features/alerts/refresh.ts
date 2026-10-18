@@ -39,6 +39,13 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
     }
     case 'estimated_readings':
       return copy.estimatedReadings(label, number('count'));
+    case 'old_charges':
+      return copy.oldCharges(
+        label,
+        formatIsoDate(text('issueDate')),
+        formatIsoDate(text('periodStart')),
+        formatIsoDate(text('oldUntil')),
+      );
     case 'meter_reading':
       return copy.meterReading(label, formatIsoDate(text('start')), formatIsoDate(text('end')));
     case 'missing_invoice':

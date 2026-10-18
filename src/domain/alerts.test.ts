@@ -213,6 +213,36 @@ describe('meter reading', () => {
   });
 });
 
+describe('old charges', () => {
+  const electricity = contract({ sector: 'electricity', label: 'Luz' });
+  const old = {
+    ...invoice('i1', '2026-05-20', 9000),
+    periodStart: '2025-09-01',
+    periodEnd: '2026-04-30',
+  };
+
+  it('warns about a recent invoice that bills services from more than six months before', () => {
+    const alerts = computeAlerts(input({ contracts: [electricity], invoices: [old] }));
+    const alert = alerts.find((candidate) => candidate.kind === 'old_charges');
+    expect(alert).toMatchObject({
+      key: 'c1:old_charges:i1',
+      severity: 'warning',
+      data: { periodStart: '2025-09-01', oldUntil: '2025-11-19' },
+    });
+  });
+
+  it('not after 60 days, nor for water', () => {
+    const later = computeAlerts(
+      input({ contracts: [electricity], invoices: [old], today: '2026-07-20' }),
+    );
+    expect(kinds(later)).not.toContain('old_charges');
+    const water = contract({ sector: 'water' });
+    expect(kinds(computeAlerts(input({ contracts: [water], invoices: [old] })))).not.toContain(
+      'old_charges',
+    );
+  });
+});
+
 describe('missing invoice', () => {
   it('alerts when an active contract has had no invoice for more than 40 days', () => {
     const invoices = [invoice('a', '2026-04-15', 1000)];
