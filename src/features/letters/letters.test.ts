@@ -141,7 +141,7 @@ describe('request_quote letter', () => {
     );
     expect(text).toContain('mudar de seguradora');
     expect(text).toContain('- Seguro: Multirriscos Habitação');
-    expect(text).toContain('  - Incêndio: capital 285 149,24 €, franquia 150,00 €');
+    expect(text).toContain('- Coberturas:\n  - Incêndio: capital 285 149,24 €, franquia 150,00 €');
     expect(text).toContain('  - Fenómenos sísmicos: franquia 5 % do capital');
     expect(text).toContain('- Prémio anual atual: 312,45');
     expect(text).toContain('franquias');

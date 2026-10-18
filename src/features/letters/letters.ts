@@ -239,8 +239,12 @@ function insuranceLines(insurance: InsuranceDetails | undefined): string[] {
   return lines.length > 0 ? lines : [copy.quote.placeholderInsurance];
 }
 
-/** What the other provider needs to quote the same service; no customer number, CPE or policy. */
-function quoteLines(data: LetterData): string[] {
+/**
+ * What the other provider needs to quote the same service, one line each
+ * (insurance coverages indented under "Coberturas:"); no customer number,
+ * CPE or policy number. Also what the AI letter is given.
+ */
+export function quoteLines(data: LetterData): string[] {
   const { contract } = data;
   const usage = copy.quote.annualKwh(
     data.annualKwh !== undefined
@@ -291,7 +295,10 @@ function quoteBody(data: LetterData, today: string): string[] {
   const end = data.contract.loyaltyEndDate;
   return [
     insurance ? copy.quote.introInsurance : copy.quote.intro(copy.services[data.contract.sector]),
-    [copy.quote.current, ...quoteLines(data).map((line) => `- ${line}`)].join('\n'),
+    [
+      copy.quote.current,
+      ...quoteLines(data).map((line) => (line.startsWith(' ') ? line : `- ${line}`)),
+    ].join('\n'),
     ...(end && end >= today ? [copy.quote.loyalty(formatIsoDate(end))] : []),
     insurance ? copy.quote.askInsurance : copy.quote.ask,
   ];

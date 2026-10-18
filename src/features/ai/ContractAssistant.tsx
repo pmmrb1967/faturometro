@@ -15,11 +15,14 @@ import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { useSession } from '../auth/session-context';
 import { getSettings } from '../settings/settings';
+import { loadLetterData, quoteLines } from '../letters/letters';
 import { contractContext } from './context';
 import { aiErrorText } from './errors';
 
 const copy = t.ai.assistant;
-type Pending = { request: TextRequest; letter: boolean };
+type Pending = { request: TextRequest; letter: boolean; quote: boolean };
+
+const METERED: readonly Contract['sector'][] = ['electricity', 'gas', 'water'];
 
 export function ContractAssistant({ contract }: { contract: Contract }) {
   const { session } = useSession();
@@ -39,8 +42,11 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
     setAnswer(undefined);
     setProblem(undefined);
     const context = await contractContext(repos, contract);
-    const request = kind === 'explain' ? explainRequest(context) : letterRequest(kind, context);
-    setPending({ request, letter: kind !== 'explain' });
+    const details =
+      kind === 'request_quote' ? quoteLines(await loadLetterData(repos, contract)) : [];
+    const request =
+      kind === 'explain' ? explainRequest(context) : letterRequest(kind, context, details);
+    setPending({ request, letter: kind !== 'explain', quote: kind === 'request_quote' });
   }
 
   async function send() {
@@ -51,12 +57,14 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
     try {
       const result = await provider.writeText(pending.request);
       await recordUsage(repos, [result.usage]);
-      const text = pending.letter
-        ? fillPlaceholders(result.text, {
-            ...(contract.customerNumber ? { customerNumber: contract.customerNumber } : {}),
-            ...(contract.supplyPointId ? { supplyPoint: contract.supplyPointId } : {}),
-          })
-        : result.text;
+      // A quote request goes to another provider: the current contract's numbers stay out.
+      const text =
+        pending.letter && !pending.quote
+          ? fillPlaceholders(result.text, {
+              ...(contract.customerNumber ? { customerNumber: contract.customerNumber } : {}),
+              ...(contract.supplyPointId ? { supplyPoint: contract.supplyPointId } : {}),
+            })
+          : result.text;
       setAnswer({ text, cost: result.usage.costMicroUsd, letter: pending.letter });
       setPending(undefined);
     } catch (error) {
@@ -101,8 +109,12 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
             >
               {copy.explain}
             </button>
-            {(['renegotiate', 'cancel', 'estimated_reading'] as const)
-              .filter((kind) => kind !== 'estimated_reading' || contract.sector !== 'telecom')
+            {(['renegotiate', 'request_quote', 'cancel', 'estimated_reading'] as const)
+              .filter(
+                (kind) =>
+                  (kind !== 'estimated_reading' || METERED.includes(contract.sector)) &&
+                  (kind !== 'request_quote' || contract.sector !== 'water'),
+              )
               .map((kind) => (
                 <button
                   key={kind}

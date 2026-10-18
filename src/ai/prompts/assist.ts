@@ -11,9 +11,9 @@ import { formatCents } from '../../lib/money';
 import type { TextRequest } from '../provider';
 
 export const EXPLAIN_PROMPT_VERSION = 'explain-v1';
-export const LETTER_PROMPT_VERSION = 'letter-v1';
+export const LETTER_PROMPT_VERSION = 'letter-v2';
 
-export type LetterKind = 'renegotiate' | 'cancel' | 'estimated_reading';
+export type LetterKind = 'renegotiate' | 'request_quote' | 'cancel' | 'estimated_reading';
 
 export interface InvoiceContext {
   invoice: Pick<
@@ -110,6 +110,8 @@ const LETTER_GOALS: Record<LetterKind, string> = {
     'Denúncia do contrato (pedido de cessação), com pedido de confirmação escrita da data de fim e de que não há penalizações se a fidelização já terminou.',
   estimated_reading:
     'Reclamação por faturação com leituras estimadas: pede a correção com base em leitura real e a emissão de nova fatura.',
+  request_quote:
+    'Pedido de proposta a outro fornecedor, não ao atual: o cliente pondera mudar e pede por escrito uma proposta para um serviço equivalente ao que descreve (preço, o que inclui, duração e fidelização; num seguro, o prémio anual, as coberturas, os capitais e as franquias). A carta é dirigida a [FORNECEDOR]. Não incluas o n.º de cliente, o CPE nem o nome do fornecedor atual.',
 };
 
 /** Placeholders the model must use; filled in locally, never sent. */
@@ -120,33 +122,60 @@ export const PLACEHOLDERS = {
   customerNumber: '[N.º DE CLIENTE]',
   supplyPoint: '[CPE/CUI]',
   date: '[DATA]',
+  provider: '[FORNECEDOR]',
 } as const;
 
-export function letterRequest(kind: LetterKind, context: ContractContext): TextRequest {
+/** The other provider's name stays for the user; the current contract's identifiers are not used. */
+const QUOTE_PLACEHOLDERS = [PLACEHOLDERS.name, PLACEHOLDERS.address, PLACEHOLDERS.provider];
+const CONTRACT_PLACEHOLDERS = Object.values(PLACEHOLDERS).filter(
+  (placeholder) => placeholder !== PLACEHOLDERS.provider,
+);
+
+/**
+ * A letter. For request_quote, `quoteDetails` (the service as the template
+ * letter describes it) replaces the provider and the invoices.
+ */
+export function letterRequest(
+  kind: LetterKind,
+  context: ContractContext,
+  quoteDetails: string[] = [],
+): TextRequest {
   const offer = context.cheaperOffer;
+  const quote = kind === 'request_quote';
   return {
     task: 'letter',
     promptVersion: LETTER_PROMPT_VERSION,
     maxOutputTokens: 2_000,
     system:
-      'Escreves cartas formais curtas em português europeu, de um cliente doméstico para o seu fornecedor. ' +
+      'Escreves cartas formais curtas em português europeu, de um cliente doméstico para um fornecedor. ' +
       'Usa exatamente estes marcadores para os dados pessoais, sem os inventar nem preencher: ' +
-      `${Object.values(PLACEHOLDERS).join(', ')}. ` +
+      `${(quote ? QUOTE_PLACEHOLDERS : CONTRACT_PLACEHOLDERS).join(', ')}. ` +
       'Não inventes factos, números de contrato, leis ou prazos que não te sejam dados. ' +
       'Devolve só o texto da carta (com assunto), pronto a copiar para email.',
-    user: [
-      `Objetivo: ${LETTER_GOALS[kind]}`,
-      '',
-      describeContract(context),
-      ...(offer
-        ? [
-            `Oferta mais barata encontrada no simulador da ERSE: ${offer.name}, com poupança estimada de ${formatCents(offer.yearlySavingCents)} por ano.`,
-          ]
-        : []),
-      '',
-      'Faturas recentes (mais recente primeiro):',
-      ...context.invoices.slice(0, 3).map(describeInvoice),
-    ].join('\n'),
+    user: quote
+      ? [
+          `Objetivo: ${LETTER_GOALS[kind]}`,
+          '',
+          `Serviço: ${SECTOR_NAMES[context.contract.sector]}`,
+          'O que o cliente tem atualmente:',
+          ...quoteDetails.map((line) => (line.startsWith(' ') ? line : `- ${line}`)),
+          ...(context.contract.loyaltyEndDate
+            ? [`Fim da fidelização atual: ${context.contract.loyaltyEndDate}`]
+            : []),
+        ].join('\n')
+      : [
+          `Objetivo: ${LETTER_GOALS[kind]}`,
+          '',
+          describeContract(context),
+          ...(offer
+            ? [
+                `Oferta mais barata encontrada no simulador da ERSE: ${offer.name}, com poupança estimada de ${formatCents(offer.yearlySavingCents)} por ano.`,
+              ]
+            : []),
+          '',
+          'Faturas recentes (mais recente primeiro):',
+          ...context.invoices.slice(0, 3).map(describeInvoice),
+        ].join('\n'),
   };
 }
 

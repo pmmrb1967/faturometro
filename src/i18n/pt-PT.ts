@@ -903,6 +903,7 @@ export const t = {
       explain: 'Explica-me a última fatura',
       letters: {
         renegotiate: 'Carta: pedir um preço melhor',
+        request_quote: 'Carta: pedir proposta a outro fornecedor',
         cancel: 'Carta: denunciar o contrato',
         estimated_reading: 'Carta: reclamar de leituras estimadas',
       },

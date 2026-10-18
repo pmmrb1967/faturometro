@@ -372,6 +372,20 @@ describe('explain and letter prompts', () => {
     expect(letter.user).toContain('108,06');
     // The context type has no field for names, NIF, customer number or CPE.
     expect(letter.system).toContain('[N.º DE CLIENTE]');
+    expect(letter.system).not.toContain('[FORNECEDOR]');
+  });
+
+  it('a quote request: the service as the template describes it, not the current provider', () => {
+    const letter = letterRequest('request_quote', context, [
+      'Potência contratada: 6,9 kVA',
+      'Coberturas:',
+      '  - Incêndio: capital 1000,00 €',
+    ]);
+    expect(letter.user).toContain('- Potência contratada: 6,9 kVA\n- Coberturas:\n  - Incêndio');
+    expect(letter.user).not.toContain(context.providerName);
+    expect(letter.user).not.toContain('108,06');
+    expect(letter.system).toContain('[FORNECEDOR]');
+    expect(letter.system).not.toContain('[N.º DE CLIENTE]');
   });
 
   it('fills placeholders locally and leaves the rest to the user', () => {
