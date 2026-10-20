@@ -3,7 +3,7 @@ export const t = {
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
   privacyPage: {
     title: 'Privacidade',
-    updated: 'Última atualização: 14 de outubro de 2026.',
+    updated: 'Última atualização: 20 de outubro de 2026.',
     intro:
       'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
     sections: [
@@ -19,7 +19,7 @@ export const t = {
         body: [
           'A conta, as faturas, os contratos, os alertas e os PDFs originais ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
           'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
-          'Não há cookies, estatísticas de utilização, publicidade nem registos com os teus dados.',
+          'Não há cookies, publicidade nem registos com os teus dados.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
         ],
       },
@@ -52,6 +52,13 @@ export const t = {
         title: 'O que a app descarrega',
         body: [
           'A própria app e as ofertas de eletricidade publicadas pela ERSE, a partir do site do Faturómetro. Estes pedidos não levam dados teus.',
+        ],
+      },
+      {
+        title: 'Estatísticas de visitas (só na página inicial)',
+        body: [
+          'Na página inicial e nesta página usamos o Cloudflare Web Analytics para saber quantas visitas há, a que páginas, de que país e de que site vieram. Não usa cookies nem identifica quem visita, e só vemos totais.',
+          'Nas páginas de entrar e criar conta e dentro da app (as tuas faturas, contratos e definições) não há estatísticas de nenhum tipo.',
         ],
       },
       {

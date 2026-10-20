@@ -8,6 +8,7 @@ import { listenForInstall } from './app/install';
 import { listenForOpenedFiles } from './app/opened-files';
 import { registerPwa } from './app/pwa';
 import { router } from './app/router';
+import { loadWebAnalytics } from './app/web-analytics';
 import { SessionProvider } from './features/auth/session';
 import './index.css';
 
@@ -25,3 +26,5 @@ createRoot(root).render(
     </SessionProvider>
   </StrictMode>,
 );
+
+loadWebAnalytics(router);

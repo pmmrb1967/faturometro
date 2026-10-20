@@ -24,6 +24,7 @@
     "vite.config.ts",
     "pwa-assets.config.ts",
     "security-headers.ts",
-    "src/sync/default-server.ts"
+    "src/sync/default-server.ts",
+    "src/app/web-analytics-config.ts"
   ]
 }

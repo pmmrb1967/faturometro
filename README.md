@@ -28,7 +28,7 @@ Os outros fornecedores funcionam pelo QR fiscal (total, IVA e data), com o resto
 
 ## Privacidade
 
-- Os dados ficam no teu dispositivo. Sem cookies, estatísticas de utilização nem publicidade.
+- Os dados ficam no teu dispositivo. Sem cookies nem publicidade; dentro da app, sem estatísticas de utilização. Só a página inicial e a de privacidade contam visitas, de forma anónima (Cloudflare Web Analytics).
 - **Sem conta:** experimentas logo, sem email; os dados ficam só nesse browser.
 - **Com conta:** os dados ficam cifrados com a tua palavra-passe; a IA fica disponível.
 - **Sincronização opcional** entre dispositivos (e dos PDF e fotografias originais) através de <https://sync.faturometro.workers.dev>, que só recebe dados cifrados no dispositivo — nunca os dados em claro nem a chave.

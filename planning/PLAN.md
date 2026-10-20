@@ -409,7 +409,7 @@ Notificações apenas dentro da app no MVP; um contador no ícone da PWA via Bad
 
 ## 11. Privacidade e segurança
 
-- CSP restritiva: `connect-src 'self' https://api.anthropic.com <origem do servidor de sincronização>`.
+- CSP restritiva: `connect-src 'self' https://api.anthropic.com <origem do servidor de sincronização> https://cloudflareinsights.com` (este último só para as estatísticas da página inicial e da de privacidade).
 - Sem analytics com dados pessoais; se houver métricas, apenas agregadas e sem cookies.
 - `samples/` (faturas reais) está no `.gitignore`.
 - `scripts/anonymize-fixture.ts`: converte um PDF real numa fixture JSON de `TextItem[]` com NIF, nomes, moradas, CPE, IBAN e n.º de cliente substituídos por valores fictícios coerentes (mesmo comprimento e formato).
@@ -677,6 +677,7 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-13 | Descontos só para novos clientes mostrados mas não incluídos na estimativa; descontos para todos os clientes incluídos |
 | 2026-10-13 | Atualizações da PWA por aviso ("Há uma nova versão") e não automáticas: recarregar a página fecha a sessão, porque a chave só existe em memória |
 | 2026-10-15 | Recarregar já não fecha a sessão (pedido do utilizador): a chave-mestra é cifrada com uma chave de sessão não exportável (IndexedDB, por separador) e a cópia cifrada fica em sessionStorage (apagada ao fechar o separador). Expira ao fim de 30 minutos sem uso (também o bloqueio automático passou de 15 para 30 min); "Sair" apaga ambas. As atualizações continuam por aviso, para não perder o que se está a escrever |
+| 2026-10-20 | Estatísticas de visitas (substitui o "sem analytics na página inicial" de 2026-10-15): Cloudflare Web Analytics, sem cookies, como no projeto poderebeleza, mas só em `/` e `/privacidade` (sem campos de palavra-passe), nunca em `/app`, e só no domínio publicado; `spa: false`, e sair dessas páginas recarrega o documento, para o script não ficar na página de entrar nem dentro da app (recarregar mantém a sessão). CSP abre `static.cloudflareinsights.com` (script) e `cloudflareinsights.com` (envio). Token público em `src/app/web-analytics-config.ts` (vazio = desligado). Texto de privacidade e README atualizados |
 | 2026-10-15 | Indicadores de utilização: só os totais que o servidor de sincronização já tem (contas, novas, ativas por dia/7/30 dias pelo `last_seen_at`, sessões, removidas por inatividade, espaço, contribuições), em `GET /v1/admin/stats` só para administradores e mostrados nas Definições. Sem analytics na app nem na página inicial (a promessa "sem estatísticas de utilização" mantém-se); quem usa sem conta não é contado |
 | 2026-10-13 | Sincronização: o servidor vê email, tipo de registo, id aleatório e data da última alteração; os campos indexados em claro no dispositivo não sobem (reconstruídos após decifrar). Chaves de sincronização derivadas com sal próprio (PBKDF2 → 512 bits: 256 autenticação, 256 cifra). Conflitos: última alteração ganha (depende dos relógios dos dispositivos) |
 | 2026-10-13 | App e servidor publicados na Cloudflare (plano gratuito), base de dados restrita à UE; app em `app.faturometro.workers.dev` (secção 15b) |
