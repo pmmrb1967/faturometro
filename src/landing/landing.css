@@ -35,15 +35,6 @@
   margin: 0;
 }
 
-.landing-status {
-  margin: 0;
-  padding: 8px 16px;
-  background: var(--amber);
-  color: #2b2105;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
 .landing-bar {
   display: flex;
   align-items: center;

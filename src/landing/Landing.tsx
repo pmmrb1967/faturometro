@@ -29,10 +29,6 @@ export function Landing() {
 
   return (
     <div className="landing">
-      <p className="landing-status" role="status">
-        {copy.status}
-      </p>
-
       <header className="landing-bar">
         <Link to="/" className="landing-brand">
           <img src="/icon.svg" alt="" width={32} height={32} />

@@ -1548,7 +1548,6 @@ export const t = {
     back: 'Voltar ao início',
   },
   landing: {
-    status: 'Versão beta',
     signIn: 'Entrar',
     createAccount: 'Criar conta',
     startGuest: 'Começar sem conta',
