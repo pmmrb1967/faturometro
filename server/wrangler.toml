@@ -10,6 +10,8 @@
 #   pnpm exec wrangler deploy
 name = "sync"
 main = "src/worker.ts"
+# Pin the Cloudflare account: this machine is also logged in to the Wattómetro account.
+account_id = "228a5886f6ada239609955a875486421"
 compatibility_date = "2026-10-01"
 
 [[d1_databases]]
