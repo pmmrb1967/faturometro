@@ -70,6 +70,43 @@ export class DocumentStore {
     return id;
   }
 
+  /**
+   * Whether an invoice could take a file as its original: none here nor on
+   * the server (e.g. the invoice came from a device that did not send it).
+   */
+  async needsOriginal(fileHash: string): Promise<boolean> {
+    const state = await this.stateOf(fileHash);
+    return state === undefined || state === 'gone';
+  }
+
+  /**
+   * Keeps a file as the original of an invoice that has none (see
+   * `needsOriginal`). Stored under the invoice's file hash, which may differ
+   * from the file's own (another copy of the same document): the invoice is
+   * left as it is, so other devices see no change to it.
+   */
+  async attach(fileHash: string, file: Omit<DocumentFile, 'fileHash'>): Promise<boolean> {
+    const row = await this.table.where('fileHash').equals(fileHash).first();
+    if (!row) {
+      await this.put({ ...file, fileHash });
+      return true;
+    }
+    if (row.deletedAt || row.syncState !== 'gone') return false;
+    // Already left the server elsewhere: kept here only, like an original past the window.
+    const meta = (await decryptJson(this.key, row.enc)) as DocumentMeta;
+    await this.table.update(row.id, {
+      enc: await encryptJson(this.key, {
+        id: meta.id,
+        fileHash,
+        mime: file.mime,
+        addedAt: new Date().toISOString(),
+      } satisfies DocumentMeta),
+      encBytes: await encryptBytes(this.key, file.bytes),
+      syncState: 'pruned',
+    });
+    return true;
+  }
+
   /** The file, if its contents are on this device. */
   async getByFileHash(fileHash: string): Promise<DocumentFile | undefined> {
     const row = await this.table.where('fileHash').equals(fileHash).first();
@@ -161,7 +198,8 @@ export class DocumentStore {
   async applyRemote(enc: EncryptedBlob, updatedAt: string): Promise<boolean> {
     const meta = (await decryptJson(this.key, enc)) as RemoteDocumentMeta;
     if (meta.onServer === false) return this.applyPruned(meta, updatedAt);
-    if (await this.table.where('fileHash').equals(meta.fileHash).count()) return false;
+    const here = await this.table.where('fileHash').equals(meta.fileHash).first();
+    if (here) return this.adoptUpload(here, meta, updatedAt);
     if (await this.table.get(meta.id)) return false;
     await this.table.put({
       id: meta.id,
@@ -169,6 +207,33 @@ export class DocumentStore {
       fileHash: meta.fileHash,
       syncState: 'remote',
       enc: await encryptJson(this.key, meta),
+    });
+    return true;
+  }
+
+  /**
+   * Another device sent the original of an invoice whose original this
+   * device has but did not send yet (both added it): this one counts as sent,
+   * under the other's id, so it is not uploaded twice. The contents and type
+   * here stay (they may be another copy of the same document).
+   */
+  private async adoptUpload(
+    here: StoredDocumentRow,
+    meta: RemoteDocumentMeta,
+    updatedAt: string,
+  ): Promise<boolean> {
+    if (here.deletedAt || here.syncState !== 'local' || here.id === meta.id) return false;
+    const own = (await decryptJson(this.key, here.enc)) as DocumentMeta;
+    const enc = await encryptJson(this.key, {
+      id: meta.id,
+      fileHash: meta.fileHash,
+      mime: own.mime,
+      addedAt: own.addedAt,
+    } satisfies DocumentMeta);
+    // Encrypted before the transaction: other promises would end it early.
+    await this.table.db.transaction('rw', this.table, async () => {
+      await this.table.delete(here.id);
+      await this.table.put({ ...here, id: meta.id, updatedAt, enc, syncState: 'uploaded' });
     });
     return true;
   }

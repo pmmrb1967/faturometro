@@ -450,6 +450,64 @@ describe('original files', () => {
     expect(await a.repos.documents.stateOf('old')).toBe('uploaded');
   });
 
+  it('an original added on two devices is uploaded only once', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    const sent = await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+    expect(sent.files?.uploaded).toBe(1);
+
+    // B kept its own copy (here a photo) of the same invoice before syncing.
+    const b = await deviceB();
+    const photo = new TextEncoder().encode('fotografia da mesma fatura');
+    await b.repos.documents.put({ fileHash: 'h1', mime: 'image/jpeg', bytes: photo });
+    const synced = await runSync({ ...b, profile: await setFileSync(b.profile, true), api });
+    expect(synced.files).toMatchObject({ uploaded: 0, downloaded: 0 });
+    expect(await b.repos.documents.stateOf('h1')).toBe('uploaded');
+    const own = await b.repos.documents.getByFileHash('h1');
+    expect(own?.mime).toBe('image/jpeg');
+    expect(new TextDecoder().decode(own?.bytes)).toBe('fotografia da mesma fatura');
+    const files = fileDb.prepare('SELECT COUNT(DISTINCT file_id) AS n FROM chunks').get() as {
+      n: number;
+    };
+    expect(files.n).toBe(1);
+  });
+
+  it('attaches a file as the original of an invoice that has none', async () => {
+    const a = await deviceA();
+    expect(await a.repos.documents.needsOriginal('h1')).toBe(true);
+    expect(await a.repos.documents.attach('h1', { mime: 'application/pdf', bytes: pdf })).toBe(
+      true,
+    );
+    expect(await a.repos.documents.stateOf('h1')).toBe('local');
+    expect(await a.repos.documents.needsOriginal('h1')).toBe(false);
+    expect(await a.repos.documents.attach('h1', { mime: 'image/png', bytes: pdf })).toBe(false);
+    expect((await a.repos.documents.getByFileHash('h1'))?.mime).toBe('application/pdf');
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+
+    // On the server: the other device fetches it instead.
+    const b = await deviceB();
+    await runSync({ ...b, api });
+    expect(await b.repos.documents.stateOf('h1')).toBe('remote');
+    expect(await b.repos.documents.needsOriginal('h1')).toBe(false);
+  });
+
+  it('attaches an original that already left the server, keeping it here only', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'old', mime: 'application/pdf', bytes: pdf });
+    await a.repos.invoices.put(invoice('old', '2020-01-10'));
+    await runSync({ ...a, profile: await setFileSync(a.profile, true), api });
+
+    const b = await deviceB();
+    const stateB = (await runSync({ ...b, profile: await setFileSync(b.profile, true), api }))
+      .profile;
+    expect(await b.repos.documents.needsOriginal('old')).toBe(true);
+    expect(await b.repos.documents.attach('old', { mime: 'image/jpeg', bytes: pdf })).toBe(true);
+    expect(await b.repos.documents.stateOf('old')).toBe('pruned');
+    expect((await b.repos.documents.getByFileHash('old'))?.mime).toBe('image/jpeg');
+    const again = await runSync({ ...b, profile: stateB, api });
+    expect(again.files).toMatchObject({ uploaded: 0, downloaded: 0 });
+  });
+
   it('counts the window in calendar months', () => {
     expect(monthsBefore(new Date('2026-10-14T09:00:00Z'), 12)).toBe('2025-10-14');
   });

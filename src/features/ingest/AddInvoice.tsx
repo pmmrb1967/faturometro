@@ -21,6 +21,7 @@ import { browserIngestDeps } from './browser-deps';
 import { ContributeOffer } from '../contribute/ContributeOffer';
 import { shouldOffer } from '../contribute/eligible';
 import { AiExtractPanel } from '../ai/AiExtractPanel';
+import { AttachOriginal } from './AttachOriginal';
 import {
   addPhotoPage,
   ingestFile,
@@ -378,7 +379,12 @@ function Outcome({
   const [aiParsed, setAiParsed] = useState<Record<number, ParsedDocument>>({});
   if (outcome.kind === 'unsupported') return <p className="ingest-problem">{copy.unsupported}</p>;
   if (outcome.kind === 'duplicate_file') {
-    return <p className="ingest-problem">{copy.duplicateFile}</p>;
+    return (
+      <>
+        <p className="ingest-problem">{copy.duplicateFile}</p>
+        <AttachOriginal invoiceId={outcome.invoiceId} file={file} />
+      </>
+    );
   }
   if (outcome.kind !== 'read') return null;
 
@@ -465,7 +471,7 @@ function Outcome({
             </p>
           );
         }
-        if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} />;
+        if (qr.duplicateInvoiceId) return <QrCard key={index} qr={qr} file={file} />;
         const parsed = qr.parsed ?? aiParsed[index];
         const { form, locked } = formFromQr(qr.result.qr, parsed);
         const docType = qr.result.qr.docType;
@@ -518,14 +524,19 @@ function Outcome({
   );
 }
 
-function QrCard({ qr }: { qr: ReadQr }) {
+function QrCard({ qr, file }: { qr: ReadQr; file: PendingFile }) {
   if (!qr.result.ok) return <p className="ingest-problem">{copy.invalidQr}</p>;
   const data = qr.result.qr;
   const fields = copy.fields;
   const docType = data.docType ? (copy.docTypes[data.docType] ?? data.docType) : '—';
   return (
     <article className="doc-card">
-      {qr.duplicateInvoiceId && <p className="doc-duplicate">{copy.duplicateInvoice}</p>}
+      {qr.duplicateInvoiceId && (
+        <>
+          <p className="doc-duplicate">{copy.duplicateInvoice}</p>
+          <AttachOriginal invoiceId={qr.duplicateInvoiceId} file={file} />
+        </>
+      )}
       <dl>
         <div>
           <dt>{fields.issuer}</dt>

@@ -185,6 +185,14 @@
   font-weight: 700;
 }
 
+.attach-original {
+  margin: 0 0 12px;
+}
+
+.attach-original p {
+  margin: 0 0 8px;
+}
+
 .doc-saved {
   font-weight: 700;
   color: var(--accent);

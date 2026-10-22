@@ -1502,6 +1502,12 @@ export const t = {
     failed: 'Não foi possível ler este ficheiro. Experimenta outro ou tira uma fotografia.',
     duplicateFile: 'Já adicionaste este ficheiro.',
     duplicateInvoice: 'Já tens esta fatura guardada.',
+    attachOriginal: {
+      hint: 'Esta fatura ainda não tem o original guardado.',
+      button: 'Guardar este ficheiro como original',
+      saved: 'Guardado como original desta fatura.',
+      failed: 'Não foi possível guardar o original.',
+    },
     noQr: 'Não encontrei o código QR desta fatura. Preenche os dados à mão.',
     invalidQr: 'Encontrei um código QR, mas não o consegui interpretar.',
     foundCount: (count: number) =>
