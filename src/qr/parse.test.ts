@@ -160,6 +160,8 @@ const privateQrs =
   existsSync(PRIVATE_DIR) && !process.env.FIXTURES_PUBLIC_ONLY
     ? readdirSync(PRIVATE_DIR).flatMap((provider) =>
         readdirSync(join(PRIVATE_DIR, provider)).flatMap((file) => {
+          // Other local files (e.g. an E-Redes export) are not invoice fixtures.
+          if (!file.endsWith('.json')) return [];
           const fixture = JSON.parse(readFileSync(join(PRIVATE_DIR, provider, file), 'utf8')) as {
             qrs?: { text: string }[];
             qr?: string | null;
