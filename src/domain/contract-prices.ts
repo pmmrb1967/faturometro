@@ -12,6 +12,7 @@ type Line = Pick<
 
 const SOCIAL = /social/i;
 const AUDIOVISUAL = /audiovisual/i;
+const IEC = /imposto especial|\bIEC\b/i;
 
 const periodKey = (line: Line): keyof Consumption => {
   switch (line.period) {
@@ -77,7 +78,7 @@ export function breakdownFromLines(lines: readonly Line[], days: number): Invoic
   const discount = -offerDiscounts.reduce((sum, line) => sum + line.amountCents, 0) / 100;
   if (discount > 0 && energyGross > 0) prices.energyDiscountPct = (discount / energyGross) * 100;
 
-  const common: CommonCharges = { perKwh: 0, reducedPerDay: 0, normalPerDay: 0 };
+  const common: CommonCharges = { perKwh: 0, normalPerKwh: 0, reducedPerDay: 0, normalPerDay: 0 };
   const isOfferLine = (line: Line) =>
     energy.includes(line) ||
     offerDiscounts.includes(line) ||
@@ -86,7 +87,9 @@ export function breakdownFromLines(lines: readonly Line[], days: number): Invoic
   for (const line of lines) {
     if (isOfferLine(line)) continue;
     const euros = line.amountCents / 100;
-    if (line.unit === 'kWh') common.perKwh += euros / kwh;
+    // The IEC (and its exemption) takes 23 %, not the energy's split: docs/electricity-vat.md.
+    if (line.unit === 'kWh' && IEC.test(line.description)) common.normalPerKwh += euros / kwh;
+    else if (line.unit === 'kWh') common.perKwh += euros / kwh;
     else if (AUDIOVISUAL.test(line.description)) common.reducedPerDay += euros / days;
     else common.normalPerDay += euros / days;
   }

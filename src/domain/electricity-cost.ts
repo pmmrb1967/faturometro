@@ -36,8 +36,10 @@ export interface Prices {
  * tariff-social financing…), read from the user's own invoices.
  */
 export interface CommonCharges {
-  /** €/kWh (e.g. social discount on energy, tariff-social financing, IEC): VAT like energy. */
+  /** €/kWh (e.g. social discount on energy, tariff-social financing): VAT like energy. */
   perKwh: number;
+  /** €/kWh taxed at 23 % (IEC: not in ERSE's reduced-rate list). */
+  normalPerKwh: number;
   /** €/day taxed at 6 % (CAV). */
   reducedPerDay: number;
   /** €/day taxed at 23 % (DGEG fee, social discount on power…). */
@@ -57,7 +59,12 @@ export interface Estimate {
   reducedKwh: number;
 }
 
-export const NO_COMMON_CHARGES: CommonCharges = { perKwh: 0, reducedPerDay: 0, normalPerDay: 0 };
+export const NO_COMMON_CHARGES: CommonCharges = {
+  perKwh: 0,
+  normalPerKwh: 0,
+  reducedPerDay: 0,
+  normalPerDay: 0,
+};
 
 function totalKwh(consumption: Consumption): number {
   return Object.values(consumption).reduce((sum, value) => sum + (value ?? 0), 0);
@@ -98,9 +105,10 @@ export function estimateCost(
     common.normalPerDay * days -
     ((prices.discountPerYear ?? 0) * days) / 365;
   const reduced = common.reducedPerDay * days;
+  const normal = common.normalPerKwh * kwh;
 
-  const net = energy + fixed + reduced;
-  const vat = energy * energyVat + fixed * VAT_NORMAL + reduced * VAT_REDUCED;
+  const net = energy + fixed + reduced + normal;
+  const vat = energy * energyVat + (fixed + normal) * VAT_NORMAL + reduced * VAT_REDUCED;
   const services = ((prices.servicesPerYearWithVat ?? 0) * days) / 365;
   const netCents = Math.round(net * 100);
   const vatCents = Math.round(vat * 100);

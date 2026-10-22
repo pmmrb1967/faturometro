@@ -31,6 +31,41 @@ describe('estimateCost', () => {
     });
   });
 
+  it('taxes the IEC at 23 %, even within the reduced-rate kWh (ERSE)', () => {
+    // 100 kWh in 30 days, all within 200 kWh; IEC 1 €/kWh (exaggerated to show the rate):
+    // 100 × 1 × 1,23 = 123 € (with the energy's 6 % it would be 106 €).
+    const estimate = estimateCost(
+      { fixedPerDay: 0, energy: { simple: 0 } },
+      { simple: 100 },
+      30,
+      { powerKva: 6.9 },
+      { perKwh: 0, normalPerKwh: 1, reducedPerDay: 0, normalPerDay: 0 },
+    );
+    expect(estimate.totalCents).toBe(12_300);
+  });
+
+  it('reads the IEC from the invoice lines as a 23 % charge', () => {
+    const tax = (description: string, amountCents: number) =>
+      ({ kind: 'tax', description, amountCents, quantity: 100, unit: 'kWh' }) as const;
+    const breakdown = breakdownFromLines(
+      [
+        {
+          kind: 'energy',
+          description: 'Energia',
+          amountCents: 2000,
+          quantity: 100,
+          unit: 'kWh',
+          unitPrice: '0.2',
+        },
+        tax('Imposto Especial Consumo', 10),
+        tax('Financiamento Tarifa Social', 5),
+      ],
+      30,
+    );
+    expect(breakdown?.common.normalPerKwh).toBeCloseTo(0.001, 10);
+    expect(breakdown?.common.perKwh).toBeCloseTo(0.0005, 10);
+  });
+
   it('needs a price for every period with consumption', () => {
     expect(() =>
       estimateCost({ fixedPerDay: 0, energy: { simple: 0.2 } }, { empty: 10 }, 30, {
