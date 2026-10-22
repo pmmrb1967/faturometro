@@ -1,6 +1,7 @@
 import type {
   AiUsageRecord,
   Alert,
+  ConsumptionProfile,
   Contract,
   FieldCorrection,
   Invoice,
@@ -38,6 +39,9 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     settings: new EncryptedTable<Settings>(db.settings, key, []),
     expenses: new EncryptedTable<RecurringExpense>(db.expenses, key, []),
     payments: new EncryptedTable<Payment>(db.payments, key, []),
+    consumptionProfiles: new EncryptedTable<ConsumptionProfile>(db.consumptionProfiles, key, [
+      'supplyPointId',
+    ]),
     documents: new DocumentStore(db.documents, key),
   };
 }

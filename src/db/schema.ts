@@ -76,7 +76,13 @@ export const SCHEMA_V5 = {
   payments: 'id, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V5;
+/** v6: daily consumption from E-Redes exports, one per CPE (docs/eredes-xlsx.md). New table only. */
+export const SCHEMA_V6 = {
+  ...SCHEMA_V5,
+  consumptionProfiles: 'id, supplyPointId, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V6;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -93,6 +99,7 @@ export class ProfileDb extends Dexie {
   aiUsage!: Table<StoredRow, string>;
   expenses!: Table<StoredRow, string>;
   payments!: Table<StoredRow, string>;
+  consumptionProfiles!: Table<StoredRow, string>;
 
   constructor(profileId: string) {
     super(profileDbName(profileId));
@@ -110,6 +117,7 @@ export class ProfileDb extends Dexie {
       );
     this.version(4).stores(SCHEMA_V4);
     this.version(5).stores(SCHEMA_V5);
+    this.version(6).stores(SCHEMA_V6);
   }
 }
 

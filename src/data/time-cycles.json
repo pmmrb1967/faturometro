@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "source": "docs/time-cycles.md",
+  "consulted": "2026-10-22",
+  "region": "continente",
+  "maps": {
+    "pre-2027": {
+      "daily": {
+        "winter": [
+          ["00:00", "empty"],
+          ["08:00", "full"],
+          ["09:00", "peak"],
+          ["10:30", "full"],
+          ["18:00", "peak"],
+          ["20:30", "full"],
+          ["22:00", "empty"]
+        ],
+        "summer": [
+          ["00:00", "empty"],
+          ["08:00", "full"],
+          ["10:30", "peak"],
+          ["13:00", "full"],
+          ["19:30", "peak"],
+          ["21:00", "full"],
+          ["22:00", "empty"]
+        ]
+      },
+      "weekly": {
+        "winter": {
+          "weekday": [
+            ["00:00", "empty"],
+            ["07:00", "full"],
+            ["09:30", "peak"],
+            ["12:00", "full"],
+            ["18:30", "peak"],
+            ["21:00", "full"]
+          ],
+          "saturday": [
+            ["00:00", "empty"],
+            ["09:30", "full"],
+            ["13:00", "empty"],
+            ["18:30", "full"],
+            ["22:00", "empty"]
+          ],
+          "sunday": [["00:00", "empty"]]
+        },
+        "summer": {
+          "weekday": [
+            ["00:00", "empty"],
+            ["07:00", "full"],
+            ["09:15", "peak"],
+            ["12:15", "full"]
+          ],
+          "saturday": [
+            ["00:00", "empty"],
+            ["09:00", "full"],
+            ["14:00", "empty"],
+            ["20:00", "full"],
+            ["22:00", "empty"]
+          ],
+          "sunday": [["00:00", "empty"]]
+        }
+      }
+    },
+    "2027": {
+      "daily": {
+        "winter": [
+          ["00:00", "empty"],
+          ["08:30", "full"],
+          ["17:30", "peak"],
+          ["21:30", "full"],
+          ["22:30", "empty"]
+        ],
+        "summer": [
+          ["00:00", "empty"],
+          ["08:30", "full"],
+          ["17:30", "peak"],
+          ["21:30", "full"],
+          ["22:30", "empty"]
+        ]
+      },
+      "weekly": {
+        "winter": {
+          "weekday": [
+            ["00:00", "full"],
+            ["00:30", "empty"],
+            ["07:30", "full"],
+            ["17:00", "peak"],
+            ["22:00", "full"]
+          ],
+          "saturday": [
+            ["00:00", "empty"],
+            ["17:00", "full"]
+          ],
+          "sunday": [["00:00", "empty"]]
+        },
+        "summer": {
+          "weekday": [
+            ["00:00", "full"],
+            ["00:30", "empty"],
+            ["07:30", "full"],
+            ["19:30", "peak"],
+            ["22:30", "full"]
+          ],
+          "saturday": [
+            ["00:00", "empty"],
+            ["17:00", "full"]
+          ],
+          "sunday": [["00:00", "empty"]]
+        }
+      }
+    }
+  }
+}

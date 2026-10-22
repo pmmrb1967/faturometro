@@ -1,5 +1,6 @@
 /** Shared domain types (PLAN.md section 7). Money in integer cents; dates as ISO YYYY-MM-DD. */
 import type { Cents } from '../lib/money';
+import type { MeterCycle, MeterPeriod, PeriodsMap } from './time-cycles';
 
 export type Sector = 'telecom' | 'electricity' | 'gas' | 'water' | 'insurance' | 'other';
 export type Confidence = 'high' | 'low';
@@ -276,6 +277,38 @@ export interface Payment extends SyncMeta {
   paidOn?: IsoDate;
   /** The user says it is not paid (a direct debit that failed): no automatic mark. */
   unpaid?: true;
+}
+
+/** Wh in the empty, full and peak hours of a meter cycle. */
+export type PeriodSplit = Record<MeterPeriod, number>;
+
+/** One Lisbon day of an E-Redes export, summed from its quarter hours. */
+export interface ConsumptionDay {
+  date: IsoDate;
+  /** Whole Wh. */
+  wh: number;
+  /** Wh of the quarter hours E-Redes estimated (meter not read). */
+  estimatedWh?: number;
+  /** The same Wh split by period, for each map and cycle (docs/time-cycles.md). */
+  split: Record<PeriodsMap, Record<MeterCycle, PeriodSplit>>;
+}
+
+/**
+ * Consumption of a supply point from the 15-minute export of the E-Redes
+ * Balcão Digital (docs/eredes-xlsx.md), kept as daily sums: the quarter hours
+ * themselves are not stored. One per CPE; a new file replaces it.
+ */
+export interface ConsumptionProfile extends SyncMeta {
+  /** CPE, without spaces. */
+  supplyPointId: string;
+  /** First and last day in the file. */
+  dateFrom: IsoDate;
+  dateTo: IsoDate;
+  /** Oldest first. */
+  days: ConsumptionDay[];
+  /** Quarter hours missing in the file (e.g. the repeated hour in October). */
+  missingQuarters: number;
+  importedAt: IsoDateTime;
 }
 
 /** One AI request, kept on this device only (PLAN.md §10: tokens per call, locally). */

@@ -1,13 +1,14 @@
 /**
  * Electricity comparator (PLAN.md §8): annual consumption from the user's
- * readings, current cost from the latest invoice's prices, and the estimated
+ * readings or from an E-Redes export (consumption-profile.ts), current cost from the latest invoice's prices, and the estimated
  * annual cost of every valid ERSE offer for the same power. "Estimativa",
  * never "poupança garantida".
  */
 import { breakdownFromLines, periodDays, type InvoiceBreakdown } from './contract-prices';
 import { estimateCost, type Consumption, type Household, type Prices } from './electricity-cost';
 import { powerKey, type CycleCode, type CyclePrices, type Offer } from './erse';
-import type { Invoice, InvoiceLine, Reading } from './types';
+import { METER_CYCLES, type MeterCycle, type MeterPeriod, type PeriodsMap } from './time-cycles';
+import type { Invoice, InvoiceLine, IsoDate, Reading } from './types';
 
 const YEAR = 365;
 
@@ -17,6 +18,10 @@ export interface AnnualUsage {
   total: number;
   /** Days of real data behind the estimate (< 365 → extrapolated). */
   daysCovered: number;
+  /** kWh per year by period of each meter cycle: known from an E-Redes export only. */
+  byCycle?: Record<MeterCycle, Record<MeterPeriod, number>>;
+  /** Set when the consumption comes from an E-Redes export instead of the invoices. */
+  source?: { kind: 'eredes'; from: IsoDate; to: IsoDate; map: PeriodsMap };
 }
 
 /** Readings of invoices whose period ends in the last 12 months, scaled to a year. */
@@ -57,10 +62,23 @@ export function annualUsage(
   return { byPeriod, total: total * scale, daysCovered };
 }
 
-/** Consumption split for an ERSE cycle, or null when the readings cannot split it. */
-export function consumptionFor(cycle: CycleCode, usage: AnnualUsage): Consumption | null {
-  const { empty, offEmpty, full, peak } = usage.byPeriod;
+/**
+ * Consumption split for an ERSE cycle, or null when the readings cannot split
+ * it. With an E-Redes profile, the split of the given meter cycle.
+ */
+export function consumptionFor(
+  cycle: CycleCode,
+  usage: AnnualUsage,
+  meterCycle: MeterCycle = 'daily',
+): Consumption | null {
   if (cycle === '1') return { simple: usage.total };
+  const split = usage.byCycle?.[meterCycle];
+  if (split) {
+    return cycle === '2'
+      ? { empty: split.empty, offEmpty: split.full + split.peak }
+      : { empty: split.empty, full: split.full, peak: split.peak };
+  }
+  const { empty, offEmpty, full, peak } = usage.byPeriod;
   if (cycle === '2') {
     if (empty === undefined) return null;
     const rest =
@@ -96,6 +114,8 @@ export interface OfferResult {
   annualCents: number;
   /** Positive = cheaper than the current contract. */
   savingCents: number;
+  /** Daily or weekly, the cheaper for this consumption (bi- and tri-hourly with an E-Redes profile). */
+  meterCycle?: MeterCycle;
 }
 
 export interface Comparison {
@@ -111,6 +131,8 @@ export interface CompareInput {
   usage: AnnualUsage;
   household: Household;
   today: string;
+  /** Cycle of the current contract's meter (daily when not known). */
+  currentMeterCycle?: MeterCycle;
 }
 
 function currentBreakdown(input: CompareInput): InvoiceBreakdown | null {
@@ -121,17 +143,27 @@ function currentBreakdown(input: CompareInput): InvoiceBreakdown | null {
 }
 
 /** Annual consumption split the way the current contract is billed. */
-function currentConsumption(breakdown: InvoiceBreakdown, usage: AnnualUsage): Consumption | null {
+function currentConsumption(
+  breakdown: InvoiceBreakdown,
+  usage: AnnualUsage,
+  meterCycle: MeterCycle,
+): Consumption | null {
   const billed = Object.keys(breakdown.consumption) as (keyof Consumption)[];
   if (billed.length === 1 && billed[0] === 'simple') return { simple: usage.total };
-  if (billed.includes('full') || billed.includes('peak')) return consumptionFor('3', usage);
-  return consumptionFor('2', usage);
+  if (billed.includes('full') || billed.includes('peak')) {
+    return consumptionFor('3', usage, meterCycle);
+  }
+  return consumptionFor('2', usage, meterCycle);
 }
 
 export function compareOffers(input: CompareInput): Comparison | null {
   const breakdown = currentBreakdown(input);
   if (!breakdown) return null;
-  const consumption = currentConsumption(breakdown, input.usage);
+  const consumption = currentConsumption(
+    breakdown,
+    input.usage,
+    input.currentMeterCycle ?? 'daily',
+  );
   if (!consumption) return null;
   const current = estimateCost(
     breakdown.prices,
@@ -150,21 +182,30 @@ export function compareOffers(input: CompareInput): Comparison | null {
     if (!byCycle) continue;
     for (const cycle of ['1', '2', '3'] as const) {
       const prices = byCycle[cycle];
-      const split = prices ? consumptionFor(cycle, input.usage) : null;
-      if (!prices || !split) continue;
-      const estimate = estimateCost(
-        offerPrices(offer, prices),
-        split,
-        YEAR,
-        input.household,
-        breakdown.common,
-      );
-      results.push({
-        offer,
-        cycle,
-        annualCents: estimate.totalCents,
-        savingCents: current.totalCents - estimate.totalCents,
-      });
+      if (!prices) continue;
+      // With a profile, a bi- or tri-hourly offer can go on either meter cycle: the cheaper.
+      const meterCycles = cycle !== '1' && input.usage.byCycle ? METER_CYCLES : [undefined];
+      let best: OfferResult | null = null;
+      for (const meterCycle of meterCycles) {
+        const split = consumptionFor(cycle, input.usage, meterCycle);
+        if (!split) continue;
+        const estimate = estimateCost(
+          offerPrices(offer, prices),
+          split,
+          YEAR,
+          input.household,
+          breakdown.common,
+        );
+        if (best && best.annualCents <= estimate.totalCents) continue;
+        best = {
+          offer,
+          cycle,
+          annualCents: estimate.totalCents,
+          savingCents: current.totalCents - estimate.totalCents,
+          ...(meterCycle ? { meterCycle } : {}),
+        };
+      }
+      if (best) results.push(best);
     }
   }
   results.sort((a, b) => a.annualCents - b.annualCents);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annualUsage, compareOffers, consumptionFor } from './compare';
+import { annualUsage, compareOffers, consumptionFor, type AnnualUsage } from './compare';
 import type { Offer } from './erse';
 import type { Invoice, InvoiceLine, Reading } from './types';
 
@@ -188,5 +188,88 @@ describe('compareOffers', () => {
     expect(result?.results.map((item) => item.cycle).sort()).toEqual(['1', '2', '3']);
     // Same prices as the current contract: no saving on the simple version.
     expect(result?.results.find((item) => item.cycle === '1')?.savingCents).toBe(0);
+  });
+});
+
+describe('compareOffers with an E-Redes profile', () => {
+  // Simple contract; the profile splits every cycle: weekly has more empty hours.
+  const energy = {
+    ...META,
+    id: 'e',
+    invoiceId: 'b',
+    kind: 'energy',
+    description: 'Energia',
+    amountCents: 4000,
+    quantity: 200,
+    unit: 'kWh',
+    unitPrice: '0.2',
+  } satisfies InvoiceLine;
+  const latest = { periodStart: '2026-05-01', periodEnd: '2026-05-30', lines: [energy] };
+  const usage: AnnualUsage = {
+    byPeriod: { empty: 1000, full: 1500, peak: 500 },
+    byCycle: {
+      daily: { empty: 1000, full: 1500, peak: 500 },
+      weekly: { empty: 1200, full: 1500, peak: 300 },
+    },
+    total: 3000,
+    daysCovered: 365,
+    source: { kind: 'eredes', from: '2025-10-23', to: '2026-10-21', map: 'pre-2027' },
+  };
+  const multi = offer('multi', {
+    '6.9': {
+      '1': { fixedPerDay: 0, simple: 0.2 },
+      '2': { fixedPerDay: 0, offEmpty: 0.25, empty: 0.1 },
+      '3': { fixedPerDay: 0, peak: 0.4, full: 0.2, empty: 0.1 },
+    },
+  });
+
+  it('splits every cycle and keeps the cheaper of daily and weekly', () => {
+    expect(consumptionFor('2', usage, 'weekly')).toEqual({ empty: 1200, offEmpty: 1800 });
+    expect(consumptionFor('3', usage, 'daily')).toEqual({ empty: 1000, full: 1500, peak: 500 });
+    const result = compareOffers({
+      offers: [multi],
+      latest,
+      usage,
+      household: { powerKva: 6.9 },
+      today: '2026-06-15',
+    });
+    const byCycle = Object.fromEntries(
+      (result?.results ?? []).map((item) => [item.cycle, item.meterCycle]),
+    );
+    expect(byCycle).toEqual({ '1': undefined, '2': 'weekly', '3': 'weekly' });
+  });
+
+  it('prices the current bi-hourly contract with its own cycle', () => {
+    const bi = {
+      ...latest,
+      lines: [
+        {
+          ...energy,
+          id: 'v',
+          period: 'empty',
+          quantity: 100,
+          amountCents: 1000,
+          unitPrice: '0.1',
+        },
+        {
+          ...energy,
+          id: 'f',
+          period: 'off_empty',
+          quantity: 100,
+          amountCents: 2500,
+          unitPrice: '0.25',
+        },
+      ] satisfies InvoiceLine[],
+    };
+    const input = {
+      offers: [],
+      latest: bi,
+      usage,
+      household: { powerKva: 6.9 },
+      today: '2026-06-15',
+    };
+    const daily = compareOffers(input)!.currentAnnualCents;
+    const weekly = compareOffers({ ...input, currentMeterCycle: 'weekly' })!.currentAnnualCents;
+    expect(weekly).toBeLessThan(daily);
   });
 });

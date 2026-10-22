@@ -12,6 +12,7 @@ import {
   SCHEMA_V2,
   SCHEMA_V3,
   SCHEMA_V4,
+  SCHEMA_V5,
   type TableName,
 } from './schema';
 
@@ -190,10 +191,28 @@ describe('schema migrations', () => {
     v4.close();
 
     const current = new ProfileDb(id);
-    expect(current.verno).toBe(5);
+    expect(current.verno).toBeGreaterThanOrEqual(5);
     expect(await current.invoices.count()).toBe(1);
     expect(await current.expenses.count()).toBe(0);
     expect(await current.payments.count()).toBe(0);
+    await current.delete();
+  });
+
+  it('upgrades v5 to v6 with E-Redes consumption profiles', async () => {
+    const id = crypto.randomUUID();
+    const v5 = new Dexie(profileDbName(id));
+    v5.version(1).stores(SCHEMA_V1);
+    v5.version(2).stores(SCHEMA_V2);
+    v5.version(3).stores(SCHEMA_V3);
+    v5.version(4).stores(SCHEMA_V4);
+    v5.version(5).stores(SCHEMA_V5);
+    await v5.table('payments').add({ id: 'p', updatedAt: 'x', enc: {} });
+    v5.close();
+
+    const current = new ProfileDb(id);
+    expect(current.verno).toBe(6);
+    expect(await current.payments.count()).toBe(1);
+    expect(await current.consumptionProfiles.count()).toBe(0);
     await current.delete();
   });
 
