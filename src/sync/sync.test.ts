@@ -15,6 +15,7 @@ import {
   enableSync,
   reconnectSync,
   fetchOriginal,
+  removeOriginalsFromServer,
   runSync,
   setFileSync,
   SyncError,
@@ -506,6 +507,29 @@ describe('original files', () => {
     expect((await b.repos.documents.getByFileHash('old'))?.mime).toBe('image/jpeg');
     const again = await runSync({ ...b, profile: stateB, api });
     expect(again.files).toMatchObject({ uploaded: 0, downloaded: 0 });
+  });
+
+  it('frees the server space, keeping every original on the devices', async () => {
+    const a = await deviceA();
+    await a.repos.documents.put({ fileHash: 'h1', mime: 'application/pdf', bytes: pdf });
+    await a.repos.documents.put({ fileHash: 'h2', mime: 'application/pdf', bytes: pdf });
+    const stateA = (await runSync({ ...a, profile: await setFileSync(a.profile, true), api }))
+      .profile;
+
+    // B has file sync off: the originals are only on the server for it.
+    const b = await deviceB();
+    await runSync({ ...b, api });
+    expect(await removeOriginalsFromServer({ ...b, api })).toEqual({ removed: 2, downloaded: 2 });
+    const files = fileDb.prepare('SELECT COUNT(*) AS n FROM chunks').get() as { n: number };
+    expect(files.n).toBe(0);
+    expect(await b.repos.documents.stateOf('h1')).toBe('pruned');
+    expect((await b.repos.documents.getByFileHash('h1'))?.bytes).toBeDefined();
+
+    // A keeps its copies and does not send them again.
+    const again = await on(stateA, () => runSync({ ...a, profile: stateA, api }));
+    expect(again.files).toMatchObject({ uploaded: 0, downloaded: 0 });
+    expect(await a.repos.documents.stateOf('h2')).toBe('pruned');
+    expect((await a.repos.documents.getByFileHash('h2'))?.bytes).toBeDefined();
   });
 
   it('counts the window in calendar months', () => {

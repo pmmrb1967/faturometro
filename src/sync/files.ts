@@ -100,14 +100,42 @@ async function pruneOld(
       '',
     );
     if (newest >= cutoff) continue;
-    const record = await repos.documents.prunedRecord(id);
-    // Announce first: a file left on the server is harmless, a silent removal is not.
-    await api.push(token, [{ table: 'documents', ...record }]);
-    await api.deleteFile(token, id);
-    await repos.documents.markPruned(id);
+    await removeFromServer(repos, api, token, id);
     pruned++;
   }
   return pruned;
+}
+
+/** Takes one original off the server; its contents must be on this device. */
+async function removeFromServer(repos: Repositories, api: SyncApi, token: string, id: string) {
+  const record = await repos.documents.prunedRecord(id);
+  // Announce first: a file left on the server is harmless, a silent removal is not.
+  await api.push(token, [{ table: 'documents', ...record }]);
+  await api.deleteFile(token, id);
+  await repos.documents.markPruned(id);
+}
+
+/**
+ * Frees the space of every original on the server, keeping them on the
+ * devices: those only on the server are downloaded here first, so none is
+ * lost. Devices with file sync on still send the originals added later.
+ */
+export async function removeAllFiles(
+  repos: Repositories,
+  api: SyncApi,
+  token: string,
+  key: CryptoKey,
+): Promise<{ removed: number; downloaded: number }> {
+  let downloaded = 0;
+  for (const meta of await repos.documents.remoteOnly()) {
+    if (await download(repos, api, token, key, meta)) downloaded++;
+  }
+  let removed = 0;
+  for (const { id } of await repos.documents.onServerHere()) {
+    await removeFromServer(repos, api, token, id);
+    removed++;
+  }
+  return { removed, downloaded };
 }
 
 /** Downloads one file's contents; false if they are no longer on the server. */

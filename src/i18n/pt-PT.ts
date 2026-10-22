@@ -812,7 +812,7 @@ export const t = {
     disabled: 'Sincronização desligada.',
     files: {
       label: 'Sincronizar também os PDFs e fotografias originais neste dispositivo',
-      hint: 'Cifrados aqui, como o resto. Sem esta opção, os originais dos outros dispositivos descarregam-se só quando os abrires.',
+      hint: 'Cifrados aqui, como o resto. Liga-a em cada dispositivo cujos originais queres enviar. Sem esta opção, os originais dos outros dispositivos descarregam-se só quando os abrires.',
       needsKeep:
         'Para enviar originais, liga também “Guardar o PDF ou a fotografia original” nas preferências.',
       usage: (used: string, quota: string) => `Espaço usado no servidor: ${used} de ${quota}.`,
@@ -827,6 +827,18 @@ export const t = {
         count === 1 ? 'Enviado 1 original.' : `Enviados ${count} originais.`,
       received: (count: number) =>
         count === 1 ? 'Recebido 1 original.' : `Recebidos ${count} originais.`,
+      remove: {
+        button: 'Retirar os originais do servidor',
+        confirm:
+          'Os originais saem do servidor e ficam só nos dispositivos que os têm; os que só estão no servidor descarregam-se primeiro para este. Os dispositivos com esta opção ligada continuam a enviar os originais novos.',
+        confirmButton: 'Retirar',
+        cancel: 'Cancelar',
+        working: 'A retirar…',
+        done: (count: number) =>
+          count === 1
+            ? '1 original saiu do servidor (continua neste dispositivo).'
+            : `${count} originais saíram do servidor (continuam neste dispositivo).`,
+      },
     },
     reconnect: {
       password: 'Palavra-passe (a mais recente)',

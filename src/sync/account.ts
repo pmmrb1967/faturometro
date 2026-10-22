@@ -25,7 +25,7 @@ import {
 } from '../lib/crypto';
 import { SyncApi, SyncHttpError } from './api';
 import { syncNow, type SyncResult } from './engine';
-import { download, syncFiles, type FileSyncResult } from './files';
+import { download, removeAllFiles, syncFiles, type FileSyncResult } from './files';
 
 export type SyncErrorCode =
   | 'wrong_password'
@@ -265,6 +265,24 @@ export async function fetchOriginal(input: {
   const token = (await decryptJson(input.masterKey, sync.token)) as string;
   try {
     return await download(input.repos, api, token, input.masterKey, meta);
+  } catch (error) {
+    fromHttp(error, { 401: 'session_expired' });
+  }
+}
+
+/** Frees the server space of every original (they stay on the devices). */
+export async function removeOriginalsFromServer(input: {
+  profile: Profile;
+  masterKey: CryptoKey;
+  repos: Repositories;
+  api?: SyncApi;
+}): Promise<{ removed: number; downloaded: number }> {
+  const sync = input.profile.sync;
+  if (!sync) throw new Error('Sync is not enabled');
+  const api = input.api ?? new SyncApi(sync.serverUrl);
+  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  try {
+    return await removeAllFiles(input.repos, api, token, input.masterKey);
   } catch (error) {
     fromHttp(error, { 401: 'session_expired' });
   }

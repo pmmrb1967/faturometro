@@ -13,6 +13,7 @@ import {
   enableSync,
   fileUsage,
   reconnectSync,
+  removeOriginalsFromServer,
   setFileSync,
   SyncError,
 } from '../../sync/account';
@@ -255,15 +256,34 @@ function FileSyncOption() {
   // Shown at once; the saved value follows.
   const [pending, setPending] = useState<boolean>();
   const enabled = pending ?? Boolean(session?.profile.sync?.files);
+  const [removal, setRemoval] = useState<
+    | { step: 'confirm' | 'working' }
+    | { step: 'done'; removed: number }
+    | { step: 'error'; text: string | undefined }
+  >();
   const usage = useLiveQuery(async () => {
-    if (!session?.profile.sync || !enabled) return null;
+    if (!session?.profile.sync) return null;
     try {
       return await fileUsage(session);
     } catch {
       return null;
     }
-  }, [session, enabled, status.files?.uploaded]);
+  }, [session, enabled, status.files?.uploaded, removal?.step]);
   if (!session?.profile.sync) return null;
+
+  async function removeAll() {
+    if (!session) return;
+    setRemoval({ step: 'working' });
+    try {
+      const { removed } = await removeOriginalsFromServer(session);
+      setRemoval({ step: 'done', removed });
+    } catch (caught) {
+      setRemoval({
+        step: 'error',
+        text: errorText(caught instanceof SyncError ? caught.code : 'unexpected'),
+      });
+    }
+  }
 
   async function toggle(checked: boolean) {
     if (!session) return;
@@ -303,6 +323,45 @@ function FileSyncOption() {
         <p role="status">{copy.files.received(files.downloaded)}</p>
       )}
       {enabled && !!files?.pruned && <p role="status">{copy.files.pruned(files.pruned)}</p>}
+      {!enabled && usage && usage.used > 0 && (
+        <p className="muted">
+          {copy.files.usage(formatMegabytes(usage.used), formatMegabytes(usage.quota))}
+        </p>
+      )}
+      {usage && usage.used > 0 && !removal && (
+        <button
+          type="button"
+          className="action-secondary"
+          onClick={() => setRemoval({ step: 'confirm' })}
+        >
+          {copy.files.remove.button}
+        </button>
+      )}
+      {(removal?.step === 'confirm' || removal?.step === 'working') && (
+        <div className="file-sync-remove">
+          <p>{copy.files.remove.confirm}</p>
+          <button
+            type="button"
+            className="action-primary"
+            disabled={removal.step === 'working'}
+            onClick={() => void removeAll()}
+          >
+            {removal.step === 'working'
+              ? copy.files.remove.working
+              : copy.files.remove.confirmButton}
+          </button>
+          <button
+            type="button"
+            className="action-secondary"
+            disabled={removal.step === 'working'}
+            onClick={() => setRemoval(undefined)}
+          >
+            {copy.files.remove.cancel}
+          </button>
+        </div>
+      )}
+      {removal?.step === 'done' && <p role="status">{copy.files.remove.done(removal.removed)}</p>}
+      {removal?.step === 'error' && <p className="ingest-problem">{removal.text}</p>}
     </div>
   );
 }
