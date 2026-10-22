@@ -17,7 +17,7 @@ export const t = {
       {
         title: 'No teu dispositivo (sempre)',
         body: [
-          'A conta, as faturas, os contratos, os alertas e os PDFs originais ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
+          'A conta, as faturas, os contratos, os alertas, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
           'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
           'Não há cookies, publicidade nem registos com os teus dados.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
@@ -669,6 +669,19 @@ export const t = {
     saving: (value: string) => `Poupança estimada: ${value}/ano`,
     moreExpensive: (value: string) => `Mais cara: ${value}/ano`,
     cycles: { '1': 'Simples', '2': 'Bi-horária', '3': 'Tri-horária' } as Record<string, string>,
+    meterCycles: { daily: 'ciclo diário', weekly: 'ciclo semanal' },
+    usageEredes: (from: string, to: string) =>
+      `Consumo real, quarto de hora a quarto de hora, dos consumos da E-Redes de ${from} a ${to}.`,
+    eredesStale: (days: number) =>
+      `Os teus consumos da E-Redes só cobrem ${days} dos últimos 365 dias: a estimativa usa as faturas. Pede um ficheiro novo à E-Redes e importa-o na página do contrato.`,
+    eredesHint:
+      'Tens o ficheiro de consumos a 15 minutos da E-Redes? Importa-o na página do contrato para comparar também a bi-horária e a tri-horária com o teu consumo real.',
+    eredesHintLink: 'Ir para o contrato',
+    periodsMap: {
+      label: 'Horários de vazio, cheias e ponta',
+      options: { 'pre-2027': 'Atuais', '2027': 'Novos, de 2027' },
+      hint: 'Os contadores bi e tri-horários passam aos novos horários entre julho e dezembro de 2027 (Diretiva ERSE n.º 3/2026); a E-Redes avisa-te da data.',
+    },
     conditions: {
       loyalty: 'Com fidelização',
       indexed: 'Preços indexados (variam)',
@@ -1149,6 +1162,47 @@ export const t = {
       open: 'Ver ofertas no COM.escolha (ANACOM)',
       unavailable: 'A ligação ao COM.escolha não está disponível nesta versão.',
       note: 'Abre o comparador oficial da ANACOM noutra janela: a app não envia nada para lá. Os tarifários são introduzidos pelos operadores. A média inclui extras (chamadas, roaming, aluguer de equipamentos), por isso pode ficar acima do preço do pacote. Se não houver ofertas até esse valor, o COM.escolha diz que não encontrou ofertas compatíveis.',
+    },
+    eredes: {
+      title: 'Consumos da E-Redes',
+      intro:
+        'Opcional. Com o ficheiro dos teus consumos a 15 minutos, o comparador usa o teu consumo real hora a hora: compara também a bi-horária e a tri-horária, em ciclo diário e semanal, mesmo que hoje tenhas a simples, e mostra o efeito dos novos horários de 2027.',
+      privacy:
+        'O ficheiro é lido neste dispositivo e não é guardado: ficam só os totais por dia, cifrados como o resto dos teus dados.',
+      stepsTitle: 'Como obter o ficheiro',
+      steps: [
+        'Entra no Balcão Digital da E-Redes com a tua conta.',
+        'Em "Consultar histórico", escolhe os consumos a 15 minutos, estado real e estimado, e o período mais longo possível (12 meses).',
+        'Exporta: o ficheiro .xlsx fica pronto até 24 horas depois (o portal avisa).',
+        'Escolhe-o aqui, sem o abrir nem gravar no Excel antes.',
+      ],
+      choose: 'Escolher o ficheiro da E-Redes (.xlsx)',
+      chooseAgain: 'Importar um ficheiro novo',
+      replaceHint: 'Um ficheiro novo substitui o anterior. Pede-o uma vez por ano.',
+      reading: 'A ler o ficheiro…',
+      stored: (from: string, to: string) => `Consumos de ${from} a ${to}`,
+      storedDetail: (kwh: string, days: number) => `${kwh} kWh em ${days} dias.`,
+      estimated: (percent: string) =>
+        `${percent} % do consumo foi estimado pela E-Redes (o contador não comunicou).`,
+      emptyShare: (now: string, next: string) =>
+        `Na bi-horária (ciclo diário), ${now} % do teu consumo cai em vazio; com os horários de 2027, ${next} %.`,
+      used: 'O comparador usa estes consumos em vez das faturas.',
+      stale: (days: number) =>
+        `Só ${days} dos últimos 365 dias têm consumos: o comparador volta a usar as faturas. Pede um ficheiro novo à E-Redes.`,
+      imported: 'Consumos importados.',
+      remove: 'Apagar os consumos',
+      removeConfirm: 'Apagar os consumos da E-Redes deste CPE? Podes voltar a importá-los.',
+      removed: 'Consumos apagados.',
+      errors: {
+        not_xlsx: 'Não consegui ler o ficheiro: tem de ser o .xlsx exportado da E-Redes.',
+        not_eredes:
+          'Este .xlsx não é a exportação de consumos da E-Redes (cabeçalho, unidade ou CPE diferentes).',
+        bad_row: (row: number) => `Linha ${row} do ficheiro com valores que não consigo ler.`,
+        duplicate: (row: number) => `A linha ${row} repete um quarto de hora já lido.`,
+        empty: 'O ficheiro não tem consumos.',
+        otherSupplyPoint: (cpe: string) =>
+          `Este ficheiro é do CPE ${cpe}, que não é o deste contrato.`,
+      },
     },
     switch: {
       title: 'Mudança de fornecedor',

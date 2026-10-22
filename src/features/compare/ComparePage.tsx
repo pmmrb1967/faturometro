@@ -3,9 +3,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { SelectField } from '../../components/Field';
 import { annualUsage, compareOffers } from '../../domain/compare';
 import { combineElectricityGas, compareGas } from '../../domain/compare-gas';
+import { profileSummary, profileUsage, sameSupplyPoint } from '../../domain/consumption-profile';
 import { offersFileSchema, OFFERS_URL, type OffersFile } from '../../domain/erse';
 import { hasEarlierAdjustments } from '../../domain/gas-cost';
-import type { Contract, Invoice, InvoiceLine, Provider, Reading } from '../../domain/types';
+import type { PeriodsMap } from '../../domain/time-cycles';
+import type {
+  ConsumptionProfile,
+  Contract,
+  Invoice,
+  InvoiceLine,
+  Provider,
+  Reading,
+} from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { today } from '../alerts/refresh';
@@ -21,6 +30,7 @@ import './compare.css';
 const copy = t.compare;
 type Tab = 'electricity' | 'gas' | 'both';
 const TAB_KEY = 'faturometro.compare.tab';
+const MAP_KEY = 'faturometro.compare.periodsMap';
 
 interface Candidate {
   contract: Contract;
@@ -30,6 +40,8 @@ interface Candidate {
   /** Invoice whose lines give the current prices and the common charges. */
   latest: Invoice;
   lines: InvoiceLine[];
+  /** E-Redes export of the contract's CPE (electricity). */
+  profile?: ConsumptionProfile;
 }
 
 function useOffers(): OffersFile | null | 'error' {
@@ -54,6 +66,14 @@ function useOffers(): OffersFile | null | 'error' {
   return offers;
 }
 
+function savedMap(): PeriodsMap {
+  try {
+    return localStorage.getItem(MAP_KEY) === '2027' ? '2027' : 'pre-2027';
+  } catch {
+    return 'pre-2027';
+  }
+}
+
 function savedTab(): Tab {
   try {
     const value = localStorage.getItem(TAB_KEY);
@@ -67,15 +87,17 @@ export function ComparePage() {
   const { session } = useSession();
   const offers = useOffers();
   const [tab, setTab] = useState<Tab>(savedTab);
+  const [periodsMap, setPeriodsMap] = useState<PeriodsMap>(savedMap);
   const [chosenElectricity, setChosenElectricity] = useState<string | null>(null);
   const [chosenGas, setChosenGas] = useState<string | null>(null);
 
   const data = useLiveQuery(async () => {
     if (!session) return null;
-    const [contracts, providers, settings] = await Promise.all([
+    const [contracts, providers, settings, profiles] = await Promise.all([
       session.repos.contracts.list(),
       session.repos.providers.list(),
       getSettings(session.repos),
+      session.repos.consumptionProfiles.list(),
     ]);
     const load = async (contract: Contract): Promise<Candidate | null> => {
       const [invoices, readings] = await Promise.all([
@@ -101,7 +123,19 @@ export function ComparePage() {
         }
       }
       const provider = providers.find((item) => item.id === contract.providerId);
-      return { contract, invoices, readings, latest, lines, ...(provider ? { provider } : {}) };
+      const profile =
+        contract.sector === 'electricity'
+          ? profiles.find((item) => sameSupplyPoint(item.supplyPointId, contract.supplyPointId))
+          : undefined;
+      return {
+        contract,
+        invoices,
+        readings,
+        latest,
+        lines,
+        ...(provider ? { provider } : {}),
+        ...(profile ? { profile } : {}),
+      };
     };
     const loaded = async (sector: 'electricity' | 'gas') =>
       (
@@ -135,8 +169,12 @@ export function ComparePage() {
 
   const electricityComparison = useMemo(() => {
     if (!electricity?.contract.electricity || !ready || !data) return null;
-    const usage = annualUsage(electricity.invoices, electricity.readings, date);
+    // The E-Redes export when it covers the last year (every cycle priced), else the invoices.
+    const usage =
+      (electricity.profile ? profileUsage(electricity.profile, periodsMap, date) : null) ??
+      annualUsage(electricity.invoices, electricity.readings, date);
     if (!usage) return null;
+    const meterCycle = electricity.contract.electricity.cycleType;
     return compareOffers({
       offers: ready.offers,
       latest: {
@@ -150,8 +188,9 @@ export function ComparePage() {
         largeFamily: data.settings.largeFamily,
       },
       today: date,
+      ...(meterCycle ? { currentMeterCycle: meterCycle } : {}),
     });
-  }, [electricity, ready, data, date]);
+  }, [electricity, ready, data, date, periodsMap]);
 
   const gasUsage = useMemo(
     () => (gas ? annualUsage(gas.invoices, gas.readings, date) : null),
@@ -187,6 +226,13 @@ export function ComparePage() {
   // "Cheaper offer" alert (PLAN.md §9) for electricity, once per ERSE data update.
   useEffect(() => {
     if (!session || !electricity || !electricityComparison || !ready || !data) return;
+    // Only with the periods in force today: the 2027 ones are a preview.
+    if (
+      electricityComparison.usage.source &&
+      electricityComparison.usage.source.map !== 'pre-2027'
+    ) {
+      return;
+    }
     const best = electricityComparison.results.find((item) => item.offer.supply === 'ELE');
     void recordCheaperOffer(session.repos, {
       contract: electricity.contract,
@@ -205,6 +251,15 @@ export function ComparePage() {
       localStorage.setItem(TAB_KEY, next);
     } catch {
       // Private mode or blocked storage: the tab is simply not remembered.
+    }
+  }
+
+  function chooseMap(next: PeriodsMap) {
+    setPeriodsMap(next);
+    try {
+      localStorage.setItem(MAP_KEY, next);
+    } catch {
+      // Private mode or blocked storage: the choice is simply not remembered.
     }
   }
 
@@ -287,6 +342,13 @@ export function ComparePage() {
               comparison={electricityComparison}
               contract={electricity.contract}
               {...(electricity.provider ? { provider: electricity.provider } : {})}
+              profile={
+                electricity.profile
+                  ? { daysInLastYear: profileSummary(electricity.profile, date).daysInLastYear }
+                  : null
+              }
+              periodsMap={periodsMap}
+              onPeriodsMap={chooseMap}
             />
           )}
         </>

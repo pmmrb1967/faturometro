@@ -376,6 +376,7 @@ custo = preço_potência_dia × 365
 ```
 - Consumo anual: soma dos últimos 12 meses de `readings`; se houver menos, extrapolar e indicar a incerteza.
 - Distribuição por período (vazio/fora de vazio): a real, se o ciclo atual for bi-horário; senão, perfil típico configurável com aviso.
+- Com os consumos da E-Redes importados (pelo menos 330 dos últimos 365 dias), o consumo anual e a divisão por período vêm deles, para todos os ciclos (`docs/eredes-xlsx.md`).
 - As regras de IVA e taxas em vigor têm de ser confirmadas e cobertas por testes com faturas reais (o cálculo da fatura atual tem de bater com o total real ± 2%).
 - Mostrar: custo atual estimado, 5 ofertas mais baratas, poupança anual, condições relevantes (fidelização, débito direto, fatura eletrónica, descontos só para novos clientes).
 - Linguagem: "estimativa", nunca "poupança garantida".
@@ -530,7 +531,8 @@ Escolhidas depois de comparar a app com os simuladores de energia (ERSE, DECO, S
 
 **Onda 2 — diferenciação técnica**
 - [x] "Vale a pena sair já?" (2026-10-18; `src/domain/early-exit.ts`, na página dos contratos de telecomunicações com fidelização a decorrer): mensalidades que faltam, máximo que o operador pode cobrar (ANACOM: 50 % no 1.º ano e 30 % no 2.º das mensalidades que faltam, para contratos desde 14-11-2022; 30 % numa nova fidelização sem mudança na instalação; antes disso, o valor do contrato) contra a poupança da oferta nova; o valor indicado pelo operador, se o utilizador o escrever, tem prioridade
-- [ ] Consumos da E-Redes — **reaberta** (2026-10-22), opcional: importar o ficheiro de 15 minutos do Balcão Digital, com instruções de como o obter; divisão real por ciclo (simples, bi e tri-horário, diário e semanal, horário atual e o de 2027) no comparador. Plano por aprovar
+- [x] Consumos da E-Redes — **reaberta** (2026-10-22), opcional: importar o ficheiro de 15 minutos do Balcão Digital na página do contrato de luz, com os passos para o obter (`docs/eredes-xlsx.md`); o comparador passa a dividir o consumo real por todas as opções horárias (bi e tri-horária em ciclo diário ou semanal, o mais barato), com os horários atuais ou os de 2027
+- [ ] Consumos da E-Redes, a seguir: conferir os kWh de cada fatura com a soma da E-Redes no mesmo período; aviso "a partir de 2027 o teu vazio muda" com o conselho de programar as máquinas para depois das 22:30
 - [x] Visão anual da casa (`src/domain/household.ts`, secção no Início; "quanto já poupaste" fica para quando houver "mudei de fornecedor" no contrato): custo por mês e por setor, previsão dos próximos 12 meses e "quanto já poupaste" depois de uma mudança registada na app
 - [x] "Mudei de fornecedor": terminar um contrato (data, contrato novo ou ligação automática com a primeira fatura de outro fornecedor do mesmo tipo; reativar) e "quanto já poupaste" no contrato novo e no Início (`src/domain/switch-savings.ts`)
 - [ ] Ingestão por email (secção 12) — adiada, ver acima
@@ -736,3 +738,4 @@ Publicada a 2026-10-13, na conta Cloudflare do utilizador (plano gratuito; conta
 | 2026-10-20 | Primeira versão oficial (1.0.0): sai a faixa "Versão beta" da página inicial. |
 | 2026-10-22 | IEC da eletricidade a 23 %: a ERSE (ERSExplica, fevereiro de 2025) enumera as componentes a 6 % (energia até ao limiar, termo fixo da tarifa de acesso até 3,45 kVA, CAV) e o IEC não está entre elas. Antes seguia a divisão da energia. Linhas "Imposto Especial Consumo" (e a isenção) em `CommonCharges.normalPerKwh`. Detetado no Wattómetro |
 | 2026-10-22 | Reaberta a importação dos consumos da E-Redes (retirada em 2026-10-18), como opção: o Wattómetro já tem o leitor do `.xlsx`, as regras da hora e os mapas dos ciclos com fontes, para portar. Ganho principal: comparar ciclos que as faturas não permitem (contrato simples → bi/tri-horário) e o novo mapa horário de 2027 (Diretiva 3/2026). A app explica como pedir o ficheiro no Balcão Digital |
+| 2026-10-22 | Consumos da E-Redes: leitor do `.xlsx`, horas de Lisboa e mapas dos ciclos portados do Wattómetro (`docs/eredes-xlsx.md`, `docs/time-cycles.md`). Guardados só os totais por dia (por ciclo e mapa), um registo por CPE na nova tabela `consumptionProfiles` (esquema v6), cifrado e sincronizado; os quartos de hora e o n.º do contador não. Ficheiro de outro CPE recusado. Comparador: perfil com ≥ 330 dias nos últimos 365, senão faturas; bi e tri-horária no ciclo diário ou semanal mais barato (as ofertas da ERSE não distinguem o ciclo); escolha entre horários atuais e de 2027 (o alerta de oferta mais barata só com os atuais) |

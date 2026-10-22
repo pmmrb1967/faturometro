@@ -9,6 +9,7 @@ import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
 import { ContractAssistant } from '../ai/ContractAssistant';
 import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { EredesSection } from '../consumption/EredesSection';
 import { LettersSection } from '../letters/LettersSection';
 import { MONTHLY_PRICE_SECTORS } from '../../domain/audit';
 import { billingFrequency } from '../../domain/grouping';
@@ -212,6 +213,10 @@ export function ContractPage() {
             await session.repos.contracts.put({ ...contract, telecom: { services } });
           }}
         />
+      )}
+
+      {contract.sector === 'electricity' && (
+        <EredesSection key={`eredes-${contract.id}`} contract={contract} />
       )}
 
       <BarChart
