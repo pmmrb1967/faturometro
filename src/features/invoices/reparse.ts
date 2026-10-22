@@ -6,6 +6,7 @@
  */
 import type { Repositories } from '../../db/repositories';
 import type { Invoice, Provider } from '../../domain/types';
+import { directDebitInText } from '../../parsers/direct-debit';
 import { PARSERS } from '../../parsers/registry';
 import type { Parser } from '../../parsers/types';
 import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
@@ -85,7 +86,8 @@ export async function reparseInvoice(
   if (extraction.periodEnd) updated.periodEnd = extraction.periodEnd.value;
   if (extraction.dueDate) updated.dueDate = extraction.dueDate.value;
   if (extraction.readingWindow) updated.readingWindow = extraction.readingWindow.value;
-  if (extraction.directDebitDate) updated.directDebitDate = extraction.directDebitDate.value;
+  const directDebitDate = extraction.directDebitDate?.value ?? directDebitInText(read.pages);
+  if (directDebitDate) updated.directDebitDate = directDebitDate;
   if (extraction.extraUsage?.length) updated.extraUsage = extraction.extraUsage;
   else delete updated.extraUsage;
   for (const field of ['periodStart', 'periodEnd', 'dueDate'] as const) {

@@ -7,6 +7,7 @@
 import { sha256Hex } from '../../lib/crypto';
 import { PdfPasswordError, type PageText, type PasswordProblem } from '../../pdf/text';
 import { readPolicyDocument, type PolicyDocument } from '../../parsers/policy-documents';
+import { directDebitInText } from '../../parsers/direct-debit';
 import { findParser } from '../../parsers/registry';
 import type { ExtractedInvoice } from '../../parsers/types';
 import { parseFiscalQr, type FiscalQr, type QrParseResult } from '../../qr/parse';
@@ -60,6 +61,8 @@ export type IngestOutcome =
       policyDocument?: PolicyDocument;
       /** The password that opened the PDF, if one was needed. */
       usedPassword?: string;
+      /** Direct debit day said in the text, whatever the layout (a reader's own wins). */
+      directDebitDate?: string;
     };
 
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // %PDF
@@ -170,6 +173,8 @@ export async function ingestFile(
     qrStatus,
   };
   if (usedPassword !== undefined) outcome.usedPassword = usedPassword;
+  const directDebitDate = directDebitInText(pages);
+  if (directDebitDate) outcome.directDebitDate = directDebitDate;
   if (qrStatus !== 'ok') {
     const policyDocument = pages.length > 0 ? readPolicyDocument(pages) : null;
     if (policyDocument) outcome.policyDocument = policyDocument;

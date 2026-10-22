@@ -72,6 +72,33 @@ describe('buildDraft', () => {
     expect(result.ok && result.draft.totalCents).toBe(4279);
   });
 
+  it('takes the direct debit day from the text when the reader has none', () => {
+    const { form } = formFromQr(qr());
+    const filled = { ...form, contractLabel: 'Luz' };
+    const fromText = buildDraft(
+      filled,
+      { fileHash: 'h', qr: qr(), directDebitDate: '2026-07-01' },
+      { providerKnown: true },
+    );
+    expect(fromText.ok && fromText.draft.directDebitDate).toBe('2026-07-01');
+
+    const extraction = emptyExtraction();
+    extraction.directDebitDate = { value: '2026-07-05', confidence: 'high' };
+    const parsed = {
+      parserId: 'x',
+      providerName: 'Fornecedor',
+      parserVersion: '1.0.0',
+      extraction,
+      check: { validation: 'passed' as const, confidence: {}, failures: [] },
+    };
+    const fromReader = buildDraft(
+      filled,
+      { fileHash: 'h', qr: qr(), parsed, directDebitDate: '2026-07-01' },
+      { providerKnown: true },
+    );
+    expect(fromReader.ok && fromReader.draft.directDebitDate).toBe('2026-07-05');
+  });
+
   it('treats credit notes as negative', () => {
     const credit = qr(QR.replace('D:FT', 'D:NC'));
     const result = buildDraft(

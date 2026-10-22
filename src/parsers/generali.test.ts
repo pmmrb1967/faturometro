@@ -37,6 +37,18 @@ describe('generali parser', () => {
     expect(result.lines[0]).toMatchObject({ kind: 'base_fee', description: 'Prémio comercial' });
 
     expect(result.periodStart!.value < result.periodEnd!.value).toBe(true);
+    // Notices ("Aviso") say when the premium is due and when the direct debit is taken.
+    const text = fixture.pages.flatMap((page) => page.items.map((item) => item.str)).join(' ');
+    if (/Limite de pagamento:/.test(text)) {
+      expect(result.dueDate?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    } else {
+      expect(result.dueDate).toBeUndefined();
+    }
+    if (/débito direto a partir de/.test(text)) {
+      expect(result.directDebitDate!.value <= result.dueDate!.value).toBe(true);
+    } else {
+      expect(result.directDebitDate).toBeUndefined();
+    }
     expect(result.customerNumber?.value).toBeTruthy();
     expect(result.contractLabel?.value).toMatch(/^Seguro \S/);
     const insurance = result.insurance?.value;

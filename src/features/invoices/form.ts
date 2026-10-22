@@ -51,6 +51,8 @@ export interface FormBase {
   qr?: FiscalQr;
   docKey?: string;
   parsed?: ParsedDocument;
+  /** Direct debit day found in the file's text when the reader did not find it. */
+  directDebitDate?: string;
 }
 
 const centsToPt = (cents: Cents) => (cents / 100).toFixed(2).replace('.', ',');
@@ -195,9 +197,10 @@ export function buildDraft(
     draft.confidence = base.parsed.check.confidence;
     draft.contractDetails = contractDetails(extraction, form.sector);
     if (extraction.readingWindow) draft.readingWindow = extraction.readingWindow.value;
-    if (extraction.directDebitDate) draft.directDebitDate = extraction.directDebitDate.value;
     if (extraction.extraUsage?.length) draft.extraUsage = extraction.extraUsage;
   }
+  const directDebitDate = extraction?.directDebitDate?.value ?? base.directDebitDate;
+  if (directDebitDate) draft.directDebitDate = directDebitDate;
   return { ok: true, draft };
 }
 

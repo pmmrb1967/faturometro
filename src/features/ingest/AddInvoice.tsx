@@ -440,6 +440,7 @@ function Outcome({
             fileHash: outcome.fileHash,
             file: stored,
             ...(parsed ? { parsed } : {}),
+            ...(outcome.directDebitDate ? { directDebitDate: outcome.directDebitDate } : {}),
           }}
           initial={parsed ? formFromParsed(parsed) : emptyForm()}
           title={t.invoices.review.manualTitle}
@@ -487,6 +488,8 @@ function Outcome({
         const base: FormBase = { fileHash: outcome.fileHash, file: stored, qr: qr.result.qr };
         if (qr.docKey) base.docKey = qr.docKey;
         if (parsed) base.parsed = parsed;
+        // With several documents in the file it is not known which one the sentence is about.
+        if (outcome.directDebitDate && total === 1) base.directDebitDate = outcome.directDebitDate;
         return (
           <div key={index}>
             {!parsed && (

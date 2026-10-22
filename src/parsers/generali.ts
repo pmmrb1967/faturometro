@@ -1,6 +1,7 @@
 /**
- * Generali Seguros: "Fatura/Recibo" of a policy's premium (car, home, …), one
- * QR code. Page 1: client and contract data (product, option, policy number,
+ * Generali Seguros: "Fatura/Recibo" of a policy's premium (car, home, …), or
+ * the "Aviso" sent before it (same layout, a letter saying when the direct
+ * debit is taken and the payment deadline), one QR code. Page 1: client and contract data (product, option, policy number,
  * insured object) and the premium breakdown (commercial premium, costs, stamp
  * duty, other charges and fees); page 2: insured objects and capitals. Exempt
  * from VAT; the stamp duty is QR field M. Layout studied on 2025–2026 receipts.
@@ -15,6 +16,7 @@ import {
   type Parser,
   type ParserContext,
 } from './types';
+import { directDebitInText } from './direct-debit';
 import { amount, date, findItem, normalize, rows, valueRightOf } from './utils';
 
 const ID = 'generali';
@@ -71,7 +73,8 @@ function parseBreakdown(page: PageText, result: ExtractedInvoice, qr?: FiscalQr)
     result.lines.push(line);
   }
   result.linesIncludeVat = true;
-  const total = findItem(page, /^Total:$/);
+  // "Total:" on receipts, "Valor total a pagar:" on notices.
+  const total = findItem(page, /^(?:Valor total a pagar|Total):$/);
   const totalValue = total ? breakdownAmount(page, total) : null;
   if (totalValue !== null) result.totalCents = { value: totalValue, confidence: 'high' };
 }
@@ -141,8 +144,8 @@ function parseInsurance(page: PageText, detail?: PageText): InsuranceDetails {
 export const generaliParser: Parser = {
   id: ID,
   name: 'Generali Seguros',
-  version: '1.0.0',
-  updated: '2026-10-14',
+  version: '1.1.0',
+  updated: '2026-10-22',
   sectors: ['insurance'],
   issuerNifs: [NIF],
 
@@ -163,7 +166,7 @@ export const generaliParser: Parser = {
       (candidate) => candidate !== page && findItem(candidate, /^Dados do Objeto Seguro$/),
     );
 
-    const docId = label(page, /^N\.º Fatura\/Recibo:$/);
+    const docId = label(page, /^N\.º (?:Fatura\/Recibo|Aviso):$/);
     if (docId) result.docId = { value: docId, confidence: 'high' };
     if (qr?.docId && docId && normalize(qr.docId) !== docId) {
       result.warnings.push('Document number differs from the QR code');
@@ -177,6 +180,11 @@ export const generaliParser: Parser = {
       result.periodStart = { value: period[1], confidence: 'high' };
       result.periodEnd = { value: period[2], confidence: 'high' };
     }
+    // Notices: the deadline, and the day the direct debit is taken (if paid that way).
+    const due = date(label(page, /^Limite de pagamento:$/));
+    if (due) result.dueDate = { value: due, confidence: 'high' };
+    const debit = directDebitInText(ctx.pages);
+    if (debit) result.directDebitDate = { value: debit, confidence: 'high' };
     const customer = label(page, /^N\.º Cliente:$/);
     if (customer) result.customerNumber = { value: customer, confidence: 'high' };
 
