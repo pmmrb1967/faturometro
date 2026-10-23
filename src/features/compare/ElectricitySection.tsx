@@ -7,10 +7,9 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { OfferCard } from './OfferCard';
-import { sharedSheets, sheetUrl } from './offer-link';
+import { OfferList } from './OfferList';
 
 const copy = t.compare;
-const TOP = 5;
 const kwh = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 
 /** Electricity: current contract and the cheapest electricity-only offers. */
@@ -35,8 +34,6 @@ export function ElectricitySection({
   const cheaper = comparison.results.filter(
     (result) => result.offer.supply === 'ELE' && result.savingCents > 0,
   );
-  const shown = cheaper.slice(0, TOP);
-  const shared = sharedSheets(shown.map((result) => result.offer));
   return (
     <>
       <section className="compare-current" aria-labelledby="compare-current">
@@ -87,9 +84,11 @@ export function ElectricitySection({
       )}
       <h2 className="section-title">{copy.best}</h2>
       {cheaper.length === 0 && <p className="muted">{copy.none}</p>}
-      {shown.length > 0 && <p className="muted offer-vat">{copy.summary.withoutVat}</p>}
-      <ol className="offers">
-        {shown.map((result) => (
+      {cheaper.length > 0 && <p className="muted offer-vat">{copy.summary.withoutVat}</p>}
+      <OfferList
+        items={cheaper}
+        offerOf={(result) => result.offer}
+        render={(result, sharedSheet) => (
           <OfferCard
             key={`${result.offer.id}-${result.cycle}`}
             offer={result.offer}
@@ -101,10 +100,10 @@ export function ElectricitySection({
             annualCents={result.annualCents}
             savingCents={result.savingCents}
             electricity={{ prices: result.prices }}
-            sharedSheet={shared.has(sheetUrl(result.offer) ?? '')}
+            sharedSheet={sharedSheet}
           />
-        ))}
-      </ol>
+        )}
+      />
     </>
   );
 }

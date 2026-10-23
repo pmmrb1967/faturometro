@@ -664,7 +664,6 @@ export const t = {
     both: {
       current: 'Os teus contratos atuais (luz + gás, estimativa anual)',
       separate: 'Melhor combinação de ofertas separadas',
-      separatePair: (electricity: string, gas: string) => `${electricity} (luz) + ${gas} (gás)`,
       duals: 'Ofertas conjuntas de luz e gás mais baratas',
       noneDual: 'Nenhuma oferta conjunta é mais barata do que os teus contratos atuais.',
       needsBoth:
@@ -712,7 +711,9 @@ export const t = {
     },
     sheet: 'Ficha da oferta',
     sharedSheet: (supplier: string, name: string) =>
-      `Página de ofertas da ${supplier} (procura «${name}»)`,
+      `Esta página tem várias ofertas da ${supplier}: procura «${name}».`,
+    showMore: (count: number) =>
+      count === 1 ? 'Mostrar mais 1 oferta' : `Mostrar mais ${count} ofertas`,
     summary: {
       split: (electricity: string, gas: string) => `Luz ${electricity}/ano · Gás ${gas}/ano`,
       prices: 'Preços',

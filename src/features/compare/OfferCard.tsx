@@ -71,7 +71,8 @@ export function OfferCard({
   /** E.g. the electricity cycle ("Simples"). */
   detail?: string;
   annualCents: number;
-  savingCents: number;
+  /** Against the current contract; left out for one part of a separate pair. */
+  savingCents?: number;
   /** Electricity prices used; with the yearly part on a dual offer. */
   electricity?: { prices: CyclePrices; annualCents?: number };
   /** Gas prices used; with the yearly part on a dual offer. */
@@ -136,7 +137,9 @@ export function OfferCard({
           <span>{copy.perYear}</span>
         </p>
       </div>
-      <p className="offer-saving">{copy.saving(formatCents(savingCents))}</p>
+      {savingCents !== undefined && (
+        <p className="offer-saving">{copy.saving(formatCents(savingCents))}</p>
+      )}
       {split && <p className="offer-split">{split}</p>}
       {(electricity || gas) && (
         <dl className="offer-prices">
@@ -198,9 +201,14 @@ export function OfferCard({
         </details>
       )}
       {url && (
-        <a href={withTextFragment(url, offer.name)} target="_blank" rel="noreferrer">
-          {sharedSheet ? copy.sharedSheet(offer.supplier, offer.name) : copy.sheet}
-        </a>
+        <p className="offer-sheet">
+          {sharedSheet && (
+            <span className="muted">{copy.sharedSheet(offer.supplier, offer.name)}</span>
+          )}
+          <a href={withTextFragment(url, offer.name)} target="_blank" rel="noreferrer">
+            {copy.sheet}
+          </a>
+        </p>
       )}
     </li>
   );
