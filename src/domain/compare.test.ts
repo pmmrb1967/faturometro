@@ -170,6 +170,17 @@ describe('compareOffers', () => {
     expect(result?.results[1]?.savingCents).toBeLessThan(0);
   });
 
+  it('gives the current prices, read from the latest invoice', () => {
+    const result = compareOffers({
+      offers: [],
+      latest,
+      usage,
+      household: { powerKva: 6.9 },
+      today: '2026-06-15',
+    });
+    expect(result?.currentPrices).toEqual({ fixedPerDay: 0.5, simple: 0.2 });
+  });
+
   it('includes bi- and tri-hourly prices when the readings allow the split', () => {
     const multi = offer('multi', {
       '6.9': {

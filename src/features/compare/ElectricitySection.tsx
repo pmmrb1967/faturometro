@@ -8,6 +8,7 @@ import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { OfferCard } from './OfferCard';
 import { OfferList } from './OfferList';
+import { PriceList } from './PriceList';
 
 const copy = t.compare;
 const kwh = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
@@ -47,6 +48,8 @@ export function ElectricitySection({
           {provider ? ` · ${provider.name}` : ''}
           {contract.tariffName ? ` · ${contract.tariffName}` : ''}
         </p>
+        <PriceList electricity={comparison.currentPrices} />
+        <p className="muted">{copy.summary.current}</p>
         {source ? (
           <p className="muted">
             {copy.usageEredes(formatIsoDate(source.from), formatIsoDate(source.to))}

@@ -30,6 +30,11 @@ export interface GasOfferResult {
 export interface GasComparison {
   usage: AnnualUsage;
   currentAnnualCents: number;
+  /**
+   * The current contract's prices, from the latest invoice (without VAT, before
+   * discounts), the fixed term with its network part as in the ERSE offers.
+   */
+  currentPrices: GasPrices;
   /** GN and DUAL offers with prices for the escalão, cheapest first. */
   results: GasOfferResult[];
   regulated?: { code: string; name: string; annualCents: number };
@@ -91,6 +96,12 @@ export function compareGas(input: CompareGasInput): GasComparison | null {
   const comparison: GasComparison = {
     usage: input.usage,
     currentAnnualCents: current.totalCents,
+    currentPrices: {
+      fixedPerDay:
+        breakdown.prices.fixedPerDay +
+        (ERSE_GAS_FIXED_INCLUDES_NETWORK ? breakdown.common.networkPerDay : 0),
+      perKwh: breakdown.prices.perKwh,
+    },
     results,
   };
   const regulated = input.distributor ? input.regulated[input.distributor] : undefined;
@@ -122,6 +133,7 @@ export interface DualResult {
 
 export interface BothComparison {
   currentAnnualCents: number;
+  currentPrices: { electricity: CyclePrices; gas: GasPrices };
   /** Best electricity-only offer + best gas-only offer (suppliers may differ). */
   bestSeparate?: {
     electricity: OfferResult;
@@ -135,7 +147,11 @@ export interface BothComparison {
 
 export function combineElectricityGas(electricity: Comparison, gas: GasComparison): BothComparison {
   const currentAnnualCents = electricity.currentAnnualCents + gas.currentAnnualCents;
-  const both: BothComparison = { currentAnnualCents, duals: [] };
+  const both: BothComparison = {
+    currentAnnualCents,
+    currentPrices: { electricity: electricity.currentPrices, gas: gas.currentPrices },
+    duals: [],
+  };
 
   const bestElectricity = electricity.results.find((item) => item.offer.supply === 'ELE');
   const bestGas = gas.results.find((item) => item.offer.supply === 'GN');

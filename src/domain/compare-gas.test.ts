@@ -131,6 +131,11 @@ describe('compareGas', () => {
     expect(result.results.at(-1)!.savingCents).toBeLessThan(0);
   });
 
+  it('gives the current prices, with the network part in the fixed term like the ERSE', () => {
+    expect(result.currentPrices.fixedPerDay).toBeCloseTo(0.17);
+    expect(result.currentPrices.perKwh).toBeCloseTo(0.09);
+  });
+
   it('adds the regulated tariff of the chosen distributor', () => {
     expect(result.regulated).toMatchObject({ code: 'LIS', name: 'Regulada Lisboa' });
     expect(result.regulated!.annualCents).toBeGreaterThan(0);
@@ -160,6 +165,7 @@ describe('combineElectricityGas', () => {
   const electricity: Comparison = {
     usage: USAGE,
     currentAnnualCents: 60_000,
+    currentPrices: elePrices,
     // Sorted like compareOffers returns them.
     results: [
       ele(dualNoGas, 40_000),
@@ -171,6 +177,7 @@ describe('combineElectricityGas', () => {
   const gas: GasComparison = {
     usage: USAGE,
     currentAnnualCents: 30_000,
+    currentPrices: gasPrices,
     results: [
       { offer: dualOffer, annualCents: 24_000, savingCents: 6_000, prices: gasPrices },
       { offer: gasOffer, annualCents: 25_000, savingCents: 5_000, prices: gasPrices },
@@ -178,8 +185,9 @@ describe('combineElectricityGas', () => {
   };
   const both = combineElectricityGas(electricity, gas);
 
-  it('adds the current contracts', () => {
+  it('adds the current contracts, with their prices', () => {
     expect(both.currentAnnualCents).toBe(90_000);
+    expect(both.currentPrices).toEqual({ electricity: elePrices, gas: gasPrices });
   });
 
   it('pairs the best electricity-only and gas-only offers', () => {

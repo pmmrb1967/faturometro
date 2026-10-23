@@ -7,7 +7,8 @@ const FIRST = 5;
 const MAX = 10;
 
 /**
- * The cheapest offers: the first five, and a button for five more (ten at most).
+ * The cheapest offers: the first five, and a button for five more (ten at most)
+ * and back.
  * `render` is told whether the offer's page is shared with another offer shown.
  */
 export function OfferList<T>({
@@ -21,21 +22,22 @@ export function OfferList<T>({
 }) {
   const [count, setCount] = useState(FIRST);
   const shown = items.slice(0, count);
-  const more = Math.min(items.length, MAX) - shown.length;
+  const all = Math.min(items.length, MAX);
+  const more = all - shown.length;
   const shared = sharedSheets(shown.map(offerOf));
   return (
     <>
       <ol className="offers">
         {shown.map((item) => render(item, shared.has(sheetUrl(offerOf(item)) ?? '')))}
       </ol>
-      {more > 0 && (
+      {all > FIRST && (
         <p className="offers-more">
           <button
             type="button"
             className="action-secondary"
-            onClick={() => setCount(Math.min(items.length, MAX))}
+            onClick={() => setCount(more > 0 ? all : FIRST)}
           >
-            {t.compare.showMore(more)}
+            {more > 0 ? t.compare.showMore(more) : t.compare.showFewer(FIRST)}
           </button>
         </p>
       )}

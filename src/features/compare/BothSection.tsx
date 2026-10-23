@@ -3,6 +3,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatCents } from '../../lib/money';
 import { OfferCard } from './OfferCard';
 import { OfferList } from './OfferList';
+import { PriceList } from './PriceList';
 import { sharedSheets, sheetUrl } from './offer-link';
 
 const copy = t.compare;
@@ -22,6 +23,13 @@ export function BothSection({ comparison }: { comparison: BothComparison }) {
         <p className="compare-amount">
           {formatCents(comparison.currentAnnualCents)}
           <span>{copy.perYear}</span>
+        </p>
+        <PriceList
+          electricity={comparison.currentPrices.electricity}
+          gas={comparison.currentPrices.gas}
+        />
+        <p className="muted">
+          {copy.summary.current} {copy.summary.currentGas}
         </p>
       </section>
       {separate && (

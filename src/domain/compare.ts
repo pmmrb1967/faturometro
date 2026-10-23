@@ -123,6 +123,8 @@ export interface OfferResult {
 export interface Comparison {
   usage: AnnualUsage;
   currentAnnualCents: number;
+  /** The current contract's prices, from the latest invoice (without VAT, before discounts). */
+  currentPrices: CyclePrices;
   results: OfferResult[];
 }
 
@@ -212,5 +214,10 @@ export function compareOffers(input: CompareInput): Comparison | null {
     }
   }
   results.sort((a, b) => a.annualCents - b.annualCents);
-  return { usage: input.usage, currentAnnualCents: current.totalCents, results };
+  return {
+    usage: input.usage,
+    currentAnnualCents: current.totalCents,
+    currentPrices: { fixedPerDay: breakdown.prices.fixedPerDay, ...breakdown.prices.energy },
+    results,
+  };
 }

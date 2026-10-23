@@ -2,34 +2,17 @@ import type { CyclePrices, GasPrices, Offer } from '../../domain/erse';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
+import { unitPrice } from './format';
 import { sheetUrl, withTextFragment } from './offer-link';
+import { PriceList } from './PriceList';
 
 const copy = t.compare;
 const summary = copy.summary;
-/** ERSE prices, €/day and €/kWh without VAT, as on an invoice. */
-const unitPrice = new Intl.NumberFormat('pt-PT', {
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 4,
-});
 const percent = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 1 });
 const euros = new Intl.NumberFormat('pt-PT', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-
-/** Electricity energy prices of a cycle, labelled by period. */
-function energyPrices(prices: CyclePrices): string {
-  const parts = (
-    [
-      [summary.periods.simple, prices.simple],
-      [summary.periods.offEmpty, prices.offEmpty],
-      [summary.periods.peak, prices.peak],
-      [summary.periods.full, prices.full],
-      [summary.periods.empty, prices.empty],
-    ] as [string, number | undefined][]
-  ).filter((entry): entry is [string, number] => entry[1] !== undefined);
-  return parts.map(([label, value]) => summary.perKwh(label, unitPrice.format(value))).join(' · ');
-}
 
 /** Discounts included in the estimate, as the supplier gave them to the ERSE: one line per part. */
 function discounts(offer: Offer, electricity: boolean, gas: boolean): string[] {
@@ -113,7 +96,6 @@ export function OfferCard({
     electricity?.annualCents !== undefined && gas?.annualCents !== undefined
       ? summary.split(formatCents(electricity.annualCents), formatCents(gas.annualCents))
       : null;
-  const dual = split !== null;
   const included = discounts(offer, electricity !== undefined, gas !== undefined);
   const notes = [
     offer.loyalty && offer.texts.loyalty ? [summary.loyalty, offer.texts.loyalty] : null,
@@ -141,30 +123,7 @@ export function OfferCard({
         <p className="offer-saving">{copy.saving(formatCents(savingCents))}</p>
       )}
       {split && <p className="offer-split">{split}</p>}
-      {(electricity || gas) && (
-        <dl className="offer-prices">
-          {electricity && (
-            <div>
-              <dt>{dual ? summary.electricity : summary.prices}</dt>
-              <dd>
-                {summary.perDay(summary.power, unitPrice.format(electricity.prices.fixedPerDay))}
-                {' · '}
-                {energyPrices(electricity.prices)}
-              </dd>
-            </div>
-          )}
-          {gas && (
-            <div>
-              <dt>{electricity ? summary.gas : summary.prices}</dt>
-              <dd>
-                {summary.perDay(summary.gasFixed, unitPrice.format(gas.prices.fixedPerDay))}
-                {' · '}
-                {summary.perKwh(summary.periods.simple, unitPrice.format(gas.prices.perKwh))}
-              </dd>
-            </div>
-          )}
-        </dl>
-      )}
+      <PriceList electricity={electricity?.prices} gas={gas?.prices} />
       {tags.length > 0 && (
         <ul className="offer-tags">
           {tags.map((tag) => (

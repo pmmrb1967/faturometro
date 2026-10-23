@@ -712,6 +712,7 @@ export const t = {
     sheet: 'Ficha da oferta',
     sharedSheet: (supplier: string, name: string) =>
       `Esta página tem várias ofertas da ${supplier}: procura «${name}».`,
+    showFewer: (count: number) => `Mostrar só ${count} ofertas`,
     showMore: (count: number) =>
       count === 1 ? 'Mostrar mais 1 oferta' : `Mostrar mais ${count} ofertas`,
     summary: {
@@ -732,6 +733,9 @@ export const t = {
       },
       withoutVat:
         'Os preços de cada oferta são sem IVA nem taxas, como no detalhe da fatura, para a tua potência e opção horária (no gás, para o teu escalão).',
+      current: 'Preços da tua última fatura, sem IVA nem taxas e antes de descontos.',
+      currentGas:
+        'No gás, o termo fixo inclui o de acesso às redes, que nas ofertas da ERSE já vem incluído.',
       more: 'Mais detalhes',
       discounts: 'Descontos incluídos na estimativa',
       electricityPrefix: 'Luz: ',

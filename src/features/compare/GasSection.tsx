@@ -7,6 +7,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatCents } from '../../lib/money';
 import { OfferCard } from './OfferCard';
 import { OfferList } from './OfferList';
+import { PriceList } from './PriceList';
 
 const copy = t.compare;
 const gasCopy = copy.gas;
@@ -83,6 +84,10 @@ export function GasSection({
               {gasCopy.usage(kwh.format(comparison.usage.total))}
               {provider ? ` · ${provider.name}` : ''}
               {contract.tariffName ? ` · ${contract.tariffName}` : ''}
+            </p>
+            <PriceList gas={comparison.currentPrices} />
+            <p className="muted">
+              {copy.summary.current} {copy.summary.currentGas}
             </p>
             {comparison.usage.daysCovered < 365 && (
               <p className="ingest-problem">{gasCopy.seasonal}</p>
