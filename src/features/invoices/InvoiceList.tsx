@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { GroupBlock } from '../../components/GroupBlock';
+import { GroupBlock, GroupControls, LimitedList } from '../../components/GroupBlock';
+import { useOpenGroups } from '../../components/group-state';
 import { billingFrequency, byGroup } from '../../domain/grouping';
 import { linesByInvoiceId, socialDiscountCents } from '../../domain/social-tariff';
 import type { Invoice } from '../../domain/types';
@@ -15,8 +16,12 @@ import { ReparseButton } from './ReparseButton';
 import { newerReader } from './reparse';
 import './invoices.css';
 
+/** Per-device choice: which blocks of the list are open. */
+const OPEN_GROUPS_KEY = 'faturometro.invoices.openGroups';
+
 export function InvoiceList() {
   const { session } = useSession();
+  const groupsOpen = useOpenGroups(OPEN_GROUPS_KEY);
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const [invoices, providers, contracts, lines] = await Promise.all([
@@ -97,22 +102,36 @@ export function InvoiceList() {
       {data.invoices.length === 0 ? (
         <p className="muted">{t.invoices.empty}</p>
       ) : (
-        groups.map(({ group, items }) => (
-          <GroupBlock
-            key={group}
-            title={t.groups[group]}
-            summary={t.groups.invoices(
-              items.length,
-              formatCents(
-                items
-                  .filter((invoice) => invoice.issueDate >= yearAgo)
-                  .reduce((sum, invoice) => sum + invoice.totalCents, 0),
-              ),
-            )}
-          >
-            <ul className="list">{items.map(row)}</ul>
-          </GroupBlock>
-        ))
+        <>
+          {groups.length > 1 && (
+            <GroupControls
+              onAll={(open) =>
+                groupsOpen.setAll(
+                  groups.map(({ group }) => group),
+                  open,
+                )
+              }
+            />
+          )}
+          {groups.map(({ group, items }) => (
+            <GroupBlock
+              key={group}
+              title={t.groups[group]}
+              open={groupsOpen.isOpen(group)}
+              onToggle={(open) => groupsOpen.setOpen(group, open)}
+              summary={t.groups.invoices(
+                items.length,
+                formatCents(
+                  items
+                    .filter((invoice) => invoice.issueDate >= yearAgo)
+                    .reduce((sum, invoice) => sum + invoice.totalCents, 0),
+                ),
+              )}
+            >
+              <LimitedList items={items} render={row} />
+            </GroupBlock>
+          ))}
+        </>
       )}
     </section>
   );

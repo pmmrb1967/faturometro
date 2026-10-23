@@ -995,6 +995,14 @@ export const t = {
     invoices: (count: number, total: string) =>
       `${count === 1 ? '1 fatura' : `${count} faturas`} · ${total} nos últimos 12 meses`,
     contracts: (count: number) => (count === 1 ? '1 contrato' : `${count} contratos`),
+    openAll: 'Abrir todos',
+    closeAll: 'Fechar todos',
+    showMore: (count: number, left: number) =>
+      count === left
+        ? left === 1
+          ? 'Mostrar a que falta'
+          : `Mostrar as ${left} que faltam`
+        : `Mostrar mais ${count} (faltam ${left})`,
   },
   frequency: {
     monthly: 'Mensal',

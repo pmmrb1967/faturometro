@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router';
-import { GroupBlock } from '../../components/GroupBlock';
+import { GroupBlock, GroupControls } from '../../components/GroupBlock';
+import { useOpenGroups } from '../../components/group-state';
 import { byGroup } from '../../domain/grouping';
 import {
   linesByInvoiceId,
@@ -15,8 +16,12 @@ import { useSession } from '../auth/session-context';
 import { CalendarExport } from './CalendarExport';
 import '../invoices/invoices.css';
 
+/** Per-device choice: which blocks of the list are open. */
+const OPEN_GROUPS_KEY = 'faturometro.contracts.openGroups';
+
 export function ContractsPage() {
   const { session } = useSession();
+  const groupsOpen = useOpenGroups(OPEN_GROUPS_KEY);
   const rows = useLiveQuery(async () => {
     if (!session) return null;
     const [contracts, providers, invoices, lines] = await Promise.all([
@@ -67,47 +72,59 @@ export function ContractsPage() {
         )
     );
   }, [session]);
+  const groups = rows ? byGroup(rows, (row) => row.contract.sector) : [];
 
   return (
     <>
       <h1>{t.nav.contracts}</h1>
       {rows?.length === 0 && <p className="muted">{t.contracts.empty}</p>}
-      {rows &&
-        byGroup(rows, (row) => row.contract.sector).map(({ group, items }) => (
-          <GroupBlock
-            key={group}
-            title={t.groups[group]}
-            summary={t.groups.contracts(items.length)}
-          >
-            <ul className="list">
-              {items.map(({ contract, provider, count, last, social }) => (
-                <li key={contract.id} className="list-item">
-                  <Link to={`/app/contratos/${contract.id}`} className="list-link">
-                    {contract.label} — {provider?.name}
-                  </Link>
-                  <span className="amount">{last ? formatCents(last.totalCents) : '—'}</span>
-                  <span className="meta">
-                    {t.sectors[contract.sector]} · {t.contracts.invoiceCount(count)}
-                    {contract.endedAt &&
-                      ` · ${t.contracts.switch.listEnded(formatIsoDate(contract.endedAt))}`}
-                    {last && ` · ${t.contracts.lastInvoice} ${formatIsoDate(last.issueDate)}`}
+      {groups.length > 1 && (
+        <GroupControls
+          onAll={(open) =>
+            groupsOpen.setAll(
+              groups.map(({ group }) => group),
+              open,
+            )
+          }
+        />
+      )}
+      {groups.map(({ group, items }) => (
+        <GroupBlock
+          key={group}
+          title={t.groups[group]}
+          open={groupsOpen.isOpen(group)}
+          onToggle={(open) => groupsOpen.setOpen(group, open)}
+          summary={t.groups.contracts(items.length)}
+        >
+          <ul className="list">
+            {items.map(({ contract, provider, count, last, social }) => (
+              <li key={contract.id} className="list-item">
+                <Link to={`/app/contratos/${contract.id}`} className="list-link">
+                  {contract.label} — {provider?.name}
+                </Link>
+                <span className="amount">{last ? formatCents(last.totalCents) : '—'}</span>
+                <span className="meta">
+                  {t.sectors[contract.sector]} · {t.contracts.invoiceCount(count)}
+                  {contract.endedAt &&
+                    ` · ${t.contracts.switch.listEnded(formatIsoDate(contract.endedAt))}`}
+                  {last && ` · ${t.contracts.lastInvoice} ${formatIsoDate(last.issueDate)}`}
+                </span>
+                {social && (
+                  <span
+                    className={`list-badge${social === 'lost' ? ' is-warning' : ''}${social === 'suggested' ? ' is-question' : ''}`}
+                  >
+                    {social === 'active'
+                      ? t.contracts.socialBadge
+                      : social === 'lost'
+                        ? t.contracts.socialLostBadge
+                        : t.socialTariff.badge}
                   </span>
-                  {social && (
-                    <span
-                      className={`list-badge${social === 'lost' ? ' is-warning' : ''}${social === 'suggested' ? ' is-question' : ''}`}
-                    >
-                      {social === 'active'
-                        ? t.contracts.socialBadge
-                        : social === 'lost'
-                          ? t.contracts.socialLostBadge
-                          : t.socialTariff.badge}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </GroupBlock>
-        ))}
+                )}
+              </li>
+            ))}
+          </ul>
+        </GroupBlock>
+      ))}
       {rows && rows.length > 0 && <CalendarExport />}
     </>
   );

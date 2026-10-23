@@ -11,7 +11,45 @@
   margin-bottom: 8px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  list-style-position: inside;
+  list-style: none;
+}
+
+/* The summary is a flex box, which hides the browser's own marker: draw it. */
+.group-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.group-block > summary::before {
+  content: '';
+  align-self: center;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+
+.group-block[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-block > summary::before {
+    transition: none;
+  }
+}
+
+.group-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.group-more {
+  margin: 12px 0 0;
 }
 
 .group-block > summary:focus-visible {
