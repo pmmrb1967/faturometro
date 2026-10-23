@@ -67,6 +67,21 @@ describe('expenseDueDate', () => {
     expect(expenseDueDate(quarterly, '2027-02')).toBeNull();
   });
 
+  it('every four months, counted from the first month', () => {
+    const fourMonthly = expense({ everyMonths: 4, startMonth: '2026-01' });
+    const due = Array.from({ length: 12 }, (_, i) => addMonthsTo('2026-01', i)).filter(
+      (month) => expenseDueDate(fourMonthly, month) !== null,
+    );
+    expect(due).toEqual(['2026-01', '2026-05', '2026-09']);
+  });
+
+  it('a one-off expense only in its month', () => {
+    const fridge = expense({ oneOff: true, startMonth: '2026-10', endMonth: '2026-10' });
+    expect(expenseDueDate(fridge, '2026-09')).toBeNull();
+    expect(expenseDueDate(fridge, '2026-10')).toBe('2026-10-08');
+    expect(expenseDueDate(fridge, '2026-11')).toBeNull();
+  });
+
   it('uses the last day of shorter months', () => {
     expect(expenseDueDate(expense({ dueDay: 31 }), '2026-02')).toBe('2026-02-28');
   });

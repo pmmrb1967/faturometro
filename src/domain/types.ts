@@ -252,8 +252,13 @@ export interface RecurringExpense extends SyncMeta {
   amountCents: Cents;
   /** Later amounts (a yearly update…), by the month they start; earlier months keep theirs. */
   amountChanges?: { fromMonth: string; amountCents: Cents }[];
-  /** Due every this many months. */
-  everyMonths: 1 | 2 | 3 | 6 | 12;
+  /** Due every this many months (1 for a one-off expense). */
+  everyMonths: 1 | 2 | 3 | 4 | 6 | 12;
+  /**
+   * Paid once (works, a new fridge): `endMonth` equals `startMonth`, so it is due
+   * only then. On the household chart they have their own switch.
+   */
+  oneOff?: true;
   /** Day of the month it is due (shorter months use their last day). */
   dueDay: number;
   /** First month (YYYY-MM); with `everyMonths`, it also sets which months. */

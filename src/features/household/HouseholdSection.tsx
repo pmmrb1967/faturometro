@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { BarChart, type Bar, type Series } from '../../components/BarChart';
 import type { Sector } from '../../domain/types';
-import { expensesYear, householdSummary } from '../../domain/household';
+import { expensesYear, householdSummary, type ExpensesYear } from '../../domain/household';
 import { t } from '../../i18n/pt-PT';
 import { formatMonthShort } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
@@ -15,23 +15,38 @@ const copy = t.household;
 /** Bottom to top in each month's bar. */
 const SECTOR_ORDER: Sector[] = ['electricity', 'gas', 'water', 'telecom', 'insurance', 'other'];
 const EXPENSES = 'expenses';
+const ONE_OFF = 'oneOff';
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 /** Per-device choice: show expenses without an invoice on the chart and totals. */
 const WITH_EXPENSES_KEY = 'faturometro.household.withExpenses';
+/** Per-device choice: show one-off expenses (works, appliances) too. */
+const WITH_ONE_OFF_KEY = 'faturometro.household.withOneOff';
 
-function savedWithExpenses(): boolean {
+function saved(key: string): boolean {
   try {
-    return localStorage.getItem(WITH_EXPENSES_KEY) === '1';
+    return localStorage.getItem(key) === '1';
   } catch {
     return false;
   }
 }
 
+function remember(key: string, on: boolean) {
+  try {
+    localStorage.setItem(key, on ? '1' : '0');
+  } catch {
+    // Not remembered on this device; the choice still applies now.
+  }
+}
+
+const hasAny = (year: ExpensesYear | null): year is ExpensesYear =>
+  year !== null && (year.totalCents !== 0 || year.forecastCents !== 0);
+
 /** The household's last 12 months and an estimate of the next 12 (Início). */
 export function HouseholdSection() {
   const { session } = useSession();
-  const [withExpenses, setWithExpenses] = useState(savedWithExpenses);
+  const [withExpenses, setWithExpenses] = useState(() => saved(WITH_EXPENSES_KEY));
+  const [withOneOff, setWithOneOff] = useState(() => saved(WITH_ONE_OFF_KEY));
   const summary = useLiveQuery(async () => {
     if (!session) return null;
     const [contracts, invoices, expenses] = await Promise.all([
@@ -41,37 +56,35 @@ export function HouseholdSection() {
     ]);
     if (invoices.length === 0) return null;
     const date = today();
+    const recurring = expenses.filter((expense) => !expense.oneOff);
+    const oneOff = expenses.filter((expense) => expense.oneOff);
     return {
       ...householdSummary({ contracts, invoices, today: date }),
-      expenses: expenses.length > 0 ? expensesYear(expenses, date) : null,
+      expenses: recurring.length > 0 ? expensesYear(recurring, date) : null,
+      oneOff: oneOff.length > 0 ? expensesYear(oneOff, date) : null,
       switchSavingCents: await totalSwitchSavings(session.repos),
     };
   }, [session]);
   if (!summary) return null;
 
-  const toggle = (on: boolean) => {
-    setWithExpenses(on);
-    try {
-      localStorage.setItem(WITH_EXPENSES_KEY, on ? '1' : '0');
-    } catch {
-      // Not remembered on this device; the choice still applies now.
-    }
-  };
-  const hasExpenses =
-    summary.expenses !== null &&
-    (summary.expenses.totalCents !== 0 || summary.expenses.forecastCents !== 0);
+  const hasExpenses = hasAny(summary.expenses);
+  const hasOneOff = hasAny(summary.oneOff);
   const expenses = hasExpenses && withExpenses ? summary.expenses : null;
-  const grandTotal = summary.totalCents + (expenses?.totalCents ?? 0);
+  const oneOff = hasOneOff && withOneOff ? summary.oneOff : null;
+  const anyExtra = expenses !== null || oneOff !== null;
+  const extras = copy.extras(expenses !== null, oneOff !== null);
+  const grandTotal = summary.totalCents + (expenses?.totalCents ?? 0) + (oneOff?.totalCents ?? 0);
 
   const bars: Bar[] = summary.months.map(({ month, totalCents, bySector }, index) => {
     const label = formatMonthShort(`${month}-01`);
     const extra = expenses?.months[index]?.totalCents ?? 0;
+    const once = oneOff?.months[index]?.totalCents ?? 0;
     return {
       key: month,
       label,
-      title: expenses ? copy.monthTitleWithExpenses(label) : copy.monthTitle(label),
-      value: (totalCents + extra) / 100,
-      display: formatCents(totalCents + extra),
+      title: anyExtra ? copy.monthTitleWithExpenses(label, extras) : copy.monthTitle(label),
+      value: (totalCents + extra + once) / 100,
+      display: formatCents(totalCents + extra + once),
       parts: [
         ...SECTOR_ORDER.map((sector) => ({
           series: sector,
@@ -81,6 +94,7 @@ export function HouseholdSection() {
         ...(expenses
           ? [{ series: EXPENSES, value: extra / 100, display: formatCents(extra) }]
           : []),
+        ...(oneOff ? [{ series: ONE_OFF, value: once / 100, display: formatCents(once) }] : []),
       ],
     };
   });
@@ -93,6 +107,7 @@ export function HouseholdSection() {
     ...(expenses
       ? [{ key: EXPENSES, label: copy.expensesSeries, color: 'var(--series-expenses)' }]
       : []),
+    ...(oneOff ? [{ key: ONE_OFF, label: copy.oneOffSeries, color: 'var(--series-one-off)' }] : []),
   ];
   const bySector = [
     ...summary.bySector.map(({ sector, totalCents }) => ({
@@ -102,6 +117,9 @@ export function HouseholdSection() {
     })),
     ...(expenses && expenses.totalCents !== 0
       ? [{ key: EXPENSES, label: copy.expensesSeries, totalCents: expenses.totalCents }]
+      : []),
+    ...(oneOff && oneOff.totalCents !== 0
+      ? [{ key: ONE_OFF, label: copy.oneOffSeries, totalCents: oneOff.totalCents }]
       : []),
   ].sort((a, b) => b.totalCents - a.totalCents);
   const previous = summary.previousTotalCents;
@@ -117,19 +135,35 @@ export function HouseholdSection() {
           <input
             type="checkbox"
             checked={withExpenses}
-            onChange={(event) => toggle(event.target.checked)}
+            onChange={(event) => {
+              setWithExpenses(event.target.checked);
+              remember(WITH_EXPENSES_KEY, event.target.checked);
+            }}
           />
           {copy.withExpenses}
         </label>
       )}
+      {hasOneOff && (
+        <label className="household-toggle">
+          <input
+            type="checkbox"
+            checked={withOneOff}
+            onChange={(event) => {
+              setWithOneOff(event.target.checked);
+              remember(WITH_ONE_OFF_KEY, event.target.checked);
+            }}
+          />
+          {copy.withOneOff}
+        </label>
+      )}
       <dl className="facts household-facts">
         <div>
-          <dt>{expenses ? copy.invoicesTotal : copy.total}</dt>
+          <dt>{anyExtra ? copy.invoicesTotal : copy.total}</dt>
           <dd>{formatCents(summary.totalCents)}</dd>
         </div>
-        {expenses && (
+        {anyExtra && (
           <div>
-            <dt>{copy.totalWithExpenses}</dt>
+            <dt>{copy.totalWithExpenses(extras)}</dt>
             <dd>{formatCents(grandTotal)}</dd>
           </div>
         )}
@@ -139,10 +173,16 @@ export function HouseholdSection() {
             <dd>{formatCents(summary.forecastCents)}</dd>
           </div>
         )}
-        {expenses && (
+        {anyExtra && (
           <div>
-            <dt>{copy.forecastWithExpenses}</dt>
-            <dd>{formatCents((summary.forecastCents ?? 0) + expenses.forecastCents)}</dd>
+            <dt>{copy.forecastWithExpenses(extras)}</dt>
+            <dd>
+              {formatCents(
+                (summary.forecastCents ?? 0) +
+                  (expenses?.forecastCents ?? 0) +
+                  (oneOff?.forecastCents ?? 0),
+              )}
+            </dd>
           </div>
         )}
       </dl>
@@ -155,7 +195,7 @@ export function HouseholdSection() {
                 percent.format((Math.abs(difference) / previous) * 100),
                 difference > 0,
               )}
-          {expenses && ` ${copy.previousInvoicesOnly}`}
+          {anyExtra && ` ${copy.previousInvoicesOnly}`}
         </p>
       )}
 
@@ -189,7 +229,7 @@ export function HouseholdSection() {
       )}
 
       <BarChart
-        title={expenses ? copy.chartWithExpenses : copy.chart}
+        title={anyExtra ? copy.chartWithExpenses(extras) : copy.chart}
         bars={bars}
         formatTick={(value) => `${euros.format(value)} €`}
         tableLabel={t.contracts.charts.table}
@@ -200,6 +240,7 @@ export function HouseholdSection() {
       <p className="muted">
         {copy.forecastNote}
         {expenses && ` ${copy.expensesNote}`}
+        {oneOff && ` ${copy.oneOffNote}`}
       </p>
     </section>
   );

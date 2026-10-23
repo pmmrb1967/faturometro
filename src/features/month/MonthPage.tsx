@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
-import type { BillingFrequency } from '../../domain/grouping';
 import {
   addMonthsTo,
   expenseActive,
@@ -21,13 +20,16 @@ import '../invoices/invoices.css';
 import './month.css';
 
 const copy = t.month;
-const EVERY: { months: RecurringExpense['everyMonths']; frequency: BillingFrequency }[] = [
-  { months: 1, frequency: 'monthly' },
-  { months: 2, frequency: 'bimonthly' },
-  { months: 3, frequency: 'quarterly' },
-  { months: 6, frequency: 'semiannual' },
-  { months: 12, frequency: 'annual' },
+const EVERY: { months: RecurringExpense['everyMonths']; label: string }[] = [
+  { months: 1, label: t.frequency.monthly },
+  { months: 2, label: t.frequency.bimonthly },
+  { months: 3, label: t.frequency.quarterly },
+  { months: 4, label: copy.expenses.fourMonthly },
+  { months: 6, label: t.frequency.semiannual },
+  { months: 12, label: t.frequency.annual },
 ];
+/** Select value of a one-off expense (the others use their number of months). */
+const ONE_OFF = 'once';
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 const monthName = new Intl.DateTimeFormat('pt-PT', {
   month: 'long',
@@ -39,8 +41,9 @@ function formatMonth(month: string): string {
   return monthName.format(new Date(`${month}-01T00:00:00Z`));
 }
 
-function frequencyOf(months: RecurringExpense['everyMonths']): string {
-  return t.frequency[EVERY.find((every) => every.months === months)?.frequency ?? 'monthly'];
+function frequencyOf(expense: RecurringExpense): string {
+  if (expense.oneOff) return copy.expenses.oneOff;
+  return EVERY.find((every) => every.months === expense.everyMonths)?.label ?? t.frequency.monthly;
 }
 
 type SavedExpense = Omit<RecurringExpense, 'updatedAt'>;
@@ -241,20 +244,22 @@ export function MonthPage() {
                 <span className="meta">
                   {copy.expenses.summary(
                     formatCents(expenseAmount(expense, month)),
-                    frequencyOf(expense.everyMonths),
+                    frequencyOf(expense),
                     expense.dueDay,
                   )}
                   {' · '}
-                  {expense.endMonth
-                    ? copy.expenses.between(
-                        formatMonth(expense.startMonth),
-                        formatMonth(expense.endMonth),
-                      )
-                    : copy.expenses.since(formatMonth(expense.startMonth))}
+                  {expense.oneOff
+                    ? copy.expenses.inMonth(formatMonth(expense.startMonth))
+                    : expense.endMonth
+                      ? copy.expenses.between(
+                          formatMonth(expense.startMonth),
+                          formatMonth(expense.endMonth),
+                        )
+                      : copy.expenses.since(formatMonth(expense.startMonth))}
                 </span>
                 <ExpenseActions
                   expense={expense}
-                  stopFrom={month}
+                  stopFrom={expense.oneOff ? undefined : month}
                   onEdit={() => setEditing({ id: expense.id, place: 'section' })}
                 />
               </li>
@@ -366,18 +371,22 @@ function ExpenseForm({
     shownAmount !== undefined ? centsToPtInput(shownAmount) : '',
   );
   const [fromMonth, setFromMonth] = useState(month);
-  const [every, setEvery] = useState<RecurringExpense['everyMonths']>(initial?.everyMonths ?? 1);
+  const [every, setEvery] = useState<RecurringExpense['everyMonths'] | typeof ONE_OFF>(
+    initial?.oneOff ? ONE_OFF : (initial?.everyMonths ?? 1),
+  );
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
-  const [endMonth, setEndMonth] = useState(initial?.endMonth ?? '');
+  const [endMonth, setEndMonth] = useState(initial?.oneOff ? '' : (initial?.endMonth ?? ''));
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
   );
   const id = initial?.id ?? 'new';
   const amountCents = parsePtAmount(amount);
+  const oneOff = every === ONE_OFF;
   // A new amount on an existing expense: from which month (earlier ones keep theirs).
+  // A one-off expense has a single month, so its amount is simply replaced.
   const amountChanged =
-    shownAmount !== undefined && amountCents !== null && amountCents !== shownAmount;
+    !oneOff && shownAmount !== undefined && amountCents !== null && amountCents !== shownAmount;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -387,7 +396,7 @@ function ExpenseForm({
     if (amountCents === null || amountCents <= 0) found.amount = copy.expenses.errors.amount;
     if (!Number.isInteger(day) || day < 1 || day > 31) found.dueDay = copy.expenses.errors.dueDay;
     if (!MONTH.test(startMonth)) found.startMonth = copy.expenses.errors.startMonth;
-    if (endMonth && (!MONTH.test(endMonth) || endMonth < startMonth)) {
+    if (!oneOff && endMonth && (!MONTH.test(endMonth) || endMonth < startMonth)) {
       found.endMonth = copy.expenses.errors.endMonth;
     }
     if (amountChanged && (!MONTH.test(fromMonth) || fromMonth < startMonth)) {
@@ -395,16 +404,33 @@ function ExpenseForm({
     }
     setErrors(found);
     if (Object.keys(found).length > 0 || amountCents === null) return;
-    const expense: SavedExpense = {
+    const common = {
       id: initial?.id ?? crypto.randomUUID(),
       name: name.trim(),
-      amountCents: initial?.amountCents ?? amountCents,
-      ...(initial?.amountChanges ? { amountChanges: initial.amountChanges } : {}),
-      everyMonths: every,
       dueDay: day,
       startMonth,
-      ...(endMonth ? { endMonth } : {}),
       createdAt: initial?.createdAt ?? new Date().toISOString(),
+    };
+    if (oneOff) {
+      // Due only in its month, also for app versions that do not know `oneOff`.
+      await onDone({
+        ...common,
+        amountCents,
+        everyMonths: 1,
+        endMonth: startMonth,
+        oneOff: true,
+      });
+      return;
+    }
+    const expense: SavedExpense = {
+      ...common,
+      // From a one-off expense, the amount typed is the amount from the start.
+      amountCents: initial && !initial.oneOff ? initial.amountCents : amountCents,
+      ...(initial?.amountChanges && !initial.oneOff
+        ? { amountChanges: initial.amountChanges }
+        : {}),
+      everyMonths: every,
+      ...(endMonth ? { endMonth } : {}),
     };
     await onDone(amountChanged ? withAmountFrom(expense, fromMonth, amountCents) : expense);
   }
@@ -442,15 +468,21 @@ function ExpenseForm({
         id={`expense-every-${id}`}
         label={copy.expenses.every}
         value={every}
+        hint={oneOff ? copy.expenses.oneOffHint : undefined}
         onChange={(event) =>
-          setEvery(Number(event.target.value) as RecurringExpense['everyMonths'])
+          setEvery(
+            event.target.value === ONE_OFF
+              ? ONE_OFF
+              : (Number(event.target.value) as RecurringExpense['everyMonths']),
+          )
         }
       >
-        {EVERY.map(({ months, frequency }) => (
+        {EVERY.map(({ months, label }) => (
           <option key={months} value={months}>
-            {t.frequency[frequency]}
+            {label}
           </option>
         ))}
+        <option value={ONE_OFF}>{copy.expenses.oneOff}</option>
       </SelectField>
       <Field
         id={`expense-day-${id}`}
@@ -466,22 +498,24 @@ function ExpenseForm({
       />
       <Field
         id={`expense-start-${id}`}
-        label={copy.expenses.startMonth}
-        hint={copy.expenses.startMonthHint}
+        label={oneOff ? copy.expenses.month : copy.expenses.startMonth}
+        hint={oneOff ? undefined : copy.expenses.startMonthHint}
         type="month"
         value={startMonth}
         error={errors.startMonth}
         onChange={(event) => setStartMonth(event.target.value)}
       />
-      <Field
-        id={`expense-end-${id}`}
-        label={copy.expenses.endMonth}
-        hint={copy.expenses.endMonthHint}
-        type="month"
-        value={endMonth}
-        error={errors.endMonth}
-        onChange={(event) => setEndMonth(event.target.value)}
-      />
+      {!oneOff && (
+        <Field
+          id={`expense-end-${id}`}
+          label={copy.expenses.endMonth}
+          hint={copy.expenses.endMonthHint}
+          type="month"
+          value={endMonth}
+          error={errors.endMonth}
+          onChange={(event) => setEndMonth(event.target.value)}
+        />
+      )}
       <div className="month-actions">
         <button type="submit" className="action-primary">
           {copy.expenses.save}

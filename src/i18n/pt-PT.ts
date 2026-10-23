@@ -378,7 +378,7 @@ export const t = {
     expenses: {
       title: 'Despesas sem fatura',
       intro:
-        'Despesas certas que não passam pela app, como a renda ou o condomínio. Escreves uma vez e aparecem nos meses em que vencem.',
+        'Despesas certas que não passam pela app, como a renda ou o condomínio, ou pontuais e de valor alto, como uma obra ou um frigorífico novo. Escreves uma vez e aparecem nos meses em que vencem.',
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar despesa',
@@ -386,6 +386,12 @@ export const t = {
       namePlaceholder: 'Ex.: Renda',
       amount: 'Valor, em euros',
       every: 'Periodicidade',
+      fourMonthly: 'Quadrimestral',
+      oneOff: 'Pontual',
+      oneOffHint:
+        'Paga uma vez, como uma obra ou um eletrodoméstico. Se a pagas em prestações, escolhe "Mensal" com o primeiro e o último mês.',
+      month: 'Mês',
+      inMonth: (month: string) => `em ${month}`,
       dueDay: 'Dia de pagamento',
       dueDayHint: 'Nos meses mais curtos, conta o último dia.',
       startMonth: 'Primeiro mês',
@@ -523,16 +529,28 @@ export const t = {
     month: 'Mês',
     value: 'Valor',
     monthTitle: (month: string) => `Faturas emitidas em ${month}`,
-    monthTitleWithExpenses: (month: string) => `Faturas emitidas e despesas sem fatura de ${month}`,
+    monthTitleWithExpenses: (month: string, extras: string) =>
+      `Faturas emitidas e ${extras} de ${month}`,
     withExpenses: 'Incluir despesas sem fatura',
+    withOneOff: 'Incluir despesas pontuais',
     expensesSeries: 'Sem fatura',
+    oneOffSeries: 'Pontuais',
+    /** What is added to the invoices, by which switches are on. */
+    extras: (expenses: boolean, oneOff: boolean) =>
+      expenses && oneOff
+        ? 'despesas sem fatura e pontuais'
+        : oneOff
+          ? 'despesas pontuais'
+          : 'despesas sem fatura',
     invoicesTotal: 'Faturas',
-    totalWithExpenses: 'Com as despesas sem fatura',
-    forecastWithExpenses: 'Próximos 12 meses, com as despesas sem fatura',
+    totalWithExpenses: (extras: string) => `Com as ${extras}`,
+    forecastWithExpenses: (extras: string) => `Próximos 12 meses, com as ${extras}`,
     previousInvoicesOnly: '(só faturas)',
-    chartWithExpenses: 'Faturas e despesas sem fatura de cada mês',
+    chartWithExpenses: (extras: string) => `Faturas e ${extras} de cada mês`,
     expensesNote:
       'As despesas sem fatura contam no mês em que vencem, com os valores e o último mês que escreveste em "Este mês".',
+    oneOffNote:
+      'As despesas pontuais contam no mês em que as pagas; nos próximos 12 meses, só as que já escreveste em "Este mês".',
     forecast: 'Próximos 12 meses (estimativa)',
     switchSaving: (amount: string) =>
       `Com as mudanças de fornecedor, poupaste cerca de ${amount} até agora (estimativa).`,
