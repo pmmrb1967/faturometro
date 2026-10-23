@@ -195,7 +195,7 @@ export function HouseholdSection() {
                 percent.format((Math.abs(difference) / previous) * 100),
                 difference > 0,
               )}
-          {anyExtra && ` ${copy.previousInvoicesOnly}`}
+          {anyExtra && ` ${copy.previousInvoicesOnly(extras)}`}
         </p>
       )}
 

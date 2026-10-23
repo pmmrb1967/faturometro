@@ -545,7 +545,8 @@ export const t = {
     invoicesTotal: 'Faturas',
     totalWithExpenses: (extras: string) => `Com as ${extras}`,
     forecastWithExpenses: (extras: string) => `Próximos 12 meses, com as ${extras}`,
-    previousInvoicesOnly: '(só faturas)',
+    previousInvoicesOnly: (extras: string) =>
+      `Esta comparação conta só as faturas: as ${extras} não entram.`,
     chartWithExpenses: (extras: string) => `Faturas e ${extras} de cada mês`,
     expensesNote:
       'As despesas sem fatura contam no mês em que vencem, com os valores e o último mês que escreveste em "Este mês".',
