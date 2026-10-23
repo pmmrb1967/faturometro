@@ -81,7 +81,11 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
           )
         : copy.missingInvoice(label, formatIsoDate(text('lastIssueDate')), number('days'));
     case 'cheaper_offer':
-      return copy.cheaperOffer(label, formatCents(number('savingCents')));
+      return copy.cheaperOffer(
+        label,
+        formatCents(number('savingCents')),
+        data.offerName ? `${text('offerName')} (${text('supplier')})` : undefined,
+      );
     case 'premium_notice':
       return copy.premiumNotice(
         label,

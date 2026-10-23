@@ -75,6 +75,8 @@ function savedMap(): PeriodsMap {
 }
 
 function savedTab(): Tab {
+  // A link to the electricity tab (the "cheaper offer" alert) wins over the remembered tab.
+  if (new URLSearchParams(window.location.search).get('separador') === 'luz') return 'electricity';
   try {
     const value = localStorage.getItem(TAB_KEY);
     return value === 'gas' || value === 'both' ? value : 'electricity';

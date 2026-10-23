@@ -28,10 +28,13 @@ export async function recordCheaperOffer(
     supplier: input.best.offer.supplier,
     dataDate: input.dataDate,
   };
+  const message = alertMessage({ kind: 'cheaper_offer', data }, input.contract);
+  // Same offer and saving: kept as is, unless the wording changed.
   if (
     current &&
     current.data?.savingCents === data.savingCents &&
-    current.data.offerId === data.offerId
+    current.data.offerId === data.offerId &&
+    current.message === message
   )
     return;
   await repos.alerts.put({
@@ -39,7 +42,7 @@ export async function recordCheaperOffer(
     contractId: input.contract.id,
     kind: 'cheaper_offer',
     severity: 'info',
-    message: alertMessage({ kind: 'cheaper_offer', data }, input.contract),
+    message,
     data,
     createdAt: current?.createdAt ?? new Date().toISOString(),
   });

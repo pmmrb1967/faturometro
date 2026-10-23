@@ -74,8 +74,12 @@ export function HomePage() {
             </span>
             <Link
               to={
-                // Paid marks are set on "Este mês".
-                alert.kind === 'payment_due' ? '/app/mes' : `/app/contratos/${alert.contractId}`
+                // Paid marks are set on "Este mês"; the offer is in Comparar, electricity tab.
+                alert.kind === 'payment_due'
+                  ? '/app/mes'
+                  : alert.kind === 'cheaper_offer'
+                    ? '/app/comparar?separador=luz'
+                    : `/app/contratos/${alert.contractId}`
               }
               className="alert-message"
             >
