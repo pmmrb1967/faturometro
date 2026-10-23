@@ -716,7 +716,6 @@ export const t = {
     showMore: (count: number) =>
       count === 1 ? 'Mostrar mais 1 oferta' : `Mostrar mais ${count} ofertas`,
     summary: {
-      split: (electricity: string, gas: string) => `Luz ${electricity}/ano · Gás ${gas}/ano`,
       prices: 'Preços',
       electricity: 'Luz',
       gas: 'Gás',

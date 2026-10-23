@@ -133,7 +133,11 @@ export interface DualResult {
 
 export interface BothComparison {
   currentAnnualCents: number;
-  currentPrices: { electricity: CyclePrices; gas: GasPrices };
+  /** Each current contract's yearly estimate, with its prices. */
+  current: {
+    electricity: { annualCents: number; prices: CyclePrices };
+    gas: { annualCents: number; prices: GasPrices };
+  };
   /** Best electricity-only offer + best gas-only offer (suppliers may differ). */
   bestSeparate?: {
     electricity: OfferResult;
@@ -149,7 +153,13 @@ export function combineElectricityGas(electricity: Comparison, gas: GasCompariso
   const currentAnnualCents = electricity.currentAnnualCents + gas.currentAnnualCents;
   const both: BothComparison = {
     currentAnnualCents,
-    currentPrices: { electricity: electricity.currentPrices, gas: gas.currentPrices },
+    current: {
+      electricity: {
+        annualCents: electricity.currentAnnualCents,
+        prices: electricity.currentPrices,
+      },
+      gas: { annualCents: gas.currentAnnualCents, prices: gas.currentPrices },
+    },
     duals: [],
   };
 

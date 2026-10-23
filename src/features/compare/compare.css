@@ -115,9 +115,21 @@
   border-radius: 999px;
 }
 
-.offer-split {
-  margin: 0 0 6px;
-  font-weight: 600;
+/* Luz and Gás rows with their yearly cost on the right. */
+.offer-prices.with-amounts {
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 8px;
+}
+
+.offer-prices.with-amounts > div {
+  display: contents;
+}
+
+.offer-prices-amount {
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .offer-prices {

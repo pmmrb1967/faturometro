@@ -1,8 +1,10 @@
 import type { CyclePrices, GasPrices } from '../../domain/erse';
 import { t } from '../../i18n/pt-PT';
+import { formatCents } from '../../lib/money';
 import { unitPrice } from './format';
 
-const summary = t.compare.summary;
+const copy = t.compare;
+const summary = copy.summary;
 
 /** Electricity energy prices of a cycle, labelled by period. */
 function energyPrices(prices: CyclePrices): string {
@@ -18,11 +20,36 @@ function energyPrices(prices: CyclePrices): string {
   return parts.map(([label, value]) => summary.perKwh(label, unitPrice.format(value))).join(' · ');
 }
 
-/** Power and energy prices, gas fixed term and energy: "Luz" and "Gás" when both are given. */
-export function PriceList({ electricity, gas }: { electricity?: CyclePrices; gas?: GasPrices }) {
-  if (!electricity && !gas) return null;
+/** Yearly cost of one part, at the end of its row. */
+function Amount({ cents }: { cents?: number }) {
+  if (cents === undefined) return null;
   return (
-    <dl className="offer-prices">
+    <dd className="offer-prices-amount">
+      {formatCents(cents)}
+      {copy.perYear}
+    </dd>
+  );
+}
+
+/**
+ * Power and energy prices, gas fixed term and energy: "Luz" and "Gás" when both
+ * are given, each with its yearly cost when known.
+ */
+export function PriceList({
+  electricity,
+  gas,
+  electricityCents,
+  gasCents,
+}: {
+  electricity?: CyclePrices;
+  gas?: GasPrices;
+  electricityCents?: number;
+  gasCents?: number;
+}) {
+  if (!electricity && !gas) return null;
+  const amounts = electricityCents !== undefined || gasCents !== undefined;
+  return (
+    <dl className={amounts ? 'offer-prices with-amounts' : 'offer-prices'}>
       {electricity && (
         <div>
           <dt>{gas ? summary.electricity : summary.prices}</dt>
@@ -31,6 +58,7 @@ export function PriceList({ electricity, gas }: { electricity?: CyclePrices; gas
             {' · '}
             {energyPrices(electricity)}
           </dd>
+          <Amount cents={electricityCents} />
         </div>
       )}
       {gas && (
@@ -41,6 +69,7 @@ export function PriceList({ electricity, gas }: { electricity?: CyclePrices; gas
             {' · '}
             {summary.perKwh(summary.periods.simple, unitPrice.format(gas.perKwh))}
           </dd>
+          <Amount cents={gasCents} />
         </div>
       )}
     </dl>

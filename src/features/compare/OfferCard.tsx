@@ -92,10 +92,6 @@ export function OfferCard({
     .filter(([applies]) => applies)
     .map(([, label]) => label);
 
-  const split =
-    electricity?.annualCents !== undefined && gas?.annualCents !== undefined
-      ? summary.split(formatCents(electricity.annualCents), formatCents(gas.annualCents))
-      : null;
   const included = discounts(offer, electricity !== undefined, gas !== undefined);
   const notes = [
     offer.loyalty && offer.texts.loyalty ? [summary.loyalty, offer.texts.loyalty] : null,
@@ -122,8 +118,12 @@ export function OfferCard({
       {savingCents !== undefined && (
         <p className="offer-saving">{copy.saving(formatCents(savingCents))}</p>
       )}
-      {split && <p className="offer-split">{split}</p>}
-      <PriceList electricity={electricity?.prices} gas={gas?.prices} />
+      <PriceList
+        electricity={electricity?.prices}
+        gas={gas?.prices}
+        electricityCents={electricity?.annualCents}
+        gasCents={gas?.annualCents}
+      />
       {tags.length > 0 && (
         <ul className="offer-tags">
           {tags.map((tag) => (

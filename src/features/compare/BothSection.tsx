@@ -25,8 +25,10 @@ export function BothSection({ comparison }: { comparison: BothComparison }) {
           <span>{copy.perYear}</span>
         </p>
         <PriceList
-          electricity={comparison.currentPrices.electricity}
-          gas={comparison.currentPrices.gas}
+          electricity={comparison.current.electricity.prices}
+          gas={comparison.current.gas.prices}
+          electricityCents={comparison.current.electricity.annualCents}
+          gasCents={comparison.current.gas.annualCents}
         />
         <p className="muted">
           {copy.summary.current} {copy.summary.currentGas}

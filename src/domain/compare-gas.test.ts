@@ -187,7 +187,10 @@ describe('combineElectricityGas', () => {
 
   it('adds the current contracts, with their prices', () => {
     expect(both.currentAnnualCents).toBe(90_000);
-    expect(both.currentPrices).toEqual({ electricity: elePrices, gas: gasPrices });
+    expect(both.current).toEqual({
+      electricity: { annualCents: 60_000, prices: elePrices },
+      gas: { annualCents: 30_000, prices: gasPrices },
+    });
   });
 
   it('pairs the best electricity-only and gas-only offers', () => {
