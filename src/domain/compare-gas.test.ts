@@ -148,11 +148,14 @@ describe('combineElectricityGas', () => {
   const dualOffer = offer('D1', { supply: 'DUAL' });
   const dualNoGas = offer('D2', { supply: 'DUAL' });
   const gasOffer = offer('G1');
+  const elePrices = { fixedPerDay: 0.4, simple: 0.13 };
+  const gasPrices = { fixedPerDay: 0.1, perKwh: 0.08 };
   const ele = (o: Offer, annualCents: number, cycle: '1' | '2' = '1'): OfferResult => ({
     offer: o,
     cycle,
     annualCents,
     savingCents: 60_000 - annualCents,
+    prices: elePrices,
   });
   const electricity: Comparison = {
     usage: USAGE,
@@ -169,8 +172,8 @@ describe('combineElectricityGas', () => {
     usage: USAGE,
     currentAnnualCents: 30_000,
     results: [
-      { offer: dualOffer, annualCents: 24_000, savingCents: 6_000 },
-      { offer: gasOffer, annualCents: 25_000, savingCents: 5_000 },
+      { offer: dualOffer, annualCents: 24_000, savingCents: 6_000, prices: gasPrices },
+      { offer: gasOffer, annualCents: 25_000, savingCents: 5_000, prices: gasPrices },
     ],
   };
   const both = combineElectricityGas(electricity, gas);
@@ -187,7 +190,14 @@ describe('combineElectricityGas', () => {
 
   it('prices dual offers with both parts, cheapest cycle, never without gas (Review Focus 1)', () => {
     expect(both.duals).toEqual([
-      { offer: dualOffer, cycle: '1', annualCents: 74_000, savingCents: 16_000 },
+      {
+        offer: dualOffer,
+        cycle: '1',
+        annualCents: 74_000,
+        savingCents: 16_000,
+        electricity: { annualCents: 50_000, prices: elePrices },
+        gas: { annualCents: 24_000, prices: gasPrices },
+      },
     ]);
   });
 });

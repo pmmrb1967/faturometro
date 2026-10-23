@@ -7,6 +7,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
 import { OfferCard } from './OfferCard';
+import { sharedSheets, sheetUrl } from './offer-link';
 
 const copy = t.compare;
 const TOP = 5;
@@ -34,6 +35,8 @@ export function ElectricitySection({
   const cheaper = comparison.results.filter(
     (result) => result.offer.supply === 'ELE' && result.savingCents > 0,
   );
+  const shown = cheaper.slice(0, TOP);
+  const shared = sharedSheets(shown.map((result) => result.offer));
   return (
     <>
       <section className="compare-current" aria-labelledby="compare-current">
@@ -84,8 +87,9 @@ export function ElectricitySection({
       )}
       <h2 className="section-title">{copy.best}</h2>
       {cheaper.length === 0 && <p className="muted">{copy.none}</p>}
+      {shown.length > 0 && <p className="muted offer-vat">{copy.summary.withoutVat}</p>}
       <ol className="offers">
-        {cheaper.slice(0, TOP).map((result) => (
+        {shown.map((result) => (
           <OfferCard
             key={`${result.offer.id}-${result.cycle}`}
             offer={result.offer}
@@ -96,6 +100,8 @@ export function ElectricitySection({
             }
             annualCents={result.annualCents}
             savingCents={result.savingCents}
+            electricity={{ prices: result.prices }}
+            sharedSheet={shared.has(sheetUrl(result.offer) ?? '')}
           />
         ))}
       </ol>

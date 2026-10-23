@@ -6,7 +6,7 @@
  */
 import type { AnnualUsage, Comparison, OfferResult } from './compare';
 import { periodDays } from './contract-prices';
-import type { CycleCode, Escalao, GasPrices, Offer, RegulatedGas } from './erse';
+import type { CycleCode, CyclePrices, Escalao, GasPrices, Offer, RegulatedGas } from './erse';
 import { estimateGasCost, gasBreakdownFromLines, type GasOfferPrices } from './gas-cost';
 import type { InvoiceLine } from './types';
 
@@ -23,6 +23,8 @@ export interface GasOfferResult {
   annualCents: number;
   /** Positive = cheaper than the current contract. */
   savingCents: number;
+  /** The offer's prices used, for the escalão (without VAT). */
+  prices: GasPrices;
 }
 
 export interface GasComparison {
@@ -81,6 +83,7 @@ export function compareGas(input: CompareGasInput): GasComparison | null {
       offer,
       annualCents: estimate.totalCents,
       savingCents: current.totalCents - estimate.totalCents,
+      prices,
     });
   }
   results.sort((a, b) => a.annualCents - b.annualCents);
@@ -112,6 +115,9 @@ export interface DualResult {
   cycle: CycleCode;
   annualCents: number;
   savingCents: number;
+  /** Each part of the yearly estimate, with the prices used. */
+  electricity: { annualCents: number; prices: CyclePrices };
+  gas: { annualCents: number; prices: GasPrices };
 }
 
 export interface BothComparison {
@@ -160,6 +166,8 @@ export function combineElectricityGas(electricity: Comparison, gas: GasCompariso
       cycle: item.cycle,
       annualCents,
       savingCents: currentAnnualCents - annualCents,
+      electricity: { annualCents: item.annualCents, prices: item.prices },
+      gas: { annualCents: gasPart.annualCents, prices: gasPart.prices },
     });
   }
   both.duals.sort((a, b) => a.annualCents - b.annualCents);

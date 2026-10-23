@@ -114,6 +114,8 @@ export interface OfferResult {
   annualCents: number;
   /** Positive = cheaper than the current contract. */
   savingCents: number;
+  /** The offer's prices used, for the contracted power and this cycle (without VAT). */
+  prices: CyclePrices;
   /** Daily or weekly, the cheaper for this consumption (bi- and tri-hourly with an E-Redes profile). */
   meterCycle?: MeterCycle;
 }
@@ -202,6 +204,7 @@ export function compareOffers(input: CompareInput): Comparison | null {
           cycle,
           annualCents: estimate.totalCents,
           savingCents: current.totalCents - estimate.totalCents,
+          prices,
           ...(meterCycle ? { meterCycle } : {}),
         };
       }
