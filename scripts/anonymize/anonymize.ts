@@ -232,6 +232,7 @@ export class Anonymizer {
     this.scanPage(items);
     const out = items.map((item) => this.text(item));
     this.digitGroupsAcrossItems(items, out);
+    this.boxedCharsAcrossItems(items, out);
     // Letters and digits of the page, with the item and position each came from, and
     // whether a space came just before (a split value has none: "MA" + "RIA").
     const chars: { item: number; at: number; base: string; afterSpace: boolean }[] = [];
@@ -308,6 +309,45 @@ export class Anonymizer {
         );
         offset += length;
       });
+    }
+  }
+
+  /**
+   * A value written one character per box on a form ("4", "4", "5", "5", "-",
+   * "2", "3", "7": Fidelidade's proposal) is replaced as a whole, with the same
+   * mapping as the compact form; the digits are written back box by box.
+   */
+  private boxedCharsAcrossItems(items: readonly string[], out: string[]): void {
+    const box = /^[\p{L}\p{N}-]$/u;
+    let index = 0;
+    while (index < items.length) {
+      const run: number[] = [];
+      for (let next = index; next < items.length; next++) {
+        if (box.test((items[next] ?? '').trim())) run.push(next);
+        else break;
+      }
+      index = (run.at(-1) ?? index) + 1;
+      const compact = run.map((at) => (items[at] ?? '').trim()).join('');
+      const digits = compact.replace(/\D/g, '');
+      let replacement: string | null = null;
+      const postal = /^(\d{4})-?(\d{3})$/.exec(compact);
+      if (postal) {
+        replacement = this.postalCode(`${postal[1]}-${postal[2]}`).replace('-', '');
+      } else if (
+        digits.length >= MIN_DIGIT_RUN &&
+        !this.isKeptNif(digits) &&
+        !isPlausibleDate(digits)
+      ) {
+        replacement = this.replaceNumber(digits);
+      }
+      if (replacement === null) continue;
+      let offset = 0;
+      for (const at of run) {
+        const char = (items[at] ?? '').trim();
+        if (!/\d/.test(char)) continue;
+        out[at] = (items[at] ?? '').replace(char, replacement[offset] ?? char);
+        offset++;
+      }
     }
   }
 

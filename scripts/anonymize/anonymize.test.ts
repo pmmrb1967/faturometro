@@ -248,6 +248,23 @@ describe('Anonymizer.page', () => {
     expect(make().page(['500', '000', '000'])).toEqual(['500', '000', '000']);
   });
 
+  it('replaces values written one character per box (forms), like the compact form', () => {
+    const anon = make();
+    const postal = anon.text('4455-237').replace('-', '');
+    const policy = anon.text('RA12345678');
+    const out = anon.page(['CÓDIGO POSTAL', ...'4455-237', 'CIDADE', ...'RA12345678', 'RAMO']);
+    expect(out[0]).toBe('CÓDIGO POSTAL');
+    expect(out.slice(1, 9).join('').replace('-', '')).toBe(postal);
+    expect(out[5]).toBe('-');
+    expect(out[9]).toBe('CIDADE');
+    expect(out.slice(10, 20).join('')).toBe(policy);
+    expect(out[20]).toBe('RAMO');
+    expect(() => anon.assertNoLeaks({ items: out, joined: [out.join('')] })).not.toThrow();
+    // Boxed dates and short codes stay as they are.
+    expect(make().page([...'20260101'])).toEqual([...'20260101']);
+    expect(make().page([...'A12'])).toEqual([...'A12']);
+  });
+
   it('still anonymizes each item on its own', () => {
     const anon = make(['Maria Sousa']);
     expect(anon.page(['Maria Sousa'])[0]).not.toMatch(/maria/i);
