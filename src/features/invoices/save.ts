@@ -67,6 +67,26 @@ export async function findProviderByNif(
   return (await repos.providers.findBy('nif', nif))[0];
 }
 
+/** The provider with this NIF, created (or given the sector) when needed. */
+export async function ensureProvider(
+  repos: Repositories,
+  nif: string,
+  name: string,
+  sector: Sector,
+): Promise<Provider> {
+  const provider = await findProviderByNif(repos, nif);
+  if (!provider) {
+    return repos.providers.put({
+      id: crypto.randomUUID(),
+      nif,
+      name: name.trim(),
+      sectors: [sector],
+    });
+  }
+  if (provider.sectors.includes(sector)) return provider;
+  return repos.providers.put({ ...provider, sectors: [...provider.sectors, sector] });
+}
+
 export async function saveInvoice(
   repos: Repositories,
   draft: InvoiceDraft,
@@ -80,20 +100,7 @@ export async function saveInvoice(
     if (existing) throw new DuplicateInvoiceError(existing.id);
   }
 
-  let provider = await findProviderByNif(repos, draft.issuerNif);
-  if (!provider) {
-    provider = await repos.providers.put({
-      id: crypto.randomUUID(),
-      nif: draft.issuerNif,
-      name: draft.providerName.trim(),
-      sectors: [draft.sector],
-    });
-  } else if (!provider.sectors.includes(draft.sector)) {
-    provider = await repos.providers.put({
-      ...provider,
-      sectors: [...provider.sectors, draft.sector],
-    });
-  }
+  const provider = await ensureProvider(repos, draft.issuerNif, draft.providerName, draft.sector);
 
   let contract: Contract | undefined;
   if ('id' in draft.contract) {

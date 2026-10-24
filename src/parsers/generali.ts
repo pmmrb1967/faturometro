@@ -21,7 +21,7 @@ import { amount, date, findItem, normalize, rows, valueRightOf } from './utils';
 
 const ID = 'generali';
 /** Field A of the QR code on Generali receipts (fixtures). */
-const NIF = '500940231';
+export const NIF = '500940231';
 
 /** Premium breakdown rows: label → line kind (rows that are totals are left out). */
 const BREAKDOWN: [RegExp, InvoiceLine['kind']][] = [

@@ -20,7 +20,7 @@ import { amount, findItem, normalize } from './utils';
 
 const ID = 'fidelidade';
 /** Field A of the QR code on Fidelidade receipts (fixtures). */
-const NIF = '500918880';
+export const NIF = '500918880';
 
 /** Charges printed next to the premium: label → description and kind. */
 const CHARGES: [RegExp, string, InvoiceLine['kind']][] = [

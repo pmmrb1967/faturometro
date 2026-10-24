@@ -13,14 +13,17 @@
  */
 import type { InsuranceCoverage, InsuranceDetails, InsuranceRenewal } from '../domain/types';
 import type { PageText } from '../pdf/text';
+import { NIF as FIDELIDADE_NIF } from './fidelidade';
 import { readFidelidadeConditions } from './fidelidade-documents';
 import { readFidelidadeProposal } from './fidelidade-proposal';
+import { NIF as GENERALI_NIF } from './generali';
 import { amount, date, findItem, normalize, quantity, rows, valueRightOf, type Row } from './utils';
 
 export type PolicyDocument =
   | {
       kind: 'renewal';
       issuerName: string;
+      issuerNif: string;
       /** "Seguro Casa". */
       title?: string;
       policyNumber?: string;
@@ -31,6 +34,7 @@ export type PolicyDocument =
       /** Read from the proposal the client signed, not the policy's conditions. */
       source?: 'proposal';
       issuerName: string;
+      issuerNif: string;
       title?: string;
       policyNumber?: string;
       details: InsuranceDetails;
@@ -115,6 +119,7 @@ function readRenewal(pages: readonly PageText[]): PolicyDocument | null {
   return {
     kind: 'renewal',
     issuerName: 'Generali Seguros',
+    issuerNif: GENERALI_NIF,
     ...(name ? { title: name } : {}),
     ...(policyNumber ? { policyNumber } : {}),
     renewal,
@@ -241,6 +246,7 @@ function readConditions(pages: readonly PageText[]): PolicyDocument | null {
   return {
     kind: 'conditions',
     issuerName: 'Generali Seguros',
+    issuerNif: GENERALI_NIF,
     ...(name ? { title: name } : {}),
     ...(policyNumber ? { policyNumber } : {}),
     details,
@@ -255,14 +261,22 @@ export function readPolicyDocument(pages: readonly PageText[]): PolicyDocument |
     if (isProposal) {
       const proposal = readFidelidadeProposal(pages);
       return proposal
-        ? { kind: 'conditions', source: 'proposal', issuerName: 'Fidelidade', ...proposal }
+        ? {
+            kind: 'conditions',
+            source: 'proposal',
+            issuerName: 'Fidelidade',
+            issuerNif: FIDELIDADE_NIF,
+            ...proposal,
+          }
         : null;
     }
     const isConditions = pages[0]?.items.some(
       (item) => normalize(item.str) === 'CONDIÇÕES PARTICULARES',
     );
     const conditions = isConditions ? readFidelidadeConditions(pages) : null;
-    return conditions ? { kind: 'conditions', issuerName: 'Fidelidade', ...conditions } : null;
+    return conditions
+      ? { kind: 'conditions', issuerName: 'Fidelidade', issuerNif: FIDELIDADE_NIF, ...conditions }
+      : null;
   }
   if (!ISSUER.test(all)) return null;
   if (/Carta Ata/.test(all)) return readRenewal(pages);

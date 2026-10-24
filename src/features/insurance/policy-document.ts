@@ -13,10 +13,13 @@ export function samePolicy(a?: string, b?: string): boolean {
   return Boolean(a && b && key(a) === key(b));
 }
 
+/** Choice that saves the document into a new contract. */
+export const NEW_CONTRACT = 'new-contract';
+
 /**
  * The contract the document belongs to: same policy number; else the only
  * insurance contract, if it has no policy number yet (another number is
- * another policy).
+ * another policy, so a new contract, as when there is no insurance yet).
  */
 export function contractForDocument(
   contracts: readonly Candidate[],
@@ -30,7 +33,24 @@ export function contractForDocument(
     if (same) return same.id;
   }
   const only = insurance.length === 1 ? insurance[0] : undefined;
-  return only && !only.insurance?.policyNumber ? only.id : '';
+  if (only && !only.insurance?.policyNumber) return only.id;
+  return document.policyNumber || insurance.length === 0 ? NEW_CONTRACT : '';
+}
+
+/** A new insurance contract made from the document alone (receipts come later). */
+export function contractFromDocument(
+  document: PolicyDocument,
+  ids: { id: string; providerId: string; label: string; now: string },
+): Omit<Contract, 'updatedAt'> {
+  return {
+    id: ids.id,
+    providerId: ids.providerId,
+    sector: 'insurance',
+    label: ids.label,
+    insurance: withPolicyDocument(undefined, document),
+    active: true,
+    createdAt: ids.now,
+  };
 }
 
 /** The contract's policy data with the document's added (the document's values win). */

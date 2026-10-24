@@ -353,10 +353,10 @@ export const t = {
         (premium ? `, prémio anual de ${premium}.` : '.'),
       contract: 'Contrato do seguro',
       choose: 'Escolhe o contrato',
+      newContract: 'Novo contrato com este documento',
+      newLabel: (issuer: string) => `Seguro ${issuer}`,
       save: 'Guardar no contrato',
       saved: (label: string) => `Guardado no contrato ${label}.`,
-      noContract:
-        'Ainda não tens nenhum seguro na app. Guarda primeiro um recibo (Fatura/Recibo) deste seguro: o contrato é criado com ele.',
     },
   },
   month: {

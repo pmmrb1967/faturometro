@@ -7,12 +7,21 @@ import { formatCents } from '../../lib/money';
 import type { PolicyDocument } from '../../parsers/policy-documents';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
-import { contractForDocument, withPolicyDocument } from './policy-document';
+import { ensureProvider } from '../invoices/save';
+import {
+  NEW_CONTRACT,
+  contractForDocument,
+  contractFromDocument,
+  withPolicyDocument,
+} from './policy-document';
 
 const copy = t.insurance.document;
 const pct = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 1, signDisplay: 'always' });
 
-/** A renewal letter or particular conditions: shown, then saved into the policy's contract. */
+/**
+ * A renewal letter, particular conditions or proposal: shown, then saved into
+ * the policy's contract, or into a new one (a policy the app does not have yet).
+ */
 export function PolicyDocumentCard({ document }: { document: PolicyDocument }) {
   const { session } = useSession();
   const contracts = useLiveQuery(
@@ -30,13 +39,34 @@ export function PolicyDocumentCard({ document }: { document: PolicyDocument }) {
   const contractId = choice ?? contractForDocument(contracts, document);
 
   async function save() {
+    if (!session) return;
+    const { repos } = session;
+    if (contractId === NEW_CONTRACT) {
+      const provider = await ensureProvider(
+        repos,
+        document.issuerNif,
+        document.issuerName,
+        'insurance',
+      );
+      const contract = await repos.contracts.put(
+        contractFromDocument(document, {
+          id: crypto.randomUUID(),
+          providerId: provider.id,
+          label: document.title ?? copy.newLabel(document.issuerName),
+          now: new Date().toISOString(),
+        }),
+      );
+      await refreshAlerts(repos);
+      setSaved(contract.label);
+      return;
+    }
     const contract = contracts?.find((candidate) => candidate.id === contractId);
-    if (!session || !contract) return;
-    await session.repos.contracts.put({
+    if (!contract) return;
+    await repos.contracts.put({
       ...contract,
       insurance: withPolicyDocument(contract.insurance, document),
     });
-    await refreshAlerts(session.repos);
+    await refreshAlerts(repos);
     setSaved(contract.label);
   }
 
@@ -105,8 +135,6 @@ export function PolicyDocumentCard({ document }: { document: PolicyDocument }) {
         <p role="status" className="doc-saved">
           {copy.saved(saved)}
         </p>
-      ) : contracts.length === 0 ? (
-        <p className="ingest-problem">{copy.noContract}</p>
       ) : (
         <>
           <SelectField
@@ -116,6 +144,7 @@ export function PolicyDocumentCard({ document }: { document: PolicyDocument }) {
             onChange={(event) => setChoice(event.target.value)}
           >
             <option value="">{copy.choose}</option>
+            <option value={NEW_CONTRACT}>{copy.newContract}</option>
             {contracts.map((contract) => (
               <option key={contract.id} value={contract.id}>
                 {[contract.label, contract.insurance?.insuredObject].filter(Boolean).join(' · ')}

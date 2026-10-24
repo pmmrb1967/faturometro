@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import type { PolicyDocument } from '../../parsers/policy-documents';
-import { contractForDocument, samePolicy, withPolicyDocument } from './policy-document';
+import {
+  NEW_CONTRACT,
+  contractForDocument,
+  contractFromDocument,
+  samePolicy,
+  withPolicyDocument,
+} from './policy-document';
 
 const renewal: PolicyDocument = {
   kind: 'renewal',
   issuerName: 'Generali Seguros',
+  issuerNif: '500940231',
   policyNumber: '222',
   renewal: { date: '2026-11-01', currentCents: 39789, nextCents: 43251 },
 };
 const conditions: PolicyDocument = {
   kind: 'conditions',
   issuerName: 'Generali Seguros',
+  issuerNif: '500940231',
   policyNumber: '111',
   details: {
     product: 'Automóvel Ligeiros',
@@ -41,14 +49,43 @@ describe('contractForDocument', () => {
     expect(contractForDocument([car, home, light], conditions)).toBe('car');
   });
 
-  it('falls back to the only insurance contract, and otherwise asks', () => {
+  it('falls back to the only unnumbered insurance contract', () => {
     const other = { ...renewal, policyNumber: '999' };
-    // The only policy has another number: another policy, so ask.
-    expect(contractForDocument([car, light], other)).toBe('');
-    const unnumbered = { id: 'new', sector: 'insurance' as const, label: 'Seguro' };
-    expect(contractForDocument([unnumbered, light], other)).toBe('new');
-    expect(contractForDocument([car, home], other)).toBe('');
-    expect(contractForDocument([light], other)).toBe('');
+    const unnumbered = { id: 'unnumbered', sector: 'insurance' as const, label: 'Seguro' };
+    expect(contractForDocument([unnumbered, light], other)).toBe('unnumbered');
+  });
+
+  it('proposes a new contract for a policy number no contract has', () => {
+    const other = { ...renewal, policyNumber: '999' };
+    // The only policy has another number: another policy.
+    expect(contractForDocument([car, light], other)).toBe(NEW_CONTRACT);
+    expect(contractForDocument([car, home], other)).toBe(NEW_CONTRACT);
+    expect(contractForDocument([light], other)).toBe(NEW_CONTRACT);
+  });
+
+  it('asks when the document has no policy number', () => {
+    const unnumbered: PolicyDocument = { ...renewal, policyNumber: undefined };
+    expect(contractForDocument([car, home], unnumbered)).toBe('');
+    expect(contractForDocument([light], unnumbered)).toBe(NEW_CONTRACT);
+  });
+});
+
+describe('contractFromDocument', () => {
+  it('makes an insurance contract with the policy data', () => {
+    const contract = contractFromDocument(conditions, {
+      id: 'c1',
+      providerId: 'p1',
+      label: 'Seguro Automóvel',
+      now: '2026-10-24T12:00:00.000Z',
+    });
+    expect(contract).toMatchObject({
+      id: 'c1',
+      providerId: 'p1',
+      sector: 'insurance',
+      label: 'Seguro Automóvel',
+      active: true,
+    });
+    expect(contract.insurance).toMatchObject({ policyNumber: '111', annualPremiumCents: 46138 });
   });
 });
 
