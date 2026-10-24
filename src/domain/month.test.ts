@@ -8,6 +8,7 @@ import {
   invoicePaid,
   monthSummary,
   paymentId,
+  uncheckAction,
   withAmountFrom,
 } from './month';
 import type { Invoice, Payment, RecurringExpense } from './types';
@@ -172,6 +173,14 @@ describe('direct debit', () => {
       paidOn: '2026-10-21',
       auto: false,
     });
+  });
+
+  it('unticking says the debit failed only for a mark the app made', () => {
+    expect(uncheckAction({ autoPaid: true })).toBe('unpaid');
+    // The user's own mark is removed; the direct debit marks it again.
+    expect(uncheckAction({})).toBe('remove');
+    const summary = monthSummary('2026-10', [debited], [], [], { today: '2026-10-30' });
+    expect(summary.items[0]).toMatchObject({ paidOn: '2026-10-23', autoPaid: true });
   });
 
   it('shows on the month of the debit, paid once it has passed', () => {

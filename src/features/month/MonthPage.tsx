@@ -7,6 +7,7 @@ import {
   expenseAmount,
   monthOf,
   monthSummary,
+  uncheckAction,
   withAmountFrom,
   type MonthItem,
 } from '../../domain/month';
@@ -103,7 +104,7 @@ export function MonthPage() {
     if (paid) {
       const payment: Omit<Payment, 'updatedAt'> = { ...target, paidOn: date };
       await repos.payments.put(payment);
-    } else if (item.debitDate && item.debitDate <= date) {
+    } else if (uncheckAction(item) === 'unpaid') {
       // The direct debit failed: say so, or the app marks it as paid again.
       const payment: Omit<Payment, 'updatedAt'> = { ...target, unpaid: true };
       await repos.payments.put(payment);

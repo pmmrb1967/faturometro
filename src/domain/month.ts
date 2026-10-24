@@ -129,6 +129,15 @@ export function invoicePaid(
   return debitDate && debitDate <= today ? { paidOn: debitDate, auto: true } : null;
 }
 
+/**
+ * What unticking an item means: a paid mark the app made from the direct
+ * debit says the debit failed; a mark the user made is just removed (the
+ * direct debit, if its day has passed, marks it again).
+ */
+export function uncheckAction(item: Pick<MonthItem, 'autoPaid'>): 'unpaid' | 'remove' {
+  return item.autoPaid ? 'unpaid' : 'remove';
+}
+
 export function monthSummary(
   month: string,
   invoices: readonly Invoice[],
