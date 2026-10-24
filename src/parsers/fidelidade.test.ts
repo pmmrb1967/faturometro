@@ -33,11 +33,17 @@ describe('fidelidade parser', () => {
     expect(result.lines.find((line) => line.description === 'Imposto do selo')?.amountCents).toBe(
       qr.stampDutyCents,
     );
-    // Monthly receipt.
-    expect(result.periodStart?.value.slice(0, 7)).toBe(result.periodEnd?.value.slice(0, 7));
+    // Monthly receipt: within one month (health) or from the 28th to the 28th (pets).
+    const start = Date.parse(result.periodStart?.value ?? '');
+    const end = Date.parse(result.periodEnd?.value ?? '');
+    expect((end - start) / 86_400_000).toBeGreaterThanOrEqual(27);
+    expect((end - start) / 86_400_000).toBeLessThanOrEqual(31);
     expect(result.customerNumber?.value).toBeTruthy();
-    expect(result.insurance?.value.policyNumber).toMatch(/^\d+$/);
+    expect(result.insurance?.value.policyNumber).toMatch(/^(?:[A-Z]{2})?\d+$/);
     expect(result.insurance?.value.product).not.toMatch(/�/);
     expect(result.contractLabel?.value).toMatch(/^Seguro \S/);
+    if (result.insurance?.value.product === 'FIDELIDADE PETS') {
+      expect(result.contractLabel?.value).toBe('Seguro Pets');
+    }
   });
 });

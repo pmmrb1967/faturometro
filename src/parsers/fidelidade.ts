@@ -3,7 +3,8 @@
  * (health insurance billed monthly, …), one QR code. Exempt from VAT; the
  * stamp duty is QR field M. Some accented letters come out of this PDF as
  * U+FFFD ("PR�MIO", "Ap�lice"), so labels match any character there. Layout
- * studied on 2026 health insurance receipts.
+ * studied on 2026 health insurance receipts; pet insurance ("FIDELIDADE
+ * PETS") uses the same receipt, with letters in the policy number ("RA…").
  */
 import type { InvoiceLine } from '../domain/types';
 import type { PageText, TextItem } from '../pdf/text';
@@ -51,6 +52,11 @@ function repaired(text: string): string {
 function sentenceCase(text: string): string {
   const lower = text.toLocaleLowerCase('pt-PT');
   return lower.charAt(0).toLocaleUpperCase('pt-PT') + lower.slice(1);
+}
+
+/** Contract label: "SAÚDE MULTICARE INDIVIDUAL" → "Seguro Saúde multicare individual", "FIDELIDADE PETS" → "Seguro Pets". */
+export function policyTitle(product: string): string {
+  return `Seguro ${sentenceCase(product.replace(/^FIDELIDADE\s+/i, ''))}`;
 }
 
 /** The first amount below `label`, within `dx` points horizontally and 30 points down. */
@@ -115,8 +121,8 @@ function parseAmounts(page: PageText, result: ExtractedInvoice, qr?: FiscalQr) {
 export const fidelidadeParser: Parser = {
   id: ID,
   name: 'Fidelidade',
-  version: '1.0.0',
-  updated: '2026-10-15',
+  version: '1.1.0',
+  updated: '2026-10-24',
   sectors: ['insurance'],
   issuerNifs: [NIF],
 
@@ -171,8 +177,7 @@ export const fidelidadeParser: Parser = {
       },
       confidence: 'high',
     };
-    if (product)
-      result.contractLabel = { value: `Seguro ${sentenceCase(product)}`, confidence: 'high' };
+    if (product) result.contractLabel = { value: policyTitle(product), confidence: 'high' };
     return result;
   },
 };

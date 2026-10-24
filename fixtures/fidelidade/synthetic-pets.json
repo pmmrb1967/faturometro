@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "parserId": "fidelidade",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 1,
+      "text": "A:500918880*B:999999990*C:PT*D:FR*E:N*F:20261030*G:FR AAA0000/000000002*H:ABCD1234-000000002*I1:PT*I2:15.00*M:1.35*N:1.35*O:16.35*Q:abcd*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "FATURA/RECIBO Nº FR AAA0000/000000002",
+          "x": 356,
+          "y": 37,
+          "width": 170.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Ramo/Produto:",
+          "x": 68,
+          "y": 255,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FIDELIDADE PETS",
+          "x": 68,
+          "y": 275,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "SELO",
+          "x": 201,
+          "y": 317,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1,35",
+          "x": 396,
+          "y": 317,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TOTAL",
+          "x": 479,
+          "y": 320,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PRÉMIO",
+          "x": 98,
+          "y": 331,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "16,35",
+          "x": 488,
+          "y": 345,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PRÉMIO COMERCIAL:",
+          "x": 85,
+          "y": 360,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "15,00",
+          "x": 118,
+          "y": 380,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de Cobrança: 2026-10-28",
+          "x": 201,
+          "y": 413,
+          "width": 128.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "RESPONSAB. CIVIL ANIMAIS",
+          "x": 68,
+          "y": 500,
+          "width": 110.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Apólice: AB1234567",
+          "x": 68,
+          "y": 532,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nº Cliente: 1000000002",
+          "x": 333,
+          "y": 532,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período do Recibo: 2026-10-28 a 2026-11-28",
+          "x": 68,
+          "y": 544,
+          "width": 193.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Lisboa, 30 de outubro de 2026",
+          "x": 432,
+          "y": 670,
+          "width": 133.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fidelidade - Companhia de Seguros, S.A. - Exemplo sintético",
+          "x": 37,
+          "y": 817,
+          "width": 271.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}
