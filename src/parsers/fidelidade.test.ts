@@ -38,6 +38,9 @@ describe('fidelidade parser', () => {
     const end = Date.parse(result.periodEnd?.value ?? '');
     expect((end - start) / 86_400_000).toBeGreaterThanOrEqual(27);
     expect((end - start) / 86_400_000).toBeLessThanOrEqual(31);
+    // "Data de Cobrança": the direct debit, around the start of the period.
+    const debit = Date.parse(result.directDebitDate?.value ?? '');
+    expect(Math.abs(debit - start) / 86_400_000).toBeLessThanOrEqual(5);
     expect(result.customerNumber?.value).toBeTruthy();
     expect(result.insurance?.value.policyNumber).toMatch(/^(?:[A-Z]{2})?\d+$/);
     expect(result.insurance?.value.product).not.toMatch(/�/);

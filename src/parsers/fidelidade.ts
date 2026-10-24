@@ -5,6 +5,7 @@
  * U+FFFD ("PR�MIO", "Ap�lice"), so labels match any character there. Layout
  * studied on 2026 health insurance receipts; pet insurance ("FIDELIDADE
  * PETS") uses the same receipt, with letters in the policy number ("RA…").
+ * "Data de Cobrança" is the day of the direct debit.
  */
 import type { InvoiceLine } from '../domain/types';
 import type { PageText, TextItem } from '../pdf/text';
@@ -121,7 +122,7 @@ function parseAmounts(page: PageText, result: ExtractedInvoice, qr?: FiscalQr) {
 export const fidelidadeParser: Parser = {
   id: ID,
   name: 'Fidelidade',
-  version: '1.1.0',
+  version: '1.2.0',
   updated: '2026-10-24',
   sectors: ['insurance'],
   issuerNifs: [NIF],
@@ -152,6 +153,9 @@ export const fidelidadeParser: Parser = {
       result.periodStart = { value: period[1], confidence: 'high' };
       result.periodEnd = { value: period[2], confidence: 'high' };
     }
+    // The day the premium is taken from the bank account (direct debit).
+    const debit = /Data de Cobran\S* (\d{4}-\d{2}-\d{2})/.exec(all)?.[1];
+    if (debit) result.directDebitDate = { value: debit, confidence: 'high' };
     const customer = /N\S* Cliente: (\S+)/.exec(all)?.[1];
     if (customer) result.customerNumber = { value: customer, confidence: 'high' };
 
