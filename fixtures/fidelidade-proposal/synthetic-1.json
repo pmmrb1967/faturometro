@@ -1,0 +1,534 @@
+{
+  "schemaVersion": 2,
+  "parserId": "fidelidade-proposal",
+  "synthetic": true,
+  "qrs": [],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "PROPOSTA DE SEGURO",
+          "x": 458,
+          "y": 44,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FIDELIDADE PETS",
+          "x": 485,
+          "y": 56,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Seguro Novo Apólice Nº: AB1234567",
+          "x": 58,
+          "y": 107,
+          "width": 151.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cliente Nº: 1000000002",
+          "x": 479,
+          "y": 107,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Fidelidade - Companhia de Seguros, S.A. Exemplo sintético",
+          "x": 57,
+          "y": 805,
+          "width": 262.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "TOMADOR DO SEGURO",
+          "x": 60,
+          "y": 250,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nome:",
+          "x": 62,
+          "y": 266,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "PESSOA EXEMPLO",
+          "x": 89,
+          "y": 266,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Nascimento:",
+          "x": 62,
+          "y": 300,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1980-01-01",
+          "x": 131,
+          "y": 300,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "DADOS DA APÓLICE",
+          "x": 60,
+          "y": 347,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Produto:",
+          "x": 62,
+          "y": 363,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FIDELIDADE PETS",
+          "x": 97,
+          "y": 363,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Início:",
+          "x": 62,
+          "y": 375,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2026-03-15",
+          "x": 107,
+          "y": 375,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data Vencimento:",
+          "x": 317,
+          "y": 375,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2027-03-15",
+          "x": 386,
+          "y": 375,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Periodicidade de Pagamento:",
+          "x": 317,
+          "y": 386,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Mensal",
+          "x": 430,
+          "y": 386,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ANIMAL A SEGURAR",
+          "x": 60,
+          "y": 432,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Nome:",
+          "x": 62,
+          "y": 448,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Exemplo",
+          "x": 89,
+          "y": 448,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Espécie:",
+          "x": 317,
+          "y": 448,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cão",
+          "x": 352,
+          "y": 448,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Raça:",
+          "x": 62,
+          "y": 460,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Rafeiro",
+          "x": 87,
+          "y": 460,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "COBERTURAS E CAPITAIS A CONTRATAR",
+          "x": 60,
+          "y": 682,
+          "width": 151.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Plano:",
+          "x": 62,
+          "y": 698,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "FIDELIDADE PETS",
+          "x": 89,
+          "y": 698,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Coberturas",
+          "x": 58,
+          "y": 721,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Franquia (*)",
+          "x": 434,
+          "y": 721,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Capital Seguro",
+          "x": 502,
+          "y": 721,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Medicina Preventiva (Check-up)",
+          "x": 58,
+          "y": 733,
+          "width": 138,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 733,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "incluída",
+          "x": 516,
+          "y": 733,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cirurgia, Internamento e Esterilização",
+          "x": 58,
+          "y": 744,
+          "width": 174.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 744,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1 500,00 €",
+          "x": 511,
+          "y": 744,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Vetcare",
+          "x": 58,
+          "y": 755,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 755,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "250,00 €",
+          "x": 514,
+          "y": 755,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Página 1 de 2",
+          "x": 518,
+          "y": 790,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "PROPOSTA DE SEGURO",
+          "x": 458,
+          "y": 44,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Seguro Novo Apólice Nº: AB1234567",
+          "x": 58,
+          "y": 107,
+          "width": 151.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Coberturas",
+          "x": 58,
+          "y": 147,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Franquia (*)",
+          "x": 434,
+          "y": 147,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Capital Seguro",
+          "x": 502,
+          "y": 147,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Telepet",
+          "x": 58,
+          "y": 158,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 158,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "incluída",
+          "x": 516,
+          "y": 158,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Pet Assistência",
+          "x": 58,
+          "y": 170,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 170,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "incluída",
+          "x": 516,
+          "y": 170,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Proteção Jurídica(**)",
+          "x": 58,
+          "y": 181,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sem Franquia",
+          "x": 431,
+          "y": 181,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3 000,00 €",
+          "x": 511,
+          "y": 181,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Responsabilidade Civil(*)",
+          "x": 58,
+          "y": 192,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "50,00 €",
+          "x": 443,
+          "y": 192,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "75 000,00 €",
+          "x": 507,
+          "y": 192,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(*)",
+          "x": 62,
+          "y": 200,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Franquia sobre os prejuízos indemnizáveis, exemplo.",
+          "x": 69,
+          "y": 203,
+          "width": 234.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "(**)",
+          "x": 61,
+          "y": 212,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Sublimites de capital, exemplo.",
+          "x": 69,
+          "y": 214,
+          "width": 142.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Página 2 de 2",
+          "x": 518,
+          "y": 790,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

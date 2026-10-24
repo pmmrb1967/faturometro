@@ -6,12 +6,15 @@
  *   premium, what changed it, and the capitals now and next year.
  * - Particular conditions ("Condições Particulares da Apólice"): product,
  *   coverages with capital and deductible, annual premium, bonus/malus.
+ * - Signed proposal (Fidelidade "Proposta de Seguro"): read as particular
+ *   conditions (`source: 'proposal'`).
  *
  * Layouts studied on Generali Seguros documents (2025–2026).
  */
 import type { InsuranceCoverage, InsuranceDetails, InsuranceRenewal } from '../domain/types';
 import type { PageText } from '../pdf/text';
 import { readFidelidadeConditions } from './fidelidade-documents';
+import { readFidelidadeProposal } from './fidelidade-proposal';
 import { amount, date, findItem, normalize, quantity, rows, valueRightOf, type Row } from './utils';
 
 export type PolicyDocument =
@@ -25,6 +28,8 @@ export type PolicyDocument =
     }
   | {
       kind: 'conditions';
+      /** Read from the proposal the client signed, not the policy's conditions. */
+      source?: 'proposal';
       issuerName: string;
       title?: string;
       policyNumber?: string;
@@ -246,6 +251,13 @@ function readConditions(pages: readonly PageText[]): PolicyDocument | null {
 export function readPolicyDocument(pages: readonly PageText[]): PolicyDocument | null {
   const all = text(pages);
   if (/Fidelidade - Companhia de Seguros/.test(all)) {
+    const isProposal = pages[0]?.items.some((item) => normalize(item.str) === 'PROPOSTA DE SEGURO');
+    if (isProposal) {
+      const proposal = readFidelidadeProposal(pages);
+      return proposal
+        ? { kind: 'conditions', source: 'proposal', issuerName: 'Fidelidade', ...proposal }
+        : null;
+    }
     const isConditions = pages[0]?.items.some(
       (item) => normalize(item.str) === 'CONDIÇÕES PARTICULARES',
     );

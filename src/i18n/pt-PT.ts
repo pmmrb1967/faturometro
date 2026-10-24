@@ -341,6 +341,7 @@ export const t = {
     document: {
       renewalTitle: 'Carta de renovação',
       conditionsTitle: 'Condições particulares',
+      proposalTitle: 'Proposta de seguro',
       notInvoice: (issuer: string) =>
         `Documento da ${issuer} sem código QR: não é uma fatura. Os dados ficam no contrato do seguro.`,
       renewal: (date: string, current: string, next: string, pct: string) =>

@@ -85,3 +85,41 @@ describe('Fidelidade health insurance particular conditions', () => {
     expect(coverages.some((coverage) => /Página|M-\d/.test(coverage.name))).toBe(false);
   });
 });
+
+describe('Fidelidade insurance proposal', () => {
+  const proposals = layoutFixtures('fidelidade-proposal');
+
+  it('has fixtures to test against', () => {
+    expect(proposals.length).toBeGreaterThan(0);
+  });
+
+  it.each(proposals)('$name', (fixture) => {
+    const document = readPolicyDocument(fixture.pages);
+    expect(document?.kind).toBe('conditions');
+    if (document?.kind !== 'conditions') return;
+    expect(document.source).toBe('proposal');
+    expect(document.issuerName).toBe('Fidelidade');
+    expect(document.title).toBe('Seguro Pets');
+    expect(document.policyNumber).toMatch(/^[A-Z]{2}\d+$/);
+    const { details } = document;
+    expect(details.product).toBe('FIDELIDADE PETS');
+    expect(details.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // The proposal has no premium; the receipts give it.
+    expect(details.annualPremiumCents).toBeUndefined();
+    // Species and breed only: the animal's name is never kept.
+    expect(details.insuredObject).toMatch(/^Cão \(\S/);
+    const coverages = details.coverages ?? [];
+    // The table goes on to the second page; the "(*)" notes are not coverages.
+    expect(coverages).toHaveLength(7);
+    expect(coverages[0]).toEqual({
+      name: 'Medicina Preventiva (Check-up)',
+      capital: 'incluída',
+      deductible: 'Sem Franquia',
+    });
+    const liability = coverages.find((coverage) => coverage.name === 'Responsabilidade Civil');
+    expect(liability?.capitalCents).toBeGreaterThan(0);
+    expect(liability?.deductible).toMatch(/^\d+,\d{2} €$/);
+    expect(coverages.map((coverage) => coverage.name)).toContain('Proteção Jurídica');
+    expect(coverages.some((coverage) => /\*|Franquia|Coberturas/.test(coverage.name))).toBe(false);
+  });
+});

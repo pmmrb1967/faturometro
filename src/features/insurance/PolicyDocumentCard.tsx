@@ -41,7 +41,11 @@ export function PolicyDocumentCard({ document }: { document: PolicyDocument }) {
   }
 
   const heading = [
-    document.kind === 'renewal' ? copy.renewalTitle : copy.conditionsTitle,
+    document.kind === 'renewal'
+      ? copy.renewalTitle
+      : document.source === 'proposal'
+        ? copy.proposalTitle
+        : copy.conditionsTitle,
     document.title,
   ]
     .filter(Boolean)
