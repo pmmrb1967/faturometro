@@ -353,15 +353,15 @@ export interface InvoiceRhythm {
   dueAfterDays?: number;
 }
 
-/** Usual rhythm from the latest invoices; null with fewer than three. */
-export function invoiceRhythm(history: readonly Invoice[]): InvoiceRhythm | null {
+/** Usual rhythm from the latest invoices; null with fewer than `minIntervals` + 1. */
+export function invoiceRhythm(history: readonly Invoice[], minIntervals = 2): InvoiceRhythm | null {
   const recent = history.slice(-(RHYTHM_INVOICES + 1));
   // Invoices a few days apart (a credit note, two documents of one bill) are not the rhythm.
   const intervals = recent
     .slice(1)
     .map((invoice, index) => daysBetween(recent[index]!.issueDate, invoice.issueDate))
     .filter((days) => days >= MIN_INTERVAL_DAYS);
-  if (intervals.length < 2) return null;
+  if (intervals.length < minIntervals) return null;
   const dueAfter = recent
     .filter((invoice) => invoice.dueDate && invoice.dueDate >= invoice.issueDate)
     .map((invoice) => daysBetween(invoice.issueDate, invoice.dueDate!));
@@ -372,7 +372,7 @@ export function invoiceRhythm(history: readonly Invoice[]): InvoiceRhythm | null
 }
 
 /** Upper median: with an even count, the later of the two, so a warning never comes early. */
-function median(values: number[]): number {
+export function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.floor(sorted.length / 2)]!;
 }

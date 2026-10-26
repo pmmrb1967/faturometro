@@ -361,7 +361,7 @@ export const t = {
   },
   month: {
     intro:
-      'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
+      'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, as que ainda vão chegar, com data e valor previstos, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
     previous: 'Mês anterior',
     next: 'Mês seguinte',
     total: 'Total',
@@ -376,6 +376,14 @@ export const t = {
     autoPaid: 'paga por débito direto (automático; desmarca se o débito falhou)',
     issued: (date: string) => `Emitida a ${date}, sem data de pagamento`,
     expenseTag: 'Sem fatura',
+    forecastTag: 'Prevista',
+    forecastAmount: (amount: string) => `≈ ${amount}`,
+    forecastDue: (date: string) => `Vence por volta de ${date}`,
+    forecastDebit: (date: string) => `Débito direto por volta de ${date}`,
+    forecastIssued: (date: string) => `Chega por volta de ${date}`,
+    forecastLate: 'ainda não chegou',
+    forecastIncluded: (amount: string) =>
+      `Inclui ${amount} em faturas previstas a partir das anteriores. Cada uma é substituída pela fatura quando a carregares.`,
     expenses: {
       title: 'Despesas sem fatura',
       intro:

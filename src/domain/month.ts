@@ -3,17 +3,21 @@
  * they are due (or issued, when the due date is unknown); recurring expenses
  * typed by the user count in the months they are due. Each item can be marked
  * as paid; invoices paid by direct debit count as paid from the debit day on.
+ * Invoices still to come count as forecasts, which cannot be marked as paid.
  * Pure: no React, no database.
  */
 import type { Cents } from '../lib/money';
+import type { ForecastInvoice } from './forecast';
 import type { Contract, Invoice, Payment, RecurringExpense } from './types';
 
 export interface MonthItem {
   /** Stable key, also the id of its "paid" mark. */
   paymentId: string;
-  kind: 'invoice' | 'expense';
+  kind: 'invoice' | 'expense' | 'forecast';
   invoiceId?: string;
   expenseId?: string;
+  /** Contract of a forecast invoice. */
+  contractId?: string;
   /** Direct debit date, else due date, else the issue date of an invoice without one. */
   date: string;
   /** True when `date` is the due (or debit) date. */
@@ -24,6 +28,8 @@ export interface MonthItem {
   paidOn?: string;
   /** Marked as paid by the app, from the direct debit date. */
   autoPaid?: boolean;
+  /** A forecast whose date has passed: the invoice has not been added. */
+  late?: boolean;
 }
 
 export interface MonthSummary {
@@ -32,6 +38,8 @@ export interface MonthSummary {
   totalCents: Cents;
   paidCents: Cents;
   toPayCents: Cents;
+  /** Part of the total that is forecast. */
+  forecastCents: Cents;
 }
 
 /** Id of the "paid" mark of an invoice, or of one month of a recurring expense. */
@@ -143,7 +151,11 @@ export function monthSummary(
   invoices: readonly Invoice[],
   expenses: readonly RecurringExpense[],
   payments: readonly Payment[],
-  options: { today?: string; contracts?: readonly Contract[] } = {},
+  options: {
+    today?: string;
+    contracts?: readonly Contract[];
+    forecasts?: readonly ForecastInvoice[];
+  } = {},
 ): MonthSummary {
   const byId = new Map(payments.map((payment) => [payment.id, payment]));
   const contracts = new Map((options.contracts ?? []).map((contract) => [contract.id, contract]));
@@ -185,11 +197,34 @@ export function monthSummary(
       }),
     );
   }
+  for (const forecast of options.forecasts ?? []) {
+    if (monthOf(forecast.date) !== month) continue;
+    items.push({
+      paymentId: `forecast-${forecast.contractId}-${forecast.issueDate}`,
+      kind: 'forecast',
+      contractId: forecast.contractId,
+      date: forecast.date,
+      hasDueDate: forecast.hasDueDate,
+      ...(forecast.debit ? { debitDate: forecast.date } : {}),
+      amountCents: forecast.amountCents,
+      ...(options.today && forecast.date < options.today ? { late: true } : {}),
+    });
+  }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.paymentId.localeCompare(b.paymentId));
 
   const totalCents = items.reduce((sum, item) => sum + item.amountCents, 0);
   const paidCents = items
     .filter((item) => item.paidOn)
     .reduce((sum, item) => sum + item.amountCents, 0);
-  return { month, items, totalCents, paidCents, toPayCents: totalCents - paidCents };
+  const forecastCents = items
+    .filter((item) => item.kind === 'forecast')
+    .reduce((sum, item) => sum + item.amountCents, 0);
+  return {
+    month,
+    items,
+    totalCents,
+    paidCents,
+    toPayCents: totalCents - paidCents,
+    forecastCents,
+  };
 }

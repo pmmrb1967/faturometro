@@ -53,6 +53,16 @@
   text-decoration: line-through;
 }
 
+.month-item.is-forecast {
+  border-style: dashed;
+}
+
+.month-item.is-forecast strong,
+.month-item.is-forecast .amount {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .list-item.month-expense {
   grid-template-columns: 1fr;
 }

@@ -11,6 +11,7 @@ import {
   withAmountFrom,
   type MonthItem,
 } from '../../domain/month';
+import { forecastInvoices } from '../../domain/forecast';
 import type { Payment, RecurringExpense } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
@@ -76,9 +77,12 @@ export function MonthPage() {
   if (!session || !data) return null;
   const repos = session.repos;
   const date = today();
-  const summary = monthSummary(month, [...data.invoices.values()], data.expenses, data.payments, {
+  const invoices = [...data.invoices.values()];
+  const contracts = [...data.contracts.values()];
+  const summary = monthSummary(month, invoices, data.expenses, data.payments, {
     today: date,
-    contracts: [...data.contracts.values()],
+    contracts,
+    forecasts: forecastInvoices(contracts, invoices, date),
   });
   // Expenses between their first and last month (due this month or not).
   const active = data.expenses
@@ -90,9 +94,9 @@ export function MonthPage() {
       return data.expenses.find((expense) => expense.id === item.expenseId)?.name ?? '';
     }
     const invoice = data.invoices.get(item.invoiceId ?? '');
-    const provider = invoice && data.providers.get(invoice.providerId)?.name;
-    const label = invoice && data.contracts.get(invoice.contractId)?.label;
-    return [provider, label].filter(Boolean).join(' — ');
+    const contract = data.contracts.get(invoice?.contractId ?? item.contractId ?? '');
+    const provider = data.providers.get(invoice?.providerId ?? contract?.providerId ?? '')?.name;
+    return [provider, contract?.label].filter(Boolean).join(' — ');
   };
 
   async function setPaid(item: MonthItem, paid: boolean) {
@@ -170,6 +174,9 @@ export function MonthPage() {
           </dd>
         </div>
       </dl>
+      {summary.forecastCents !== 0 && (
+        <p className="muted">{copy.forecastIncluded(formatCents(summary.forecastCents))}</p>
+      )}
 
       {summary.items.length === 0 ? (
         <p className="muted">{copy.empty}</p>
@@ -177,6 +184,25 @@ export function MonthPage() {
         <ul className="list">
           {summary.items.map((item) => {
             const name = nameOf(item);
+            if (item.kind === 'forecast') {
+              return (
+                <li key={item.paymentId} className="list-item month-item is-forecast">
+                  <span className="month-check">{copy.forecastTag}</span>
+                  <strong>{name}</strong>
+                  <span className="amount">
+                    {copy.forecastAmount(formatCents(item.amountCents))}
+                  </span>
+                  <span className="meta">
+                    {item.debitDate
+                      ? copy.forecastDebit(formatIsoDate(item.date))
+                      : item.hasDueDate
+                        ? copy.forecastDue(formatIsoDate(item.date))
+                        : copy.forecastIssued(formatIsoDate(item.date))}
+                    {item.late && ` · ${copy.forecastLate}`}
+                  </span>
+                </li>
+              );
+            }
             const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
             if (expense && editing?.id === expense.id && editing.place === 'line') {
               return (
