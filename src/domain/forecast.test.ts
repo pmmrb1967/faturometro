@@ -153,6 +153,72 @@ describe('forecastInvoices', () => {
   });
 });
 
+describe('insurance', () => {
+  const yearly = invoice('y', '2026-02-10', 32000, {
+    periodStart: '2026-03-01',
+    periodEnd: '2027-02-28',
+    dueDate: '2026-03-01',
+  });
+
+  it('a single yearly receipt: the same receipt every year', () => {
+    const forecasts = forecastInvoices([contract({ sector: 'insurance' })], [yearly], '2026-10-26');
+    expect(forecasts).toEqual([
+      {
+        contractId: 'c1',
+        issueDate: '2027-02-10',
+        date: '2027-03-01',
+        hasDueDate: true,
+        debit: false,
+        amountCents: 32000,
+      },
+    ]);
+    // A monthly instalment alone says nothing about the rhythm.
+    const instalment = invoice('m', '2026-10-01', 2700, {
+      periodStart: '2026-10-01',
+      periodEnd: '2026-10-31',
+    });
+    expect(
+      forecastInvoices([contract({ sector: 'insurance' })], [instalment], '2026-10-26'),
+    ).toEqual([]);
+  });
+
+  const renewal = { date: '2027-03-01', currentCents: 32000, nextCents: 34400 };
+
+  it('the new premium of the renewal letter, from the renewal on', () => {
+    const insurance = contract({ sector: 'insurance', insurance: { renewal } });
+    expect(forecastInvoices([insurance], [yearly], '2026-10-26')[0]?.amountCents).toBe(34400);
+  });
+
+  it('monthly instalments go up in proportion, only from the renewal', () => {
+    const insurance = contract({ sector: 'insurance', insurance: { renewal } });
+    const instalments = ['2026-08-01', '2026-09-01', '2026-10-01'].map((day) =>
+      invoice(day, day, 2700, { periodStart: day }),
+    );
+    const forecasts = forecastInvoices([insurance], instalments, '2026-10-26', 5);
+    expect(forecasts.map((forecast) => [forecast.issueDate, forecast.amountCents])).toEqual([
+      ['2026-11-01', 2700],
+      ['2026-12-01', 2700],
+      ['2027-01-01', 2700],
+      ['2027-02-01', 2700],
+      // 27,00 € × 344 / 320.
+      ['2027-03-01', 2903],
+    ]);
+  });
+
+  it('a receipt already at the new premium is not raised again', () => {
+    const insurance = contract({ sector: 'insurance', insurance: { renewal } });
+    const renewedReceipt = invoice('r', '2027-02-10', 34400, {
+      periodStart: '2027-03-01',
+      periodEnd: '2028-02-29',
+      dueDate: '2027-03-01',
+    });
+    expect(forecastInvoices([insurance], [renewedReceipt], '2027-02-20', 24)[0]).toMatchObject({
+      issueDate: '2028-02-10',
+      amountCents: 34400,
+    });
+  });
+});
+
 describe('forecasts in the month', () => {
   it('count in the total and in what is left to pay, never as paid', () => {
     const forecasts = forecastInvoices([contract()], monthly.slice(0, 2), '2026-10-26');

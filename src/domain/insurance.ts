@@ -5,6 +5,15 @@ import type { Contract, Invoice } from './types';
 const YEARLY_PERIOD_DAYS = 300;
 const DAY_MS = 86_400_000;
 
+/** A receipt that pays a whole year of the policy. */
+export function isYearlyReceipt(invoice: Pick<Invoice, 'periodStart' | 'periodEnd'>): boolean {
+  return Boolean(
+    invoice.periodStart &&
+    invoice.periodEnd &&
+    days(invoice.periodStart, invoice.periodEnd) >= YEARLY_PERIOD_DAYS,
+  );
+}
+
 function days(start: string, end: string): number {
   return (
     Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / DAY_MS) + 1
@@ -37,12 +46,7 @@ export function insuranceRenewalDate(
   today?: string,
 ): string | undefined {
   const yearlyEnd = invoices
-    .filter(
-      (invoice) =>
-        invoice.periodStart &&
-        invoice.periodEnd &&
-        days(invoice.periodStart, invoice.periodEnd) >= YEARLY_PERIOD_DAYS,
-    )
+    .filter(isYearlyReceipt)
     .map((invoice) => invoice.periodEnd!)
     .sort()
     .at(-1);
