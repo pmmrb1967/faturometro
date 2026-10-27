@@ -544,6 +544,8 @@ export const t = {
     withOneOff: 'Incluir despesas pontuais',
     expensesSeries: 'Sem fatura',
     oneOffSeries: 'Pontuais',
+    /** Table header for Telecomunicações, which is too wide for a phone. */
+    telecomShort: 'Telecom.',
     /** What is added to the invoices, by which switches are on. */
     extras: (expenses: boolean, oneOff: boolean) =>
       expenses && oneOff

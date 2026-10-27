@@ -134,10 +134,33 @@
   border-bottom: 1px solid var(--border);
 }
 
+.chart-table tbody th {
+  font-weight: 400;
+}
+
+/* The values never break across lines ("1 234,56 €"). */
+.chart-table td {
+  white-space: nowrap;
+}
+
 .chart-table td:last-child,
 .chart-table th:last-child {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* The chart title, as a note under the table. */
+.chart-table caption {
+  caption-side: bottom;
+  padding-top: 6px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.chart-table abbr {
+  text-decoration: none;
+  cursor: help;
 }
 
 /* Stacked segments: a thin gap in the surface colour keeps neighbouring colours apart. */

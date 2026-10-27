@@ -68,6 +68,7 @@ export function ContractPage() {
     key: invoice.id,
     label: formatMonthShort(invoice.issueDate),
     title: copy.charts.invoiceOf(formatIsoDate(invoice.issueDate)),
+    cell: formatIsoDate(invoice.issueDate),
     value: invoice.totalCents / 100,
     display: formatCents(invoice.totalCents),
   }));
@@ -89,6 +90,7 @@ export function ContractPage() {
         key: invoice.id,
         label: formatMonthShort(invoice.issueDate),
         title: copy.charts.invoiceOf(formatIsoDate(invoice.issueDate)),
+        cell: formatIsoDate(invoice.issueDate),
         value,
         display: `${kwh.format(value)} ${consumptionUnit === 'm3' ? 'm³' : 'kWh'}`,
       };

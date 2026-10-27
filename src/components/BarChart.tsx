@@ -5,8 +5,10 @@ export interface Bar {
   key: string;
   /** Short axis label (e.g. "jun 26"). */
   label: string;
-  /** Long label for the tooltip and table (e.g. "Fatura de 24-06-2026"). */
+  /** Long label for the tooltip and screen readers (e.g. "Fatura de 24-06-2026"). */
   title: string;
+  /** The table's first column (e.g. "24-06-2026"); defaults to `label`. */
+  cell?: string;
   value: number;
   /** Formatted value ("42,79 €", "226 kWh"). */
   display: string;
@@ -18,6 +20,8 @@ export interface Bar {
 export interface Series {
   key: string;
   label: string;
+  /** Shorter table header for a long label ("Telecom."); the full label stays as its tooltip. */
+  short?: string;
   /** CSS colour (a custom property such as var(--series-energy)). */
   color: string;
 }
@@ -206,12 +210,13 @@ export function BarChart({
       <details className="chart-table">
         <summary>{tableLabel}</summary>
         <table>
+          <caption>{title}</caption>
           <thead>
             <tr>
               <th scope="col">{columnLabel}</th>
               {tableSeries.map((entry) => (
                 <th key={entry.key} scope="col">
-                  {entry.label}
+                  {entry.short ? <abbr title={entry.label}>{entry.short}</abbr> : entry.label}
                 </th>
               ))}
               <th scope="col">{valueLabel}</th>
@@ -220,7 +225,7 @@ export function BarChart({
           <tbody>
             {bars.map((bar) => (
               <tr key={bar.key}>
-                <td>{bar.title}</td>
+                <th scope="row">{bar.cell ?? bar.label}</th>
                 {tableSeries.map((entry) => (
                   <td key={entry.key}>
                     {bar.parts?.find((part) => part.series === entry.key)?.display ?? '—'}

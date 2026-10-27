@@ -102,6 +102,7 @@ export function HouseholdSection() {
     ...SECTOR_ORDER.map((sector) => ({
       key: sector,
       label: t.sectors[sector],
+      ...(sector === 'telecom' && { short: copy.telecomShort }),
       color: `var(--series-${sector})`,
     })),
     ...(expenses
