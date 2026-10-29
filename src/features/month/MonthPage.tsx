@@ -268,47 +268,48 @@ export function MonthPage() {
               type="button"
               className="action-secondary"
               aria-expanded={showExpenses}
-              aria-controls="expenses-list"
               onClick={() => setShowExpenses((open) => !open)}
             >
               {showExpenses ? copy.expenses.hide : copy.expenses.show(active.length)}
             </button>
           </p>
         )}
-        <ul className="list" id="expenses-list" hidden={!showExpenses}>
-          {active.map((expense) =>
-            editing?.id === expense.id && editing.place === 'section' ? (
-              <li key={expense.id}>
-                <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
-              </li>
-            ) : (
-              <li key={expense.id} className="list-item month-expense">
-                <strong>{expense.name}</strong>
-                <span className="meta">
-                  {copy.expenses.summary(
-                    formatCents(expenseAmount(expense, month)),
-                    frequencyOf(expense),
-                    expense.dueDay,
-                  )}
-                  {' · '}
-                  {expense.oneOff
-                    ? copy.expenses.inMonth(formatMonth(expense.startMonth))
-                    : expense.endMonth
-                      ? copy.expenses.between(
-                          formatMonth(expense.startMonth),
-                          formatMonth(expense.endMonth),
-                        )
-                      : copy.expenses.since(formatMonth(expense.startMonth))}
-                </span>
-                <ExpenseActions
-                  expense={expense}
-                  stopFrom={expense.oneOff ? undefined : month}
-                  onEdit={() => setEditing({ id: expense.id, place: 'section' })}
-                />
-              </li>
-            ),
-          )}
-        </ul>
+        {showExpenses && (
+          <ul className="list">
+            {active.map((expense) =>
+              editing?.id === expense.id && editing.place === 'section' ? (
+                <li key={expense.id}>
+                  <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                </li>
+              ) : (
+                <li key={expense.id} className="list-item month-expense">
+                  <strong>{expense.name}</strong>
+                  <span className="meta">
+                    {copy.expenses.summary(
+                      formatCents(expenseAmount(expense, month)),
+                      frequencyOf(expense),
+                      expense.dueDay,
+                    )}
+                    {' · '}
+                    {expense.oneOff
+                      ? copy.expenses.inMonth(formatMonth(expense.startMonth))
+                      : expense.endMonth
+                        ? copy.expenses.between(
+                            formatMonth(expense.startMonth),
+                            formatMonth(expense.endMonth),
+                          )
+                        : copy.expenses.since(formatMonth(expense.startMonth))}
+                  </span>
+                  <ExpenseActions
+                    expense={expense}
+                    stopFrom={expense.oneOff ? undefined : month}
+                    onEdit={() => setEditing({ id: expense.id, place: 'section' })}
+                  />
+                </li>
+              ),
+            )}
+          </ul>
+        )}
         {editing?.id === 'new' ? (
           <ExpenseForm month={month} onDone={saveExpense} />
         ) : (
