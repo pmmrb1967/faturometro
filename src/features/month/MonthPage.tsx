@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
+import { GroupBlock } from '../../components/GroupBlock';
 import {
   addMonthsTo,
   expenseActive,
@@ -263,52 +264,50 @@ export function MonthPage() {
           </p>
         )}
         {active.length > 0 && (
-          <p>
-            <button
-              type="button"
-              className="action-secondary"
-              aria-expanded={showExpenses}
-              onClick={() => setShowExpenses((open) => !open)}
-            >
-              {showExpenses ? copy.expenses.hide : copy.expenses.show(active.length)}
-            </button>
-          </p>
-        )}
-        {showExpenses && (
-          <ul className="list">
-            {active.map((expense) =>
-              editing?.id === expense.id && editing.place === 'section' ? (
-                <li key={expense.id}>
-                  <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
-                </li>
-              ) : (
-                <li key={expense.id} className="list-item month-expense">
-                  <strong>{expense.name}</strong>
-                  <span className="meta">
-                    {copy.expenses.summary(
-                      formatCents(expenseAmount(expense, month)),
-                      frequencyOf(expense),
-                      expense.dueDay,
-                    )}
-                    {' · '}
-                    {expense.oneOff
-                      ? copy.expenses.inMonth(formatMonth(expense.startMonth))
-                      : expense.endMonth
-                        ? copy.expenses.between(
-                            formatMonth(expense.startMonth),
-                            formatMonth(expense.endMonth),
-                          )
-                        : copy.expenses.since(formatMonth(expense.startMonth))}
-                  </span>
-                  <ExpenseActions
-                    expense={expense}
-                    stopFrom={expense.oneOff ? undefined : month}
-                    onEdit={() => setEditing({ id: expense.id, place: 'section' })}
-                  />
-                </li>
-              ),
+          <GroupBlock
+            title={copy.expenses.listTitle}
+            summary={copy.expenses.listSummary(
+              active.length,
+              formatCents(active.reduce((sum, expense) => sum + expenseAmount(expense, month), 0)),
             )}
-          </ul>
+            open={showExpenses}
+            onToggle={setShowExpenses}
+          >
+            <ul className="list">
+              {active.map((expense) =>
+                editing?.id === expense.id && editing.place === 'section' ? (
+                  <li key={expense.id}>
+                    <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                  </li>
+                ) : (
+                  <li key={expense.id} className="list-item month-expense">
+                    <strong>{expense.name}</strong>
+                    <span className="meta">
+                      {copy.expenses.summary(
+                        formatCents(expenseAmount(expense, month)),
+                        frequencyOf(expense),
+                        expense.dueDay,
+                      )}
+                      {' · '}
+                      {expense.oneOff
+                        ? copy.expenses.inMonth(formatMonth(expense.startMonth))
+                        : expense.endMonth
+                          ? copy.expenses.between(
+                              formatMonth(expense.startMonth),
+                              formatMonth(expense.endMonth),
+                            )
+                          : copy.expenses.since(formatMonth(expense.startMonth))}
+                    </span>
+                    <ExpenseActions
+                      expense={expense}
+                      stopFrom={expense.oneOff ? undefined : month}
+                      onEdit={() => setEditing({ id: expense.id, place: 'section' })}
+                    />
+                  </li>
+                ),
+              )}
+            </ul>
+          </GroupBlock>
         )}
         {editing?.id === 'new' ? (
           <ExpenseForm month={month} onDone={saveExpense} />
