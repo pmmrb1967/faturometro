@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entryFor, loginGreeting } from './entry';
+import { entryFor, loginGreeting, signInRoute } from './entry';
 
 describe('entryFor', () => {
   it('opens the guest only when it is the only profile', () => {
@@ -22,5 +22,17 @@ describe('loginGreeting', () => {
     expect(loginGreeting(0)).toBe('none');
     // While loading, assume the usual case (one account) to avoid a flicker.
     expect(loginGreeting(null)).toBe('one');
+  });
+});
+
+describe('signInRoute', () => {
+  it('sends the front door of the app to the landing page', () => {
+    expect(signInRoute('/app')).toBe('/');
+    expect(signInRoute('/app/')).toBe('/');
+  });
+
+  it('sends any other page to the login page', () => {
+    expect(signInRoute('/app/mes')).toBe('/entrar');
+    expect(signInRoute('/app/partilhar')).toBe('/entrar');
   });
 });

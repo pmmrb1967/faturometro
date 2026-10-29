@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => ({
         short_name: 'Faturómetro',
         description: 'Acompanha as faturas da casa, sem os teus dados saírem do dispositivo.',
         lang: 'pt-PT',
+        // The app's identity: without it, it was start_url ('/app' when installed first), and
+        // changing start_url would make browsers see another app and keep the old one.
+        id: '/app',
         // The landing page picks the right next step: open the app, sign in or continue.
         start_url: '/',
         scope: '/',

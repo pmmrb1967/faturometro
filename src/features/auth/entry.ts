@@ -3,6 +3,15 @@ export function entryFor(state: { hasGuest: boolean; accounts: number }): 'guest
   return state.hasGuest && state.accounts === 0 ? 'guest' : 'login';
 }
 
+/**
+ * Where a page of the app sends a visitor who has to sign in. The app's front door
+ * (`/app`, which older installs still open) goes to the landing page, which offers
+ * the right next step; any other page goes to /entrar and back there afterwards.
+ */
+export function signInRoute(pathname: string): '/' | '/entrar' {
+  return pathname === '/app' || pathname === '/app/' ? '/' : '/entrar';
+}
+
 /** The login page's greeting: by how many accounts this device has (unknown while loading). */
 export function loginGreeting(accounts: number | null): 'one' | 'many' | 'none' {
   if (accounts === 0) return 'none';

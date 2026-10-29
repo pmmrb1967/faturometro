@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { listAccountEmails, openGuest } from './accounts';
-import { entryFor } from './entry';
+import { entryFor, signInRoute } from './entry';
 import { useSession } from './session-context';
 
 /**
  * Without a session, opens the guest when it is the only profile here; otherwise sends to
- * /entrar, and back to the same page after signing in.
+ * sign in (signInRoute), and back to the same page afterwards.
  */
 export function RequireSession({ children }: { children: ReactNode }) {
   const { session, restoring, signIn } = useSession();
@@ -30,7 +30,9 @@ export function RequireSession({ children }: { children: ReactNode }) {
 
   if (session) return children;
   if (entry === 'login') {
-    return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
+    return (
+      <Navigate to={signInRoute(location.pathname)} replace state={{ from: location.pathname }} />
+    );
   }
   return null;
 }
