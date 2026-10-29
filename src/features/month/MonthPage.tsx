@@ -56,6 +56,7 @@ export function MonthPage() {
   const [month, setMonth] = useState(monthOf(today()));
   // Expense being changed, in its line of the month or in the expenses section.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
+  const [showExpenses, setShowExpenses] = useState(false);
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const [invoices, contracts, providers, expenses, payments] = await Promise.all([
@@ -121,6 +122,8 @@ export function MonthPage() {
 
   async function saveExpense(expense: SavedExpense | null) {
     if (expense) await repos.expenses.put(expense);
+    // A new expense opens the list, so the user sees it was saved.
+    if (expense && editing?.id === 'new') setShowExpenses(true);
     setEditing(null);
   }
 
@@ -259,7 +262,20 @@ export function MonthPage() {
             {data.expenses.length === 0 ? copy.expenses.empty : copy.expenses.emptyMonth}
           </p>
         )}
-        <ul className="list">
+        {active.length > 0 && (
+          <p>
+            <button
+              type="button"
+              className="action-secondary"
+              aria-expanded={showExpenses}
+              aria-controls="expenses-list"
+              onClick={() => setShowExpenses((open) => !open)}
+            >
+              {showExpenses ? copy.expenses.hide : copy.expenses.show(active.length)}
+            </button>
+          </p>
+        )}
+        <ul className="list" id="expenses-list" hidden={!showExpenses}>
           {active.map((expense) =>
             editing?.id === expense.id && editing.place === 'section' ? (
               <li key={expense.id}>

@@ -391,6 +391,9 @@ export const t = {
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar despesa',
+      show: (count: number) =>
+        count === 1 ? 'Ver 1 despesa deste mês' : `Ver ${count} despesas deste mês`,
+      hide: 'Ocultar as despesas',
       name: 'Nome',
       namePlaceholder: 'Ex.: Renda',
       amount: 'Valor, em euros',
