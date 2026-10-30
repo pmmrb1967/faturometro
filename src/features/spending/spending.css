@@ -45,6 +45,12 @@
   margin-top: 24px;
 }
 
+.spending-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .spending-progress {
   margin: 0 0 8px;
   font-size: 0.9rem;

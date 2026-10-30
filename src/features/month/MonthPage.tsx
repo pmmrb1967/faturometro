@@ -7,11 +7,14 @@ import {
   expenseActive,
   expenseAmount,
   expenseDueDate,
+  MONTH_ORDERS,
   monthOf,
   monthSummary,
+  sortMonthItems,
   uncheckAction,
   withAmountFrom,
   type MonthItem,
+  type MonthOrder,
 } from '../../domain/month';
 import { forecastInvoices } from '../../domain/forecast';
 import type { Payment, RecurringExpense } from '../../domain/types';
@@ -26,6 +29,7 @@ import '../compare/compare.css';
 import '../invoices/invoices.css';
 import { EVERY, frequencyOf, MONTH, ONE_OFF } from './frequency';
 import './month.css';
+import { useRememberedOrder } from './use-remembered-order';
 
 type Tab = 'payments' | 'spending';
 
@@ -131,6 +135,7 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
   // Expense being changed, in its line of the month or in the expenses section.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
   const [showExpenses, setShowExpenses] = useState(false);
+  const [order, setOrder] = useRememberedOrder('faturometro.month.order', MONTH_ORDERS);
   const [shownMonth, setShownMonth] = useState(month);
   if (month !== shownMonth) {
     setShownMonth(month);
@@ -228,11 +233,25 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
         <p className="muted">{copy.forecastIncluded(formatCents(summary.forecastCents))}</p>
       )}
 
+      {summary.items.length > 1 && (
+        <SelectField
+          id="month-order"
+          label={copy.order.label}
+          value={order}
+          onChange={(event) => setOrder(event.target.value as MonthOrder)}
+        >
+          {MONTH_ORDERS.map((item) => (
+            <option key={item} value={item}>
+              {copy.order[item]}
+            </option>
+          ))}
+        </SelectField>
+      )}
       {summary.items.length === 0 ? (
         <p className="muted">{copy.empty}</p>
       ) : (
         <ul className="list">
-          {summary.items.map((item) => {
+          {sortMonthItems(summary.items, order).map((item) => {
             const name = nameOf(item);
             if (item.kind === 'forecast') {
               return (

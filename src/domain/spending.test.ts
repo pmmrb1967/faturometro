@@ -3,8 +3,10 @@ import {
   categoryShare,
   lastFromIssuer,
   monthProgress,
+  sortSpendingItems,
   spendingMonth,
   type SpendingData,
+  type SpendingOrder,
 } from './spending';
 import type { Contract, Invoice, RecurringExpense, SpendingTransaction } from './types';
 
@@ -68,6 +70,42 @@ function purchase(
 }
 
 const empty: SpendingData = { invoices: [], expenses: [], transactions: [], contracts: [] };
+
+describe('sortSpendingItems', () => {
+  const items = spendingMonth('2026-10', {
+    ...empty,
+    invoices: [invoice('power', 'c1', '2026-10-20', 5000)],
+    contracts: [contract('c1', 'electricity')],
+    expenses: [expense({ category: 'home' })],
+    transactions: [
+      purchase('shop', '2026-10-25', 2000),
+      purchase('fun', '2026-10-10', 7000, { category: 'leisure' }),
+    ],
+  }).items;
+  const ids = (order: SpendingOrder) => sortSpendingItems(items, order).map((item) => item.id);
+  const [shop, power, fun, rent] = [
+    'transaction-shop',
+    'invoice-power',
+    'transaction-fun',
+    'expense-rent-2026-10',
+  ];
+
+  it('keeps the list by date, newest first', () => {
+    expect(ids('date')).toEqual([shop, power, fun, rent]);
+  });
+
+  it('by amount, highest first', () => {
+    expect(ids('amount')).toEqual([rent, fun, power, shop]);
+  });
+
+  it('by type: invoices, expenses, purchases, each by date', () => {
+    expect(ids('type')).toEqual([power, rent, shop, fun]);
+  });
+
+  it('by category, in the order of the list of categories', () => {
+    expect(ids('category')).toEqual([shop, rent, power, fun]);
+  });
+});
 
 describe('spendingMonth', () => {
   it('joins invoices, recurring expenses and purchases, newest first', () => {

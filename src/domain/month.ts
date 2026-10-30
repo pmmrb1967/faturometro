@@ -155,6 +155,23 @@ export function uncheckAction(item: Pick<MonthItem, 'autoPaid'>): 'unpaid' | 're
   return item.autoPaid ? 'unpaid' : 'remove';
 }
 
+/** In display order of the selector; the first is the default. */
+export const MONTH_ORDERS = ['date', 'amount', 'type', 'unpaid'] as const;
+export type MonthOrder = (typeof MONTH_ORDERS)[number];
+
+const KIND_RANK: Record<MonthItem['kind'], number> = { invoice: 0, expense: 1, forecast: 2 };
+
+/** Items of a month in another order; a tie keeps the date order of the list. */
+export function sortMonthItems(items: readonly MonthItem[], order: MonthOrder): MonthItem[] {
+  const rank: Record<MonthOrder, (item: MonthItem) => number> = {
+    date: () => 0,
+    amount: (item) => -item.amountCents,
+    type: (item) => KIND_RANK[item.kind],
+    unpaid: (item) => (item.paidOn ? 1 : 0),
+  };
+  return [...items].sort((a, b) => rank[order](a) - rank[order](b));
+}
+
 export function monthSummary(
   month: string,
   invoices: readonly Invoice[],

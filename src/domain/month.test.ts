@@ -8,8 +8,11 @@ import {
   invoicePaid,
   monthSummary,
   paymentId,
+  sortMonthItems,
   uncheckAction,
   withAmountFrom,
+  type MonthItem,
+  type MonthOrder,
 } from './month';
 import type { Invoice, Payment, RecurringExpense } from './types';
 
@@ -145,6 +148,51 @@ describe('monthSummary', () => {
     ]);
     expect(summary.items.find((item) => item.invoiceId === 'b')?.hasDueDate).toBe(false);
     expect(summary).toMatchObject({ totalCents: 72499, paidCents: 4999, toPayCents: 67500 });
+  });
+});
+
+describe('sortMonthItems', () => {
+  const item = (
+    paymentId: string,
+    kind: MonthItem['kind'],
+    amountCents: number,
+    paidOn?: string,
+  ): MonthItem => ({
+    paymentId,
+    kind,
+    date: `2026-10-0${paymentId}`,
+    hasDueDate: true,
+    amountCents,
+    ...(paidOn ? { paidOn } : {}),
+  });
+  const items = [
+    item('1', 'expense', 3000, '2026-10-01'),
+    item('2', 'invoice', 5000, '2026-10-02'),
+    item('3', 'forecast', 4000),
+    item('4', 'invoice', 5000),
+    item('5', 'expense', 1000),
+  ];
+  const ids = (order: MonthOrder) => sortMonthItems(items, order).map((entry) => entry.paymentId);
+
+  it('keeps the list by date', () => {
+    expect(ids('date')).toEqual(['1', '2', '3', '4', '5']);
+  });
+
+  it('by amount, highest first, and by date on a tie', () => {
+    expect(ids('amount')).toEqual(['2', '4', '3', '1', '5']);
+  });
+
+  it('by type: invoices, expenses, forecasts, each by date', () => {
+    expect(ids('type')).toEqual(['2', '4', '1', '5', '3']);
+  });
+
+  it('what is still to pay first, forecasts included', () => {
+    expect(ids('unpaid')).toEqual(['3', '4', '5', '1', '2']);
+  });
+
+  it('does not change the list it gets', () => {
+    sortMonthItems(items, 'amount');
+    expect(items[0]?.paymentId).toBe('1');
   });
 });
 

@@ -6,9 +6,12 @@ import { incomeMonth } from '../../domain/income';
 import { monthOf } from '../../domain/month';
 import {
   monthProgress,
+  sortSpendingItems,
   spendingMonth,
   SPENDING_CATEGORIES,
+  SPENDING_ORDERS,
   type SpendingItem,
+  type SpendingOrder,
 } from '../../domain/spending';
 import type { RecurringExpense, SpendingCategory, SpendingTransaction } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -18,6 +21,7 @@ import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import '../invoices/invoices.css';
 import '../month/month.css';
+import { useRememberedOrder } from '../month/use-remembered-order';
 import { IncomeSection } from './IncomeSection';
 import { readReceipt, type TransactionDraft } from './receipt';
 import { CategoryChart, ProgressChart } from './SpendingCharts';
@@ -42,6 +46,7 @@ export function SpendingView({
 }) {
   const { session } = useSession();
   const [filter, setFilter] = useState<Filter>(ALL);
+  const [order, setOrder] = useRememberedOrder('faturometro.spending.order', SPENDING_ORDERS);
   const [showMovements, setShowMovements] = useState(true);
   const [editing, setEditing] = useState<TransactionDraft | null>(null);
   const [reading, setReading] = useState(false);
@@ -73,7 +78,10 @@ export function SpendingView({
   const progress = monthProgress(month, data, today());
   const income = incomeMonth(month, data.incomes);
   const hasIncome = income.items.length > 0;
-  const shown = summary.items.filter((item) => filter === ALL || item.category === filter);
+  const shown = sortSpendingItems(
+    summary.items.filter((item) => filter === ALL || item.category === filter),
+    order,
+  );
   const editingStored = data.transactions.some((entry) => entry.id === editing?.id);
 
   const nameOf = (item: SpendingItem): string => {
@@ -256,19 +264,33 @@ export function SpendingView({
             open={showMovements}
             onToggle={setShowMovements}
           >
-            <SelectField
-              id="spending-filter"
-              label={copy.category}
-              value={filter}
-              onChange={(event) => setFilter(event.target.value as Filter)}
-            >
-              <option value={ALL}>{copy.allCategories}</option>
-              {SPENDING_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {copy.categories[category]}
-                </option>
-              ))}
-            </SelectField>
+            <div className="spending-controls">
+              <SelectField
+                id="spending-filter"
+                label={copy.category}
+                value={filter}
+                onChange={(event) => setFilter(event.target.value as Filter)}
+              >
+                <option value={ALL}>{copy.allCategories}</option>
+                {SPENDING_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {copy.categories[category]}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField
+                id="spending-order"
+                label={copy.order.label}
+                value={order}
+                onChange={(event) => setOrder(event.target.value as SpendingOrder)}
+              >
+                {SPENDING_ORDERS.map((item) => (
+                  <option key={item} value={item}>
+                    {copy.order[item]}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
             {filter !== ALL && (
               <p className="muted">
                 {copy.filtered(
@@ -325,12 +347,9 @@ function Movement({
   const [confirming, setConfirming] = useState(false);
   if (!session) return null;
   const repos = session.repos;
-  const tag =
-    item.kind === 'invoice'
-      ? copy.invoiceTag
-      : item.kind === 'expense'
-        ? copy.expenseTag
-        : undefined;
+  const tag = { invoice: copy.invoiceTag, expense: copy.expenseTag, transaction: copy.purchaseTag }[
+    item.kind
+  ];
 
   return (
     <li className="list-item spending-movement">

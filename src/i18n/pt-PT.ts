@@ -425,8 +425,16 @@ export const t = {
         other: 'O resto, como ganhos em apostas ou a venda de um objeto usado.',
       },
     },
+    order: {
+      label: 'Ordenar por',
+      date: 'Data',
+      amount: 'Valor',
+      type: 'Tipo',
+      category: 'Categoria',
+    },
     invoiceTag: 'Fatura',
     expenseTag: 'Sem fatura',
+    purchaseTag: 'Compra',
     expenseCategory: (name: string) => `Categoria de ${name}`,
     filtered: (count: number, total: string) =>
       `${count === 1 ? '1 movimento' : `${count} movimentos`} · ${total}`,
@@ -519,6 +527,13 @@ export const t = {
   },
   month: {
     tabs: { payments: 'Pagamentos', spending: 'Gastos' },
+    order: {
+      label: 'Ordenar por',
+      date: 'Data',
+      amount: 'Valor',
+      type: 'Tipo',
+      unpaid: 'Por pagar primeiro',
+    },
     intro:
       'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, as que ainda vão chegar, com data e valor previstos, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
     previous: 'Mês anterior',

@@ -114,6 +114,26 @@ function monthItems(month: string, data: SpendingData): SpendingItem[] {
   return items.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
 }
 
+/** In display order of the selector; the first is the default. */
+export const SPENDING_ORDERS = ['date', 'amount', 'type', 'category'] as const;
+export type SpendingOrder = (typeof SPENDING_ORDERS)[number];
+
+const KIND_RANK: Record<SpendingItem['kind'], number> = { invoice: 0, expense: 1, transaction: 2 };
+
+/** Movements in another order; a tie keeps the date order of the list. */
+export function sortSpendingItems(
+  items: readonly SpendingItem[],
+  order: SpendingOrder,
+): SpendingItem[] {
+  const rank: Record<SpendingOrder, (item: SpendingItem) => number> = {
+    date: () => 0,
+    amount: (item) => -item.amountCents,
+    type: (item) => KIND_RANK[item.kind],
+    category: (item) => SPENDING_CATEGORIES.indexOf(item.category),
+  };
+  return [...items].sort((a, b) => rank[order](a) - rank[order](b));
+}
+
 function total(items: readonly SpendingItem[]): Cents {
   return sumCents(items.map((item) => item.amountCents));
 }
