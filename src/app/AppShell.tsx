@@ -31,9 +31,10 @@ export function AppShell() {
     document.title = 'Faturómetro';
   }, []);
 
-  // A guest alone on the device reopens by itself from /app: go to the login page instead.
-  function leaveGuest() {
-    navigate('/entrar', { replace: true });
+  // Always the landing page, which offers the right next step. Leaving first: without a
+  // session, a page of the app would send to sign in, and a lone guest would reopen by itself.
+  function signOut() {
+    navigate('/', { replace: true });
     lock();
   }
 
@@ -64,7 +65,7 @@ export function AppShell() {
               <button
                 type="button"
                 className="topbar-lock"
-                onClick={leaveGuest}
+                onClick={signOut}
                 aria-label={t.guest.signOutLabel}
                 title={t.guest.signOutLabel}
               >
@@ -78,7 +79,7 @@ export function AppShell() {
               <button
                 type="button"
                 className="topbar-lock"
-                onClick={lock}
+                onClick={signOut}
                 aria-label={t.signOutLabel}
                 title={t.signOutLabel}
               >
