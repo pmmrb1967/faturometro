@@ -50,11 +50,6 @@
   font-size: 0.9rem;
 }
 
-/* The drawing is scaled to its width: past this its text would look oversized. */
-.spending-plot {
-  max-width: 480px;
-}
-
 .spending-line {
   /* A finger moves along the days; the page still scrolls up and down. */
   touch-action: pan-y;

@@ -1,4 +1,11 @@
-import { useId, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import { niceMax } from '../../components/chart-scale';
 import '../../components/chart.css';
 import { addMonthsTo } from '../../domain/month';
@@ -32,8 +39,8 @@ export function CategoryChart({ summary }: { summary: SpendingMonth }) {
   );
 }
 
-// Narrow on purpose: the drawing is scaled to the page, and its text must stay legible on a phone.
-const WIDTH = 360;
+// Drawn to the width of its box, so the text keeps its size on a phone and on a wide page.
+const MIN_WIDTH = 240;
 const HEIGHT = 210;
 const PAD = { top: 14, right: 12, bottom: 24, left: 54 };
 const TICKS = 4;
@@ -56,9 +63,19 @@ export function ProgressChart({
 }) {
   const [active, setActive] = useState<number | null>(null);
   const titleId = useId();
+  const plot = useRef<HTMLDivElement>(null);
+  const [boxWidth, setBoxWidth] = useState(MIN_WIDTH);
+  useLayoutEffect(() => {
+    const box = plot.current;
+    if (!box) return;
+    const observer = new ResizeObserver(() => setBoxWidth(box.clientWidth));
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
+  const width = Math.max(boxWidth, MIN_WIDTH);
   const { current, previous, days } = progress;
   const max = niceMax(Math.max(...current, ...previous, incomeCents));
-  const plotWidth = WIDTH - PAD.left - PAD.right;
+  const plotWidth = width - PAD.left - PAD.right;
   const plotHeight = HEIGHT - PAD.top - PAD.bottom;
   const x = (index: number) => PAD.left + (index / Math.max(days - 1, 1)) * plotWidth;
   const y = (cents: number) => PAD.top + plotHeight - (Math.max(cents, 0) / max) * plotHeight;
@@ -84,7 +101,7 @@ export function ProgressChart({
 
   function dayAt(event: PointerEvent<SVGSVGElement>): number {
     const box = event.currentTarget.getBoundingClientRect();
-    const inDrawing = ((event.clientX - box.left) / box.width) * WIDTH;
+    const inDrawing = ((event.clientX - box.left) / box.width) * width;
     const index = Math.round(((inDrawing - PAD.left) / plotWidth) * (days - 1));
     return Math.min(Math.max(index, 0), days - 1);
   }
@@ -102,9 +119,9 @@ export function ProgressChart({
         {copy.progress.title}
       </figcaption>
       <p className="muted spending-progress">{summary}</p>
-      <div className="chart-plot spending-plot">
+      <div className="chart-plot" ref={plot}>
         <svg
-          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          viewBox={`0 0 ${width} ${HEIGHT}`}
           className="spending-line"
           role="img"
           aria-label={`${copy.progress.title}. ${summary}`}
@@ -120,7 +137,7 @@ export function ProgressChart({
             const value = (max / TICKS) * index;
             return (
               <g key={index} className="chart-grid">
-                <line x1={PAD.left} x2={WIDTH - PAD.right} y1={y(value)} y2={y(value)} />
+                <line x1={PAD.left} x2={width - PAD.right} y1={y(value)} y2={y(value)} />
                 <text x={PAD.left - 6} y={y(value)} dy="0.32em" textAnchor="end">
                   {euros.format(value / 100)} €
                 </text>
@@ -152,13 +169,13 @@ export function ProgressChart({
               <line
                 className="spending-income"
                 x1={PAD.left}
-                x2={WIDTH - PAD.right}
+                x2={width - PAD.right}
                 y1={y(incomeCents)}
                 y2={y(incomeCents)}
               />
               <text
                 className="chart-axis spending-income-label"
-                x={WIDTH - PAD.right}
+                x={width - PAD.right}
                 y={y(incomeCents) - 5}
                 textAnchor="end"
               >
@@ -176,7 +193,7 @@ export function ProgressChart({
           <div
             className="chart-tooltip"
             role="status"
-            style={{ left: `${Math.min(Math.max((x(active) / WIDTH) * 100, 24), 76)}%` }}
+            style={{ left: `${Math.min(Math.max((x(active) / width) * 100, 24), 76)}%` }}
           >
             <span>{copy.progress.dayLabel(active + 1)}</span>
             {current[active] !== undefined && (
