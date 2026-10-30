@@ -6,10 +6,18 @@ export function entryFor(state: { hasGuest: boolean; accounts: number }): 'guest
 /**
  * Where a page of the app sends a visitor who has to sign in. The app's front door
  * (`/app`, which older installs still open) goes to the landing page, which offers
- * the right next step; any other page goes to /entrar and back there afterwards.
+ * the right next step; any other page goes to /entrar.
  */
 export function signInRoute(pathname: string): '/' | '/entrar' {
   return pathname === '/app' || pathname === '/app/' ? '/' : '/entrar';
+}
+
+/**
+ * Where signing in lands: always the start page, whatever page the user left,
+ * unless files shared to the app are waiting on the invoices page that reads them.
+ */
+export function afterSignIn(sharedFiles: number): '/app' | '/app/faturas' {
+  return sharedFiles > 0 ? '/app/faturas' : '/app';
 }
 
 /** The login page's greeting: by how many accounts this device has (unknown while loading). */

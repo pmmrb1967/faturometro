@@ -6,7 +6,7 @@ import { useSession } from './session-context';
 
 /**
  * Without a session, opens the guest when it is the only profile here; otherwise sends to
- * sign in (signInRoute), and back to the same page afterwards.
+ * sign in (signInRoute).
  */
 export function RequireSession({ children }: { children: ReactNode }) {
   const { session, restoring, signIn } = useSession();
@@ -29,10 +29,6 @@ export function RequireSession({ children }: { children: ReactNode }) {
   }, [session, restoring, signIn]);
 
   if (session) return children;
-  if (entry === 'login') {
-    return (
-      <Navigate to={signInRoute(location.pathname)} replace state={{ from: location.pathname }} />
-    );
-  }
+  if (entry === 'login') return <Navigate to={signInRoute(location.pathname)} replace />;
   return null;
 }

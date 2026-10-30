@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { countSharedFiles } from '../../app/shared-files';
 import { t } from '../../i18n/pt-PT';
 import {
   AccountError,
@@ -10,22 +11,13 @@ import {
   type UnlockedAccount,
 } from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
-import { loginGreeting } from './entry';
+import { afterSignIn, loginGreeting } from './entry';
 import { useSession } from './session-context';
 import { required, validateEmail } from './validation';
-
-function useReturnPath(): string {
-  const state: unknown = useLocation().state;
-  if (state && typeof state === 'object' && 'from' in state && typeof state.from === 'string') {
-    return state.from.startsWith('/app') ? state.from : '/app';
-  }
-  return '/app';
-}
 
 export function LoginPage() {
   const { signIn } = useSession();
   const navigate = useNavigate();
-  const returnPath = useReturnPath();
   const [emails, setEmails] = useState<string[] | null>(null);
   // undefined while checking; null when this device has no guest yet.
   const [guest, setGuest] = useState<UnlockedAccount | null | undefined>(undefined);
@@ -50,8 +42,10 @@ export function LoginPage() {
   // An installed app opens here with no profile: it must be able to start without an account.
   async function continueGuest() {
     if (guest === undefined) return;
-    signIn(guest ?? (await createGuest()));
-    navigate(returnPath, { replace: true });
+    const account = guest ?? (await createGuest());
+    const next = afterSignIn(await countSharedFiles());
+    signIn(account);
+    navigate(next, { replace: true });
   }
 
   async function submit(event: FormEvent) {
@@ -62,8 +56,10 @@ export function LoginPage() {
     if (found.email || found.password) return;
     setBusy(true);
     try {
-      signIn(await unlockAccount(email, password));
-      navigate(returnPath, { replace: true });
+      const account = await unlockAccount(email, password);
+      const next = afterSignIn(await countSharedFiles());
+      signIn(account);
+      navigate(next, { replace: true });
     } catch (error) {
       setFormError(
         error instanceof AccountError ? t.auth.errors[error.code] : t.auth.errors.unexpected,

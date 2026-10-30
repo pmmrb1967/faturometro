@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entryFor, loginGreeting, signInRoute } from './entry';
+import { afterSignIn, entryFor, loginGreeting, signInRoute } from './entry';
 
 describe('entryFor', () => {
   it('opens the guest only when it is the only profile', () => {
@@ -22,6 +22,16 @@ describe('loginGreeting', () => {
     expect(loginGreeting(0)).toBe('none');
     // While loading, assume the usual case (one account) to avoid a flicker.
     expect(loginGreeting(null)).toBe('one');
+  });
+});
+
+describe('afterSignIn', () => {
+  it('lands on the start page', () => {
+    expect(afterSignIn(0)).toBe('/app');
+  });
+
+  it('lands on the invoices page when shared files are waiting there', () => {
+    expect(afterSignIn(2)).toBe('/app/faturas');
   });
 });
 
