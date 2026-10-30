@@ -473,7 +473,7 @@ function ExpenseForm({
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
   const [endMonth, setEndMonth] = useState(initial?.oneOff ? '' : (initial?.endMonth ?? ''));
-  const [paidBefore, setPaidBefore] = useState(true);
+  const [paidBefore, setPaidBefore] = useState(!initial);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
   );
@@ -481,9 +481,10 @@ function ExpenseForm({
   const amountCents = parsePtAmount(amount);
   const oneOff = every === ONE_OFF;
   const date = today();
-  // A new expense that starts in the past: its months so far were most likely paid.
+  // Starts in the past: on a new expense, those months were most likely paid; on a
+  // stored one, the user may tick them all at once, and nothing changes unless they do.
   const firstDue =
-    !initial && MONTH.test(startMonth) && Number.isInteger(Number(dueDay))
+    MONTH.test(startMonth) && Number.isInteger(Number(dueDay))
       ? expenseDueDate({ startMonth, everyMonths: 1, dueDay: Number(dueDay) }, startMonth)
       : null;
   const startsInThePast = firstDue !== null && firstDue < date;
