@@ -265,6 +265,39 @@ export interface RecurringExpense extends SyncMeta {
   startMonth: string;
   /** Last month (YYYY-MM), when it stopped. */
   endMonth?: string;
+  /** Category on the page "Gastos" ("other" when missing). */
+  category?: SpendingCategory;
+  createdAt: IsoDateTime;
+}
+
+export type SpendingCategory =
+  | 'food'
+  | 'home'
+  | 'bills'
+  | 'transport'
+  | 'health'
+  | 'education'
+  | 'leisure'
+  | 'shopping'
+  | 'insurance'
+  | 'other';
+
+/**
+ * One-off purchase on the page "Gastos", typed or read from the QR code of a
+ * receipt. Invoices and recurring expenses are not copied here.
+ */
+export interface SpendingTransaction extends SyncMeta {
+  date: IsoDate;
+  /** Negative for a refund or a credit note. */
+  amountCents: Cents;
+  category: SpendingCategory;
+  /** May be empty: the category then names the line. */
+  description: string;
+  source: 'manual' | 'qr';
+  /** Field A of the QR code. */
+  issuerNif?: string;
+  /** Same key as {@link Invoice.docKey}; it also sets the id, so devices write one record. */
+  docKey?: string;
   createdAt: IsoDateTime;
 }
 
@@ -344,4 +377,6 @@ export interface Settings extends SyncMeta {
   largeFamily: boolean;
   /** Minimum estimated yearly saving for a "cheaper offer" alert (PLAN.md §9). */
   cheaperOfferMinSavingCents: number;
+  /** Show the section "Gastos" (off by default; turning it off keeps the data). */
+  spendingEnabled: boolean;
 }

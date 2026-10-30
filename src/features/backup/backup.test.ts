@@ -49,6 +49,7 @@ beforeEach(async () => {
     autoLockMinutes: 15,
     largeFamily: true,
     cheaperOfferMinSavingCents: 3000,
+    spendingEnabled: false,
   });
   await source.documents.put({ fileHash, mime: 'application/pdf', bytes: pdf });
 });

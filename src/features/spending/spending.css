@@ -1,0 +1,27 @@
+.spending-hint {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.spending-bar {
+  grid-column: 1 / -1;
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.spending-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.spending-movement .field,
+.spending-movement .month-actions,
+.spending-movement .month-confirm {
+  grid-column: 1 / -1;
+}

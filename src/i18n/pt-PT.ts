@@ -3,7 +3,7 @@ export const t = {
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
   privacyPage: {
     title: 'Privacidade',
-    updated: 'Última atualização: 20 de outubro de 2026.',
+    updated: 'Última atualização: 30 de outubro de 2026.',
     intro:
       'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
     sections: [
@@ -17,7 +17,7 @@ export const t = {
       {
         title: 'No teu dispositivo (sempre)',
         body: [
-          'A conta, as faturas, os contratos, os alertas, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
+          'A conta, as faturas, os contratos, os alertas, os gastos que registares, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
           'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
           'Não há cookies, publicidade nem registos com os teus dados.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
@@ -201,6 +201,7 @@ export const t = {
   nav: {
     home: 'Início',
     month: 'Este mês',
+    spending: 'Gastos',
     contracts: 'Contratos',
     invoices: 'Faturas',
     compare: 'Comparar',
@@ -357,6 +358,64 @@ export const t = {
       newLabel: (issuer: string) => `Seguro ${issuer}`,
       save: 'Guardar no contrato',
       saved: (label: string) => `Guardado no contrato ${label}.`,
+    },
+  },
+  spending: {
+    intro:
+      'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui.',
+    disabled: 'Esta secção está desligada. Podes ligá-la nas Preferências, em Definições.',
+    openSettings: 'Abrir as Definições',
+    add: 'Registar gasto',
+    scan: 'Ler talão',
+    scanHint: 'A fotografia do talão é lida neste dispositivo e não fica guardada.',
+    tabs: { summary: 'Resumo', movements: 'Movimentos' },
+    total: 'Total',
+    previousMonth: 'Mês anterior',
+    count: 'Movimentos',
+    empty: 'Ainda não há gastos neste mês.',
+    byCategory: 'Por categoria',
+    allCategories: 'Todas',
+    category: 'Categoria',
+    categories: {
+      food: 'Alimentação',
+      home: 'Casa',
+      bills: 'Contas da casa',
+      transport: 'Transportes',
+      health: 'Saúde',
+      education: 'Educação',
+      leisure: 'Lazer',
+      shopping: 'Compras',
+      insurance: 'Seguros',
+      other: 'Outros',
+    },
+    invoiceTag: 'Fatura',
+    expenseTag: 'Sem fatura',
+    expenseCategory: (name: string) => `Categoria de ${name}`,
+    filtered: (count: number, total: string) =>
+      `${count === 1 ? '1 movimento' : `${count} movimentos`} · ${total}`,
+    saved: 'Gasto guardado.',
+    edit: 'Alterar',
+    remove: 'Apagar',
+    confirmRemove: (name: string) => `Apagar "${name}"?`,
+    confirm: 'Apagar de vez',
+    cancel: 'Cancelar',
+    form: {
+      amount: 'Valor, em euros',
+      description: 'Descrição (opcional)',
+      descriptionPlaceholder: 'Ex.: Supermercado',
+      date: 'Data',
+      save: 'Guardar gasto',
+      errors: {
+        amount: 'Escreve um valor diferente de zero, por exemplo 12,50.',
+        date: 'Escolhe a data.',
+      },
+    },
+    receipt: {
+      reading: 'A ler o talão…',
+      read: 'Lido do código QR do talão. Confirma e guarda.',
+      noQr: 'Não foi possível encontrar o código QR nesta fotografia. Escreve o gasto à mão.',
+      invoice: 'Este documento já está guardado nas faturas.',
+      known: 'Este talão já está registado.',
     },
   },
   month: {
@@ -836,6 +895,7 @@ export const t = {
     largeFamily:
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
+    spendingEnabled: 'Mostrar a secção Gastos, para registar também as compras do dia a dia',
     saved: 'Guardado.',
     account: {
       title: 'Conta',

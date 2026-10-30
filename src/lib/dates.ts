@@ -19,6 +19,17 @@ const MONTHS_SHORT = [
   'dez',
 ];
 
+const MONTH_NAME = new Intl.DateTimeFormat('pt-PT', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** "2026-10" → "outubro de 2026". */
+export function formatMonth(month: string): string {
+  return MONTH_NAME.format(new Date(`${month}-01T00:00:00Z`));
+}
+
 /** "2026-06-24" → "jun 26" (chart axis labels). */
 export function formatMonthShort(iso: string): string {
   const match = /^(\d{4})-(\d{2})/.exec(iso);

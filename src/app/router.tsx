@@ -13,6 +13,7 @@ import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
 import { MonthPage } from '../features/month/MonthPage';
 import { SocialTariffPage } from '../features/social-tariff/SocialTariffPage';
+import { SpendingPage } from '../features/spending/SpendingPage';
 import { Landing } from '../landing/Landing';
 import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
 import { SECTIONS, type SectionId } from './sections';
@@ -24,6 +25,7 @@ function sectionElement(id: SectionId) {
   if (id === 'invoices') return <InvoicesPage />;
   if (id === 'contracts') return <ContractsPage />;
   if (id === 'month') return <MonthPage />;
+  if (id === 'spending') return <SpendingPage />;
   return <SectionPlaceholder section={id} />;
 }
 

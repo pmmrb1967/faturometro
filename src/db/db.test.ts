@@ -13,6 +13,7 @@ import {
   SCHEMA_V3,
   SCHEMA_V4,
   SCHEMA_V5,
+  SCHEMA_V6,
   type TableName,
 } from './schema';
 
@@ -210,9 +211,28 @@ describe('schema migrations', () => {
     v5.close();
 
     const current = new ProfileDb(id);
-    expect(current.verno).toBe(6);
+    expect(current.verno).toBeGreaterThanOrEqual(6);
     expect(await current.payments.count()).toBe(1);
     expect(await current.consumptionProfiles.count()).toBe(0);
+    await current.delete();
+  });
+
+  it('upgrades v6 to v7 with the purchases of the page "Gastos"', async () => {
+    const id = crypto.randomUUID();
+    const v6 = new Dexie(profileDbName(id));
+    v6.version(1).stores(SCHEMA_V1);
+    v6.version(2).stores(SCHEMA_V2);
+    v6.version(3).stores(SCHEMA_V3);
+    v6.version(4).stores(SCHEMA_V4);
+    v6.version(5).stores(SCHEMA_V5);
+    v6.version(6).stores(SCHEMA_V6);
+    await v6.table('expenses').add({ id: 'e', updatedAt: 'x', enc: {} });
+    v6.close();
+
+    const current = new ProfileDb(id);
+    expect(current.verno).toBe(7);
+    expect(await current.expenses.count()).toBe(1);
+    expect(await current.transactions.count()).toBe(0);
     await current.delete();
   });
 

@@ -6,6 +6,12 @@ const PATHS: Record<SectionId, string[]> = {
   home: ['M3 10.5 12 3l9 7.5', 'M5 9.5V21h5v-6h4v6h5V9.5'],
   // Calendar page with a tick
   month: ['M4 6h16v15H4z', 'M4 10h16', 'M8 3v4', 'M16 3v4', 'M9 15.5l2 2 4-4'],
+  // Wallet
+  spending: [
+    'M4 7h15a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z',
+    'M4 7V6a2 2 0 0 1 2-2h11v3',
+    'M15.5 13.5h.01',
+  ],
   // Document with a paper clip
   contracts: [
     'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z',

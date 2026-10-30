@@ -109,7 +109,9 @@ body {
   /* Above positioned content (e.g. password fields with a show button). */
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* As many equal columns as sections: "Gastos" only shows when it is turned on. */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   min-height: var(--nav-height);
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
@@ -137,11 +139,19 @@ body {
   white-space: nowrap;
 }
 
+/* Phone with the optional seventh section: smaller labels, so none is cut. */
+@media (max-width: 767px) {
+  .nav.is-dense .nav-item {
+    font-size: 0.66rem;
+    padding-inline: 0;
+  }
+}
+
 /* Phone: the icon sits in a pill that fills in for the current section. */
 .nav-icon {
   flex: none;
   box-sizing: content-box;
-  padding: 3px 16px;
+  padding: 3px clamp(6px, 3vw, 16px);
   border-radius: 999px;
 }
 

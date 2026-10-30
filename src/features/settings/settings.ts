@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Omit<Settings, 'updatedAt'> = {
   autoLockMinutes: 15,
   largeFamily: false,
   cheaperOfferMinSavingCents: 3000,
+  spendingEnabled: false,
 };
 
 export async function getSettings(repos: Repositories): Promise<Omit<Settings, 'updatedAt'>> {

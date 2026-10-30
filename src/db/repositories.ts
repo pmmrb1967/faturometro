@@ -11,6 +11,7 @@ import type {
   Reading,
   RecurringExpense,
   Settings,
+  SpendingTransaction,
 } from '../domain/types';
 import { DocumentStore } from './documents';
 import { EncryptedTable } from './encrypted-table';
@@ -42,6 +43,7 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     consumptionProfiles: new EncryptedTable<ConsumptionProfile>(db.consumptionProfiles, key, [
       'supplyPointId',
     ]),
+    transactions: new EncryptedTable<SpendingTransaction>(db.transactions, key, []),
     documents: new DocumentStore(db.documents, key),
   };
 }

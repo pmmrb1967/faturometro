@@ -15,7 +15,7 @@ import {
 import { forecastInvoices } from '../../domain/forecast';
 import type { Payment, RecurringExpense } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
-import { formatIsoDate } from '../../lib/dates';
+import { formatIsoDate, formatMonth } from '../../lib/dates';
 import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
 import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
@@ -34,15 +34,6 @@ const EVERY: { months: RecurringExpense['everyMonths']; label: string }[] = [
 /** Select value of a one-off expense (the others use their number of months). */
 const ONE_OFF = 'once';
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
-const monthName = new Intl.DateTimeFormat('pt-PT', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-function formatMonth(month: string): string {
-  return monthName.format(new Date(`${month}-01T00:00:00Z`));
-}
 
 function frequencyOf(expense: RecurringExpense): string {
   if (expense.oneOff) return copy.expenses.oneOff;
@@ -452,6 +443,7 @@ function ExpenseForm({
       name: name.trim(),
       dueDay: day,
       startMonth,
+      ...(initial?.category ? { category: initial.category } : {}),
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
     if (oneOff) {
