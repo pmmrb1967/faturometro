@@ -57,10 +57,7 @@ export function IncomeSection({
   }
 
   return (
-    <section aria-labelledby="income-title">
-      <h2 id="income-title" className="section-title">
-        {copy.title}
-      </h2>
+    <section className="spending-income" aria-label={copy.title}>
       {active.length === 0 && (
         <p className="muted">{incomes.length === 0 ? copy.empty : copy.emptyMonth}</p>
       )}
@@ -116,8 +113,7 @@ export function IncomeSection({
         <IncomeForm month={month} onDone={save} />
       ) : (
         <p>
-          {/* Secondary: "Registar gasto", above, is what is used every day. */}
-          <button type="button" className="action-secondary" onClick={() => setEditing('new')}>
+          <button type="button" className="action-primary" onClick={() => setEditing('new')}>
             {copy.add}
           </button>
         </p>

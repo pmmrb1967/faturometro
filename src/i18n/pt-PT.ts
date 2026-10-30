@@ -463,8 +463,8 @@ export const t = {
       balance: 'Saldo',
       balanceHint:
         'O saldo conta todo o mês: as receitas e os gastos que ainda vão acontecer. A linha do gráfico vai só até hoje.',
-      empty: 'Ainda não acrescentaste nenhuma.',
-      emptyMonth: 'Nenhuma neste mês.',
+      empty: 'Ainda não acrescentaste nenhuma receita.',
+      emptyMonth: 'Nenhuma receita neste mês.',
       add: 'Acrescentar receita',
       listTitle: 'Receitas deste mês',
       listSummary: (count: number, total: string) =>
