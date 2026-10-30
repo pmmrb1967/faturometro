@@ -148,6 +148,55 @@ describe('monthSummary', () => {
   });
 });
 
+describe('expense added with its past months paid', () => {
+  const rent = expense({
+    id: 'rent',
+    amountCents: 65000,
+    dueDay: 8,
+    startMonth: '2026-08',
+    paidUntil: '2026-10-08',
+  });
+  const summary = (month: string, payments: Payment[] = []) =>
+    monthSummary(month, [], [rent], payments, { today: '2026-10-30' });
+
+  it('each past month is paid on its own due date', () => {
+    expect(summary('2026-08').items[0]).toMatchObject({ paidOn: '2026-08-08', autoPaid: true });
+    expect(summary('2026-09').paidCents).toBe(65000);
+    expect(summary('2026-09').toPayCents).toBe(0);
+  });
+
+  it('what is due on that day or later stays to pay', () => {
+    expect(summary('2026-10').items[0]?.paidOn).toBeUndefined();
+    expect(summary('2026-11').toPayCents).toBe(65000);
+  });
+
+  it('a month the user unticked stays unpaid', () => {
+    const id = paymentId({ expenseId: 'rent', month: '2026-09' });
+    const unpaid: Payment = { ...META, id, expenseId: 'rent', month: '2026-09', unpaid: true };
+    expect(summary('2026-09', [unpaid]).items[0]?.paidOn).toBeUndefined();
+    expect(summary('2026-08', [unpaid]).items[0]?.paidOn).toBe('2026-08-08');
+  });
+
+  it('the user can mark it with another day', () => {
+    const id = paymentId({ expenseId: 'rent', month: '2026-09' });
+    const late: Payment = {
+      ...META,
+      id,
+      expenseId: 'rent',
+      month: '2026-09',
+      paidOn: '2026-09-20',
+    };
+    expect(summary('2026-09', [late]).items[0]).toMatchObject({ paidOn: '2026-09-20' });
+    expect(summary('2026-09', [late]).items[0]?.autoPaid).toBeUndefined();
+  });
+
+  it('without it, past months stay to pay', () => {
+    const plain = expense({ amountCents: 65000, startMonth: '2026-08' });
+    const month = monthSummary('2026-09', [], [plain], [], { today: '2026-10-30' });
+    expect(month.toPayCents).toBe(65000);
+  });
+});
+
 describe('direct debit', () => {
   const debited = {
     ...invoice('d', '2026-10-01', 5051, '2026-10-20'),

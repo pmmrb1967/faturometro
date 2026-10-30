@@ -74,6 +74,22 @@
   margin-top: 8px;
 }
 
+.month-paid-before {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  line-height: 1.4;
+}
+
+.month-paid-before input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--accent);
+}
+
 .month-form {
   margin-top: 8px;
   padding: 16px;

@@ -6,6 +6,7 @@ import {
   addMonthsTo,
   expenseActive,
   expenseAmount,
+  expenseDueDate,
   monthOf,
   monthSummary,
   uncheckAction,
@@ -118,14 +119,14 @@ export function MonthPage() {
       {tab === 'spending' ? (
         <SpendingView month={month} onMonth={setMonth} />
       ) : (
-        <PaymentsView month={month} />
+        <PaymentsView month={month} withSpending={settings.spendingEnabled} />
       )}
     </>
   );
 }
 
 /** What is due in a month, marked as paid or not, and expenses without an invoice. */
-function PaymentsView({ month }: { month: string }) {
+function PaymentsView({ month, withSpending }: { month: string; withSpending: boolean }) {
   const { session } = useSession();
   // Expense being changed, in its line of the month or in the expenses section.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
@@ -283,7 +284,11 @@ function PaymentsView({ month }: { month: string }) {
                       ? copy.due(formatIsoDate(item.date))
                       : copy.issued(formatIsoDate(item.date))}
                   {item.paidOn &&
-                    ` · ${item.autoPaid ? copy.autoPaid : copy.paidOn(formatIsoDate(item.paidOn))}`}
+                    ` · ${
+                      item.autoPaid && item.debitDate
+                        ? copy.autoPaid
+                        : copy.paidOn(formatIsoDate(item.paidOn))
+                    }`}
                   {item.kind === 'expense' && ` · ${copy.expenseTag}`}
                 </span>
                 {expense && (
@@ -302,7 +307,10 @@ function PaymentsView({ month }: { month: string }) {
         <h2 id="expenses-title" className="section-title">
           {copy.expenses.title}
         </h2>
-        <p className="muted">{copy.expenses.intro}</p>
+        <p className="muted">
+          {copy.expenses.intro}
+          {withSpending && ` ${copy.expenses.introSpending}`}
+        </p>
         {active.length === 0 && (
           <p className="muted">
             {data.expenses.length === 0 ? copy.expenses.empty : copy.expenses.emptyMonth}
@@ -465,12 +473,20 @@ function ExpenseForm({
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
   const [endMonth, setEndMonth] = useState(initial?.oneOff ? '' : (initial?.endMonth ?? ''));
+  const [paidBefore, setPaidBefore] = useState(true);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
   );
   const id = initial?.id ?? 'new';
   const amountCents = parsePtAmount(amount);
   const oneOff = every === ONE_OFF;
+  const date = today();
+  // A new expense that starts in the past: its months so far were most likely paid.
+  const firstDue =
+    !initial && MONTH.test(startMonth) && Number.isInteger(Number(dueDay))
+      ? expenseDueDate({ startMonth, everyMonths: 1, dueDay: Number(dueDay) }, startMonth)
+      : null;
+  const startsInThePast = firstDue !== null && firstDue < date;
   // A new amount on an existing expense: from which month (earlier ones keep theirs).
   // A one-off expense has a single month, so its amount is simply replaced.
   const amountChanged =
@@ -498,6 +514,8 @@ function ExpenseForm({
       dueDay: day,
       startMonth,
       ...(initial?.category ? { category: initial.category } : {}),
+      ...(initial?.paidUntil ? { paidUntil: initial.paidUntil } : {}),
+      ...(startsInThePast && paidBefore ? { paidUntil: date } : {}),
       createdAt: initial?.createdAt ?? new Date().toISOString(),
     };
     if (oneOff) {
@@ -604,6 +622,16 @@ function ExpenseForm({
           error={errors.endMonth}
           onChange={(event) => setEndMonth(event.target.value)}
         />
+      )}
+      {startsInThePast && (
+        <label className="month-paid-before">
+          <input
+            type="checkbox"
+            checked={paidBefore}
+            onChange={(event) => setPaidBefore(event.target.checked)}
+          />
+          {oneOff ? copy.expenses.alreadyPaid : copy.expenses.alreadyPaidMonths}
+        </label>
       )}
       <div className="month-actions">
         <button type="submit" className="action-primary">

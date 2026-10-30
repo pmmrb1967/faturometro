@@ -400,8 +400,8 @@ export const t = {
       other: 'Outros',
     },
     help: {
-      title: 'Onde registar cada gasto e receita?',
-      categories: 'Categorias de gastos',
+      spendingTitle: 'Onde registar cada gasto?',
+      incomeTitle: 'Onde registar cada receita?',
       category: {
         food: 'Supermercado, talho, padaria.',
         home: 'Ter e manter a casa: renda, condomínio, obras, reparações, eletrodomésticos, mobília.',
@@ -416,7 +416,6 @@ export const t = {
       },
       invoices:
         'As faturas entram sozinhas: luz, gás, água e telecomunicações em Contas da casa, seguros em Seguros. Nas despesas sem fatura, escolhes a categoria na lista de movimentos.',
-      incomes: 'Tipos de receita',
       income: {
         salary: 'O que recebes do trabalho ou da reforma, todos os meses.',
         rent: 'Rendas pagas pelos teus inquilinos.',
@@ -467,6 +466,7 @@ export const t = {
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar receita',
+      listTitle: 'Receitas deste mês',
       listSummary: (count: number, total: string) =>
         `${count === 1 ? '1 receita' : `${count} receitas`} · ${total}`,
       kind: 'Tipo',
@@ -546,7 +546,8 @@ export const t = {
     expenses: {
       title: 'Despesas sem fatura',
       intro:
-        'Despesas certas que não passam pela app, como a renda ou o condomínio, ou pontuais e de valor alto, como uma obra ou um frigorífico novo. Escreves uma vez e aparecem nos meses em que vencem.',
+        'Despesas certas que não passam pela app, como a renda ou o condomínio. Escreves uma vez e aparecem nos meses em que vencem. Também podes acrescentar uma despesa pontual que ainda tens de pagar, como uma obra.',
+      introSpending: 'As compras já feitas registam-se em Gastos.',
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar despesa',
@@ -560,7 +561,9 @@ export const t = {
       fourMonthly: 'Quadrimestral',
       oneOff: 'Pontual',
       oneOffHint:
-        'Paga uma vez, como uma obra ou um eletrodoméstico. Se a pagas em prestações, escolhe "Mensal" com o primeiro e o último mês.',
+        'Paga uma vez, como uma obra. Se a pagas em prestações, escolhe "Mensal" com o primeiro e o último mês.',
+      alreadyPaidMonths: 'Já paguei os meses anteriores',
+      alreadyPaid: 'Já paguei esta despesa',
       month: 'Mês',
       inMonth: (month: string) => `em ${month}`,
       dueDay: 'Dia de pagamento',

@@ -28,10 +28,11 @@ A app já conhece a maioria das despesas certas da casa. Falta o resto do mês: 
 - **Sem QR legível:** abre o formulário manual vazio, com aviso.
 - **Sem duplicados:** o id de uma compra do talão deriva de `docKey` (`qr-<docKey>`), por isso dois dispositivos escrevem o mesmo registo. Um documento já guardado como fatura ou como compra é recusado ao ler; uma compra cuja fatura seja acrescentada depois deixa de contar.
 - **Sugestões:** para um NIF, a descrição e a categoria da última compra; sem compra anterior, o nome do fornecedor conhecido.
-- **Receitas:** bloco dobrável em Gastos, fechado e acima dos gráficos (no fim da página ficava cada vez mais longe com os movimentos), sem opção própria. Tabela `incomes` (esquema v8), cifrada, sincronizada e na cópia de segurança. Fixas (com mudança de valor a partir de um mês) ou pontuais, pelas regras das despesas sem fatura. Valor líquido, no mês da data de entrada.
+- **Receitas:** secção de Gastos acima dos gráficos (no fim da página ficava cada vez mais longe com os movimentos), com a estrutura das Despesas sem fatura: lista dobrável e botão à vista. O texto explicativo fica na ajuda da secção, porque se lê uma vez. Sem opção própria. Tabela `incomes` (esquema v8), cifrada, sincronizada e na cópia de segurança. Fixas (com mudança de valor a partir de um mês) ou pontuais, pelas regras das despesas sem fatura. Valor líquido, no mês da data de entrada.
 - **Saldo:** com receitas no mês, o topo mostra Gastos, Receitas e Saldo; sem elas, fica como estava. O saldo conta todo o mês e a curva só vai até hoje, e a página diz isso no mês corrente. No gráfico, as receitas são uma linha tracejada a toda a largura, com legenda, frase e linha na tabela. A escala inclui-as, por isso as curvas ficam mais baixas quando as receitas são muito maiores.
 
-- **Ajuda:** "Onde registar cada gasto e receita?", fechada por omissão a seguir aos botões de registo, com o que cabe em cada categoria e tipo de receita.
+- **Ajuda:** duas, fechadas por omissão e junto do que explicam: "Onde registar cada gasto?", a seguir aos botões de registo, e "Onde registar cada receita?", a seguir a "Acrescentar receita". Um formulário único para gastos e receitas foi rejeitado: os campos são quase todos diferentes e acrescentava um passo a cada compra.
+- **Pontual ou Gastos:** o que já foi pago regista-se em Gastos; o que ainda se tem de pagar, com data, fica nas Despesas sem fatura, com o visto de paga. "Pontual" mantém-se: Gastos é opcional, e a comparação anual conta as pontuais mas não as compras.
 
 ## A confirmar com uso real
 

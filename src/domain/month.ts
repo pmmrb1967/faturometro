@@ -26,7 +26,7 @@ export interface MonthItem {
   debitDate?: string;
   amountCents: Cents;
   paidOn?: string;
-  /** Marked as paid by the app, from the direct debit date. */
+  /** Marked as paid by the app: from the direct debit date, or added as already paid. */
   autoPaid?: boolean;
   /** A forecast whose date has passed: the invoice has not been added. */
   late?: boolean;
@@ -168,10 +168,6 @@ export function monthSummary(
 ): MonthSummary {
   const byId = new Map(payments.map((payment) => [payment.id, payment]));
   const contracts = new Map((options.contracts ?? []).map((contract) => [contract.id, contract]));
-  const withPaid = (item: Omit<MonthItem, 'paidOn'>): MonthItem => {
-    const paidOn = byId.get(item.paymentId)?.paidOn;
-    return paidOn ? { ...item, paidOn } : item;
-  };
 
   const items: MonthItem[] = [];
   for (const invoice of invoices) {
@@ -195,16 +191,19 @@ export function monthSummary(
   for (const expense of expenses) {
     const date = expenseDueDate(expense, month);
     if (!date) continue;
-    items.push(
-      withPaid({
-        paymentId: paymentId({ expenseId: expense.id, month }),
-        kind: 'expense',
-        expenseId: expense.id,
-        date,
-        hasDueDate: true,
-        amountCents: expenseAmount(expense, month),
-      }),
-    );
+    const id = paymentId({ expenseId: expense.id, month });
+    // Like a direct debit on the due date: the user's own mark comes first.
+    const alreadyPaid = expense.paidUntil !== undefined && date < expense.paidUntil;
+    const paid = invoicePaid(byId.get(id), alreadyPaid ? date : undefined, date);
+    items.push({
+      paymentId: id,
+      kind: 'expense',
+      expenseId: expense.id,
+      date,
+      hasDueDate: true,
+      amountCents: expenseAmount(expense, month),
+      ...(paid ? { paidOn: paid.paidOn, ...(paid.auto ? { autoPaid: true } : {}) } : {}),
+    });
   }
   for (const forecast of options.forecasts ?? []) {
     if (monthOf(forecast.date) !== month) continue;

@@ -14,15 +14,10 @@
   font-weight: 700;
 }
 
-.spending-help h3 {
-  margin: 16px 0 8px;
-  font-size: 1rem;
-}
-
 .spending-help dl {
   display: grid;
   gap: 8px;
-  margin: 0;
+  margin: 12px 0 0;
 }
 
 .spending-help dt {
@@ -38,16 +33,8 @@
   font-size: 0.85rem;
 }
 
-.spending-income-block {
-  margin-top: 12px;
-}
-
-.spending-income-block .group-block {
-  margin-bottom: 8px;
-}
-
 .spending-charts {
-  margin-top: 8px;
+  margin-top: 24px;
 }
 
 .spending-progress {

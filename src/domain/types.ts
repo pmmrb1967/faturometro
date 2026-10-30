@@ -265,6 +265,11 @@ export interface RecurringExpense extends SyncMeta {
   startMonth: string;
   /** Last month (YYYY-MM), when it stopped. */
   endMonth?: string;
+  /**
+   * Added with its past months already paid: what was due before this day
+   * counts as paid on its due date, unless the user unticks that month.
+   */
+  paidUntil?: IsoDate;
   /** Category on the page "Gastos" ("other" when missing). */
   category?: SpendingCategory;
   createdAt: IsoDateTime;
