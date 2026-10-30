@@ -46,13 +46,7 @@ function summaryOf({ year: shown, current, spent, compared }: YearProgress): str
 }
 
 /** Money spent each month, against the same months of the year before and what came in. */
-export function YearChart({
-  progress,
-  switcher,
-}: {
-  progress: YearProgress;
-  switcher: ReactNode;
-}) {
+export function YearChart({ progress, switcher }: { progress: YearProgress; switcher: ReactNode }) {
   const titleId = useId();
   const { plot, width } = useDrawingWidth();
   const { current, previous, income, spent, purchasesSince } = progress;
@@ -60,8 +54,7 @@ export function YearChart({
   const { active, handlers } = useChartPointer(MONTHS, width, lastIndex);
   const max = niceMax(Math.max(...[...current, ...previous, ...income].map((value) => value ?? 0)));
   const plotHeight = HEIGHT - PAD.top - PAD.bottom;
-  const x = (index: number) =>
-    PAD.left + (index / (MONTHS - 1)) * (width - PAD.left - PAD.right);
+  const x = (index: number) => PAD.left + (index / (MONTHS - 1)) * (width - PAD.left - PAD.right);
   const y = (cents: number) => PAD.top + plotHeight - (Math.max(cents, 0) / max) * plotHeight;
   const hasIncome = income.some((value) => value !== null);
   const hasPrevious = previous.some((value) => value !== null);
@@ -117,13 +110,7 @@ export function YearChart({
             );
           })}
           {year.months.map((name, index) => (
-            <text
-              key={name}
-              className="chart-axis"
-              x={x(index)}
-              y={HEIGHT - 6}
-              textAnchor="middle"
-            >
+            <text key={name} className="chart-axis" x={x(index)} y={HEIGHT - 6} textAnchor="middle">
               {name.charAt(0).toUpperCase()}
             </text>
           ))}

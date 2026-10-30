@@ -407,7 +407,8 @@ export const t = {
       samePeriod: (year: string, total: string) => `No mesmo período de ${year}: ${total}.`,
       inBoth: (year: string, total: string, previousYear: string, previous: string) =>
         `Nos meses com dados nos dois anos: ${total} em ${year} e ${previous} em ${previousYear}.`,
-      purchasesNote: (month: string) => `As compras só contam desde que as registas (desde ${month}).`,
+      purchasesNote: (month: string) =>
+        `As compras só contam desde que as registas (desde ${month}).`,
       month: 'Mês',
       incomeKey: 'Receitas de cada mês',
     },

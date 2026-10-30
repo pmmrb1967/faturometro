@@ -72,7 +72,9 @@ export function IncomeForm({
       ...common,
       // From a one-off income, the amount typed is the amount from the start.
       amountCents: initial && !initial.oneOff ? initial.amountCents : amountCents,
-      ...(initial?.amountChanges && !initial.oneOff ? { amountChanges: initial.amountChanges } : {}),
+      ...(initial?.amountChanges && !initial.oneOff
+        ? { amountChanges: initial.amountChanges }
+        : {}),
       everyMonths: every,
       ...(endMonth ? { endMonth } : {}),
     };

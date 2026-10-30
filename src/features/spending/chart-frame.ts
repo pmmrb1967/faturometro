@@ -1,10 +1,4 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type PointerEvent,
-} from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 
 // Drawn to the width of its box, so the text keeps its size on a phone and on a wide page.
 const MIN_WIDTH = 240;

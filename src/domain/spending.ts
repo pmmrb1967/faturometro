@@ -236,9 +236,7 @@ export function yearProgress(
 
   const lastMonth = current.findLastIndex((value) => value !== null);
   const spent =
-    lastMonth >= 0
-      ? { lastMonth, totalCents: sumCents(current.map((value) => value ?? 0)) }
-      : null;
+    lastMonth >= 0 ? { lastMonth, totalCents: sumCents(current.map((value) => value ?? 0)) } : null;
 
   const sameDay = year === today.slice(0, 4) ? `${previousYear}${today.slice(4)}` : undefined;
   const both = months.flatMap((month, index) => {
