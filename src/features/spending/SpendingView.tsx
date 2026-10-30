@@ -24,8 +24,9 @@ import '../month/month.css';
 import { useRememberedOrder } from '../month/use-remembered-order';
 import { IncomeSection } from './IncomeSection';
 import { readReceipt, type TransactionDraft } from './receipt';
-import { CategoryChart, ProgressChart } from './SpendingCharts';
+import { CategoryChart } from './SpendingCharts';
 import { SpendingHelp } from './SpendingHelp';
+import { SpendingTimeline } from './SpendingTimeline';
 import { TransactionForm } from './TransactionForm';
 import './spending.css';
 
@@ -246,17 +247,28 @@ export function SpendingView({
       <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} />
 
       {summary.items.length === 0 ? (
-        <p className="muted">{copy.empty}</p>
+        <>
+          <p className="muted">{copy.empty}</p>
+          {/* An empty month draws nothing of its own, but its year still has a story. */}
+          <div className="spending-charts">
+            <SpendingTimeline
+              month={month}
+              progress={null}
+              data={data}
+              incomes={data.incomes}
+              incomeCents={income.totalCents}
+            />
+          </div>
+        </>
       ) : (
         <div className="spending-charts">
-          {progress && (
-            <ProgressChart
-              month={month}
-              progress={progress}
-              incomeCents={income.totalCents}
-              past={month < monthOf(today())}
-            />
-          )}
+          <SpendingTimeline
+            month={month}
+            progress={progress}
+            data={data}
+            incomes={data.incomes}
+            incomeCents={income.totalCents}
+          />
           <CategoryChart summary={summary} />
           <GroupBlock
             title={copy.movements}

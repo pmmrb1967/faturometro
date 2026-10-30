@@ -56,6 +56,34 @@
   font-size: 0.9rem;
 }
 
+.spending-chart-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.spending-chart-head .chart-title {
+  margin-bottom: 0;
+}
+
+.spending-views {
+  margin: 0;
+}
+
+.spending-views .compare-tab {
+  min-height: 36px;
+  padding: 4px 14px;
+  font-size: 0.9rem;
+}
+
+.spending-year-note {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
 .spending-line {
   /* A finger moves along the days; the page still scrolls up and down. */
   touch-action: pan-y;
@@ -86,8 +114,29 @@
   stroke: var(--chart-context);
 }
 
+.spending-current-point,
+.spending-previous-point,
+.spending-income-point {
+  /* A ring keeps two months with close values apart. */
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.spending-current-point {
+  fill: var(--chart-mark);
+}
+
+.spending-previous-point {
+  fill: var(--chart-context);
+}
+
+.spending-income-point {
+  fill: var(--text);
+}
+
 /* Dashed and in text colour: it is a level, not a third series of days. */
 .spending-income {
+  fill: none;
   stroke: var(--text);
   stroke-width: 1.5;
   stroke-dasharray: 5 4;

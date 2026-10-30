@@ -1,11 +1,4 @@
-import {
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type PointerEvent,
-} from 'react';
+import { useId, type ReactNode } from 'react';
 import { niceMax } from '../../components/chart-scale';
 import '../../components/chart.css';
 import { addMonthsTo } from '../../domain/month';
@@ -13,6 +6,7 @@ import { categoryShare, type MonthProgress, type SpendingMonth } from '../../dom
 import { t } from '../../i18n/pt-PT';
 import { formatMonth } from '../../lib/dates';
 import { formatCents, type Cents } from '../../lib/money';
+import { HEIGHT, PAD, TICKS, useChartPointer, useDrawingWidth } from './chart-frame';
 
 const copy = t.spending;
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
@@ -39,12 +33,6 @@ export function CategoryChart({ summary }: { summary: SpendingMonth }) {
   );
 }
 
-// Drawn to the width of its box, so the text keeps its size on a phone and on a wide page.
-const MIN_WIDTH = 240;
-const HEIGHT = 210;
-const PAD = { top: 14, right: 12, bottom: 24, left: 54 };
-const TICKS = 4;
-
 /**
  * Money spent up to each day, against the same days of the month before and,
  * when there is any, the income of the month as a level to stay under.
@@ -54,26 +42,19 @@ export function ProgressChart({
   progress,
   incomeCents = 0,
   past = false,
+  switcher,
 }: {
   month: string;
   progress: MonthProgress;
   incomeCents?: Cents;
   /** The month is over: the text says how it ended, not what is left. */
   past?: boolean;
+  switcher: ReactNode;
 }) {
-  const [active, setActive] = useState<number | null>(null);
   const titleId = useId();
-  const plot = useRef<HTMLDivElement>(null);
-  const [boxWidth, setBoxWidth] = useState(MIN_WIDTH);
-  useLayoutEffect(() => {
-    const box = plot.current;
-    if (!box) return;
-    const observer = new ResizeObserver(() => setBoxWidth(box.clientWidth));
-    observer.observe(box);
-    return () => observer.disconnect();
-  }, []);
-  const width = Math.max(boxWidth, MIN_WIDTH);
+  const { plot, width } = useDrawingWidth();
   const { current, previous, days } = progress;
+  const { active, handlers } = useChartPointer(days, width, current.length - 1);
   const max = niceMax(Math.max(...current, ...previous, incomeCents));
   const plotWidth = width - PAD.left - PAD.right;
   const plotHeight = HEIGHT - PAD.top - PAD.bottom;
@@ -99,24 +80,13 @@ export function ProgressChart({
   ].join(' ');
   const names = { current: formatMonth(month), previous: formatMonth(addMonthsTo(month, -1)) };
 
-  function dayAt(event: PointerEvent<SVGSVGElement>): number {
-    const box = event.currentTarget.getBoundingClientRect();
-    const inDrawing = ((event.clientX - box.left) / box.width) * width;
-    const index = Math.round(((inDrawing - PAD.left) / plotWidth) * (days - 1));
-    return Math.min(Math.max(index, 0), days - 1);
-  }
-
-  function onKey(event: KeyboardEvent<SVGSVGElement>) {
-    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-    if (step === 0) return;
-    event.preventDefault();
-    setActive(Math.min(Math.max((active ?? lastIndex) + step, 0), days - 1));
-  }
-
   return (
     <figure className="chart" aria-labelledby={titleId}>
-      <figcaption id={titleId} className="chart-title">
-        {copy.progress.title}
+      <figcaption className="spending-chart-head">
+        <span id={titleId} className="chart-title">
+          {copy.progress.title}
+        </span>
+        {switcher}
       </figcaption>
       <p className="muted spending-progress">{summary}</p>
       <div className="chart-plot" ref={plot}>
@@ -126,12 +96,7 @@ export function ProgressChart({
           role="img"
           aria-label={`${copy.progress.title}. ${summary}`}
           tabIndex={0}
-          onPointerDown={(event) => setActive(dayAt(event))}
-          onPointerMove={(event) => setActive(dayAt(event))}
-          onPointerLeave={() => setActive(null)}
-          onFocus={() => setActive(lastIndex)}
-          onBlur={() => setActive(null)}
-          onKeyDown={onKey}
+          {...handlers}
         >
           {Array.from({ length: TICKS + 1 }, (_, index) => {
             const value = (max / TICKS) * index;

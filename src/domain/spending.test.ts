@@ -5,10 +5,11 @@ import {
   monthProgress,
   sortSpendingItems,
   spendingMonth,
+  yearProgress,
   type SpendingData,
   type SpendingOrder,
 } from './spending';
-import type { Contract, Invoice, RecurringExpense, SpendingTransaction } from './types';
+import type { Contract, Income, Invoice, RecurringExpense, SpendingTransaction } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
 
@@ -70,6 +71,138 @@ function purchase(
 }
 
 const empty: SpendingData = { invoices: [], expenses: [], transactions: [], contracts: [] };
+
+describe('yearProgress', () => {
+  const TODAY = '2026-10-15';
+  const salary = (extra: Partial<Income> = {}): Income => ({
+    ...META,
+    id: 'salary',
+    kind: 'salary',
+    name: '',
+    amountCents: 150000,
+    everyMonths: 1,
+    dueDay: 28,
+    startMonth: '2026-09',
+    createdAt: META.updatedAt,
+    ...extra,
+  });
+
+  it('gives each month its own total, with no spending as a gap and not as zero', () => {
+    const year = yearProgress(
+      '2026',
+      {
+        ...empty,
+        transactions: [
+          purchase('a', '2026-01-10', 1000),
+          purchase('b', '2026-01-20', 500),
+          purchase('c', '2026-03-05', 2000),
+        ],
+      },
+      [],
+      TODAY,
+    );
+    expect(year?.current.slice(0, 4)).toEqual([1500, null, 2000, null]);
+    expect(year?.spent).toEqual({ lastMonth: 2, totalCents: 3500 });
+  });
+
+  it('stops today: what is still due this month is not spent', () => {
+    const year = yearProgress(
+      '2026',
+      {
+        ...empty,
+        transactions: [purchase('a', '2026-10-15', 1000), purchase('b', '2026-10-16', 500)],
+      },
+      [],
+      TODAY,
+    );
+    expect(year?.current[9]).toBe(1000);
+    expect(year?.current[10]).toBeNull();
+  });
+
+  it('shows the whole months of the year before', () => {
+    const year = yearProgress(
+      '2026',
+      { ...empty, transactions: [purchase('a', '2025-12-20', 900)] },
+      [],
+      TODAY,
+    );
+    expect(year?.previous[11]).toBe(900);
+    expect(year?.spent).toBeNull();
+    expect(year?.compared).toBeNull();
+  });
+
+  it('compares only the months recorded in both years', () => {
+    const year = yearProgress(
+      '2026',
+      {
+        ...empty,
+        transactions: [
+          purchase('a', '2025-02-10', 300),
+          purchase('b', '2026-02-10', 400),
+          purchase('c', '2026-03-10', 9000),
+          purchase('d', '2025-05-10', 7000),
+        ],
+      },
+      [],
+      TODAY,
+    );
+    expect(year?.compared).toEqual({ months: 1, currentCents: 400, previousCents: 300 });
+  });
+
+  it('compares the running month up to the same day of last year', () => {
+    const year = yearProgress(
+      '2026',
+      {
+        ...empty,
+        transactions: [
+          purchase('a', '2025-10-10', 300),
+          purchase('b', '2025-10-20', 5000),
+          purchase('c', '2026-10-10', 400),
+        ],
+      },
+      [],
+      TODAY,
+    );
+    expect(year?.previous[9]).toBe(5300);
+    expect(year?.compared).toEqual({ months: 1, currentCents: 400, previousCents: 300 });
+  });
+
+  it('warns while purchases are on one side of the comparison only', () => {
+    const data = {
+      ...empty,
+      expenses: [expense({ startMonth: '2025-01' })],
+      transactions: [purchase('a', '2026-09-10', 1000)],
+    };
+    expect(yearProgress('2026', data, [], TODAY)?.purchasesSince).toBe('2026-09');
+  });
+
+  it('does not warn once both sides have purchases, or with none at all', () => {
+    const both = {
+      ...empty,
+      expenses: [expense({ startMonth: '2025-01' })],
+      transactions: [purchase('a', '2025-01-10', 1000)],
+    };
+    expect(yearProgress('2026', both, [], TODAY)?.purchasesSince).toBeNull();
+    const none = { ...empty, expenses: [expense({ startMonth: '2025-01' })] };
+    expect(yearProgress('2026', none, [], TODAY)?.purchasesSince).toBeNull();
+  });
+
+  it('gives the income of each month, up to today', () => {
+    const year = yearProgress(
+      '2026',
+      { ...empty, transactions: [purchase('a', '2026-09-10', 1000)] },
+      [salary()],
+      TODAY,
+    );
+    expect(year?.income.slice(7, 11)).toEqual([null, 150000, 150000, null]);
+  });
+
+  it('is null for a year to come, or with nothing recorded', () => {
+    const data = { ...empty, transactions: [purchase('a', '2026-09-10', 1000)] };
+    expect(yearProgress('2027', data, [], TODAY)).toBeNull();
+    expect(yearProgress('2024', data, [], TODAY)).toBeNull();
+  });
+});
 
 describe('sortSpendingItems', () => {
   const items = spendingMonth('2026-10', {
