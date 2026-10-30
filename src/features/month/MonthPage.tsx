@@ -19,9 +19,16 @@ import { formatIsoDate, formatMonth } from '../../lib/dates';
 import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
 import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { getSettings } from '../settings/settings';
+import { SpendingView } from '../spending/SpendingView';
+import '../compare/compare.css';
 import '../invoices/invoices.css';
 import './month.css';
 
+type Tab = 'payments' | 'spending';
+
+/** Per-device choice: the tab "Este mês" opens on. */
+const TAB_KEY = 'faturometro.month.tab';
 const copy = t.month;
 const EVERY: { months: RecurringExpense['everyMonths']; label: string }[] = [
   { months: 1, label: t.frequency.monthly },
@@ -42,13 +49,107 @@ function frequencyOf(expense: RecurringExpense): string {
 
 type SavedExpense = Omit<RecurringExpense, 'updatedAt'>;
 
-/** "Este mês": what is due in a month, marked as paid or not, and expenses without an invoice. */
+/** A link can ask for a tab (alerts open "Pagamentos"); otherwise, the last one on this device. */
+function firstTab(): Tab {
+  const asked = new URLSearchParams(window.location.search).get('separador');
+  if (asked === 'gastos') return 'spending';
+  if (asked === 'pagamentos') return 'payments';
+  try {
+    return localStorage.getItem(TAB_KEY) === 'spending' ? 'spending' : 'payments';
+  } catch {
+    return 'payments';
+  }
+}
+
+/**
+ * "Este mês": what is paid in a month and, when the user turned it on, what
+ * was spent. Both tabs look at the same month.
+ */
 export function MonthPage() {
   const { session } = useSession();
   const [month, setMonth] = useState(monthOf(today()));
+  const [chosen, setChosen] = useState<Tab>(firstTab);
+  const settings = useLiveQuery(
+    async () => (session ? getSettings(session.repos) : null),
+    [session],
+  );
+  if (!session || !settings) return null;
+  const tab = settings.spendingEnabled ? chosen : 'payments';
+
+  function choose(next: Tab) {
+    setChosen(next);
+    try {
+      localStorage.setItem(TAB_KEY, next);
+    } catch {
+      // Not remembered on this device; the choice still applies now.
+    }
+  }
+
+  return (
+    <>
+      <h1>{t.nav.month}</h1>
+      {settings.spendingEnabled && (
+        <div className="compare-tabs" role="tablist" aria-label={t.nav.month}>
+          {(['payments', 'spending'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              aria-selected={tab === item}
+              className="compare-tab"
+              onClick={() => choose(item)}
+            >
+              {copy.tabs[item]}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="muted">{tab === 'spending' ? t.spending.intro : copy.intro}</p>
+
+      <div className="month-nav">
+        <button
+          type="button"
+          className="action-secondary"
+          aria-label={copy.previous}
+          title={copy.previous}
+          onClick={() => setMonth(addMonthsTo(month, -1))}
+        >
+          ←
+        </button>
+        <h2 className="month-title" aria-live="polite">
+          {formatMonth(month)}
+        </h2>
+        <button
+          type="button"
+          className="action-secondary"
+          aria-label={copy.next}
+          title={copy.next}
+          onClick={() => setMonth(addMonthsTo(month, 1))}
+        >
+          →
+        </button>
+      </div>
+
+      {tab === 'spending' ? (
+        <SpendingView month={month} onMonth={setMonth} />
+      ) : (
+        <PaymentsView month={month} />
+      )}
+    </>
+  );
+}
+
+/** What is due in a month, marked as paid or not, and expenses without an invoice. */
+function PaymentsView({ month }: { month: string }) {
+  const { session } = useSession();
   // Expense being changed, in its line of the month or in the expenses section.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
   const [showExpenses, setShowExpenses] = useState(false);
+  const [shownMonth, setShownMonth] = useState(month);
+  if (month !== shownMonth) {
+    setShownMonth(month);
+    setEditing(null);
+  }
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const [invoices, contracts, providers, expenses, payments] = await Promise.all([
@@ -119,40 +220,8 @@ export function MonthPage() {
     setEditing(null);
   }
 
-  const goTo = (next: string) => {
-    setEditing(null);
-    setMonth(next);
-  };
-
   return (
     <>
-      <h1>{t.nav.month}</h1>
-      <p className="muted">{copy.intro}</p>
-
-      <div className="month-nav">
-        <button
-          type="button"
-          className="action-secondary"
-          aria-label={copy.previous}
-          title={copy.previous}
-          onClick={() => goTo(addMonthsTo(month, -1))}
-        >
-          ←
-        </button>
-        <h2 className="month-title" aria-live="polite">
-          {formatMonth(month)}
-        </h2>
-        <button
-          type="button"
-          className="action-secondary"
-          aria-label={copy.next}
-          title={copy.next}
-          onClick={() => goTo(addMonthsTo(month, 1))}
-        >
-          →
-        </button>
-      </div>
-
       <dl className="facts">
         <div>
           <dt>{copy.total}</dt>

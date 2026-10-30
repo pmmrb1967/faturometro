@@ -1,10 +1,8 @@
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
 import { useSession } from '../features/auth/session-context';
-import { getSettings } from '../features/settings/settings';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
 import { NavIcon } from './NavIcon';
@@ -28,13 +26,6 @@ export function AppShell() {
   useAutoSync(session, updateProfile);
   const updateAvailable = useUpdateAvailable();
   const [collapsed, setCollapsed] = useState(savedCollapsed);
-  const settings = useLiveQuery(
-    async () => (session ? getSettings(session.repos) : null),
-    [session],
-  );
-  const sections = SECTIONS.filter(
-    (section) => section.id !== 'spending' || settings?.spendingEnabled,
-  );
   // The long title is for search results (index.html); inside the app the tab shows the name.
   useEffect(() => {
     document.title = 'Faturómetro';
@@ -98,7 +89,7 @@ export function AppShell() {
         </div>
       </header>
 
-      <nav className={sections.length > 6 ? 'nav is-dense' : 'nav'} aria-label={t.appName}>
+      <nav className="nav" aria-label={t.appName}>
         <button
           type="button"
           className="nav-toggle"
@@ -121,7 +112,7 @@ export function AppShell() {
           </svg>
           <span>{collapsed ? t.navToggle.expand : t.navToggle.collapse}</span>
         </button>
-        {sections.map((section) => (
+        {SECTIONS.map((section) => (
           <NavLink
             key={section.id}
             to={section.path}

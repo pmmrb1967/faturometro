@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { niceMax } from './chart-scale';
 import './chart.css';
 
 export interface Bar {
@@ -44,14 +45,6 @@ const PAD = { top: 24, right: 8, bottom: 28, left: 56 };
 const GAP = 2;
 const RADIUS = 4;
 const TICKS = 4;
-
-/** An axis maximum whose quarters are round numbers (1, 2, 4, 6, 8 × 10^n). */
-function niceMax(value: number): number {
-  if (value <= 0) return 1;
-  const power = 10 ** Math.floor(Math.log10(value));
-  const step = [1, 2, 4, 6, 8, 10].find((candidate) => candidate * power >= value) ?? 10;
-  return step * power;
-}
 
 /** Bar with a 4px rounded data end, anchored square on the baseline. */
 function barPath(x: number, y: number, width: number, height: number): string {

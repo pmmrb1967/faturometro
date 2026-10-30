@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { categoryShare, lastFromIssuer, spendingMonth, type SpendingData } from './spending';
+import {
+  categoryShare,
+  lastFromIssuer,
+  monthProgress,
+  spendingMonth,
+  type SpendingData,
+} from './spending';
 import type { Contract, Invoice, RecurringExpense, SpendingTransaction } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
@@ -128,6 +134,37 @@ describe('spendingMonth', () => {
     });
     expect(summary.totalCents).toBe(0);
     expect(summary.byCategory).toEqual([{ category: 'food', totalCents: 0 }]);
+  });
+});
+
+describe('monthProgress', () => {
+  const data: SpendingData = {
+    ...empty,
+    transactions: [
+      purchase('t1', '2026-02-10', 1000),
+      purchase('t2', '2026-03-02', 500),
+      purchase('t3', '2026-03-02', 250),
+      purchase('t4', '2026-03-20', 900),
+    ],
+  };
+
+  it('stops today in the current month and adds up day by day', () => {
+    const progress = monthProgress('2026-03', data, '2026-03-05');
+    expect(progress?.current).toEqual([0, 750, 750, 750, 750]);
+    expect(progress?.days).toBe(31);
+    expect(progress?.previous).toHaveLength(28);
+    expect(progress?.previous[9]).toBe(1000);
+    expect(progress?.previous[8]).toBe(0);
+  });
+
+  it('covers the whole of a past month', () => {
+    const progress = monthProgress('2026-03', data, '2026-10-30');
+    expect(progress?.current).toHaveLength(31);
+    expect(progress?.current[30]).toBe(1650);
+  });
+
+  it('has nothing for a month still to come', () => {
+    expect(monthProgress('2026-11', data, '2026-10-30')).toBeNull();
   });
 });
 

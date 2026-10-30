@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { PrivacyPage } from '../landing/PrivacyPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RecoverPage } from '../features/auth/RecoverPage';
@@ -13,7 +13,6 @@ import { ContractsPage } from '../features/contracts/ContractsPage';
 import { InvoicesPage } from '../features/ingest/InvoicesPage';
 import { MonthPage } from '../features/month/MonthPage';
 import { SocialTariffPage } from '../features/social-tariff/SocialTariffPage';
-import { SpendingPage } from '../features/spending/SpendingPage';
 import { Landing } from '../landing/Landing';
 import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
 import { SECTIONS, type SectionId } from './sections';
@@ -25,7 +24,6 @@ function sectionElement(id: SectionId) {
   if (id === 'invoices') return <InvoicesPage />;
   if (id === 'contracts') return <ContractsPage />;
   if (id === 'month') return <MonthPage />;
-  if (id === 'spending') return <SpendingPage />;
   return <SectionPlaceholder section={id} />;
 }
 
@@ -49,6 +47,8 @@ export const router = createBrowserRouter([
           ? { index: true, element: sectionElement(section.id) }
           : { path: section.path, element: sectionElement(section.id) },
       ),
+      // "Gastos" was a section of its own at first: old links open its tab.
+      { path: '/app/gastos', element: <Navigate to="/app/mes?separador=gastos" replace /> },
       { path: '/app/contratos/:id', element: <ContractPage /> },
       { path: '/app/tarifa-social', element: <SocialTariffPage /> },
     ],

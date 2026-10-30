@@ -4,7 +4,7 @@
  * only one-off purchases are stored. Pure: no React, no database.
  */
 import { sumCents, type Cents } from '../lib/money';
-import { addMonthsTo, monthOf, monthSummary } from './month';
+import { addMonthsTo, lastDay, monthOf, monthSummary } from './month';
 import type {
   Contract,
   Invoice,
@@ -130,6 +130,42 @@ export function spendingMonth(month: string, data: SpendingData): SpendingMonth 
     totalCents: total(items),
     byCategory,
     previousTotalCents: total(monthItems(addMonthsTo(month, -1), data)),
+  };
+}
+
+/** Spent up to the end of each day: position 0 is day 1. */
+export interface MonthProgress {
+  /** Longest of the two months, for the axis. */
+  days: number;
+  /** Stops today in the current month: what is still due has not been spent. */
+  current: Cents[];
+  previous: Cents[];
+}
+
+function cumulative(items: readonly SpendingItem[], days: number): Cents[] {
+  let total = 0;
+  return Array.from({ length: days }, (_, index) => {
+    for (const item of items) {
+      if (Number(item.date.slice(8, 10)) === index + 1) total += item.amountCents;
+    }
+    return total;
+  });
+}
+
+/** Null for a month still to come, which has nothing spent yet. */
+export function monthProgress(
+  month: string,
+  data: SpendingData,
+  today: string,
+): MonthProgress | null {
+  if (month > monthOf(today)) return null;
+  const previousMonth = addMonthsTo(month, -1);
+  const days = lastDay(month);
+  const until = month === monthOf(today) ? Number(today.slice(8, 10)) : days;
+  return {
+    days: Math.max(days, lastDay(previousMonth)),
+    current: cumulative(monthItems(month, data), days).slice(0, until),
+    previous: cumulative(monthItems(previousMonth, data), lastDay(previousMonth)),
   };
 }
 

@@ -201,7 +201,6 @@ export const t = {
   nav: {
     home: 'Início',
     month: 'Este mês',
-    spending: 'Gastos',
     contracts: 'Contratos',
     invoices: 'Faturas',
     compare: 'Comparar',
@@ -363,17 +362,23 @@ export const t = {
   spending: {
     intro:
       'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui.',
-    disabled: 'Esta secção está desligada. Podes ligá-la nas Preferências, em Definições.',
-    openSettings: 'Abrir as Definições',
     add: 'Registar gasto',
     scan: 'Ler talão',
     scanHint: 'A fotografia do talão é lida neste dispositivo e não fica guardada.',
-    tabs: { summary: 'Resumo', movements: 'Movimentos' },
     total: 'Total',
     previousMonth: 'Mês anterior',
     count: 'Movimentos',
     empty: 'Ainda não há gastos neste mês.',
     byCategory: 'Por categoria',
+    progress: {
+      title: 'Ao longo do mês',
+      summary: (day: number, current: string, previous: string) =>
+        `Até ao dia ${day}: ${current}. No mês anterior, até ao mesmo dia: ${previous}.`,
+      day: 'Dia',
+      dayLabel: (day: number) => `Dia ${day}`,
+      table: 'Ver os valores em tabela',
+    },
+    movements: 'Movimentos',
     allCategories: 'Todas',
     category: 'Categoria',
     categories: {
@@ -419,6 +424,7 @@ export const t = {
     },
   },
   month: {
+    tabs: { payments: 'Pagamentos', spending: 'Gastos' },
     intro:
       'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, as que ainda vão chegar, com data e valor previstos, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
     previous: 'Mês anterior',
@@ -895,7 +901,8 @@ export const t = {
     largeFamily:
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
-    spendingEnabled: 'Mostrar a secção Gastos, para registar também as compras do dia a dia',
+    spendingEnabled:
+      'Mostrar o separador Gastos em "Este mês", para registar também as compras do dia a dia',
     saved: 'Guardado.',
     account: {
       title: 'Conta',

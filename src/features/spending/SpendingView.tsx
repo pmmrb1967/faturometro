@@ -1,76 +1,75 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Link } from 'react-router';
 import { SelectField } from '../../components/Field';
-import { addMonthsTo, monthOf } from '../../domain/month';
+import { GroupBlock } from '../../components/GroupBlock';
+import { monthOf } from '../../domain/month';
 import {
-  categoryShare,
+  monthProgress,
   spendingMonth,
   SPENDING_CATEGORIES,
   type SpendingItem,
-  type SpendingMonth,
 } from '../../domain/spending';
 import type { RecurringExpense, SpendingCategory, SpendingTransaction } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
-import { formatIsoDate, formatMonth } from '../../lib/dates';
+import { formatIsoDate } from '../../lib/dates';
 import { formatCents, sumCents } from '../../lib/money';
 import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
-import { getSettings } from '../settings/settings';
-import '../compare/compare.css';
 import '../invoices/invoices.css';
 import '../month/month.css';
 import { readReceipt, type TransactionDraft } from './receipt';
+import { CategoryChart, ProgressChart } from './SpendingCharts';
 import { TransactionForm } from './TransactionForm';
 import './spending.css';
 
 const copy = t.spending;
 const ALL = 'all';
 
-type Tab = 'summary' | 'movements';
 type Filter = SpendingCategory | typeof ALL;
-type Notice = { text: string; problem?: boolean };
+/** Shown only in the month it is about, so it goes away with the arrows. */
+type Notice = { text: string; month: string; problem?: boolean };
 
-/** "Gastos": what was spent in a month, by category, and each movement. */
-export function SpendingPage() {
+/** The tab "Gastos" of "Este mês": what was spent, by category and day, and each movement. */
+export function SpendingView({
+  month,
+  onMonth,
+}: {
+  month: string;
+  onMonth: (month: string) => void;
+}) {
   const { session } = useSession();
-  const [month, setMonth] = useState(monthOf(today()));
-  const [tab, setTab] = useState<Tab>('summary');
   const [filter, setFilter] = useState<Filter>(ALL);
+  const [showMovements, setShowMovements] = useState(true);
   const [editing, setEditing] = useState<TransactionDraft | null>(null);
   const [reading, setReading] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [shownMonth, setShownMonth] = useState(month);
+  if (month !== shownMonth) {
+    setShownMonth(month);
+    setEditing(null);
+  }
   const photoInput = useRef<HTMLInputElement>(null);
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const repos = session.repos;
-    const [settings, invoices, contracts, providers, expenses, transactions] = await Promise.all([
-      getSettings(repos),
+    const [invoices, contracts, providers, expenses, transactions] = await Promise.all([
       repos.invoices.list(),
       repos.contracts.list(),
       repos.providers.list(),
       repos.expenses.list(),
       repos.transactions.list(),
     ]);
-    return { settings, invoices, contracts, providers, expenses, transactions };
+    return { invoices, contracts, providers, expenses, transactions };
   }, [session]);
 
   if (!session || !data) return null;
   const repos = session.repos;
 
-  if (!data.settings.spendingEnabled) {
-    return (
-      <>
-        <h1>{t.nav.spending}</h1>
-        <p>{copy.disabled}</p>
-        <Link to="/app/definicoes" className="action-primary">
-          {copy.openSettings}
-        </Link>
-      </>
-    );
-  }
-
   const summary = spendingMonth(month, data);
+  const progress = monthProgress(month, data, today());
+  const shown = summary.items.filter((item) => filter === ALL || item.category === filter);
+  const editingStored = data.transactions.some((entry) => entry.id === editing?.id);
+
   const nameOf = (item: SpendingItem): string => {
     if (item.kind === 'transaction') {
       const purchase = data.transactions.find((entry) => entry.id === item.transactionId);
@@ -109,6 +108,7 @@ export function SpendingPage() {
     setNotice(null);
     setEditing(null);
     setReading(true);
+    const problem = (text: string) => setNotice({ text, month, problem: true });
     try {
       const outcome = await readReceipt(new Uint8Array(await photo.arrayBuffer()), photo.type, {
         // pdf.js and zxing are loaded only when a receipt is read.
@@ -121,18 +121,18 @@ export function SpendingPage() {
         issuerName: async (nif) => (await repos.providers.findBy('nif', nif))[0]?.name,
       });
       if (outcome.kind === 'read') {
-        setNotice({ text: copy.receipt.read });
+        setNotice({ text: copy.receipt.read, month });
         setEditing(outcome.draft);
       } else if (outcome.kind === 'invoice') {
-        setNotice({ text: copy.receipt.invoice, problem: true });
+        problem(copy.receipt.invoice);
       } else if (outcome.kind === 'known') {
-        setNotice({ text: copy.receipt.known, problem: true });
+        problem(copy.receipt.known);
       } else {
-        setNotice({ text: copy.receipt.noQr, problem: true });
+        problem(copy.receipt.noQr);
         setEditing(newDraft());
       }
     } catch {
-      setNotice({ text: copy.receipt.noQr, problem: true });
+      problem(copy.receipt.noQr);
       setEditing(newDraft());
     } finally {
       setReading(false);
@@ -140,55 +140,22 @@ export function SpendingPage() {
   }
 
   async function save(draft: TransactionDraft | null) {
-    if (draft) {
-      await repos.transactions.put({
-        ...draft,
-        createdAt: draft.createdAt ?? new Date().toISOString(),
-      });
-      // An old receipt is shown where it landed.
-      setMonth(monthOf(draft.date));
-      setNotice({ text: copy.saved });
-    } else {
+    setEditing(null);
+    if (!draft) {
       setNotice(null);
+      return;
     }
-    setEditing(null);
+    await repos.transactions.put({
+      ...draft,
+      createdAt: draft.createdAt ?? new Date().toISOString(),
+    });
+    // An old receipt is shown where it landed.
+    setNotice({ text: copy.saved, month: monthOf(draft.date) });
+    onMonth(monthOf(draft.date));
   }
-
-  const goTo = (next: string) => {
-    setEditing(null);
-    setNotice(null);
-    setMonth(next);
-  };
 
   return (
     <>
-      <h1>{t.nav.spending}</h1>
-      <p className="muted">{copy.intro}</p>
-
-      <div className="month-nav">
-        <button
-          type="button"
-          className="action-secondary"
-          aria-label={t.month.previous}
-          title={t.month.previous}
-          onClick={() => goTo(addMonthsTo(month, -1))}
-        >
-          ←
-        </button>
-        <h2 className="month-title" aria-live="polite">
-          {formatMonth(month)}
-        </h2>
-        <button
-          type="button"
-          className="action-secondary"
-          aria-label={t.month.next}
-          title={t.month.next}
-          onClick={() => goTo(addMonthsTo(month, 1))}
-        >
-          →
-        </button>
-      </div>
-
       <dl className="facts">
         <div>
           <dt>{copy.total}</dt>
@@ -230,124 +197,76 @@ export function SpendingPage() {
       <p className="muted spending-hint">{copy.scanHint}</p>
 
       {reading && <p role="status">{copy.receipt.reading}</p>}
-      {notice && (
+      {notice?.month === month && (
         <p role="status" className={notice.problem ? 'ingest-problem' : 'doc-saved'}>
           {notice.text}
         </p>
       )}
-      {editing && <TransactionForm key={editing.id} initial={editing} onDone={save} />}
-
-      <div className="compare-tabs" role="tablist" aria-label={t.nav.spending}>
-        {(['summary', 'movements'] as const).map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={tab === item}
-            className="compare-tab"
-            onClick={() => setTab(item)}
-          >
-            {copy.tabs[item]}
-          </button>
-        ))}
-      </div>
+      {editing && !editingStored && (
+        <TransactionForm key={editing.id} initial={editing} onDone={save} />
+      )}
 
       {summary.items.length === 0 ? (
         <p className="muted">{copy.empty}</p>
-      ) : tab === 'summary' ? (
-        <Categories summary={summary} />
       ) : (
-        <Movements
-          items={summary.items}
-          filter={filter}
-          onFilter={setFilter}
-          nameOf={nameOf}
-          transactions={data.transactions}
-          expenses={data.expenses}
-          onEdit={(transaction) => {
-            setNotice(null);
-            setEditing(transaction);
-          }}
-        />
+        <div className="spending-charts">
+          {progress && <ProgressChart month={month} progress={progress} />}
+          <CategoryChart summary={summary} />
+          <GroupBlock
+            title={copy.movements}
+            summary={copy.filtered(summary.items.length, formatCents(summary.totalCents))}
+            open={showMovements}
+            onToggle={setShowMovements}
+          >
+            <SelectField
+              id="spending-filter"
+              label={copy.category}
+              value={filter}
+              onChange={(event) => setFilter(event.target.value as Filter)}
+            >
+              <option value={ALL}>{copy.allCategories}</option>
+              {SPENDING_CATEGORIES.map((category) => (
+                <option key={category} value={category}>
+                  {copy.categories[category]}
+                </option>
+              ))}
+            </SelectField>
+            {filter !== ALL && (
+              <p className="muted">
+                {copy.filtered(
+                  shown.length,
+                  formatCents(sumCents(shown.map((item) => item.amountCents))),
+                )}
+              </p>
+            )}
+            <ul className="list">
+              {shown.map((item) => {
+                const transaction = data.transactions.find(
+                  (entry) => entry.id === item.transactionId,
+                );
+                return transaction && editing?.id === transaction.id ? (
+                  <li key={item.id}>
+                    <TransactionForm initial={editing} onDone={save} />
+                  </li>
+                ) : (
+                  <Movement
+                    key={item.id}
+                    item={item}
+                    name={nameOf(item)}
+                    transaction={transaction}
+                    expense={data.expenses.find((entry) => entry.id === item.expenseId)}
+                    onEdit={(chosen) => {
+                      setNotice(null);
+                      setEditing(chosen);
+                    }}
+                  />
+                );
+              })}
+            </ul>
+          </GroupBlock>
+        </div>
       )}
     </>
-  );
-}
-
-function Categories({ summary }: { summary: SpendingMonth }) {
-  return (
-    <section aria-labelledby="spending-categories">
-      <h2 id="spending-categories" className="section-title">
-        {copy.byCategory}
-      </h2>
-      <ul className="list">
-        {summary.byCategory.map(({ category, totalCents }) => {
-          const share = categoryShare(totalCents, summary.byCategory);
-          return (
-            <li key={category} className="list-item spending-category">
-              <strong>{copy.categories[category]}</strong>
-              <span className="amount">{formatCents(totalCents)}</span>
-              <span className="meta">{share} %</span>
-              <span className="spending-bar" aria-hidden="true">
-                <span style={{ width: `${share}%` }} />
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
-function Movements({
-  items,
-  filter,
-  onFilter,
-  nameOf,
-  transactions,
-  expenses,
-  onEdit,
-}: {
-  items: SpendingItem[];
-  filter: Filter;
-  onFilter: (filter: Filter) => void;
-  nameOf: (item: SpendingItem) => string;
-  transactions: readonly SpendingTransaction[];
-  expenses: readonly RecurringExpense[];
-  onEdit: (transaction: SpendingTransaction) => void;
-}) {
-  const shown = items.filter((item) => filter === ALL || item.category === filter);
-  return (
-    <section aria-label={copy.tabs.movements}>
-      <SelectField
-        id="spending-filter"
-        label={copy.category}
-        value={filter}
-        onChange={(event) => onFilter(event.target.value as Filter)}
-      >
-        <option value={ALL}>{copy.allCategories}</option>
-        {SPENDING_CATEGORIES.map((category) => (
-          <option key={category} value={category}>
-            {copy.categories[category]}
-          </option>
-        ))}
-      </SelectField>
-      <p className="muted">
-        {copy.filtered(shown.length, formatCents(sumCents(shown.map((i) => i.amountCents))))}
-      </p>
-      <ul className="list">
-        {shown.map((item) => (
-          <Movement
-            key={item.id}
-            item={item}
-            name={nameOf(item)}
-            transaction={transactions.find((entry) => entry.id === item.transactionId)}
-            expense={expenses.find((entry) => entry.id === item.expenseId)}
-            onEdit={onEdit}
-          />
-        ))}
-      </ul>
-    </section>
   );
 }
 

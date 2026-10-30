@@ -67,7 +67,7 @@ function monthIndex(month: string): number {
   return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
 }
 
-function lastDay(month: string): number {
+export function lastDay(month: string): number {
   const [year, number] = [Number(month.slice(0, 4)), Number(month.slice(5, 7))];
   return new Date(Date.UTC(year, number, 0)).getUTCDate();
 }
