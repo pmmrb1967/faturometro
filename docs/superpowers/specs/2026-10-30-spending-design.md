@@ -31,6 +31,8 @@ A app já conhece a maioria das despesas certas da casa. Falta o resto do mês: 
 - **Receitas:** secção dobrável em Gastos, sem opção própria. Tabela `incomes` (esquema v8), cifrada, sincronizada e na cópia de segurança. Fixas (com mudança de valor a partir de um mês) ou pontuais, pelas regras das despesas sem fatura. Valor líquido, no mês da data de entrada.
 - **Saldo:** com receitas no mês, o topo mostra Gastos, Receitas e Saldo; sem elas, fica como estava. O saldo conta todo o mês e a curva só vai até hoje, e a página diz isso no mês corrente. No gráfico, as receitas são uma linha tracejada a toda a largura, com legenda, frase e linha na tabela. A escala inclui-as, por isso as curvas ficam mais baixas quando as receitas são muito maiores.
 
+- **Ajuda:** "Onde registar cada gasto e receita?", fechada por omissão a seguir aos botões de registo, com o que cabe em cada categoria e tipo de receita.
+
 ## A confirmar com uso real
 
 Não há talões de exemplo no repositório. A especificação diz que o QR é obrigatório em documentos de programas certificados, mas a leitura de talões térmicos fotografados só se confirma com talões verdadeiros. Se falhar, o formulário manual cobre o caso.

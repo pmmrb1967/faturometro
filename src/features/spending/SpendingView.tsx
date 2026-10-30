@@ -21,6 +21,7 @@ import '../month/month.css';
 import { IncomeSection } from './IncomeSection';
 import { readReceipt, type TransactionDraft } from './receipt';
 import { CategoryChart, ProgressChart } from './SpendingCharts';
+import { SpendingHelp } from './SpendingHelp';
 import { TransactionForm } from './TransactionForm';
 import './spending.css';
 
@@ -222,6 +223,7 @@ export function SpendingView({
         />
       </div>
       <p className="muted spending-hint">{copy.scanHint}</p>
+      <SpendingHelp />
 
       {reading && <p role="status">{copy.receipt.reading}</p>}
       {notice?.month === month && (

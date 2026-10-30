@@ -3,6 +3,41 @@
   font-size: 0.85rem;
 }
 
+.spending-help {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.spending-help summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.spending-help h3 {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+}
+
+.spending-help dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.spending-help dt {
+  font-weight: 700;
+}
+
+.spending-help dd {
+  margin: 0;
+}
+
+.spending-help p {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
 .spending-charts {
   margin-top: 16px;
 }
