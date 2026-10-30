@@ -467,7 +467,6 @@ export const t = {
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar receita',
-      listTitle: 'Receitas deste mês',
       listSummary: (count: number, total: string) =>
         `${count === 1 ? '1 receita' : `${count} receitas`} · ${total}`,
       kind: 'Tipo',

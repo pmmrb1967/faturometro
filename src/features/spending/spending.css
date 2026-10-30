@@ -38,8 +38,16 @@
   font-size: 0.85rem;
 }
 
+.spending-income-block {
+  margin-top: 12px;
+}
+
+.spending-income-block .group-block {
+  margin-bottom: 8px;
+}
+
 .spending-charts {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .spending-progress {

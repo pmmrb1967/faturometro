@@ -56,24 +56,22 @@ export function IncomeSection({
   }
 
   return (
-    <section aria-labelledby="income-title">
-      <h2 id="income-title" className="section-title">
-        {copy.title}
-      </h2>
-      <p className="muted">{copy.intro}</p>
-      {active.length === 0 && (
-        <p className="muted">{incomes.length === 0 ? copy.empty : copy.emptyMonth}</p>
-      )}
-      {active.length > 0 && (
-        <GroupBlock
-          title={copy.listTitle}
-          summary={copy.listSummary(
-            active.length,
-            formatCents(incomeMonth(month, active).totalCents),
-          )}
-          open={open}
-          onToggle={setOpen}
-        >
+    <section className="spending-income-block" aria-label={copy.title}>
+      {/* Closed, one line above the charts: it changes rarely, purchases every day. */}
+      <GroupBlock
+        title={copy.title}
+        summary={
+          active.length > 0
+            ? copy.listSummary(active.length, formatCents(incomeMonth(month, active).totalCents))
+            : incomes.length === 0
+              ? copy.empty
+              : copy.emptyMonth
+        }
+        open={open}
+        onToggle={setOpen}
+      >
+        <p className="muted">{copy.intro}</p>
+        {active.length > 0 && (
           <ul className="list">
             {active.map((income) =>
               editing === income.id ? (
@@ -110,17 +108,17 @@ export function IncomeSection({
               ),
             )}
           </ul>
-        </GroupBlock>
-      )}
-      {editing === 'new' ? (
-        <IncomeForm month={month} onDone={save} />
-      ) : (
-        <p>
-          <button type="button" className="action-primary" onClick={() => setEditing('new')}>
-            {copy.add}
-          </button>
-        </p>
-      )}
+        )}
+        {editing === 'new' ? (
+          <IncomeForm month={month} onDone={save} />
+        ) : (
+          <p>
+            <button type="button" className="action-primary" onClick={() => setEditing('new')}>
+              {copy.add}
+            </button>
+          </p>
+        )}
+      </GroupBlock>
     </section>
   );
 }

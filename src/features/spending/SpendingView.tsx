@@ -235,6 +235,8 @@ export function SpendingView({
         <TransactionForm key={editing.id} initial={editing} onDone={save} />
       )}
 
+      <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} />
+
       {summary.items.length === 0 ? (
         <p className="muted">{copy.empty}</p>
       ) : (
@@ -302,8 +304,6 @@ export function SpendingView({
           </GroupBlock>
         </div>
       )}
-
-      <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} />
     </>
   );
 }
