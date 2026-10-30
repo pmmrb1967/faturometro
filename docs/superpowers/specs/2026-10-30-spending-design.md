@@ -19,7 +19,8 @@ A app já conhece a maioria das despesas certas da casa. Falta o resto do mês: 
 
 ## Desenho
 
-- **Ativação:** `Settings.spendingEnabled` (sincronizado), desligado por omissão. Liga a secção "Gastos" (`/app/gastos`) na navegação. Desligar esconde a secção e mantém os dados.
+- **Ativação:** `Settings.spendingEnabled` (sincronizado), desligado por omissão. Mostra em "Este mês" os separadores **Pagamentos | Gastos**, com o mesmo seletor de mês; desligado, a página fica sem separadores. Desligar mantém os dados. A navegação fica com 6 entradas (a primeira versão tinha uma sétima, que obrigava a letra mais pequena no telemóvel). O separador é lembrado no dispositivo; `?separador=gastos|pagamentos` escolhe-o (os avisos de pagamento abrem Pagamentos) e `/app/gastos` redireciona.
+- **Gráficos:** "Ao longo do mês", linha do acumulado por dia contra o mês anterior, que pára hoje no mês corrente (o que ainda vence não foi gasto); "Por categoria", barras ordenadas, de uma só cor e na mesma escala. Sem circular: com dez categorias e uma renda, as pequenas deixavam de se ler.
 - **Dados:** tabela `transactions` (esquema v7), cifrada, sincronizada e na cópia de segurança. Guarda só as compras avulsas. Faturas e despesas sem fatura são calculadas na hora, como as previsões, por isso nada se duplica.
 - **Mês de cada gasto:** o mesmo do "Este mês", sem previsões, mais as compras do mês. O total dos dois só difere nas previsões e nas compras.
 - **Categorias:** lista fixa em `src/domain/spending.ts`. Faturas pelo setor do contrato; despesas sem fatura pelo campo opcional `category` (sem categoria, "Outros"), mudado na própria lista.
