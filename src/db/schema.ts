@@ -88,7 +88,13 @@ export const SCHEMA_V7 = {
   transactions: 'id, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V7;
+/** v8: income of the page "Gastos". New table only. */
+export const SCHEMA_V8 = {
+  ...SCHEMA_V7,
+  incomes: 'id, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V8;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -107,6 +113,7 @@ export class ProfileDb extends Dexie {
   payments!: Table<StoredRow, string>;
   consumptionProfiles!: Table<StoredRow, string>;
   transactions!: Table<StoredRow, string>;
+  incomes!: Table<StoredRow, string>;
 
   constructor(profileId: string) {
     super(profileDbName(profileId));
@@ -126,6 +133,7 @@ export class ProfileDb extends Dexie {
     this.version(5).stores(SCHEMA_V5);
     this.version(6).stores(SCHEMA_V6);
     this.version(7).stores(SCHEMA_V7);
+    this.version(8).stores(SCHEMA_V8);
   }
 }
 

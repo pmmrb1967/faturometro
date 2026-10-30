@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { SelectField } from '../../components/Field';
 import { GroupBlock } from '../../components/GroupBlock';
+import { incomeMonth } from '../../domain/income';
 import { monthOf } from '../../domain/month';
 import {
   monthProgress,
@@ -17,6 +18,7 @@ import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import '../invoices/invoices.css';
 import '../month/month.css';
+import { IncomeSection } from './IncomeSection';
 import { readReceipt, type TransactionDraft } from './receipt';
 import { CategoryChart, ProgressChart } from './SpendingCharts';
 import { TransactionForm } from './TransactionForm';
@@ -52,14 +54,15 @@ export function SpendingView({
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const repos = session.repos;
-    const [invoices, contracts, providers, expenses, transactions] = await Promise.all([
+    const [invoices, contracts, providers, expenses, transactions, incomes] = await Promise.all([
       repos.invoices.list(),
       repos.contracts.list(),
       repos.providers.list(),
       repos.expenses.list(),
       repos.transactions.list(),
+      repos.incomes.list(),
     ]);
-    return { invoices, contracts, providers, expenses, transactions };
+    return { invoices, contracts, providers, expenses, transactions, incomes };
   }, [session]);
 
   if (!session || !data) return null;
@@ -67,6 +70,8 @@ export function SpendingView({
 
   const summary = spendingMonth(month, data);
   const progress = monthProgress(month, data, today());
+  const income = incomeMonth(month, data.incomes);
+  const hasIncome = income.items.length > 0;
   const shown = summary.items.filter((item) => filter === ALL || item.category === filter);
   const editingStored = data.transactions.some((entry) => entry.id === editing?.id);
 
@@ -156,22 +161,44 @@ export function SpendingView({
 
   return (
     <>
-      <dl className="facts">
-        <div>
-          <dt>{copy.total}</dt>
-          <dd>
-            <strong>{formatCents(summary.totalCents)}</strong>
-          </dd>
-        </div>
-        <div>
-          <dt>{copy.previousMonth}</dt>
-          <dd>{formatCents(summary.previousTotalCents)}</dd>
-        </div>
-        <div>
-          <dt>{copy.count}</dt>
-          <dd>{summary.items.length}</dd>
-        </div>
-      </dl>
+      {hasIncome ? (
+        <dl className="facts">
+          <div>
+            <dt>{copy.income.spent}</dt>
+            <dd>{formatCents(summary.totalCents)}</dd>
+          </div>
+          <div>
+            <dt>{copy.income.received}</dt>
+            <dd>{formatCents(income.totalCents)}</dd>
+          </div>
+          <div>
+            <dt>{copy.income.balance}</dt>
+            <dd>
+              <strong>{formatCents(income.totalCents - summary.totalCents)}</strong>
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <dl className="facts">
+          <div>
+            <dt>{copy.total}</dt>
+            <dd>
+              <strong>{formatCents(summary.totalCents)}</strong>
+            </dd>
+          </div>
+          <div>
+            <dt>{copy.previousMonth}</dt>
+            <dd>{formatCents(summary.previousTotalCents)}</dd>
+          </div>
+          <div>
+            <dt>{copy.count}</dt>
+            <dd>{summary.items.length}</dd>
+          </div>
+        </dl>
+      )}
+      {hasIncome && month === monthOf(today()) && (
+        <p className="muted spending-hint">{copy.income.balanceHint}</p>
+      )}
 
       <div className="month-actions">
         <button type="button" className="action-primary" onClick={startNew}>
@@ -210,7 +237,14 @@ export function SpendingView({
         <p className="muted">{copy.empty}</p>
       ) : (
         <div className="spending-charts">
-          {progress && <ProgressChart month={month} progress={progress} />}
+          {progress && (
+            <ProgressChart
+              month={month}
+              progress={progress}
+              incomeCents={income.totalCents}
+              past={month < monthOf(today())}
+            />
+          )}
           <CategoryChart summary={summary} />
           <GroupBlock
             title={copy.movements}
@@ -266,6 +300,8 @@ export function SpendingView({
           </GroupBlock>
         </div>
       )}
+
+      <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} />
     </>
   );
 }

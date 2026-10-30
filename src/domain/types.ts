@@ -301,6 +301,32 @@ export interface SpendingTransaction extends SyncMeta {
   createdAt: IsoDateTime;
 }
 
+export type IncomeKind = 'salary' | 'rent' | 'interest' | 'dividends' | 'bonus' | 'other';
+
+/**
+ * Money coming in, on the page "Gastos": what reaches the account, with no tax
+ * reckoning. Repeats like a {@link RecurringExpense}, with the same fields.
+ */
+export interface Income extends SyncMeta {
+  kind: IncomeKind;
+  /** May be empty: the kind then names the line. */
+  name: string;
+  /** Amount from `startMonth`, until the first of `amountChanges`. */
+  amountCents: Cents;
+  amountChanges?: { fromMonth: string; amountCents: Cents }[];
+  /** Every this many months (1 for a one-off income). */
+  everyMonths: 1 | 2 | 3 | 4 | 6 | 12;
+  /** Comes in once: `endMonth` equals `startMonth`. */
+  oneOff?: true;
+  /** Day of the month it comes in (shorter months use their last day). */
+  dueDay: number;
+  /** First month (YYYY-MM); with `everyMonths`, it also sets which months. */
+  startMonth: string;
+  /** Last month (YYYY-MM), when it stopped. */
+  endMonth?: string;
+  createdAt: IsoDateTime;
+}
+
 /**
  * "Paid" mark the user sets on an invoice or on one month of a recurring
  * expense. The id is derived from what is paid ({@link paymentId}), so two

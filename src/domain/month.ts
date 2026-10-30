@@ -73,12 +73,18 @@ export function lastDay(month: string): number {
 }
 
 /** Between its first and last month (whether or not it is due in this one). */
-export function expenseActive(expense: RecurringExpense, month: string): boolean {
+export function expenseActive(
+  expense: Pick<RecurringExpense, 'startMonth' | 'endMonth'>,
+  month: string,
+): boolean {
   return month >= expense.startMonth && (!expense.endMonth || month <= expense.endMonth);
 }
 
 /** Due date of a recurring expense in a month, or null when it is not due then. */
-export function expenseDueDate(expense: RecurringExpense, month: string): string | null {
+export function expenseDueDate(
+  expense: Pick<RecurringExpense, 'startMonth' | 'endMonth' | 'everyMonths' | 'dueDay'>,
+  month: string,
+): string | null {
   if (!expenseActive(expense, month)) return null;
   if ((monthIndex(month) - monthIndex(expense.startMonth)) % expense.everyMonths !== 0) return null;
   const day = Math.min(Math.max(Math.trunc(expense.dueDay), 1), lastDay(month));
@@ -86,7 +92,10 @@ export function expenseDueDate(expense: RecurringExpense, month: string): string
 }
 
 /** Amount of a recurring expense in a month (the latest change already started). */
-export function expenseAmount(expense: RecurringExpense, month: string): Cents {
+export function expenseAmount(
+  expense: Pick<RecurringExpense, 'amountCents' | 'amountChanges'>,
+  month: string,
+): Cents {
   let amount = expense.amountCents;
   for (const change of [...(expense.amountChanges ?? [])].sort((a, b) =>
     a.fromMonth.localeCompare(b.fromMonth),

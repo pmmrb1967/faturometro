@@ -23,6 +23,7 @@ import { getSettings } from '../settings/settings';
 import { SpendingView } from '../spending/SpendingView';
 import '../compare/compare.css';
 import '../invoices/invoices.css';
+import { EVERY, frequencyOf, MONTH, ONE_OFF } from './frequency';
 import './month.css';
 
 type Tab = 'payments' | 'spending';
@@ -30,22 +31,6 @@ type Tab = 'payments' | 'spending';
 /** Per-device choice: the tab "Este mês" opens on. */
 const TAB_KEY = 'faturometro.month.tab';
 const copy = t.month;
-const EVERY: { months: RecurringExpense['everyMonths']; label: string }[] = [
-  { months: 1, label: t.frequency.monthly },
-  { months: 2, label: t.frequency.bimonthly },
-  { months: 3, label: t.frequency.quarterly },
-  { months: 4, label: copy.expenses.fourMonthly },
-  { months: 6, label: t.frequency.semiannual },
-  { months: 12, label: t.frequency.annual },
-];
-/** Select value of a one-off expense (the others use their number of months). */
-const ONE_OFF = 'once';
-const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
-
-function frequencyOf(expense: RecurringExpense): string {
-  if (expense.oneOff) return copy.expenses.oneOff;
-  return EVERY.find((every) => every.months === expense.everyMonths)?.label ?? t.frequency.monthly;
-}
 
 type SavedExpense = Omit<RecurringExpense, 'updatedAt'>;
 

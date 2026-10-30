@@ -47,6 +47,26 @@
   stroke: var(--chart-context);
 }
 
+/* Dashed and in text colour: it is a level, not a third series of days. */
+.spending-income {
+  stroke: var(--text);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.spending-income-label {
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+}
+
+.chart-legend .spending-income-key {
+  width: 14px;
+  height: 0;
+  border-top: 2px dashed var(--text);
+  border-radius: 0;
+}
+
 .spending-dot {
   fill: var(--chart-mark);
   stroke: var(--surface);

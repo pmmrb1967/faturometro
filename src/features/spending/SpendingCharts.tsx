@@ -5,7 +5,7 @@ import { addMonthsTo } from '../../domain/month';
 import { categoryShare, type MonthProgress, type SpendingMonth } from '../../domain/spending';
 import { t } from '../../i18n/pt-PT';
 import { formatMonth } from '../../lib/dates';
-import { formatCents } from '../../lib/money';
+import { formatCents, type Cents } from '../../lib/money';
 
 const copy = t.spending;
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
@@ -38,12 +38,26 @@ const HEIGHT = 210;
 const PAD = { top: 14, right: 12, bottom: 24, left: 54 };
 const TICKS = 4;
 
-/** Money spent up to each day, against the same days of the month before. */
-export function ProgressChart({ month, progress }: { month: string; progress: MonthProgress }) {
+/**
+ * Money spent up to each day, against the same days of the month before and,
+ * when there is any, the income of the month as a level to stay under.
+ */
+export function ProgressChart({
+  month,
+  progress,
+  incomeCents = 0,
+  past = false,
+}: {
+  month: string;
+  progress: MonthProgress;
+  incomeCents?: Cents;
+  /** The month is over: the text says how it ended, not what is left. */
+  past?: boolean;
+}) {
   const [active, setActive] = useState<number | null>(null);
   const titleId = useId();
   const { current, previous, days } = progress;
-  const max = niceMax(Math.max(...current, ...previous));
+  const max = niceMax(Math.max(...current, ...previous, incomeCents));
   const plotWidth = WIDTH - PAD.left - PAD.right;
   const plotHeight = HEIGHT - PAD.top - PAD.bottom;
   const x = (index: number) => PAD.left + (index / Math.max(days - 1, 1)) * plotWidth;
@@ -53,11 +67,19 @@ export function ProgressChart({ month, progress }: { month: string; progress: Mo
 
   const lastIndex = current.length - 1;
   const atLast = current[lastIndex] ?? 0;
-  const summary = copy.progress.summary(
-    current.length,
-    formatCents(atLast),
-    formatCents(previous[Math.min(lastIndex, previous.length - 1)] ?? 0),
-  );
+  const left = incomeCents - atLast;
+  const againstIncome =
+    left >= 0
+      ? (past ? copy.progress.incomeBelow : copy.progress.incomeLeft)(formatCents(left))
+      : (past ? copy.progress.incomeAbove : copy.progress.incomeOver)(formatCents(-left));
+  const summary = [
+    copy.progress.summary(
+      current.length,
+      formatCents(atLast),
+      formatCents(previous[Math.min(lastIndex, previous.length - 1)] ?? 0),
+    ),
+    ...(incomeCents > 0 ? [againstIncome] : []),
+  ].join(' ');
   const names = { current: formatMonth(month), previous: formatMonth(addMonthsTo(month, -1)) };
 
   function dayAt(event: PointerEvent<SVGSVGElement>): number {
@@ -125,6 +147,25 @@ export function ProgressChart({ month, progress }: { month: string; progress: Mo
               y2={PAD.top + plotHeight}
             />
           )}
+          {incomeCents > 0 && (
+            <>
+              <line
+                className="spending-income"
+                x1={PAD.left}
+                x2={WIDTH - PAD.right}
+                y1={y(incomeCents)}
+                y2={y(incomeCents)}
+              />
+              <text
+                className="chart-axis spending-income-label"
+                x={WIDTH - PAD.right}
+                y={y(incomeCents) - 5}
+                textAnchor="end"
+              >
+                {copy.progress.incomeLabel}
+              </text>
+            </>
+          )}
           <polyline className="spending-previous" points={line(previous)} />
           <polyline className="spending-current" points={line(current)} />
           {current.length > 0 && (
@@ -160,6 +201,12 @@ export function ProgressChart({ month, progress }: { month: string; progress: Mo
           <i style={{ background: 'var(--chart-context)' }} aria-hidden="true" />
           {names.previous}
         </li>
+        {incomeCents > 0 && (
+          <li>
+            <i className="spending-income-key" aria-hidden="true" />
+            {copy.progress.incomeKey}
+          </li>
+        )}
       </ul>
       <details className="chart-table">
         <summary>{copy.progress.table}</summary>
@@ -181,6 +228,16 @@ export function ProgressChart({ month, progress }: { month: string; progress: Mo
               </tr>
             ))}
           </tbody>
+          {incomeCents > 0 && (
+            <tfoot>
+              <tr>
+                <th scope="row" colSpan={2}>
+                  {copy.progress.incomeKey}
+                </th>
+                <td>{formatCents(incomeCents)}</td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </details>
     </figure>

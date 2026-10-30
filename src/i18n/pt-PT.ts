@@ -17,7 +17,7 @@ export const t = {
       {
         title: 'No teu dispositivo (sempre)',
         body: [
-          'A conta, as faturas, os contratos, os alertas, os gastos que registares, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
+          'A conta, as faturas, os contratos, os alertas, os gastos e as receitas que registares, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
           'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
           'Não há cookies, publicidade nem registos com os teus dados.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
@@ -361,7 +361,7 @@ export const t = {
   },
   spending: {
     intro:
-      'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui.',
+      'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui. Com as receitas, vês também o saldo.',
     add: 'Registar gasto',
     scan: 'Ler talão',
     scanHint: 'A fotografia do talão é lida neste dispositivo e não fica guardada.',
@@ -374,6 +374,12 @@ export const t = {
       title: 'Ao longo do mês',
       summary: (day: number, current: string, previous: string) =>
         `Até ao dia ${day}: ${current}. No mês anterior, até ao mesmo dia: ${previous}.`,
+      incomeLeft: (amount: string) => `Faltam ${amount} para chegares às receitas do mês.`,
+      incomeOver: (amount: string) => `Já passaste ${amount} acima das receitas do mês.`,
+      incomeBelow: (amount: string) => `Ficaste ${amount} abaixo das receitas do mês.`,
+      incomeAbove: (amount: string) => `Ficaste ${amount} acima das receitas do mês.`,
+      incomeLabel: 'Receitas',
+      incomeKey: 'Receitas do mês',
       day: 'Dia',
       dayLabel: (day: number) => `Dia ${day}`,
       table: 'Ver os valores em tabela',
@@ -421,6 +427,68 @@ export const t = {
       noQr: 'Não foi possível encontrar o código QR nesta fotografia. Escreve o gasto à mão.',
       invoice: 'Este documento já está guardado nas faturas.',
       known: 'Este talão já está registado.',
+    },
+    income: {
+      title: 'Receitas',
+      intro:
+        'O que entra em casa, como o vencimento, rendas de inquilinos, juros ou dividendos. Escreves uma vez e aparece nos meses em que entra, no mês da data de entrada.',
+      spent: 'Gastos',
+      received: 'Receitas',
+      balance: 'Saldo',
+      balanceHint:
+        'O saldo conta todo o mês: as receitas e os gastos que ainda vão acontecer. A linha do gráfico vai só até hoje.',
+      empty: 'Ainda não acrescentaste nenhuma.',
+      emptyMonth: 'Nenhuma neste mês.',
+      add: 'Acrescentar receita',
+      listTitle: 'Receitas deste mês',
+      listSummary: (count: number, total: string) =>
+        `${count === 1 ? '1 receita' : `${count} receitas`} · ${total}`,
+      kind: 'Tipo',
+      kinds: {
+        salary: 'Vencimento ou pensão',
+        rent: 'Rendas recebidas',
+        interest: 'Juros',
+        dividends: 'Dividendos',
+        bonus: 'Prémio ou subsídio',
+        other: 'Outra receita',
+      },
+      name: 'Descrição (opcional)',
+      namePlaceholder: 'Ex.: Apartamento de Braga',
+      amount: 'Valor líquido, em euros',
+      amountHint: 'O que entra mesmo na conta, depois de impostos e descontos.',
+      every: 'Periodicidade',
+      oneOff: 'Pontual',
+      oneOffHint: 'Entra uma vez, como um prémio. Se entra todos os anos, escolhe "Anual".',
+      month: 'Mês',
+      inMonth: (month: string) => `em ${month}`,
+      dueDay: 'Dia em que entra',
+      dueDayHint: 'Nos meses mais curtos, conta o último dia.',
+      day: (day: number) => `dia ${day}`,
+      startMonth: 'Primeiro mês',
+      startMonthHint:
+        'Por exemplo 2026-10. Nas receitas que não são mensais, também define os meses.',
+      endMonth: 'Último mês (opcional)',
+      endMonthHint: 'Deixa em branco se continua a entrar.',
+      fromMonth: 'Novo valor a partir de',
+      fromMonthHint: 'Os meses anteriores ficam com o valor antigo.',
+      save: 'Guardar receita',
+      cancel: 'Cancelar',
+      edit: 'Alterar',
+      stop: 'Já não recebo',
+      stopLabel: (name: string, month: string) => `${name}: deixar de receber a partir de ${month}`,
+      remove: 'Apagar',
+      since: (month: string) => `desde ${month}`,
+      between: (start: string, end: string) => `de ${start} a ${end}`,
+      confirmRemove: (name: string) =>
+        `Apagar "${name}" de todos os meses? Se só deixaste de a receber, usa "Já não recebo".`,
+      confirm: 'Apagar de vez',
+      errors: {
+        amount: 'Escreve um valor maior que zero, por exemplo 1 200,00.',
+        dueDay: 'Escolhe um dia entre 1 e 31.',
+        startMonth: 'Escreve o mês como 2026-10.',
+        endMonth: 'Escreve o mês como 2026-12, igual ou depois do primeiro mês.',
+        fromMonth: 'Escreve o mês como 2027-01, igual ou depois do primeiro mês.',
+      },
     },
   },
   month: {
@@ -902,7 +970,7 @@ export const t = {
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
     spendingEnabled:
-      'Mostrar o separador Gastos em "Este mês", para registar também as compras do dia a dia',
+      'Mostrar o separador Gastos em "Este mês", para registar também as compras do dia a dia e as receitas',
     saved: 'Guardado.',
     account: {
       title: 'Conta',

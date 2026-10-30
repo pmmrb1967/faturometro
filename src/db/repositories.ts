@@ -4,6 +4,7 @@ import type {
   ConsumptionProfile,
   Contract,
   FieldCorrection,
+  Income,
   Invoice,
   InvoiceLine,
   Provider,
@@ -44,6 +45,7 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
       'supplyPointId',
     ]),
     transactions: new EncryptedTable<SpendingTransaction>(db.transactions, key, []),
+    incomes: new EncryptedTable<Income>(db.incomes, key, []),
     documents: new DocumentStore(db.documents, key),
   };
 }

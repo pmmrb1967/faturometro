@@ -14,7 +14,7 @@ A app já conhece a maioria das despesas certas da casa. Falta o resto do mês: 
 ## Fora de âmbito
 
 - Ligação ao banco: exigiria um servidor com acesso aos movimentos (regra 1).
-- Limites por categoria, importação de CSV, categorias personalizadas.
+- Limites por categoria, metas de poupança, importação de CSV, categorias personalizadas.
 - Alertas e entrada no Início: a visão anual e a comparação continuam só com o que já tinham.
 
 ## Desenho
@@ -28,6 +28,8 @@ A app já conhece a maioria das despesas certas da casa. Falta o resto do mês: 
 - **Sem QR legível:** abre o formulário manual vazio, com aviso.
 - **Sem duplicados:** o id de uma compra do talão deriva de `docKey` (`qr-<docKey>`), por isso dois dispositivos escrevem o mesmo registo. Um documento já guardado como fatura ou como compra é recusado ao ler; uma compra cuja fatura seja acrescentada depois deixa de contar.
 - **Sugestões:** para um NIF, a descrição e a categoria da última compra; sem compra anterior, o nome do fornecedor conhecido.
+- **Receitas:** secção dobrável em Gastos, sem opção própria. Tabela `incomes` (esquema v8), cifrada, sincronizada e na cópia de segurança. Fixas (com mudança de valor a partir de um mês) ou pontuais, pelas regras das despesas sem fatura. Valor líquido, no mês da data de entrada.
+- **Saldo:** com receitas no mês, o topo mostra Gastos, Receitas e Saldo; sem elas, fica como estava. O saldo conta todo o mês e a curva só vai até hoje, e a página diz isso no mês corrente. No gráfico, as receitas são uma linha tracejada a toda a largura, com legenda, frase e linha na tabela. A escala inclui-as, por isso as curvas ficam mais baixas quando as receitas são muito maiores.
 
 ## A confirmar com uso real
 
