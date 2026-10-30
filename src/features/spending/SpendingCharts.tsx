@@ -11,23 +11,28 @@ import { HEIGHT, PAD, TICKS, useChartPointer, useDrawingWidth } from './chart-fr
 const copy = t.spending;
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 
-/** Ranked bars on one baseline, not a pie: with ten categories the small ones must stay readable. */
+/**
+ * Ranked bars on one baseline, not a pie: with ten categories the small ones must stay readable.
+ * Each track is the whole month, so a bar says the same as the percentage beside it.
+ */
 export function CategoryChart({ summary }: { summary: SpendingMonth }) {
-  const largest = Math.max(...summary.byCategory.map((entry) => entry.totalCents), 1);
   return (
     <figure className="chart">
       <figcaption className="chart-title">{copy.byCategory}</figcaption>
       <ul className="spending-bars">
-        {summary.byCategory.map(({ category, totalCents }) => (
-          <li key={category}>
-            <span>{copy.categories[category]}</span>
-            <strong>{formatCents(totalCents)}</strong>
-            <span className="muted">{categoryShare(totalCents, summary.byCategory)} %</span>
-            <span className="spending-bar" aria-hidden="true">
-              <span style={{ width: `${(Math.max(totalCents, 0) / largest) * 100}%` }} />
-            </span>
-          </li>
-        ))}
+        {summary.byCategory.map(({ category, totalCents }) => {
+          const share = categoryShare(totalCents, summary.byCategory);
+          return (
+            <li key={category}>
+              <span>{copy.categories[category]}</span>
+              <strong>{formatCents(totalCents)}</strong>
+              <span className="muted">{share} %</span>
+              <span className="spending-bar" aria-hidden="true">
+                {totalCents > 0 && <span style={{ width: `${share}%` }} />}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </figure>
   );

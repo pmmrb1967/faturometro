@@ -196,10 +196,14 @@
   grid-column: 1 / -1;
   display: block;
   height: 8px;
+  background: var(--chart-grid);
+  border-radius: 0 4px 4px 0;
 }
 
 .spending-bar span {
   display: block;
+  /* A share under 1 % still shows as a mark. */
+  min-width: 3px;
   height: 100%;
   background: var(--chart-mark);
   /* Square on the baseline, rounded at the end of the value. */
