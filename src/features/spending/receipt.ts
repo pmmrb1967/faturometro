@@ -1,7 +1,8 @@
 /**
- * Reads a purchase from the fiscal QR code of a photographed receipt. The QR
- * code is the only source (nothing else on the receipt is read, and no AI),
- * and the user reviews the result before it is saved.
+ * Reads a purchase from the fiscal QR code of a receipt, seen by the live
+ * camera or in a photograph. The QR code is the only source (nothing else on
+ * the receipt is read, and no AI), and the user reviews the result before it
+ * is saved.
  */
 import { lastFromIssuer } from '../../domain/spending';
 import type { SpendingTransaction } from '../../domain/types';
@@ -15,7 +16,6 @@ export type TransactionDraft = Omit<SpendingTransaction, 'updatedAt' | 'createdA
 };
 
 export interface ReceiptDeps {
-  readImage(bytes: Uint8Array, mime: string): Promise<FoundQr[]>;
   findInvoiceIdByDocKey(docKey: string): Promise<string | undefined>;
   getTransaction(id: string): Promise<SpendingTransaction | undefined>;
   listTransactions(): Promise<readonly SpendingTransaction[]>;
@@ -43,12 +43,16 @@ function firstFiscal(found: readonly FoundQr[]): FiscalQr | null {
   return null;
 }
 
+/** Whether the live camera can stop: a code that only looks fiscal keeps it reading. */
+export function hasFiscalQr(found: readonly FoundQr[]): boolean {
+  return firstFiscal(found) !== null;
+}
+
 export async function readReceipt(
-  bytes: Uint8Array,
-  mime: string,
+  found: readonly FoundQr[],
   deps: ReceiptDeps,
 ): Promise<ReceiptOutcome> {
-  const qr = firstFiscal(await deps.readImage(bytes, mime));
+  const qr = firstFiscal(found);
   if (!qr) return { kind: 'no_qr' };
 
   const docKey = qr.docId ? await docKeyFor(qr.issuerNif, qr.docId) : undefined;

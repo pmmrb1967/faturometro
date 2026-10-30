@@ -9,21 +9,13 @@ import {
   type PDFPageProxy,
 } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { prepareZXingModule } from 'zxing-wasm/reader';
-import zxingWasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url';
+import '../qr/zxing-browser';
 import { scanImageQrs, scanPdfQrs, type FoundQr } from '../qr/scan';
 import { installReadableStreamIterator } from './polyfills';
 import { extractText, toPasswordError, type PageText } from './text';
 
 installReadableStreamIterator();
 GlobalWorkerOptions.workerSrc = workerUrl;
-
-prepareZXingModule({
-  overrides: {
-    locateFile: (path: string, prefix: string) =>
-      path.endsWith('.wasm') ? zxingWasmUrl : prefix + path,
-  },
-});
 
 /** Text and every fiscal QR code of a PDF; throws PdfPasswordError when a (correct) password is needed. */
 export async function readPdf(

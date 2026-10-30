@@ -20,6 +20,7 @@ export const t = {
           'A conta, as faturas, os contratos, os alertas, os gastos e as receitas que registares, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
           'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
           'Não há cookies, publicidade nem registos com os teus dados.',
+          'A câmara só abre quando carregas em "Ler talão". As imagens são analisadas neste dispositivo, só para encontrar o código QR, e não são guardadas nem enviadas.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
         ],
       },
@@ -364,7 +365,7 @@ export const t = {
       'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui. Com as receitas, vês também o saldo.',
     add: 'Registar gasto',
     scan: 'Ler talão',
-    scanHint: 'A fotografia do talão é lida neste dispositivo e não fica guardada.',
+    scanHint: 'O talão é lido neste dispositivo e as imagens da câmara não ficam guardadas.',
     total: 'Total',
     previousMonth: 'Mês anterior',
     count: 'Movimentos',
@@ -489,6 +490,14 @@ export const t = {
       noQr: 'Não foi possível encontrar o código QR nesta fotografia. Escreve o gasto à mão.',
       invoice: 'Este documento já está guardado nas faturas.',
       known: 'Este talão já está registado.',
+      live: {
+        title: 'Aponta a câmara ao código QR do talão.',
+        slow: 'Ainda sem leitura. Aproxima o talão com boa luz ou tira uma fotografia.',
+        unavailable:
+          'Não foi possível abrir a câmara aqui, talvez por falta de permissão. Podes tirar uma fotografia ao talão.',
+        takePhoto: 'Tirar fotografia',
+        close: 'Fechar',
+      },
     },
     income: {
       title: 'Receitas',

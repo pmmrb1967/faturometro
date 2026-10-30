@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SpendingTransaction } from '../../domain/types';
 import { docKeyFor } from '../ingest/ingest';
-import { readReceipt, receiptTransactionId, type ReceiptDeps } from './receipt';
+import { hasFiscalQr, readReceipt, receiptTransactionId, type ReceiptDeps } from './receipt';
 
 /** Example 5.2 of the specification (docs/qr-fiscal.md). */
 const SIMPLIFIED =
@@ -9,7 +9,6 @@ const SIMPLIFIED =
 
 function deps(extra: Partial<ReceiptDeps> = {}): ReceiptDeps {
   return {
-    readImage: async () => [{ text: SIMPLIFIED }],
     findInvoiceIdByDocKey: async () => undefined,
     getTransaction: async () => undefined,
     listTransactions: async () => [],
@@ -18,8 +17,8 @@ function deps(extra: Partial<ReceiptDeps> = {}): ReceiptDeps {
   };
 }
 
-const read = (extra?: Partial<ReceiptDeps>) =>
-  readReceipt(new Uint8Array(), 'image/jpeg', deps(extra));
+const read = (extra?: Partial<ReceiptDeps>, text = SIMPLIFIED) =>
+  readReceipt([{ text }], deps(extra));
 
 describe('readReceipt', () => {
   it('fills a purchase from the QR code', async () => {
@@ -40,8 +39,14 @@ describe('readReceipt', () => {
   });
 
   it('says so when the photo has no fiscal QR code', async () => {
-    expect(await read({ readImage: async () => [] })).toEqual({ kind: 'no_qr' });
-    expect(await read({ readImage: async () => [{ text: 'A:1*B:2' }] })).toEqual({ kind: 'no_qr' });
+    expect(await readReceipt([], deps())).toEqual({ kind: 'no_qr' });
+    expect(await read({}, 'A:1*B:2')).toEqual({ kind: 'no_qr' });
+  });
+
+  it('lets the live camera stop only at a real fiscal QR code', () => {
+    expect(hasFiscalQr([{ text: SIMPLIFIED }])).toBe(true);
+    expect(hasFiscalQr([{ text: 'A:1*B:2' }])).toBe(false);
+    expect(hasFiscalQr([])).toBe(false);
   });
 
   it('refuses a document stored as an invoice or registered before', async () => {
@@ -74,7 +79,7 @@ describe('readReceipt', () => {
 
   it('takes a credit note off the month', async () => {
     const credit = SIMPLIFIED.replace('D:FS', 'D:NC');
-    const outcome = await read({ readImage: async () => [{ text: credit }] });
+    const outcome = await read({}, credit);
     expect(outcome).toMatchObject({ draft: { amountCents: -80 } });
   });
 });

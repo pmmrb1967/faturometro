@@ -3,6 +3,60 @@
   font-size: 0.85rem;
 }
 
+.live-scanner {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #000;
+  color: #fff;
+}
+
+.live-scanner[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.live-scanner-view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.live-scanner-view video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.live-scanner-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(72vw, 52vh);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 45%);
+}
+
+.live-scanner-panel {
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  background: var(--surface);
+  color: var(--text);
+}
+
+.live-scanner-panel p {
+  margin: 0 0 8px;
+}
+
 .spending-help {
   margin-top: 12px;
   font-size: 0.9rem;

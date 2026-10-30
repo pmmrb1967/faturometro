@@ -17,12 +17,15 @@ import type { RecurringExpense, SpendingCategory, SpendingTransaction } from '..
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { formatCents, sumCents } from '../../lib/money';
+import type { FoundQr } from '../../qr/scan';
 import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import '../invoices/invoices.css';
 import '../month/month.css';
 import { useRememberedOrder } from '../month/use-remembered-order';
 import { IncomeSection } from './IncomeSection';
+import { canUseLiveCamera } from './camera';
+import { LiveReceiptScanner } from './LiveReceiptScanner';
 import { readReceipt, type TransactionDraft } from './receipt';
 import { CategoryChart } from './SpendingCharts';
 import { SpendingHelp } from './SpendingHelp';
@@ -51,6 +54,7 @@ export function SpendingView({
   const [showMovements, setShowMovements] = useState(true);
   const [editing, setEditing] = useState<TransactionDraft | null>(null);
   const [reading, setReading] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [shownMonth, setShownMonth] = useState(month);
   if (month !== shownMonth) {
@@ -116,19 +120,35 @@ export function SpendingView({
     setEditing(newDraft());
   }
 
+  function startScan() {
+    setNotice(null);
+    if (canUseLiveCamera()) setScanning(true);
+    else photoInput.current?.click();
+  }
+
+  function scanByPhoto() {
+    setScanning(false);
+    photoInput.current?.click();
+  }
+
   async function onPhoto(event: ChangeEvent<HTMLInputElement>) {
     const photo = event.target.files?.[0];
     event.target.value = '';
     if (!photo) return;
+    await showReceipt(async () => {
+      // pdf.js and zxing are loaded only when a receipt is read.
+      const { readImage } = await import('../../pdf/browser');
+      return readImage(new Uint8Array(await photo.arrayBuffer()), photo.type);
+    });
+  }
+
+  async function showReceipt(read: () => Promise<FoundQr[]>) {
     setNotice(null);
     setEditing(null);
     setReading(true);
     const problem = (text: string) => setNotice({ text, month, problem: true });
     try {
-      const outcome = await readReceipt(new Uint8Array(await photo.arrayBuffer()), photo.type, {
-        // pdf.js and zxing are loaded only when a receipt is read.
-        readImage: async (bytes, mime) =>
-          (await import('../../pdf/browser')).readImage(bytes, mime),
+      const outcome = await readReceipt(await read(), {
         findInvoiceIdByDocKey: async (docKey) =>
           (await repos.invoices.findBy('docKey', docKey))[0]?.id,
         getTransaction: (id) => repos.transactions.get(id),
@@ -214,12 +234,7 @@ export function SpendingView({
         <button type="button" className="action-primary" onClick={startNew}>
           {copy.add}
         </button>
-        <button
-          type="button"
-          className="action-secondary"
-          disabled={reading}
-          onClick={() => photoInput.current?.click()}
-        >
+        <button type="button" className="action-secondary" disabled={reading} onClick={startScan}>
           {copy.scan}
         </button>
         <input
@@ -231,6 +246,16 @@ export function SpendingView({
           onChange={(event) => void onPhoto(event)}
         />
       </div>
+      {scanning && (
+        <LiveReceiptScanner
+          onFound={(found) => {
+            setScanning(false);
+            void showReceipt(async () => found);
+          }}
+          onPhoto={scanByPhoto}
+          onClose={() => setScanning(false)}
+        />
+      )}
       <p className="muted spending-hint">{copy.scanHint}</p>
       <SpendingHelp />
 

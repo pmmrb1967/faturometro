@@ -53,3 +53,14 @@ export async function scanPdfQrs(pdf: PDFDocumentProxy, render: PageRenderer): P
 export async function scanImageQrs(image: Blob | Uint8Array): Promise<FoundQr[]> {
   return keepFiscal((await readQrs(image)).map((text) => ({ text })));
 }
+
+/** One frame of the live camera: a receipt has few codes, and the next frame comes right after. */
+export async function scanFrameQrs(frame: ImageData): Promise<FoundQr[]> {
+  const results = await readBarcodes(frame, {
+    formats: ['QRCode'],
+    tryHarder: true,
+    tryInvert: false,
+    maxNumberOfSymbols: 4,
+  });
+  return keepFiscal(results.filter((result) => result.isValid).map(({ text }) => ({ text })));
+}
