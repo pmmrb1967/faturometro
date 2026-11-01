@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
 import { useSession } from '../features/auth/session-context';
+import { BackupBanner } from '../features/backup/BackupBanner';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
 import { NavIcon } from './NavIcon';
@@ -138,6 +139,7 @@ export function AppShell() {
             </button>
           </div>
         )}
+        <BackupBanner />
         <Outlet />
         <LegalFooter />
       </main>

@@ -2,15 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import comEscolhaData from '../../data/comescolha.json';
-import { backupStatus } from '../../domain/backup-reminder';
 import { checkIsStale, comEscolhaConfigSchema } from '../../domain/comescolha';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { isGuest } from '../../db/profiles';
 import { useSession } from '../auth/session-context';
 import { BACKUP_ANCHOR } from '../backup/backup';
+import { useBackupStatus } from '../backup/use-backup-status';
 import { HouseholdSection } from '../household/HouseholdSection';
-import { getSettings } from '../settings/settings';
 import { GuestHomeNotice } from './GuestHomeNotice';
 import { dismissAlert, refreshAlerts, today } from './refresh';
 import './alerts.css';
@@ -44,23 +43,7 @@ export function HomePage() {
       );
   }, [session]);
 
-  // With sync, the server already holds a copy.
-  const backup = useLiveQuery(async () => {
-    if (!session || session.profile.sync) return null;
-    const { repos } = session;
-    const [settings, ...records] = await Promise.all([
-      getSettings(repos),
-      repos.contracts.list(),
-      repos.transactions.list(),
-      repos.expenses.list(),
-      repos.incomes.list(),
-    ]);
-    return backupStatus({
-      hasData: records.some((list) => list.length > 0),
-      lastBackupAt: settings.lastBackupAt,
-      today: today(),
-    });
-  }, [session]);
+  const backup = useBackupStatus();
 
   if (!session) return null;
   const backupDue = backup?.kind === 'never' || backup?.kind === 'overdue';

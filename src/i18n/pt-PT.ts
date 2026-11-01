@@ -808,6 +808,8 @@ export const t = {
       overdue: (date: string) =>
         `A tua última cópia de segurança é de ${date}. Faz uma nova para guardares o que mudou desde então.`,
       recent: (date: string) => `Última cópia de segurança: ${date}.`,
+      banner: 'Os teus dados estão só neste browser e não têm uma cópia de segurança recente.',
+      bannerAction: 'Fazer cópia',
     },
     admin: {
       contributions: (count: number) =>

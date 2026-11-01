@@ -352,6 +352,10 @@ a.topbar-lock {
   border-radius: 10px;
 }
 
+.backup-banner {
+  border-left: 4px solid #b26a00;
+}
+
 .legal-footer {
   display: flex;
   flex-wrap: wrap;
