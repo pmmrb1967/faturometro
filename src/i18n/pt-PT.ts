@@ -802,6 +802,13 @@ export const t = {
     title: 'Avisos',
     empty: 'Sem avisos. Quando algo mudar nos teus contratos, aparece aqui.',
     dismiss: 'Dispensar',
+    backup: {
+      never:
+        'Ainda não fizeste nenhuma cópia de segurança. Sem ela, se os dados deste browser se perderem, não os consegues repor.',
+      overdue: (date: string) =>
+        `A tua última cópia de segurança é de ${date}. Faz uma nova para guardares o que mudou desde então.`,
+      recent: (date: string) => `Última cópia de segurança: ${date}.`,
+    },
     admin: {
       contributions: (count: number) =>
         `${count === 1 ? 'Há 1 contribuição de layout' : `Há ${count} contribuições de layout`} por recolher no servidor. No PC, abre o projeto no Claude Code e escreve /novo-leitor: recolhe-as, cria o leitor com testes e pergunta antes de publicar. O aviso desaparece na sincronização seguinte.`,

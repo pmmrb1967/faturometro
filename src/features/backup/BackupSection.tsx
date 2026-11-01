@@ -4,9 +4,9 @@ import { useLocation, useNavigate } from 'react-router';
 import { profilesDb } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import { disableSync, SyncError } from '../../sync/account';
-import { refreshAlerts } from '../alerts/refresh';
+import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
-import { getSettings } from '../settings/settings';
+import { getSettings, updateSettings } from '../settings/settings';
 import { syncSession } from '../sync/sync-store';
 import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
 
@@ -51,6 +51,7 @@ export function BackupSection() {
     try {
       const result = await exportBackup(repos);
       download(result.zip, backupFileName());
+      await updateSettings(repos, { lastBackupAt: today() });
       setMessage({ text: copy.exported(result.records, result.files) });
     } catch {
       setMessage({ text: copy.failed, problem: true });

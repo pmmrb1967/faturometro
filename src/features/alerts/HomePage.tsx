@@ -2,12 +2,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import comEscolhaData from '../../data/comescolha.json';
+import { backupStatus } from '../../domain/backup-reminder';
 import { checkIsStale, comEscolhaConfigSchema } from '../../domain/comescolha';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { isGuest } from '../../db/profiles';
 import { useSession } from '../auth/session-context';
+import { BACKUP_ANCHOR } from '../backup/backup';
 import { HouseholdSection } from '../household/HouseholdSection';
+import { getSettings } from '../settings/settings';
 import { GuestHomeNotice } from './GuestHomeNotice';
 import { dismissAlert, refreshAlerts, today } from './refresh';
 import './alerts.css';
@@ -41,7 +44,26 @@ export function HomePage() {
       );
   }, [session]);
 
+  // With sync, the server already holds a copy.
+  const backup = useLiveQuery(async () => {
+    if (!session || session.profile.sync) return null;
+    const { repos } = session;
+    const [settings, ...records] = await Promise.all([
+      getSettings(repos),
+      repos.contracts.list(),
+      repos.transactions.list(),
+      repos.expenses.list(),
+      repos.incomes.list(),
+    ]);
+    return backupStatus({
+      hasData: records.some((list) => list.length > 0),
+      lastBackupAt: settings.lastBackupAt,
+      today: today(),
+    });
+  }, [session]);
+
   if (!session) return null;
+  const backupDue = backup?.kind === 'never' || backup?.kind === 'overdue';
   const staleCheck = session.profile.sync?.admin ? staleComEscolhaCheck() : null;
   const waiting = session.profile.sync?.admin ? (session.profile.sync.contributions ?? 0) : 0;
 
@@ -50,10 +72,22 @@ export function HomePage() {
       <h1>{t.nav.home}</h1>
       {isGuest(session.profile) && <GuestHomeNotice />}
       <h2 className="section-title">{t.alerts.title}</h2>
-      {alerts?.length === 0 && !staleCheck && waiting === 0 && (
+      {alerts?.length === 0 && !staleCheck && waiting === 0 && !backupDue && (
         <p className="muted">{t.alerts.empty}</p>
       )}
       <ul className="alerts">
+        {backupDue && (
+          <li className="alert alert-warning">
+            <span className="alert-icon" aria-hidden="true">
+              !
+            </span>
+            <Link to={`/app/definicoes#${BACKUP_ANCHOR}`} className="alert-message">
+              {backup.kind === 'never'
+                ? t.alerts.backup.never
+                : t.alerts.backup.overdue(formatIsoDate(backup.lastBackupAt))}
+            </Link>
+          </li>
+        )}
         {waiting > 0 && (
           <li className="alert alert-info">
             <span className="alert-icon" aria-hidden="true">
@@ -98,6 +132,9 @@ export function HomePage() {
           </li>
         ))}
       </ul>
+      {backup?.kind === 'recent' && (
+        <p className="muted">{t.alerts.backup.recent(formatIsoDate(backup.lastBackupAt))}</p>
+      )}
       <p className="home-link">
         <Link to="/app/tarifa-social">{t.socialTariff.homeLink}</Link>
       </p>

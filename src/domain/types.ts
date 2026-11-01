@@ -410,4 +410,6 @@ export interface Settings extends SyncMeta {
   cheaperOfferMinSavingCents: number;
   /** Show the section "Gastos" (off by default; turning it off keeps the data). */
   spendingEnabled: boolean;
+  /** Date of the last backup exported (`YYYY-MM-DD`), for the reminder on the home page. */
+  lastBackupAt?: string;
 }
