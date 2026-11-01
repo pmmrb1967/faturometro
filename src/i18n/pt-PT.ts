@@ -260,7 +260,8 @@ export const t = {
     ],
     home: {
       limits: [
-        'Os teus dados ficam só neste browser: se limpares os dados do site ou perderes o dispositivo, perdem-se.',
+        'Os teus dados ficam só neste browser: perdem-se se limpares os dados do site ou perderes o dispositivo.',
+        'O próprio browser pode apagá-los se faltar espaço ou, sobretudo no iPhone, depois de vários dias sem abrires a app. Faz cópias de segurança.',
         'Sem palavra-passe, quem usar este browser consegue vê-los.',
         'Não há sincronização entre dispositivos nem IA.',
         'Se criares uma conta, manténs tudo o que já tens aqui.',
@@ -1968,7 +1969,7 @@ export const t = {
     privacy: {
       title: 'Os teus dados ficam contigo',
       items: [
-        'As faturas ficam no teu dispositivo, cifradas com a tua palavra-passe.',
+        'As faturas ficam cifradas no teu dispositivo. Com conta, ficam protegidas pela tua palavra-passe; sem conta, quem usar o mesmo browser consegue vê-las.',
         'Sem publicidade e sem comissões dos fornecedores.',
         'Se quiseres os mesmos dados no telemóvel e no computador, ativas a sincronização: os dados saem cifrados e o servidor não os consegue ler.',
         'A inteligência artificial é opcional e usa a tua própria chave.',

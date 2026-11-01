@@ -13,6 +13,8 @@ import { SYNCED_TABLES, type SyncedTable } from '../../sync/engine';
 
 export const BACKUP_FORMAT = 'faturometro-backup';
 export const BACKUP_VERSION = 1;
+/** Hash of the settings page that opens on the backup section. */
+export const BACKUP_ANCHOR = 'os-teus-dados';
 const DATA_FILE = 'faturometro.json';
 const FILES_DIR = 'originais/';
 /** Large enough for years of invoices; stops a wrong or hostile file from filling memory. */

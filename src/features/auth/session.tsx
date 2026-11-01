@@ -3,6 +3,7 @@ import { setSignedIn } from '../../app/pwa';
 import { isGuest, type Profile } from '../../db/profiles';
 import { createRepositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
+import { requestPersistentStorage } from '../../lib/persistent-storage';
 import type { UnlockedAccount } from './accounts';
 import { SessionContext, type Session } from './session-context';
 import {
@@ -80,6 +81,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useAutoLock(session !== null && !isGuest(session.profile), lock);
   // Signed out, a new version of the app can be applied at once.
   useEffect(() => setSignedIn(session !== null), [session]);
+  // Only once someone is using the app: Firefox answers this with a permission prompt.
+  const hasSession = session !== null;
+  useEffect(() => {
+    if (hasSession) void requestPersistentStorage();
+  }, [hasSession]);
 
   const value = useMemo(
     () => ({ session, restoring, signIn, lock, updateProfile }),

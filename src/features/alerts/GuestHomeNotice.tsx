@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { t } from '../../i18n/pt-PT';
+import { BACKUP_ANCHOR } from '../backup/backup';
 
 /** What using the app without an account costs; gone as soon as an account is created. */
 export function GuestHomeNotice() {
@@ -20,7 +21,7 @@ export function GuestHomeNotice() {
           <Link to="/criar-conta" className="action-primary">
             {t.guest.createAccount}
           </Link>
-          <Link to="/app/definicoes" className="action-secondary">
+          <Link to={`/app/definicoes#${BACKUP_ANCHOR}`} className="action-secondary">
             {copy.backup}
           </Link>
         </div>

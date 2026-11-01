@@ -1,11 +1,13 @@
-import { useRef, useState, type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { profilesDb } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import { disableSync, SyncError } from '../../sync/account';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
-import { BackupError, backupFileName, exportBackup, importBackup } from './backup';
+import { getSettings } from '../settings/settings';
+import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
 
 const copy = t.backup;
 
@@ -28,6 +30,16 @@ export function BackupSection() {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteRemote, setDeleteRemote] = useState(true);
+  const { hash } = useLocation();
+  const section = useRef<HTMLElement>(null);
+  // The sections above wait for the settings and then grow, so scroll once they have loaded.
+  const settingsLoaded = useLiveQuery(
+    async () => (session ? (await getSettings(session.repos), true) : false),
+    [session],
+  );
+  useEffect(() => {
+    if (settingsLoaded && hash === `#${BACKUP_ANCHOR}`) section.current?.scrollIntoView();
+  }, [settingsLoaded, hash]);
   if (!session) return null;
   const { repos } = session;
   const synced = Boolean(session.profile.sync);
@@ -92,7 +104,7 @@ export function BackupSection() {
   }
 
   return (
-    <section className="settings-section" aria-labelledby="backup-title">
+    <section ref={section} className="settings-section" aria-labelledby="backup-title">
       <h2 id="backup-title">{copy.title}</h2>
       {!synced && <p className="ingest-problem">{copy.localOnlyWarning}</p>}
 
