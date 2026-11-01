@@ -16,6 +16,7 @@ import type {
 } from '../domain/types';
 import { DocumentStore } from './documents';
 import { EncryptedTable } from './encrypted-table';
+import { PendingPushStore } from './pending-push';
 import type { ProfileDb } from './schema';
 
 export type Repositories = ReturnType<typeof createRepositories>;
@@ -47,5 +48,7 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     transactions: new EncryptedTable<SpendingTransaction>(db.transactions, key, []),
     incomes: new EncryptedTable<Income>(db.incomes, key, []),
     documents: new DocumentStore(db.documents, key),
+    /** Device-local (not in SYNCED_TABLES). */
+    pendingPush: new PendingPushStore(db.pendingPush),
   };
 }

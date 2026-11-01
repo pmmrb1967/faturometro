@@ -7,6 +7,7 @@
  */
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
 import { z } from 'zod';
+import type { PendingPush } from '../../db/pending-push';
 import type { Repositories } from '../../db/repositories';
 import { sha256Hex } from '../../lib/crypto';
 import { SYNCED_TABLES, type SyncedTable } from '../../sync/engine';
@@ -138,14 +139,18 @@ export async function importBackup(repos: Repositories, bytes: Uint8Array): Prom
 
   const result: ImportResult = { added: 0, skipped: 0, files: 0 };
   for (const table of SYNCED_TABLES) {
+    const restored: PendingPush[] = [];
     for (const record of parsed.tables[table] ?? []) {
       // Validated above for the sync fields; the rest is the app's own format.
       const written = await (
         repos[table] as unknown as { restore(record: unknown): Promise<boolean> }
       ).restore(record);
-      if (written) result.added++;
-      else result.skipped++;
+      if (written) {
+        result.added++;
+        restored.push({ table, id: record.id });
+      } else result.skipped++;
     }
+    await repos.pendingPush.add(restored);
   }
   for (const document of parsed.documents) {
     const fileBytes = entries[document.path];

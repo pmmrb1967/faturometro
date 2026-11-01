@@ -15,6 +15,7 @@ import {
   SCHEMA_V5,
   SCHEMA_V6,
   SCHEMA_V7,
+  SCHEMA_V8,
   type TableName,
 } from './schema';
 
@@ -251,9 +252,30 @@ describe('schema migrations', () => {
     v7.close();
 
     const current = new ProfileDb(id);
-    expect(current.verno).toBe(8);
+    expect(current.verno).toBeGreaterThanOrEqual(8);
     expect(await current.transactions.count()).toBe(1);
     expect(await current.incomes.count()).toBe(0);
+    await current.delete();
+  });
+
+  it('upgrades v8 to v9 with the queue of restored records', async () => {
+    const id = crypto.randomUUID();
+    const v8 = new Dexie(profileDbName(id));
+    v8.version(1).stores(SCHEMA_V1);
+    v8.version(2).stores(SCHEMA_V2);
+    v8.version(3).stores(SCHEMA_V3);
+    v8.version(4).stores(SCHEMA_V4);
+    v8.version(5).stores(SCHEMA_V5);
+    v8.version(6).stores(SCHEMA_V6);
+    v8.version(7).stores(SCHEMA_V7);
+    v8.version(8).stores(SCHEMA_V8);
+    await v8.table('incomes').add({ id: 'i', updatedAt: 'x', enc: {} });
+    v8.close();
+
+    const current = new ProfileDb(id);
+    expect(current.verno).toBe(9);
+    expect(await current.incomes.count()).toBe(1);
+    expect(await current.pendingPush.count()).toBe(0);
     await current.delete();
   });
 

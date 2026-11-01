@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { EncryptedBlob } from '../lib/crypto';
+import type { PendingPush } from './pending-push';
 
 /**
  * Stored row: id, sync metadata and the few indexed fields in clear (IDs,
@@ -94,7 +95,13 @@ export const SCHEMA_V8 = {
   incomes: 'id, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V8;
+/** v9: records restored from a backup waiting to be sent (not synced). New table only. */
+export const SCHEMA_V9 = {
+  ...SCHEMA_V8,
+  pendingPush: '[table+id]',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V9;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -114,6 +121,7 @@ export class ProfileDb extends Dexie {
   consumptionProfiles!: Table<StoredRow, string>;
   transactions!: Table<StoredRow, string>;
   incomes!: Table<StoredRow, string>;
+  pendingPush!: Table<PendingPush, [string, string]>;
 
   constructor(profileId: string) {
     super(profileDbName(profileId));
@@ -134,6 +142,7 @@ export class ProfileDb extends Dexie {
     this.version(6).stores(SCHEMA_V6);
     this.version(7).stores(SCHEMA_V7);
     this.version(8).stores(SCHEMA_V8);
+    this.version(9).stores(SCHEMA_V9);
   }
 }
 

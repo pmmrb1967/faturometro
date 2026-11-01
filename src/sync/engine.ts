@@ -80,7 +80,16 @@ export async function syncNow(
       outgoing.push({ table, ...row });
     }
   }
+  // Restored from a backup: older than the cursor, so `changedSince` does not see them.
+  const pending = await repos.pendingPush.list();
+  const listed = new Set(outgoing.map(({ table, id }) => `${table}:${id}`));
+  for (const { table, id } of pending) {
+    if (!isSyncedTable(table) || listed.has(`${table}:${id}`)) continue;
+    const row = await repos[table].encryptedRow(id);
+    if (row) outgoing.push({ table, ...row });
+  }
   for (const batch of batches(outgoing)) await api.push(token, batch);
+  await repos.pendingPush.remove(pending);
   const lastPushedAt = outgoing.reduce(
     (latest, row) => (row.updatedAt > latest ? row.updatedAt : latest),
     state.lastPushedAt,

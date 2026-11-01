@@ -7,6 +7,7 @@ import { disableSync, SyncError } from '../../sync/account';
 import { refreshAlerts } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { getSettings } from '../settings/settings';
+import { syncSession } from '../sync/sync-store';
 import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
 
 const copy = t.backup;
@@ -23,7 +24,7 @@ function download(bytes: Uint8Array, name: string) {
 }
 
 export function BackupSection() {
-  const { session, lock } = useSession();
+  const { session, lock, updateProfile } = useSession();
   const navigate = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ text: string; problem?: boolean }>();
@@ -68,6 +69,8 @@ export function BackupSection() {
       const result = await importBackup(repos, new Uint8Array(await file.arrayBuffer()));
       await refreshAlerts(repos);
       setMessage({ text: copy.imported(result.added, result.skipped, result.files) });
+      // The other devices get it now, not at the next automatic sync.
+      if (session && result.added + result.files > 0) void syncSession(session, updateProfile);
     } catch (error) {
       setMessage({
         text: error instanceof BackupError ? copy.errors[error.code] : copy.failed,

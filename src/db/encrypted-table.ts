@@ -5,6 +5,23 @@ import type { StoredRow } from './schema';
 
 type Indexable<T> = { [K in keyof T]: T[K] extends IndexableType | undefined ? K : never }[keyof T];
 
+/** A row without its clear index fields. */
+export interface EncryptedRow {
+  id: string;
+  updatedAt: string;
+  deletedAt?: string;
+  enc: StoredRow['enc'];
+}
+
+function toEncryptedRow(row: StoredRow): EncryptedRow {
+  return {
+    id: row.id,
+    updatedAt: row.updatedAt,
+    ...(row.deletedAt ? { deletedAt: row.deletedAt } : {}),
+    enc: row.enc,
+  };
+}
+
 /**
  * Repository over one table: encrypts records on write, decrypts on read.
  * Only the listed fields are copied in clear for indexing.
@@ -35,16 +52,15 @@ export class EncryptedTable<T extends SyncMeta> {
   }
 
   /** Encrypted rows changed after `after` (ISO), as sent to the sync server: no clear fields. */
-  async changedSince(
-    after: string,
-  ): Promise<{ id: string; updatedAt: string; deletedAt?: string; enc: StoredRow['enc'] }[]> {
+  async changedSince(after: string): Promise<EncryptedRow[]> {
     const rows = await this.table.where('updatedAt').above(after).toArray();
-    return rows.map((row) => ({
-      id: row.id,
-      updatedAt: row.updatedAt,
-      ...(row.deletedAt ? { deletedAt: row.deletedAt } : {}),
-      enc: row.enc,
-    }));
+    return rows.map(toEncryptedRow);
+  }
+
+  /** One row as sent to the sync server (`changedSince`), whatever its date. */
+  async encryptedRow(id: string): Promise<EncryptedRow | undefined> {
+    const row = await this.table.get(id);
+    return row && toEncryptedRow(row);
   }
 
   /** Decrypts a row sent by another device (same master key) and stores it as is. */
