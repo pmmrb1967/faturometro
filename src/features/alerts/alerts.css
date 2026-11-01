@@ -73,6 +73,33 @@
   outline-offset: 2px;
 }
 
+.guest-notice {
+  margin-bottom: 20px;
+}
+
+.guest-notice h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.guest-notice ul {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+  line-height: 1.45;
+}
+
+.guest-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guest-notice-actions a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 .back-link {
   display: inline-block;
   margin-bottom: 8px;

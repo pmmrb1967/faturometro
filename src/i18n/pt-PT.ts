@@ -258,6 +258,15 @@ export const t = {
       'Os teus dados ficam só neste browser e não estão protegidos por palavra-passe: quem usar este browser consegue vê-los.',
       'Se limpares os dados do site, perdes tudo. Faz uma cópia de segurança (mais abaixo) ou cria uma conta.',
     ],
+    home: {
+      limits: [
+        'Os teus dados ficam só neste browser: se limpares os dados do site ou perderes o dispositivo, perdem-se.',
+        'Sem palavra-passe, quem usar este browser consegue vê-los.',
+        'Não há sincronização entre dispositivos nem IA.',
+        'Se criares uma conta, manténs tudo o que já tens aqui.',
+      ],
+      backup: 'Fazer cópia de segurança',
+    },
   },
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   insurance: {

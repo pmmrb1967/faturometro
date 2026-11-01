@@ -5,8 +5,10 @@ import comEscolhaData from '../../data/comescolha.json';
 import { checkIsStale, comEscolhaConfigSchema } from '../../domain/comescolha';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
+import { isGuest } from '../../db/profiles';
 import { useSession } from '../auth/session-context';
 import { HouseholdSection } from '../household/HouseholdSection';
+import { GuestHomeNotice } from './GuestHomeNotice';
 import { dismissAlert, refreshAlerts, today } from './refresh';
 import './alerts.css';
 
@@ -46,6 +48,7 @@ export function HomePage() {
   return (
     <>
       <h1>{t.nav.home}</h1>
+      {isGuest(session.profile) && <GuestHomeNotice />}
       <h2 className="section-title">{t.alerts.title}</h2>
       {alerts?.length === 0 && !staleCheck && waiting === 0 && (
         <p className="muted">{t.alerts.empty}</p>
