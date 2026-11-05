@@ -12,10 +12,16 @@ export interface AppEnv {
   ASSETS: { fetch(request: Request): Promise<Response> };
 }
 
-/** Whether the request wants a page, for browsers that do not say it is a navigation. */
+/**
+ * Whether the request wants a page although Cloudflare did not see a browser
+ * navigation: a page asked for as HTML, or a client that is not a browser
+ * (link previews, crawlers: no Sec-Fetch-Mode, often Accept: *\/*). Browsers
+ * send Sec-Fetch-Mode with every script and style, so those still get a 404.
+ */
 function wantsPage(request: Request, url: URL): boolean {
   if (request.method !== 'GET' && request.method !== 'HEAD') return false;
   if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/data/')) return false;
+  if (!request.headers.has('Sec-Fetch-Mode')) return true;
   return (request.headers.get('Accept') ?? '').includes('text/html');
 }
 

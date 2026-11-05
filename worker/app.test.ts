@@ -15,7 +15,9 @@ describe('handleAppRequest', () => {
   it('answers a missing script of an earlier version with a 404, not the page', async () => {
     const { appEnv, fetch } = env();
     const response = await handleAppRequest(
-      new Request(`${ORIGIN}/assets/index-R5hRIZjO.js`, { headers: { Accept: '*/*' } }),
+      new Request(`${ORIGIN}/assets/index-R5hRIZjO.js`, {
+        headers: { Accept: '*/*', 'Sec-Fetch-Mode': 'cors' },
+      }),
       appEnv,
     );
     expect(response.status).toBe(404);
@@ -48,10 +50,25 @@ describe('handleAppRequest', () => {
     expect(fetch).toHaveBeenCalledOnce();
   });
 
+  it('serves index.html to link previews and crawlers, which are not browsers', async () => {
+    const { appEnv } = env();
+    for (const path of ['/', '/app']) {
+      const response = await handleAppRequest(
+        new Request(`${ORIGIN}${path}`, {
+          headers: { Accept: '*/*', 'User-Agent': 'WhatsApp/2.23' },
+        }),
+        appEnv,
+      );
+      expect(response.status).toBe(200);
+    }
+  });
+
   it('gives a 404 to other missing files and to writes', async () => {
     const { appEnv } = env();
     const image = await handleAppRequest(
-      new Request(`${ORIGIN}/old-icon.png`, { headers: { Accept: 'image/*' } }),
+      new Request(`${ORIGIN}/old-icon.png`, {
+        headers: { Accept: 'image/*', 'Sec-Fetch-Mode': 'no-cors' },
+      }),
       appEnv,
     );
     const post = await handleAppRequest(
