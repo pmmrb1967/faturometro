@@ -231,8 +231,30 @@ body {
     grid-template-areas: 'top top' 'nav content';
   }
 
+  /* The top bar and the side menu stay in view while the page scrolls. */
+  :root {
+    /* 12 px padding + 40 px compact button + 12 px padding + 1 px border. */
+    --topbar-height: 65px;
+  }
+
+  html {
+    /* Focused fields and anchors are not hidden under the top bar. */
+    scroll-padding-top: calc(var(--topbar-height) + 16px);
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: var(--topbar-height);
+  }
+
   .nav {
-    position: static;
+    position: sticky;
+    top: var(--topbar-height);
+    align-self: start;
+    height: calc(100dvh - var(--topbar-height));
+    overflow-y: auto;
     z-index: auto;
     display: flex;
     flex-direction: column;
