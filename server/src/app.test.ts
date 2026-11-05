@@ -34,8 +34,15 @@ beforeEach(() => {
   });
 });
 
-async function call(method: string, path: string, body?: unknown, token?: string, origin = ORIGIN) {
-  const headers: Record<string, string> = { Origin: origin };
+async function call(
+  method: string,
+  path: string,
+  body?: unknown,
+  token?: string,
+  origin = ORIGIN,
+  extra: Record<string, string> = {},
+) {
+  const headers: Record<string, string> = { Origin: origin, ...extra };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await handle(
@@ -316,6 +323,75 @@ describe('keys and account', () => {
     expect((await call('DELETE', '/v1/account', undefined, token)).status).toBe(204);
     expect(db.prepare('SELECT COUNT(*) AS n FROM records').get()).toEqual({ n: 0 });
     expect(db.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 0 });
+  });
+});
+
+describe('owner proof (password change and account deletion)', () => {
+  const PROOF = 'b'.repeat(64);
+  const NEW_KEYS = {
+    authKey: 'c'.repeat(64),
+    salt: 'bmV3c2FsdA==',
+    iterations: 600_000,
+    wrappedKey: WRAPPED,
+  };
+  const withProof = (proof: string) => ({ 'X-Owner-Proof': proof });
+
+  async function registerWithProof() {
+    const result = await call('POST', '/v1/register', {
+      email: 'ana@example.pt',
+      salt: 'c2FsdHNhbHQ=',
+      iterations: 600_000,
+      authKey: AUTH,
+      wrappedKey: WRAPPED,
+      ownerProof: PROOF,
+    });
+    return result.body?.token as string;
+  }
+
+  it('a session token alone no longer changes the password or deletes the account', async () => {
+    const token = await registerWithProof();
+    expect((await call('PUT', '/v1/keys', NEW_KEYS, token)).status).toBe(403);
+    expect(
+      (await call('PUT', '/v1/keys', NEW_KEYS, token, ORIGIN, withProof('d'.repeat(64)))).status,
+    ).toBe(403);
+    expect((await call('DELETE', '/v1/account', undefined, token)).status).toBe(403);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 1 });
+
+    const changed = await call('PUT', '/v1/keys', NEW_KEYS, token, ORIGIN, withProof(PROOF));
+    expect(changed.status).toBe(200);
+    const fresh = changed.body?.token as string;
+    expect(
+      (await call('DELETE', '/v1/account', undefined, fresh, ORIGIN, withProof(PROOF))).status,
+    ).toBe(204);
+  });
+
+  it('an older account gets its proof once, then needs it', async () => {
+    const token = await register();
+    // Until the app sends the proof, nothing changes for the account.
+    expect(db.prepare('SELECT owner_hash FROM users').get()).toEqual({ owner_hash: null });
+
+    expect((await call('PUT', '/v1/owner', { ownerProof: PROOF }, token)).status).toBe(204);
+    // The same proof again (another device of the same account) is fine; another one is not.
+    expect((await call('PUT', '/v1/owner', { ownerProof: PROOF }, token)).status).toBe(204);
+    expect((await call('PUT', '/v1/owner', { ownerProof: 'd'.repeat(64) }, token)).status).toBe(
+      409,
+    );
+    expect((await call('PUT', '/v1/keys', NEW_KEYS, token)).status).toBe(403);
+    expect((await call('PUT', '/v1/keys', NEW_KEYS, token, ORIGIN, withProof(PROOF))).status).toBe(
+      200,
+    );
+  });
+
+  it('stores only a hash of the proof', async () => {
+    await registerWithProof();
+    expect(JSON.stringify(db.prepare('SELECT * FROM users').all())).not.toContain(PROOF);
+  });
+
+  it('lets the app send the proof header across origins', async () => {
+    const preflight = await call('OPTIONS', '/v1/keys');
+    expect(preflight.response.headers.get('Access-Control-Allow-Headers')).toContain(
+      'X-Owner-Proof',
+    );
   });
 });
 

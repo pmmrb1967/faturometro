@@ -13,6 +13,7 @@ import type { Repositories } from '../db/repositories';
 import {
   PBKDF2_ITERATIONS,
   decryptJson,
+  deriveOwnerProof,
   deriveSyncKeys,
   encryptJson,
   newSyncSalt,
@@ -95,6 +96,7 @@ export async function enableSync(input: {
       iterations,
       authKey: keys.authKeyHex,
       wrappedKey: await wrapForSync(wrappedKeyOf(input.profile), input.masterKey, keys),
+      ownerProof: await deriveOwnerProof(input.masterKey),
     }));
   } catch (error) {
     fromHttp(error, { 409: 'account_exists', 503: 'capacity' });
@@ -105,6 +107,7 @@ export async function enableSync(input: {
     token: await encryptJson(input.masterKey, token),
     lastPulledSeq: 0,
     lastPushedAt: '',
+    ownerProofSent: true,
   });
 }
 
@@ -170,6 +173,25 @@ async function wasRemoved(error: unknown, api: SyncApi, sync: ProfileSync): Prom
   }
 }
 
+/**
+ * Accounts made before the owner proof (or signed in on a new device): sends it once.
+ * Anything but an ended session is retried on the next sync instead of stopping this one.
+ */
+async function sendOwnerProof(
+  api: SyncApi,
+  token: string,
+  masterKey: CryptoKey,
+  sync: ProfileSync,
+): Promise<ProfileSync> {
+  try {
+    await api.setOwner(token, await deriveOwnerProof(masterKey));
+    return { ...sync, ownerProofSent: true };
+  } catch (error) {
+    if (error instanceof SyncHttpError && error.status === 401) throw error;
+    return sync;
+  }
+}
+
 /** Runs one sync and saves the new state on the profile. */
 export async function runSync(input: {
   profile: Profile;
@@ -186,6 +208,7 @@ export async function runSync(input: {
   let files: FileSyncResult | undefined;
   try {
     if (!sync.accountId) sync = { ...sync, accountId: (await api.account(token)).id };
+    if (!sync.ownerProofSent) sync = await sendOwnerProof(api, token, input.masterKey, sync);
     // Tables added since the last pull were skipped by the older version: pull from the start
     // (last write wins, so what is already here is not applied again).
     const missesTables = SYNCED_TABLES.some((table) => !sync.pulledTables?.includes(table));
@@ -293,8 +316,9 @@ export async function removeOriginalsFromServer(input: {
 }
 
 /**
- * Sends new server keys derived from `newPassword` (session token only, no
- * old password needed). The server signs out the other devices.
+ * Sends new server keys derived from `newPassword`. No old password needed (a
+ * recovery-key reset has none): the owner proof comes from the master key. The
+ * server signs out the other devices.
  */
 async function updateServerPassword(input: {
   profile: Profile;
@@ -312,12 +336,16 @@ async function updateServerPassword(input: {
   const iterations = input.iterations ?? PBKDF2_ITERATIONS;
   const keys = await deriveSyncKeys(input.newPassword, salt, iterations);
   try {
-    const { token: newToken } = await api.updateKeys(token, {
-      authKey: keys.authKeyHex,
-      salt,
-      iterations,
-      wrappedKey: await wrapForSync(input.localWrappedKey, input.masterKey, keys),
-    });
+    const { token: newToken } = await api.updateKeys(
+      token,
+      {
+        authKey: keys.authKeyHex,
+        salt,
+        iterations,
+        wrappedKey: await wrapForSync(input.localWrappedKey, input.masterKey, keys),
+      },
+      await deriveOwnerProof(input.masterKey),
+    );
     return { ...sync, token: await encryptJson(input.masterKey, newToken) };
   } catch (error) {
     fromHttp(error, { 401: 'session_expired' });
@@ -454,7 +482,7 @@ export async function disableSync(input: {
     const api = input.api ?? new SyncApi(sync.serverUrl);
     const token = (await decryptJson(input.masterKey, sync.token)) as string;
     try {
-      await api.deleteAccount(token);
+      await api.deleteAccount(token, await deriveOwnerProof(input.masterKey));
     } catch (error) {
       fromHttp(error, { 401: 'session_expired' });
     }

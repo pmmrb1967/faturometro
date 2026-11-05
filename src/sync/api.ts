@@ -52,11 +52,12 @@ export class SyncApi {
     method: string,
     path: string,
     schema: z.ZodType<T> | null,
-    options: { body?: unknown; token?: string } = {},
+    options: { body?: unknown; token?: string; ownerProof?: string } = {},
   ): Promise<T> {
     const headers: Record<string, string> = {};
     if (options.body !== undefined) headers['Content-Type'] = 'application/json';
     if (options.token) headers.Authorization = `Bearer ${options.token}`;
+    if (options.ownerProof) headers['X-Owner-Proof'] = options.ownerProof;
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
       method,
       headers,
@@ -84,6 +85,7 @@ export class SyncApi {
     iterations: number;
     authKey: string;
     wrappedKey: ServerWrappedKey;
+    ownerProof: string;
   }) {
     return this.call(
       'POST',
@@ -139,12 +141,22 @@ export class SyncApi {
     );
   }
 
+  /** Older accounts: gives the server the owner proof (accepted once; the same one again is fine). */
+  setOwner(token: string, ownerProof: string) {
+    return this.call('PUT', '/v1/owner', null, { body: { ownerProof }, token });
+  }
+
   /** Password change: new KDF salt, authentication key and server wrap; signs out other devices. */
   updateKeys(
     token: string,
     input: { authKey: string; salt: string; iterations: number; wrappedKey: ServerWrappedKey },
+    ownerProof?: string,
   ) {
-    return this.call('PUT', '/v1/keys', z.object({ token: z.string() }), { body: input, token });
+    return this.call('PUT', '/v1/keys', z.object({ token: z.string() }), {
+      body: input,
+      token,
+      ...(ownerProof ? { ownerProof } : {}),
+    });
   }
 
   /** Administrators: usage totals of the server (no per-account data). */
@@ -205,7 +217,7 @@ export class SyncApi {
     return response.text();
   }
 
-  deleteAccount(token: string) {
-    return this.call('DELETE', '/v1/account', null, { token });
+  deleteAccount(token: string, ownerProof: string) {
+    return this.call('DELETE', '/v1/account', null, { token, ownerProof });
   }
 }

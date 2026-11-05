@@ -12,8 +12,10 @@
  *   GET    /v1/changes?since=N                            → {records, latest, more, admin, contributions?}
  *          (contributions: layout contributions waiting, for administrators only)
  *   POST   /v1/changes    {records}                       → {latest}
- *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → 204  (password change)
+ *   PUT    /v1/owner      {ownerProof}                    → 204; 409 if another one is set
+ *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → {token}  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
+ *   (/v1/keys and DELETE /v1/account also need the header X-Owner-Proof once the account has one)
  *
  * Original files (optional, separate database), as base64 ciphertext chunks:
  *   GET    /v1/files/usage                                → {used, quota}
@@ -138,7 +140,10 @@ const schemas = {
     iterations: z.number().int().max(10_000_000),
     authKey: hex64,
     wrappedKey,
+    /** Derived from the master key in the app (optional: older apps do not send it). */
+    ownerProof: hex64.optional(),
   }),
+  owner: z.object({ ownerProof: hex64 }),
   login: z.object({ email, authKey: hex64 }),
   push: z.object({ records: z.array(record).max(MAX_RECORDS_PER_REQUEST) }),
   keys: z.object({
@@ -204,6 +209,8 @@ interface UserRow {
   last_seen_at: string;
   /** Size of the encrypted records, refreshed daily and grown by each push. */
   records_bytes: number;
+  /** SHA-256 of the owner proof (migration 0004); null until the app sends it. */
+  owner_hash: string | null;
 }
 
 export function createApp(config: AppConfig) {
@@ -367,6 +374,18 @@ export function createApp(config: AppConfig) {
     return new TextDecoder().decode(bytes);
   }
 
+  /**
+   * Password change and account deletion: a stolen session token is not enough, the
+   * device must also hold the master key. Accounts without a proof yet keep working.
+   */
+  async function requireOwner(request: Request, user: UserRow): Promise<void> {
+    if (!user.owner_hash) return;
+    const proof = request.headers.get('X-Owner-Proof') ?? '';
+    if (!/^[0-9a-f]{64}$/.test(proof) || !sameHex(await sha256Hex(proof), user.owner_hash)) {
+      throw new HttpError(403, 'Owner proof required');
+    }
+  }
+
   function isMaintainer(request: Request): boolean {
     const expected = config.contribAdminToken;
     const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
@@ -459,7 +478,7 @@ export function createApp(config: AppConfig) {
       }
       const id = crypto.randomUUID();
       await sql.run(
-        'INSERT INTO users (id, email, kdf_salt, kdf_iterations, auth_hash, wrapped_key, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO users (id, email, kdf_salt, kdf_iterations, auth_hash, wrapped_key, created_at, last_seen_at, owner_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         id,
         input.email,
         input.salt,
@@ -468,6 +487,7 @@ export function createApp(config: AppConfig) {
         JSON.stringify(input.wrappedKey),
         now().toISOString(),
         today(),
+        input.ownerProof ? await sha256Hex(input.ownerProof) : null,
       );
       return json({ token: await newSession(id), accountId: id }, 201);
     }
@@ -638,7 +658,23 @@ export function createApp(config: AppConfig) {
       return json({ latest: Math.max(latest, user.seq) });
     }
 
+    if (method === 'PUT' && path === '/v1/owner') {
+      // Set once (older accounts); afterwards only the same proof is accepted.
+      const hash = await sha256Hex((await body(request, schemas.owner)).ownerProof);
+      if (user.owner_hash) {
+        if (!sameHex(hash, user.owner_hash)) throw new HttpError(409, 'Another proof is set');
+        return new Response(null, { status: 204 });
+      }
+      await sql.run(
+        'UPDATE users SET owner_hash = ? WHERE id = ? AND owner_hash IS NULL',
+        hash,
+        user.id,
+      );
+      return new Response(null, { status: 204 });
+    }
+
     if (method === 'PUT' && path === '/v1/keys') {
+      await requireOwner(request, user);
       const input = await body(request, schemas.keys);
       if (input.iterations < (config.minIterations ?? MIN_ITERATIONS)) {
         throw new HttpError(400, 'Too few KDF iterations');
@@ -736,6 +772,7 @@ export function createApp(config: AppConfig) {
     }
 
     if (method === 'DELETE' && path === '/v1/account') {
+      await requireOwner(request, user);
       await config.files?.run('DELETE FROM chunks WHERE user_id = ?', user.id);
       await sql.run('DELETE FROM records WHERE user_id = ?', user.id);
       await sql.run('DELETE FROM sessions WHERE user_id = ?', user.id);
@@ -768,7 +805,7 @@ export function createApp(config: AppConfig) {
           status: 204,
           headers: {
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Owner-Proof',
             'Access-Control-Max-Age': '86400',
           },
         }),

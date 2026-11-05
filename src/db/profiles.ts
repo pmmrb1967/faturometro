@@ -35,6 +35,8 @@ export interface ProfileSync {
    * know yet but still moves `lastPulledSeq` on; missing ones here mean pulling from the start.
    */
   pulledTables?: string[];
+  /** The server has this account's owner proof (older accounts send it on their next sync). */
+  ownerProofSent?: boolean;
   /** Latest local `updatedAt` already sent. */
   lastPushedAt: string;
   lastSyncAt?: string;

@@ -18,10 +18,12 @@ import {
   removeOriginalsFromServer,
   runSync,
   setFileSync,
+  syncPasswordAfterRecovery,
   SyncError,
 } from './account';
 import type { Invoice } from '../domain/types';
 import { chunk, monthsBefore } from './files';
+import { decryptJson } from '../lib/crypto';
 import { SYNCED_TABLES } from './engine';
 
 const ITERATIONS = 1_000;
@@ -203,6 +205,66 @@ describe('sync between two devices', () => {
     expect(serverDb.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 0 });
     // Local data stays.
     expect(await a.repos.contracts.get('c1')).toBeDefined();
+  });
+});
+
+describe('owner proof', () => {
+  const ownerHash = () =>
+    (serverDb.prepare('SELECT owner_hash FROM users').get() as { owner_hash: string | null })
+      .owner_hash;
+
+  it('a new server account gets it from the start', async () => {
+    const a = await deviceA();
+    expect(ownerHash()).toMatch(/^[0-9a-f]{64}$/);
+    expect(a.profile.sync?.ownerProofSent).toBe(true);
+  });
+
+  it('an older account sends it on its next sync, once', async () => {
+    const a = await deviceA();
+    serverDb.prepare('UPDATE users SET owner_hash = NULL').run();
+    const older: ProfileSync = { ...a.profile.sync! };
+    delete older.ownerProofSent;
+    const synced = await runSync({ ...a, profile: { ...a.profile, sync: older }, api });
+    expect(ownerHash()).toMatch(/^[0-9a-f]{64}$/);
+    expect(synced.profile.sync?.ownerProofSent).toBe(true);
+  });
+
+  it('every device of the account derives the same proof', async () => {
+    await deviceA();
+    const before = ownerHash();
+    const b = await deviceB();
+    await runSync({ ...b, api });
+    expect(ownerHash()).toBe(before);
+  });
+
+  it('the session token alone cannot change the keys on the server', async () => {
+    const a = await deviceA();
+    const token = (await decryptJson(a.masterKey, a.profile.sync!.token)) as string;
+    await expect(
+      api.updateKeys(token, {
+        authKey: 'c'.repeat(64),
+        salt: 'c2FsdA==',
+        iterations: ITERATIONS,
+        wrappedKey: {
+          byPassword: { iv: 'aXY=', data: 'ZGF0YQ==' },
+          byRecoveryKey: { iv: 'aXY=', data: 'cmVj' },
+          recoverySalt: 'c2FsdA==',
+        },
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('after a recovery-key reset the server still takes the new password', async () => {
+    const a = await deviceA();
+    const result = await syncPasswordAfterRecovery({
+      profile: a.profile,
+      masterKey: a.masterKey,
+      newPassword: 'nova-palavra-passe-longa',
+      api,
+      iterations: ITERATIONS,
+    });
+    expect(result.serverUpdated).toBe(true);
+    await expect(deviceB('nova-palavra-passe-longa')).resolves.toBeDefined();
   });
 });
 

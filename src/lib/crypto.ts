@@ -301,6 +301,32 @@ export async function deriveSyncKeys(
   return { authKeyHex, wrappingKey };
 }
 
+/**
+ * Owner proof for the sync server: derived from the master key, so every device of the
+ * account (including one reset with the recovery key) gets the same value, and a session
+ * token alone cannot produce it. The server keeps only its SHA-256.
+ */
+export async function deriveOwnerProof(masterKey: CryptoKey): Promise<string> {
+  const material = await crypto.subtle.importKey(
+    'raw',
+    await crypto.subtle.exportKey('raw', masterKey),
+    'HKDF',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: encoder.encode('faturometro-owner-proof-v1'),
+    },
+    material,
+    256,
+  );
+  return [...new Uint8Array(bits)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export function newSyncSalt(): string {
   return toBase64(randomBytes(SALT_BYTES));
 }
