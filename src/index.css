@@ -391,6 +391,11 @@ body {
   border: 0;
 }
 
+/* With the page title hidden, the first section title takes its place at the top. */
+.content > h1.visually-hidden + .section-title {
+  margin-top: 0;
+}
+
 /* Plain links in the pages (not buttons, nav or footer, which have their own colours). */
 .content a:not([class]) {
   color: var(--accent);
