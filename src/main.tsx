@@ -11,6 +11,7 @@ import { router } from './app/router';
 import { loadWebAnalytics } from './app/web-analytics';
 import { SessionProvider } from './features/auth/session';
 import './index.css';
+import './components/buttons.css';
 
 listenForInstall();
 listenForOpenedFiles();

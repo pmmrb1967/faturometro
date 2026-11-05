@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
@@ -140,7 +140,10 @@ export function AppShell() {
           </div>
         )}
         <BackupBanner />
-        <Outlet />
+        {/* Pages load in their own files: the shell and the menu stay while one arrives. */}
+        <Suspense fallback={<p className="hint">{t.loadingPage}</p>}>
+          <Outlet />
+        </Suspense>
         <LegalFooter />
       </main>
     </div>

@@ -212,6 +212,7 @@ export const t = {
     expand: 'Expandir menu',
   },
   placeholder: 'Em construção.',
+  loadingPage: 'A carregar…',
   update: {
     available: 'Há uma nova versão da app.',
     hint: 'A página vai recarregar: guarda primeiro o que estiveres a escrever.',
@@ -259,6 +260,8 @@ export const t = {
       'Se limpares os dados do site, perdes tudo. Faz uma cópia de segurança (mais abaixo) ou cria uma conta.',
     ],
     home: {
+      summary: 'Os dados ficam só neste browser, sem palavra-passe nem sincronização.',
+      more: 'O que isto quer dizer',
       limits: [
         'Os teus dados ficam só neste browser: perdem-se se limpares os dados do site ou perderes o dispositivo.',
         'O próprio browser pode apagá-los se faltar espaço ou, sobretudo no iPhone, depois de vários dias sem abrires a app. Faz cópias de segurança.',

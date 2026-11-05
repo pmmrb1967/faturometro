@@ -1,21 +1,49 @@
+import { Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
-import { PrivacyPage } from '../landing/PrivacyPage';
-import { LoginPage } from '../features/auth/LoginPage';
-import { RecoverPage } from '../features/auth/RecoverPage';
-import { RegisterPage } from '../features/auth/RegisterPage';
 import { RequireSession } from '../features/auth/RequireSession';
-import { HomePage } from '../features/alerts/HomePage';
-import { ComparePage } from '../features/compare/ComparePage';
-import { SettingsPage } from '../features/settings/SettingsPage';
-import { ConnectPage } from '../features/sync/ConnectPage';
-import { ContractPage } from '../features/contracts/ContractPage';
-import { ContractsPage } from '../features/contracts/ContractsPage';
-import { InvoicesPage } from '../features/ingest/InvoicesPage';
-import { MonthPage } from '../features/month/MonthPage';
-import { SocialTariffPage } from '../features/social-tariff/SocialTariffPage';
+import { t } from '../i18n/pt-PT';
 import { Landing } from '../landing/Landing';
+import { PrivacyPage } from '../landing/PrivacyPage';
 import { AppShell, NotFound, SectionPlaceholder } from './AppShell';
+import { lazyPage } from './lazy-page';
 import { SECTIONS, type SectionId } from './sections';
+
+// The landing and privacy pages load at once; everything else in its own files.
+const LoginPage = lazyPage(() => import('../features/auth/LoginPage').then((m) => m.LoginPage));
+const RecoverPage = lazyPage(() =>
+  import('../features/auth/RecoverPage').then((m) => m.RecoverPage),
+);
+const RegisterPage = lazyPage(() =>
+  import('../features/auth/RegisterPage').then((m) => m.RegisterPage),
+);
+const ConnectPage = lazyPage(() =>
+  import('../features/sync/ConnectPage').then((m) => m.ConnectPage),
+);
+const HomePage = lazyPage(() => import('../features/alerts/HomePage').then((m) => m.HomePage));
+const ComparePage = lazyPage(() =>
+  import('../features/compare/ComparePage').then((m) => m.ComparePage),
+);
+const SettingsPage = lazyPage(() =>
+  import('../features/settings/SettingsPage').then((m) => m.SettingsPage),
+);
+const ContractPage = lazyPage(() =>
+  import('../features/contracts/ContractPage').then((m) => m.ContractPage),
+);
+const ContractsPage = lazyPage(() =>
+  import('../features/contracts/ContractsPage').then((m) => m.ContractsPage),
+);
+const InvoicesPage = lazyPage(() =>
+  import('../features/ingest/InvoicesPage').then((m) => m.InvoicesPage),
+);
+const MonthPage = lazyPage(() => import('../features/month/MonthPage').then((m) => m.MonthPage));
+const SocialTariffPage = lazyPage(() =>
+  import('../features/social-tariff/SocialTariffPage').then((m) => m.SocialTariffPage),
+);
+
+/** Pages outside the app (sign in, create account): the shell is not there to wait in. */
+function standalone(page: ReactNode) {
+  return <Suspense fallback={<p className="hint content">{t.loadingPage}</p>}>{page}</Suspense>;
+}
 
 function sectionElement(id: SectionId) {
   if (id === 'home') return <HomePage />;
@@ -30,10 +58,10 @@ function sectionElement(id: SectionId) {
 export const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   { path: '/privacidade', element: <PrivacyPage /> },
-  { path: '/criar-conta', element: <RegisterPage /> },
-  { path: '/entrar', element: <LoginPage /> },
-  { path: '/recuperar', element: <RecoverPage /> },
-  { path: '/entrar-sincronizado', element: <ConnectPage /> },
+  { path: '/criar-conta', element: standalone(<RegisterPage />) },
+  { path: '/entrar', element: standalone(<LoginPage />) },
+  { path: '/recuperar', element: standalone(<RecoverPage />) },
+  { path: '/entrar-sincronizado', element: standalone(<ConnectPage />) },
   {
     path: '/app',
     element: (

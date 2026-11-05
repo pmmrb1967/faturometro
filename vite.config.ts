@@ -108,6 +108,11 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
+  build: {
+    // Pages load in their own files (src/app/lazy-page.ts), but the CSS stays in one file:
+    // classes are shared across features, and a page must never show before its styles.
+    cssCodeSplit: false,
+  },
   // HTTPS tunnel for testing on a phone (pnpm tunnel); see README.
   server: { allowedHosts: ['.trycloudflare.com'] },
   preview: { allowedHosts: ['.trycloudflare.com'] },
