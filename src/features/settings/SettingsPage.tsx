@@ -67,10 +67,8 @@ function SyncSection() {
     return (
       <section className="settings-section" aria-labelledby="sync-title">
         <h2 id="sync-title">{copy.title}</h2>
+        {/* "Criar conta" is in the notice at the top of the page (GuestNotice). */}
         <p>{t.guest.syncNeedsAccount}</p>
-        <Link to="/criar-conta" className="action-primary">
-          {t.guest.createAccount}
-        </Link>
       </section>
     );
   }

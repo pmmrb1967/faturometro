@@ -1,6 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
 import { Field, SelectField } from '../../components/Field';
 import { AI_MODELS, DEFAULT_AI_MODEL, PRICES_CHECKED, formatMicroUsd } from '../../ai/models';
 import { AiError } from '../../ai/provider';
@@ -39,10 +38,8 @@ export function AiSettings() {
       <section className="settings-section" aria-labelledby="ai-title">
         <h2 id="ai-title">{copy.title}</h2>
         <p>{copy.intro}</p>
+        {/* "Criar conta" is in the notice at the top of Settings. */}
         <p>{t.guest.aiNeedsAccount}</p>
-        <Link to="/criar-conta" className="action-primary">
-          {t.guest.createAccount}
-        </Link>
       </section>
     );
   }

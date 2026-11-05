@@ -12,11 +12,16 @@ export function GuestHomeNotice() {
       </span>
       <div>
         <h2 id="guest-home-title">{t.guest.noticeTitle}</h2>
-        <ul>
-          {copy.limits.map((limit) => (
-            <li key={limit}>{limit}</li>
-          ))}
-        </ul>
+        <p className="guest-notice-summary">{copy.summary}</p>
+        {/* The whole list filled a phone's first screen on every visit: one tap away now. */}
+        <details className="guest-notice-more">
+          <summary>{copy.more}</summary>
+          <ul>
+            {copy.limits.map((limit) => (
+              <li key={limit}>{limit}</li>
+            ))}
+          </ul>
+        </details>
         <div className="guest-notice-actions">
           <Link to="/criar-conta" className="action-primary">
             {t.guest.createAccount}
