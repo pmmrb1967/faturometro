@@ -52,7 +52,8 @@ export function HomePage() {
 
   return (
     <>
-      <h1>{t.nav.home}</h1>
+      {/* The menu already says where you are; screen readers still get the page title. */}
+      <h1 className="visually-hidden">{t.nav.home}</h1>
       {isGuest(session.profile) && <GuestHomeNotice />}
       <h2 className="section-title">{t.alerts.title}</h2>
       {alerts?.length === 0 && !staleCheck && waiting === 0 && !backupDue && (
