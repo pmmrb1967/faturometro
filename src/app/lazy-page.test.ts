@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { loadOrReload } from './lazy-page';
+import { dropStoredApp, loadOrReload } from './lazy-page';
 
 function memoryStorage(): Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> {
   const items = new Map<string, string>();
@@ -42,5 +42,31 @@ describe('loadOrReload', () => {
     await loadOrReload(() => Promise.resolve('page'), storage, reload);
     void loadOrReload(() => Promise.reject(new Error('gone')), storage, reload);
     await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('dropStoredApp', () => {
+  it('unregisters the service worker and deletes only its precache', async () => {
+    const unregister = vi.fn(async () => true);
+    const deleted: string[] = [];
+    await dropStoredApp(
+      { getRegistrations: async () => [{ unregister } as unknown as ServiceWorkerRegistration] },
+      {
+        keys: async () => ['workbox-precache-v2-https://app/', 'shared-files', 'erse-data'],
+        delete: async (key) => {
+          deleted.push(key);
+          return true;
+        },
+      },
+    );
+    expect(unregister).toHaveBeenCalledOnce();
+    expect(deleted).toEqual(['workbox-precache-v2-https://app/']);
+  });
+
+  it('settles without a service worker or caches, and when they fail', async () => {
+    await expect(dropStoredApp(undefined, undefined)).resolves.toBeUndefined();
+    await expect(
+      dropStoredApp({ getRegistrations: () => Promise.reject(new Error('blocked')) }, undefined),
+    ).resolves.toBeUndefined();
   });
 });

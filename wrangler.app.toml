@@ -5,9 +5,13 @@ name = "app"
 # Pin the Cloudflare account: this machine is also logged in to the Wattómetro account.
 account_id = "228a5886f6ada239609955a875486421"
 compatibility_date = "2026-10-01"
+# Only for requests that match no file and are not page navigations: a 404
+# instead of index.html (worker/app.ts).
+main = "worker/app.ts"
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
 # Client-side routes (/app/…, /entrar…) are served by index.html.
 not_found_handling = "single-page-application"
 # Files are served at their own name: /google….html must not redirect to

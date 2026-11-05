@@ -118,6 +118,11 @@ export default defineConfig(({ mode }) => ({
   preview: { allowedHosts: ['.trycloudflare.com'] },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts', 'server/**/*.test.ts'],
+    include: [
+      'src/**/*.test.ts',
+      'scripts/**/*.test.ts',
+      'server/**/*.test.ts',
+      'worker/**/*.test.ts',
+    ],
   },
 }));
