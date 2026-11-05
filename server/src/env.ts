@@ -22,6 +22,14 @@ export interface Env {
   CONTRIB_ADMIN_TOKEN?: string;
   CONTRIB_DAILY_MAX?: string;
   CONTRIB_TOTAL_MB?: string;
+  /** Workers rate limiters (wrangler.toml, [[ratelimits]]): per IP, counted by Cloudflare. */
+  REGISTER_LIMITER?: RateLimiter;
+  CONTRIB_LIMITER?: RateLimiter;
+}
+
+/** The Workers rate limiting binding. */
+export interface RateLimiter {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
 export interface Limits {

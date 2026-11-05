@@ -4,7 +4,7 @@ import { encryptContribution } from './envelope';
 import { MAINTAINER_PUBLIC_KEY } from './maintainer-key';
 import type { Contribution } from './skeleton';
 
-export type SendError = 'too_large' | 'full' | 'offline' | 'failed';
+export type SendError = 'too_large' | 'full' | 'too_many' | 'offline' | 'failed';
 
 export class ContributionError extends Error {
   readonly code: SendError;
@@ -43,5 +43,6 @@ export async function sendContribution(
   if (response.status === 201) return;
   if (response.status === 503) throw new ContributionError('full');
   if (response.status === 413) throw new ContributionError('too_large');
+  if (response.status === 429) throw new ContributionError('too_many');
   throw new ContributionError('failed');
 }

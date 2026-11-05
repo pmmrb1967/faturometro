@@ -47,6 +47,7 @@ describe('sendContribution', () => {
       code: 'full',
     });
     await expect(send(fakeFetch(413).fn)).rejects.toMatchObject({ code: 'too_large' });
+    await expect(send(fakeFetch(429).fn)).rejects.toMatchObject({ code: 'too_many' });
     await expect(send(fakeFetch(500).fn)).rejects.toMatchObject({ code: 'failed' });
     const offline = (async () => {
       throw new TypeError('Failed to fetch');

@@ -39,7 +39,8 @@ export type SyncErrorCode =
   | 'different_account'
   | 'capacity'
   | 'records_full'
-  | 'account_removed';
+  | 'account_removed'
+  | 'too_many';
 
 export class SyncError extends Error {
   readonly code: SyncErrorCode;
@@ -99,7 +100,7 @@ export async function enableSync(input: {
       ownerProof: await deriveOwnerProof(input.masterKey),
     }));
   } catch (error) {
-    fromHttp(error, { 409: 'account_exists', 503: 'capacity' });
+    fromHttp(error, { 409: 'account_exists', 429: 'too_many', 503: 'capacity' });
   }
   return saveSync(input.profile, {
     serverUrl: input.serverUrl,

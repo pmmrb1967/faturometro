@@ -243,6 +243,7 @@ export const t = {
     errors: {
       too_large: 'Esta fatura é grande demais para enviar.',
       full: 'Não é possível receber contribuições agora. Tenta noutro dia.',
+      too_many: 'Enviaste várias contribuições seguidas. Espera um minuto e tenta de novo.',
       offline: 'Sem ligação. Tenta outra vez quando estiveres online.',
       failed: 'Não foi possível enviar. Tenta outra vez.',
     },
@@ -1174,6 +1175,7 @@ export const t = {
         'Já existe uma conta sincronizada com este email. Para a usar aqui, entra com ela num perfil novo (“Entrar com conta sincronizada”).',
       wrong_credentials: 'Email ou palavra-passe errados.',
       locked: 'Demasiadas tentativas. Espera 15 minutos e tenta de novo.',
+      too_many: 'Foram criadas várias contas a partir desta ligação. Espera um minuto e tenta de novo.',
       email_taken_locally: 'Já existe um perfil com este email neste dispositivo.',
       offline: 'Sem ligação ao servidor. Verifica a internet ou o endereço do servidor.',
       session_expired:

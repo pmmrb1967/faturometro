@@ -781,3 +781,88 @@ describe('contributions', () => {
     expect((await call('GET', '/v1/contributions', undefined, 'anything')).status).toBe(401);
   });
 });
+
+describe('requests per IP', () => {
+  const ENVELOPE = {
+    v: 1,
+    epk: { kty: 'EC', crv: 'P-256', x: 'eA', y: 'eQ' },
+    iv: 'aXY=',
+    data: 'ZGF0YQ==',
+  };
+  /** Like the Workers rate limiter: `allowed` requests per key, then refused. */
+  function limiter(allowed: number) {
+    const seen: { scope: string; key: string }[] = [];
+    const counts = new Map<string, number>();
+    const limit = (scope: 'register' | 'contribution', key: string) => {
+      seen.push({ scope, key });
+      const id = `${scope}:${key}`;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+      return Promise.resolve((counts.get(id) ?? 0) <= allowed);
+    };
+    return { limit, seen };
+  }
+
+  function withLimiter(limit: ReturnType<typeof limiter>['limit']) {
+    handle = createApp({
+      sql: memorySql().sql,
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+      rateLimit: limit,
+    });
+  }
+
+  const fromIp = (ip: string) => ({ 'CF-Connecting-IP': ip });
+  const registerFrom = (ip: string, email: string) =>
+    call(
+      'POST',
+      '/v1/register',
+      { email, salt: 'c2FsdA==', iterations: 600_000, authKey: AUTH, wrappedKey: WRAPPED },
+      undefined,
+      ORIGIN,
+      fromIp(ip),
+    );
+
+  it('refuses new accounts from one IP past the limit, with 429', async () => {
+    const { limit } = limiter(2);
+    withLimiter(limit);
+    expect((await registerFrom('203.0.113.7', 'a@example.pt')).status).toBe(201);
+    expect((await registerFrom('203.0.113.7', 'b@example.pt')).status).toBe(201);
+    expect((await registerFrom('203.0.113.7', 'c@example.pt')).status).toBe(429);
+    // Another IP is not affected.
+    expect((await registerFrom('198.51.100.1', 'c@example.pt')).status).toBe(201);
+  });
+
+  it('limits contributions the same way, apart from accounts', async () => {
+    const { limit, seen } = limiter(1);
+    withLimiter(limit);
+    const post = () =>
+      call('POST', '/v1/contributions', ENVELOPE, undefined, ORIGIN, fromIp('203.0.113.7'));
+    expect((await post()).status).toBe(201);
+    expect((await post()).status).toBe(429);
+    expect((await registerFrom('203.0.113.7', 'a@example.pt')).status).toBe(201);
+    expect(seen.map((entry) => entry.scope)).toEqual(['contribution', 'contribution', 'register']);
+  });
+
+  it('does not limit sign-in, syncing or anything else', async () => {
+    const { limit, seen } = limiter(0);
+    withLimiter(limit);
+    await call('POST', '/v1/prelogin', { email: 'a@b.pt' }, undefined, ORIGIN, fromIp('203.0.113.7'));
+    await call(
+      'POST',
+      '/v1/login',
+      { email: 'a@b.pt', authKey: AUTH },
+      undefined,
+      ORIGIN,
+      fromIp('203.0.113.7'),
+    );
+    expect(seen).toEqual([]);
+  });
+
+  it('without an IP (local runs) or without a limiter, nothing is limited', async () => {
+    const { limit, seen } = limiter(0);
+    withLimiter(limit);
+    expect((await call('POST', '/v1/contributions', ENVELOPE)).status).toBe(201);
+    expect(seen).toEqual([]);
+  });
+});

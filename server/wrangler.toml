@@ -43,6 +43,19 @@ INACTIVE_MONTHS = "12"
 CONTRIB_DAILY_MAX = "30"
 CONTRIB_TOTAL_MB = "20"
 
+# Requests per IP (Workers rate limiting; counted by Cloudflare, nothing stored):
+# new accounts and layout contributions. Sign-in already locks an account after 10 failures.
+# The period can only be 10 or 60 seconds; namespace_id is any number unique in the account.
+[[ratelimits]]
+name = "REGISTER_LIMITER"
+namespace_id = "1001"
+simple = { limit = 3, period = 60 }
+
+[[ratelimits]]
+name = "CONTRIB_LIMITER"
+namespace_id = "1002"
+simple = { limit = 2, period = 60 }
+
 [triggers]
 # Daily maintenance: inactive accounts and usage totals (src/maintenance.ts).
 crons = ["17 3 * * *"]

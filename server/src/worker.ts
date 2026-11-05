@@ -1,7 +1,7 @@
 /** Cloudflare Worker entry point. Configuration in server/wrangler.toml. */
 import { createApp } from './app';
 import { d1 } from './db';
-import { limitsFromEnv, type Env } from './env';
+import { limitsFromEnv, type Env, type RateLimiter } from './env';
 import { runMaintenance } from './maintenance';
 
 export default {
@@ -14,6 +14,12 @@ export default {
       allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),
       ...limitsFromEnv(env),
       ...(env.CONTRIB_ADMIN_TOKEN ? { contribAdminToken: env.CONTRIB_ADMIN_TOKEN } : {}),
+      rateLimit: async (scope, ip) => {
+        const limiter: RateLimiter | undefined =
+          scope === 'register' ? env.REGISTER_LIMITER : env.CONTRIB_LIMITER;
+        // Without the binding (local runs), no limit.
+        return limiter ? (await limiter.limit({ key: ip })).success : true;
+      },
     });
     return handle(request);
   },

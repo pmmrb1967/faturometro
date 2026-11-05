@@ -66,7 +66,14 @@ export interface AppConfig {
   contribDailyMax?: number;
   /** Space for stored contributions, in characters. */
   contribTotalBytes?: number;
+  /**
+   * Requests per IP for new accounts and contributions (the Workers rate limiter, in
+   * worker.ts): false means refuse. The count stays with Cloudflare; nothing is stored here.
+   */
+  rateLimit?: (scope: RateLimitScope, ip: string) => Promise<boolean>;
 }
+
+export type RateLimitScope = 'register' | 'contribution';
 
 export const SESSION_DAYS = 30;
 export const MAX_FAILED_LOGINS = 10;
@@ -386,6 +393,13 @@ export function createApp(config: AppConfig) {
     }
   }
 
+  /** Refuses (429) past the per-IP limit. No IP (local runs) or no limiter: no limit. */
+  async function limitPerIp(request: Request, scope: RateLimitScope): Promise<void> {
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (!ip || !config.rateLimit) return;
+    if (!(await config.rateLimit(scope, ip))) throw new HttpError(429, 'Too many requests');
+  }
+
   function isMaintainer(request: Request): boolean {
     const expected = config.contribAdminToken;
     const token = /^Bearer (\S+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
@@ -394,6 +408,7 @@ export function createApp(config: AppConfig) {
 
   async function contributions(request: Request, method: string, path: string) {
     if (method === 'POST' && path === '/v1/contributions') {
+      await limitPerIp(request, 'contribution');
       // Checked before reading, so a huge body is never loaded in memory.
       if (Number(request.headers.get('Content-Length') ?? 0) > MAX_CONTRIBUTION_LENGTH) {
         throw new HttpError(413, 'Too large');
@@ -466,6 +481,8 @@ export function createApp(config: AppConfig) {
     }
 
     if (method === 'POST' && path === '/v1/register') {
+      // A script could otherwise take every free account (MAX_ACCOUNTS) in minutes.
+      await limitPerIp(request, 'register');
       const input = await body(request, schemas.register);
       if (input.iterations < (config.minIterations ?? MIN_ITERATIONS)) {
         throw new HttpError(400, 'Too few KDF iterations');
