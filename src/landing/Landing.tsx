@@ -35,7 +35,7 @@ export function Landing() {
           {t.appName}
         </Link>
         {showsTopSignIn(action) && (
-          <Link to="/entrar" className="button button-quiet">
+          <Link to="/entrar" className="action-secondary">
             {copy.signIn}
           </Link>
         )}
@@ -48,19 +48,19 @@ export function Landing() {
             <p className="hero-lead">{copy.hero.lead}</p>
             <div className="hero-actions">
               {action === 'open' && (
-                <Link to="/app" className="button button-primary">
+                <Link to="/app" className="action-primary">
                   {copy.openApp}
                 </Link>
               )}
               {action === 'signIn' && (
-                <Link to="/entrar" className="button button-primary">
+                <Link to="/entrar" className="action-primary">
                   {copy.signIn}
                 </Link>
               )}
               {(action === 'startGuest' || action === 'continueGuest') && (
                 <button
                   type="button"
-                  className="button button-primary"
+                  className="action-primary"
                   onClick={() => void startGuest()}
                 >
                   {action === 'continueGuest' ? copy.continueGuest : copy.startGuest}
@@ -70,18 +70,18 @@ export function Landing() {
                 // Accounts here but no guest: starting without one stays possible.
                 <button
                   type="button"
-                  className="button button-quiet"
+                  className="action-secondary"
                   onClick={() => void startGuest()}
                 >
                   {copy.startGuest}
                 </button>
               )}
               {action !== 'open' && (
-                <Link to="/criar-conta" className="button button-quiet">
+                <Link to="/criar-conta" className="action-secondary">
                   {copy.createAccount}
                 </Link>
               )}
-              <a href="#como-funciona" className="button button-quiet">
+              <a href="#como-funciona" className="action-secondary">
                 {copy.howItWorksLink}
               </a>
             </div>
@@ -133,7 +133,7 @@ export function Landing() {
             ))}
           </dl>
           <div className="landing-install">
-            <InstallButton className="button button-primary" />
+            <InstallButton />
           </div>
         </section>
       </main>

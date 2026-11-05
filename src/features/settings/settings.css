@@ -42,11 +42,6 @@
   accent-color: var(--accent);
 }
 
-.action-secondary.danger {
-  color: var(--danger);
-  border-color: var(--danger);
-}
-
 .admin-stats {
   width: 100%;
   border-collapse: collapse;

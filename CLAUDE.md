@@ -49,6 +49,7 @@ Antes de dar uma tarefa por concluída: `pnpm typecheck && pnpm lint && pnpm tes
 - **Código, nomes e comentários em inglês. Texto visível ao utilizador em português europeu** (pós-AO90, tratamento por "tu"), centralizado em `src/i18n/pt-PT.ts`.
 - Datas em ISO `YYYY-MM-DD`; IDs com `crypto.randomUUID()`.
 - Componentes pequenos; lógica de domínio em `src/domain/` sem dependências de React, para ser testável.
+- Cores só pelos tokens de `:root` em `src/index.css` (com a versão escura); botões só com as classes de `src/components/buttons.css` (`action-primary`, `action-secondary`, `danger`, `action-wide`, `action-compact`). Nada de cores soltas nem estilos de botão novos no CSS de uma funcionalidade; as únicas exceções são a paleta dos gráficos (tokens próprios em `src/components/chart.css`), a ilustração do talão na página inicial e o visor da câmara.
 - Sem `any`. Tipos partilhados em `src/domain/types.ts`.
 - Alterações ao esquema Dexie: nova versão + migração + teste. Nunca alterar uma versão existente.
 

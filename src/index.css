@@ -7,6 +7,14 @@
   --accent: #1f5c4a;
   --accent-soft: #e2eee8;
   --danger: #b3261e;
+  /* Warnings that are not errors (deadlines, missing backup); same in dark mode. */
+  --warning: #b26a00;
+  /* Brand accents (mostly the landing page): deep green band, amber highlight and focus,
+     the slightly green page background, and a stronger rule. */
+  --accent-deep: #173f33;
+  --highlight: #f2b134;
+  --tint: #eef2ee;
+  --border-strong: #c9d3cb;
   --nav-height: 64px;
   --font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
   --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
@@ -29,6 +37,9 @@
     --accent: #7cc4a8;
     --accent-soft: #23352d;
     --danger: #ff8a80;
+    --accent-deep: #183a2f;
+    --tint: #111a16;
+    --border-strong: #2c3a33;
   }
 }
 
@@ -185,30 +196,6 @@ body {
   white-space: nowrap;
 }
 
-.topbar-lock {
-  flex: none;
-  min-height: 40px;
-  padding: 6px 14px;
-  font: inherit;
-  font-weight: 700;
-  color: var(--text);
-  background: transparent;
-  border: 2px solid var(--border);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-a.topbar-lock {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.topbar-lock:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 @media (max-width: 480px) {
   .topbar-email,
   .topbar-badge {
@@ -220,7 +207,7 @@ a.topbar-lock {
     gap: 8px;
   }
 
-  .topbar-lock {
+  .topbar .action-compact {
     padding: 6px 10px;
   }
 
@@ -396,9 +383,3 @@ a.topbar-lock {
   color: var(--accent);
 }
 
-/* Links that look like secondary buttons (feedback emails). */
-a.feedback-link {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-}

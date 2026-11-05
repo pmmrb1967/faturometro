@@ -57,7 +57,7 @@
 
 .letter-warning {
   padding: 10px 12px;
-  border-left: 4px solid #b26a00;
+  border-left: 4px solid var(--warning);
   border-radius: 8px;
   background: var(--surface);
 }

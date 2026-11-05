@@ -37,10 +37,10 @@ export function RecoveryKeyStep({ email, recoveryKey, onDone }: Props) {
         {recoveryKey}
       </p>
       <div className="recovery-actions">
-        <button type="button" className="auth-secondary" onClick={copyKey}>
+        <button type="button" className="action-secondary" onClick={copyKey}>
           {copied ? copy.copied : copy.copy}
         </button>
-        <button type="button" className="auth-secondary" onClick={download}>
+        <button type="button" className="action-secondary" onClick={download}>
           {copy.download}
         </button>
       </div>
@@ -52,7 +52,7 @@ export function RecoveryKeyStep({ email, recoveryKey, onDone }: Props) {
         />
         {copy.confirm}
       </label>
-      <button type="button" className="auth-submit" disabled={!saved} onClick={onDone}>
+      <button type="button" className="action-primary action-wide" disabled={!saved} onClick={onDone}>
         {copy.continue}
       </button>
     </AuthLayout>

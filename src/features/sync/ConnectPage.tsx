@@ -71,7 +71,7 @@ export function ConnectPage() {
           onChange={(event) => setPassword(event.target.value)}
         />
         <FormError message={error} />
-        <button type="submit" className="auth-submit" disabled={busy || !password}>
+        <button type="submit" className="action-primary action-wide" disabled={busy || !password}>
           {busy ? copy.connect.working : copy.connect.submit}
         </button>
       </form>

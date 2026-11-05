@@ -230,7 +230,7 @@
 .offer-dual {
   margin: 6px 0;
   padding: 6px 10px;
-  border-left: 3px solid #b26a00;
+  border-left: 3px solid var(--warning);
   background: var(--bg);
   font-size: 0.9rem;
 }

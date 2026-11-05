@@ -15,7 +15,7 @@ export function BackupBanner() {
   return (
     <div className="update-banner backup-banner" role="status">
       <span>{t.alerts.backup.banner}</span>
-      <Link to={`/app/definicoes#${BACKUP_ANCHOR}`} className="topbar-lock">
+      <Link to={`/app/definicoes#${BACKUP_ANCHOR}`} className="action-secondary action-compact">
         {t.alerts.backup.bannerAction}
       </Link>
     </div>

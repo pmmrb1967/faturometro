@@ -12,7 +12,7 @@ export function FeedbackLinks({ kinds = KINDS }: { kinds?: FeedbackKind[] }) {
       {kinds.map((kind) => (
         <a
           key={kind}
-          className="action-secondary feedback-link"
+          className="action-secondary"
           href={feedbackLink(kind, pathname)}
         >
           {t.feedback.links[kind]}

@@ -60,12 +60,12 @@ export function AppShell() {
           {session && isGuest(session.profile) ? (
             <>
               <span className="topbar-badge">{t.guest.badge}</span>
-              <Link to="/criar-conta" className="topbar-lock">
+              <Link to="/criar-conta" className="action-secondary action-compact">
                 {t.guest.createAccount}
               </Link>
               <button
                 type="button"
-                className="topbar-lock"
+                className="action-secondary action-compact"
                 onClick={signOut}
                 aria-label={t.guest.signOutLabel}
                 title={t.guest.signOutLabel}
@@ -79,7 +79,7 @@ export function AppShell() {
               <span className="topbar-email">{session?.profile.email}</span>
               <button
                 type="button"
-                className="topbar-lock"
+                className="action-secondary action-compact"
                 onClick={signOut}
                 aria-label={t.signOutLabel}
                 title={t.signOutLabel}
@@ -134,7 +134,7 @@ export function AppShell() {
             <span>
               {t.update.available} {t.update.hint}
             </span>
-            <button type="button" className="topbar-lock" onClick={applyUpdate}>
+            <button type="button" className="action-secondary action-compact" onClick={applyUpdate}>
               {t.update.apply}
             </button>
           </div>

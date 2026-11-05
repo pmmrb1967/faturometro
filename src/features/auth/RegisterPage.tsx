@@ -102,7 +102,7 @@ export function RegisterPage() {
           error={errors.confirm}
         />
         <FormError message={formError} />
-        <button type="submit" className="auth-submit" disabled={busy}>
+        <button type="submit" className="action-primary action-wide" disabled={busy}>
           {busy ? t.auth.working : copy.submit}
         </button>
       </form>

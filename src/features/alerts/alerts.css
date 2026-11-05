@@ -19,7 +19,7 @@
 }
 
 .alert-warning {
-  border-left-color: #b26a00;
+  border-left-color: var(--warning);
 }
 
 .alert-info {
@@ -34,12 +34,13 @@
   border-radius: 50%;
   font-weight: 700;
   font-size: 0.85rem;
-  color: #fff;
+  /* White in light mode; dark on the light accent of dark mode (white was unreadable). */
+  color: var(--surface);
   background: var(--accent);
 }
 
 .alert-warning .alert-icon {
-  background: #b26a00;
+  background: var(--warning);
 }
 
 .alert-message {
@@ -112,12 +113,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.guest-notice-actions a {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
 }
 
 .back-link {

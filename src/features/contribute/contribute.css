@@ -8,7 +8,7 @@
   margin: 12px 0;
   overflow: hidden;
   container-type: inline-size;
-  background: var(--surface, #fff);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
 }
@@ -30,7 +30,7 @@
 }
 
 .contribute-word.masked {
-  color: var(--muted, #666);
+  color: var(--muted);
   background: var(--border);
   border-bottom: 0;
 }
