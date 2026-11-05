@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'react-router';
+import { APP_BUILT, APP_COMMIT } from '../app/build-info';
 import { feedbackLink } from '../app/feedback';
+import { formatIsoDate } from '../lib/dates';
 import { t } from '../i18n/pt-PT';
 
 const REPO_URL = 'https://github.com/pmmrb1967/faturometro';
 const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 
-/** Copyright and licence, at the bottom of every page. */
+/** Copyright, licence and the running version, at the bottom of every page. */
 export function LegalFooter({ className = 'legal-footer' }: { className?: string }) {
   const { pathname } = useLocation();
   return (
@@ -19,6 +21,7 @@ export function LegalFooter({ className = 'legal-footer' }: { className?: string
       <a href={REPO_URL} rel="noreferrer">
         {t.legal.source}
       </a>
+      <p>{t.install.version(APP_COMMIT, formatIsoDate(APP_BUILT))}</p>
     </footer>
   );
 }
