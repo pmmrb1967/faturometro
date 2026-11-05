@@ -2,11 +2,9 @@ import { FeedbackLinks } from '../../components/FeedbackLinks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
-import { APP_BUILT, APP_COMMIT } from '../../app/build-info';
 import { Field } from '../../components/Field';
 import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
-import { formatIsoDate } from '../../lib/dates';
 import {
   changeAccountPassword,
   disableSync,
@@ -552,7 +550,6 @@ function AppSection() {
       <p>{t.install.intro}</p>
       <InstallButton />
       <p className="muted">{t.install.dataNote}</p>
-      <p className="muted">{t.install.version(APP_COMMIT, formatIsoDate(APP_BUILT))}</p>
     </section>
   );
 }

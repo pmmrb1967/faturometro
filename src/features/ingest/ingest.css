@@ -42,7 +42,11 @@
 
 .action-primary,
 .action-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
+  text-decoration: none;
   padding: 10px 18px;
   font: inherit;
   font-weight: 700;

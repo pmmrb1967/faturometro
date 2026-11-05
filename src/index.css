@@ -223,6 +223,12 @@ a.topbar-lock {
   .topbar-lock {
     padding: 6px 10px;
   }
+
+  /* Six tabs on a 360-390 px phone: "Definições" fits whole at this size. */
+  .nav-item {
+    font-size: 0.75rem;
+    padding-inline: 0;
+  }
 }
 
 /* Only on wide screens, where the menu is at the side. */
@@ -383,6 +389,11 @@ a.topbar-lock {
 
 .install-done {
   margin: 0;
+}
+
+/* Plain links in the pages (not buttons, nav or footer, which have their own colours). */
+.content a:not([class]) {
+  color: var(--accent);
 }
 
 /* Links that look like secondary buttons (feedback emails). */
