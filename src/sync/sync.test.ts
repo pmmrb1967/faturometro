@@ -22,6 +22,7 @@ import {
 } from './account';
 import type { Invoice } from '../domain/types';
 import { chunk, monthsBefore } from './files';
+import { SYNCED_TABLES } from './engine';
 
 const ITERATIONS = 1_000;
 const SERVER = 'https://sync.test';
@@ -202,6 +203,57 @@ describe('sync between two devices', () => {
     expect(serverDb.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 0 });
     // Local data stays.
     expect(await a.repos.contracts.get('c1')).toBeDefined();
+  });
+});
+
+describe('tables added by a newer version', () => {
+  function income(id: string) {
+    return {
+      id,
+      kind: 'salary' as const,
+      name: 'Ordenado',
+      amountCents: 150000,
+      everyMonths: 1 as const,
+      dueDay: 25,
+      startMonth: '2026-10',
+      createdAt: '2026-10-30T10:00:00.000Z',
+    };
+  }
+
+  it('pulls again from the start what an older version skipped', async () => {
+    const a = await deviceA();
+    await a.repos.incomes.put(income('i1'));
+    await runSync({ ...a, api });
+
+    const b = await deviceB();
+    const synced = (await runSync({ ...b, api })).profile;
+    // An older version did not know "incomes": it skipped them and moved the cursor on.
+    await b.db.incomes.clear();
+    const older = {
+      ...synced,
+      sync: { ...synced.sync!, pulledTables: SYNCED_TABLES.filter((t) => t !== 'incomes') },
+    };
+    const updated = await runSync({ ...b, profile: older, api });
+    expect(await b.repos.incomes.get('i1')).toMatchObject({ name: 'Ordenado' });
+    expect(updated.profile.sync?.pulledTables).toEqual([...SYNCED_TABLES]);
+
+    // Once caught up, it continues from the cursor.
+    const again = await runSync({ ...b, profile: updated.profile, api });
+    expect(again.result.received).toBe(0);
+  });
+
+  it('pulls everything once on a profile saved before the tables were recorded', async () => {
+    const a = await deviceA();
+    await a.repos.incomes.put(income('i1'));
+    await runSync({ ...a, api });
+
+    const b = await deviceB();
+    const synced = (await runSync({ ...b, api })).profile;
+    await b.db.incomes.clear();
+    const legacy: ProfileSync = { ...synced.sync! };
+    delete legacy.pulledTables;
+    await runSync({ ...b, profile: { ...synced, sync: legacy }, api });
+    expect(await b.repos.incomes.get('i1')).toBeDefined();
   });
 });
 

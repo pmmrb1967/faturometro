@@ -30,6 +30,11 @@ export interface ProfileSync {
   token: EncryptedBlob;
   /** Last server sequence number received. */
   lastPulledSeq: number;
+  /**
+   * Tables this device knew at its last pull. An older version skips tables it does not
+   * know yet but still moves `lastPulledSeq` on; missing ones here mean pulling from the start.
+   */
+  pulledTables?: string[];
   /** Latest local `updatedAt` already sent. */
   lastPushedAt: string;
   lastSyncAt?: string;

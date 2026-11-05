@@ -24,7 +24,7 @@ import {
   type WrappedMasterKey,
 } from '../lib/crypto';
 import { SyncApi, SyncHttpError } from './api';
-import { syncNow, type SyncResult } from './engine';
+import { SYNCED_TABLES, syncNow, type SyncResult } from './engine';
 import { download, removeAllFiles, syncFiles, type FileSyncResult } from './files';
 
 export type SyncErrorCode =
@@ -186,7 +186,10 @@ export async function runSync(input: {
   let files: FileSyncResult | undefined;
   try {
     if (!sync.accountId) sync = { ...sync, accountId: (await api.account(token)).id };
-    result = await syncNow(input.repos, api, token, sync);
+    // Tables added since the last pull were skipped by the older version: pull from the start
+    // (last write wins, so what is already here is not applied again).
+    const missesTables = SYNCED_TABLES.some((table) => !sync.pulledTables?.includes(table));
+    result = await syncNow(input.repos, api, token, missesTables ? { ...sync, lastPulledSeq: 0 } : sync);
     if (sync.files) files = await syncFiles(input.repos, api, token, input.masterKey);
   } catch (error) {
     if (await wasRemoved(error, api, sync)) {
@@ -201,6 +204,7 @@ export async function runSync(input: {
     ...sync,
     lastPulledSeq: result.lastPulledSeq,
     lastPushedAt: result.lastPushedAt,
+    pulledTables: [...SYNCED_TABLES],
     lastSyncAt: new Date().toISOString(),
     admin: result.admin,
     ...(result.contributions !== undefined ? { contributions: result.contributions } : {}),
