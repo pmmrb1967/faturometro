@@ -7,6 +7,7 @@ import {
   expenseActive,
   expenseAmount,
   expenseDueDate,
+  groupStatements,
   MONTH_ORDERS,
   monthOf,
   monthSummary,
@@ -136,6 +137,8 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
   const [showExpenses, setShowExpenses] = useState(false);
   const [order, setOrder] = useRememberedOrder('faturometro.month.order', MONTH_ORDERS);
+  /** Statements (Via Verde) showing their invoices. */
+  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const [shownMonth, setShownMonth] = useState(month);
   if (month !== shownMonth) {
     setShownMonth(month);
@@ -175,6 +178,9 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
     .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
 
   const nameOf = (item: MonthItem): string => {
+    if (item.parts) {
+      return copy.statement(data.contracts.get(item.contractId ?? '')?.label ?? '');
+    }
     if (item.kind === 'expense') {
       return data.expenses.find((expense) => expense.id === item.expenseId)?.name ?? '';
     }
@@ -184,24 +190,52 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
     return [provider, contract?.label].filter(Boolean).join(' — ');
   };
 
-  async function setPaid(item: MonthItem, paid: boolean) {
+  /** Issuer of one invoice of a statement (Brisa, Infraestruturas de Portugal…). */
+  const issuerOf = (item: MonthItem): string =>
+    data.providers.get(data.invoices.get(item.invoiceId ?? '')?.providerId ?? '')?.name ?? '';
+
+  async function markPaid(item: MonthItem, paid: boolean) {
     const target = {
       id: item.paymentId,
       ...(item.invoiceId ? { invoiceId: item.invoiceId } : {}),
       ...(item.expenseId ? { expenseId: item.expenseId, month } : {}),
     };
     if (paid) {
-      const payment: Omit<Payment, 'updatedAt'> = { ...target, paidOn: date };
+      // A receipt (Via Verde) unticked and ticked again: paid when issued, not today.
+      const invoice = data?.invoices.get(item.invoiceId ?? '');
+      const receipt =
+        invoice && data?.contracts.get(invoice.contractId)?.usageBased
+          ? invoice.issueDate
+          : undefined;
+      const payment: Omit<Payment, 'updatedAt'> = { ...target, paidOn: receipt ?? date };
       await repos.payments.put(payment);
     } else if (uncheckAction(item) === 'unpaid') {
-      // The direct debit failed: say so, or the app marks it as paid again.
+      // The direct debit failed (or the receipt was not paid): say so, or the app marks it again.
       const payment: Omit<Payment, 'updatedAt'> = { ...target, unpaid: true };
       await repos.payments.put(payment);
     } else {
       await repos.payments.remove(item.paymentId);
     }
+  }
+
+  /** A statement marks each of its invoices. */
+  async function setPaid(item: MonthItem, paid: boolean) {
+    for (const part of item.parts ?? [item]) {
+      // Ticking a statement leaves alone the invoices already paid.
+      if (paid && part.paidOn) continue;
+      if (!paid && !part.paidOn) continue;
+      await markPaid(part, paid);
+    }
     // The prescription and payment alerts depend on it.
     await refreshAlerts(repos);
+  }
+
+  function toggleOpen(key: string) {
+    setOpened((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
   }
 
   async function saveExpense(expense: SavedExpense | null) {
@@ -251,74 +285,104 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
         <p className="muted">{copy.empty}</p>
       ) : (
         <ul className="list">
-          {sortMonthItems(summary.items, order).map((item) => {
-            const name = nameOf(item);
-            if (item.kind === 'forecast') {
+          {sortMonthItems(groupStatements(summary.items, invoices, contracts), order).map(
+            (item) => {
+              const name = nameOf(item);
+              if (item.kind === 'forecast') {
+                return (
+                  <li key={item.paymentId} className="list-item month-item is-forecast">
+                    <span className="month-check">{copy.forecastTag}</span>
+                    <strong>{name}</strong>
+                    <span className="amount">
+                      {copy.forecastAmount(formatCents(item.amountCents))}
+                    </span>
+                    <span className="meta">
+                      {item.debitDate
+                        ? copy.forecastDebit(formatIsoDate(item.date))
+                        : item.hasDueDate
+                          ? copy.forecastDue(formatIsoDate(item.date))
+                          : copy.forecastIssued(formatIsoDate(item.date))}
+                      {item.late && ` · ${copy.forecastLate}`}
+                    </span>
+                  </li>
+                );
+              }
+              const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
+              if (expense && editing?.id === expense.id && editing.place === 'line') {
+                return (
+                  <li key={item.paymentId}>
+                    <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                  </li>
+                );
+              }
               return (
-                <li key={item.paymentId} className="list-item month-item is-forecast">
-                  <span className="month-check">{copy.forecastTag}</span>
+                <li
+                  key={item.paymentId}
+                  className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}
+                >
+                  <label className="month-check">
+                    <input
+                      type="checkbox"
+                      checked={item.paidOn !== undefined}
+                      aria-label={copy.paidLabel(name)}
+                      onChange={(event) => void setPaid(item, event.target.checked)}
+                    />
+                    <span aria-hidden="true">{copy.paidCheck}</span>
+                  </label>
                   <strong>{name}</strong>
-                  <span className="amount">
-                    {copy.forecastAmount(formatCents(item.amountCents))}
-                  </span>
+                  <span className="amount">{formatCents(item.amountCents)}</span>
                   <span className="meta">
                     {item.debitDate
-                      ? copy.forecastDebit(formatIsoDate(item.date))
+                      ? copy.debit(formatIsoDate(item.debitDate))
                       : item.hasDueDate
-                        ? copy.forecastDue(formatIsoDate(item.date))
-                        : copy.forecastIssued(formatIsoDate(item.date))}
-                    {item.late && ` · ${copy.forecastLate}`}
+                        ? copy.due(formatIsoDate(item.date))
+                        : item.autoPaid
+                          ? copy.issuedOn(formatIsoDate(item.date))
+                          : copy.issued(formatIsoDate(item.date))}
+                    {item.paidOn &&
+                      ` · ${
+                        item.autoPaid && item.debitDate
+                          ? copy.autoPaid
+                          : item.autoPaid
+                            ? copy.receiptPaid(formatIsoDate(item.paidOn))
+                            : copy.paidOn(formatIsoDate(item.paidOn))
+                      }`}
+                    {item.kind === 'expense' && ` · ${copy.expenseTag}`}
                   </span>
+                  {item.parts && (
+                    <div className="month-parts">
+                      <button
+                        type="button"
+                        className="action-secondary action-compact"
+                        aria-expanded={opened.has(item.paymentId)}
+                        onClick={() => toggleOpen(item.paymentId)}
+                      >
+                        {opened.has(item.paymentId)
+                          ? copy.statementHide
+                          : copy.statementShow(item.parts.length)}
+                      </button>
+                      {opened.has(item.paymentId) && (
+                        <ul>
+                          {item.parts.map((part) => (
+                            <li key={part.paymentId}>
+                              <span>{issuerOf(part)}</span>
+                              <span className="amount">{formatCents(part.amountCents)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                  {expense && (
+                    <ExpenseActions
+                      expense={expense}
+                      onEdit={() => setEditing({ id: expense.id, place: 'line' })}
+                    />
+                  )}
                 </li>
               );
-            }
-            const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
-            if (expense && editing?.id === expense.id && editing.place === 'line') {
-              return (
-                <li key={item.paymentId}>
-                  <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
-                </li>
-              );
-            }
-            return (
-              <li
-                key={item.paymentId}
-                className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}
-              >
-                <label className="month-check">
-                  <input
-                    type="checkbox"
-                    checked={item.paidOn !== undefined}
-                    aria-label={copy.paidLabel(name)}
-                    onChange={(event) => void setPaid(item, event.target.checked)}
-                  />
-                  <span aria-hidden="true">{copy.paidCheck}</span>
-                </label>
-                <strong>{name}</strong>
-                <span className="amount">{formatCents(item.amountCents)}</span>
-                <span className="meta">
-                  {item.debitDate
-                    ? copy.debit(formatIsoDate(item.debitDate))
-                    : item.hasDueDate
-                      ? copy.due(formatIsoDate(item.date))
-                      : copy.issued(formatIsoDate(item.date))}
-                  {item.paidOn &&
-                    ` · ${
-                      item.autoPaid && item.debitDate
-                        ? copy.autoPaid
-                        : copy.paidOn(formatIsoDate(item.paidOn))
-                    }`}
-                  {item.kind === 'expense' && ` · ${copy.expenseTag}`}
-                </span>
-                {expense && (
-                  <ExpenseActions
-                    expense={expense}
-                    onEdit={() => setEditing({ id: expense.id, place: 'line' })}
-                  />
-                )}
-              </li>
-            );
-          })}
+            },
+          )}
         </ul>
       )}
 

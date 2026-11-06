@@ -30,6 +30,8 @@ export interface MonthItem {
   autoPaid?: boolean;
   /** A forecast whose date has passed: the invoice has not been added. */
   late?: boolean;
+  /** One statement (Via Verde): its invoices, shown together (see `groupStatements`). */
+  parts?: MonthItem[];
 }
 
 export interface MonthSummary {
@@ -133,6 +135,18 @@ export function debitDateOf(
 }
 
 /**
+ * Day an invoice pays itself: the direct debit, or the issue date of a
+ * statement of a contract by usage (Via Verde "Extrato/Recibo": a receipt,
+ * already paid when issued).
+ */
+export function autoPaidDateOf(
+  invoice: Pick<Invoice, 'directDebitDate' | 'dueDate' | 'issueDate'>,
+  contract?: Pick<Contract, 'directDebit' | 'usageBased'>,
+): string | undefined {
+  return debitDateOf(invoice, contract) ?? (contract?.usageBased ? invoice.issueDate : undefined);
+}
+
+/**
  * Whether an invoice is paid: the user's mark, else automatically from the
  * direct debit day on, unless the user said it was not paid (debit failed).
  */
@@ -188,11 +202,19 @@ export function monthSummary(
 
   const items: MonthItem[] = [];
   for (const invoice of invoices) {
-    const debitDate = debitDateOf(invoice, contracts.get(invoice.contractId));
+    const contract = contracts.get(invoice.contractId);
+    const debitDate = debitDateOf(invoice, contract);
     const date = debitDate ?? invoice.dueDate ?? invoice.issueDate;
     if (monthOf(date) !== month) continue;
     const id = paymentId({ invoiceId: invoice.id });
-    const paid = invoicePaid(byId.get(id), debitDate, options.today ?? '');
+    const marked = invoicePaid(
+      byId.get(id),
+      autoPaidDateOf(invoice, contract),
+      options.today ?? '',
+    );
+    // A receipt is paid when issued, also when ticked by hand (before the app knew it was one).
+    const paid =
+      marked && contract?.usageBased ? { paidOn: invoice.issueDate, auto: true } : marked;
     items.push({
       paymentId: id,
       kind: 'invoice',
@@ -252,4 +274,64 @@ export function monthSummary(
     toPayCents: totalCents - paidCents,
     forecastCents,
   };
+}
+
+/**
+ * The invoices of one statement (contract by usage, same issue date: the
+ * issuers of a Via Verde statement) as one line with their total, in the
+ * place of the first one. It is paid when all of them are. Other items are
+ * left as they are; the month total does not change.
+ */
+export function groupStatements(
+  items: readonly MonthItem[],
+  invoices: readonly Invoice[],
+  contracts: readonly Contract[],
+): MonthItem[] {
+  const invoiceById = new Map(invoices.map((invoice) => [invoice.id, invoice]));
+  const usageBased = new Set(
+    contracts.filter((contract) => contract.usageBased).map((contract) => contract.id),
+  );
+  const keyOf = (item: MonthItem): string | undefined => {
+    const invoice = item.kind === 'invoice' ? invoiceById.get(item.invoiceId ?? '') : undefined;
+    return invoice && usageBased.has(invoice.contractId)
+      ? `statement-${invoice.contractId}-${invoice.issueDate}`
+      : undefined;
+  };
+  const byKey = new Map<string, MonthItem[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    if (key) byKey.set(key, [...(byKey.get(key) ?? []), item]);
+  }
+
+  const lines: MonthItem[] = [];
+  const done = new Set<string>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const parts = key ? byKey.get(key)! : [];
+    if (!key || parts.length < 2) {
+      lines.push(item);
+      continue;
+    }
+    if (done.has(key)) continue;
+    done.add(key);
+    const paidOn = parts.every((part) => part.paidOn)
+      ? parts
+          .map((part) => part.paidOn!)
+          .sort()
+          .at(-1)
+      : undefined;
+    lines.push({
+      paymentId: key,
+      kind: 'invoice',
+      contractId: invoiceById.get(item.invoiceId!)!.contractId,
+      date: item.date,
+      hasDueDate: item.hasDueDate,
+      ...(item.debitDate ? { debitDate: item.debitDate } : {}),
+      amountCents: parts.reduce((sum, part) => sum + part.amountCents, 0),
+      ...(paidOn ? { paidOn } : {}),
+      ...(paidOn && parts.every((part) => part.autoPaid) ? { autoPaid: true } : {}),
+      parts,
+    });
+  }
+  return lines;
 }

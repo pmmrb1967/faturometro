@@ -8,7 +8,7 @@ import { insuranceRenewalDate } from './insurance';
 import { auditInvoice, needsAuditAlert, type AuditFinding } from './audit';
 import { oldCharges, prescriptionApplies } from './prescription';
 import { isSocialDiscount, socialTariffState, socialTariffSuggestions } from './social-tariff';
-import { debitDateOf, invoicePaid, paymentId } from './month';
+import { autoPaidDateOf, debitDateOf, invoicePaid, paymentId } from './month';
 import type {
   Alert,
   Contract,
@@ -465,7 +465,7 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
   const isPaid = (invoice: Invoice) =>
     invoicePaid(
       payments.get(paymentId({ invoiceId: invoice.id })),
-      debitDateOf(invoice, contractById.get(invoice.contractId)),
+      autoPaidDateOf(invoice, contractById.get(invoice.contractId)),
       input.today,
     ) !== null;
   // Users who never mark payments would get the due-date alert for every invoice.

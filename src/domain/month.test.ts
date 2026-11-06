@@ -5,6 +5,7 @@ import {
   expenseActive,
   expenseAmount,
   expenseDueDate,
+  groupStatements,
   invoicePaid,
   monthSummary,
   paymentId,
@@ -14,7 +15,7 @@ import {
   type MonthItem,
   type MonthOrder,
 } from './month';
-import type { Invoice, Payment, RecurringExpense } from './types';
+import type { Contract, Invoice, Payment, RecurringExpense } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
 
@@ -287,5 +288,109 @@ describe('direct debit', () => {
     const after = monthSummary('2026-10', [debited], [], [], { today: '2026-10-24' });
     expect(after.items[0]).toMatchObject({ paidOn: '2026-10-23', autoPaid: true });
     expect(after.paidCents).toBe(5051);
+  });
+});
+
+describe('Via Verde statement (Extrato/Recibo, contract by usage)', () => {
+  const contract: Contract = {
+    ...META,
+    id: 'vv',
+    providerId: 'p1',
+    sector: 'transport',
+    label: 'Via Verde',
+    active: true,
+    usageBased: true,
+    createdAt: META.updatedAt,
+  };
+  const other: Contract = { ...contract, id: 'c1', label: 'Casa', usageBased: false };
+  const toll = (id: string, totalCents: number, issueDate = '2026-05-31'): Invoice => ({
+    ...invoice(id, issueDate, totalCents),
+    contractId: 'vv',
+  });
+  const statement = [toll('a', 720), toll('b', 149), toll('c', 55)];
+
+  it('is paid on its issue date: it is a receipt', () => {
+    const summary = monthSummary('2026-05', statement, [], [], {
+      today: '2026-11-06',
+      contracts: [contract],
+    });
+    expect(summary.items.map((item) => item.paidOn)).toEqual([
+      '2026-05-31',
+      '2026-05-31',
+      '2026-05-31',
+    ]);
+    expect(summary.items.every((item) => item.autoPaid)).toBe(true);
+    expect(summary.paidCents).toBe(924);
+    // Unticking says it was not paid after all.
+    expect(uncheckAction(summary.items[0]!)).toBe('unpaid');
+    const unpaid = monthSummary(
+      '2026-05',
+      statement,
+      [],
+      [{ ...META, id: 'invoice-a', unpaid: true }],
+      {
+        today: '2026-11-06',
+        contracts: [contract],
+      },
+    );
+    expect(unpaid.items.find((item) => item.invoiceId === 'a')?.paidOn).toBeUndefined();
+  });
+
+  it('ticked by hand before (as paid today) still counts as paid on its issue date', () => {
+    const summary = monthSummary('2026-05', statement, [], [paid('invoice-a', '2026-11-06')], {
+      today: '2026-11-06',
+      contracts: [contract],
+    });
+    expect(summary.items.find((item) => item.invoiceId === 'a')).toMatchObject({
+      paidOn: '2026-05-31',
+      autoPaid: true,
+    });
+  });
+
+  it('other invoices without a due date are not paid by themselves', () => {
+    const summary = monthSummary('2026-05', [invoice('x', '2026-05-31', 100)], [], [], {
+      today: '2026-11-06',
+      contracts: [other],
+    });
+    expect(summary.items[0]?.paidOn).toBeUndefined();
+  });
+
+  it('the invoices of one statement make one line, with their total', () => {
+    const invoices = [...statement, toll('d', 300, '2026-05-15'), invoice('x', '2026-05-31', 100)];
+    const summary = monthSummary('2026-05', invoices, [], [], {
+      today: '2026-11-06',
+      contracts: [contract, other],
+    });
+    const lines = groupStatements(summary.items, invoices, [contract, other]);
+    const group = lines.find((line) => line.parts);
+    expect(group).toMatchObject({
+      kind: 'invoice',
+      contractId: 'vv',
+      date: '2026-05-31',
+      amountCents: 924,
+      paidOn: '2026-05-31',
+      autoPaid: true,
+    });
+    expect(group?.parts?.map((part) => part.invoiceId)).toEqual(['a', 'b', 'c']);
+    // An invoice alone on its day and the other contracts stay as they are.
+    expect(lines).toHaveLength(3);
+    // Same total for the month.
+    expect(lines.reduce((sum, line) => sum + line.amountCents, 0)).toBe(summary.totalCents);
+  });
+
+  it('a statement is paid only when all of its invoices are', () => {
+    const summary = monthSummary(
+      '2026-05',
+      statement,
+      [],
+      [{ ...META, id: 'invoice-b', unpaid: true }],
+      {
+        today: '2026-11-06',
+        contracts: [contract],
+      },
+    );
+    const [group] = groupStatements(summary.items, statement, [contract]);
+    expect(group?.paidOn).toBeUndefined();
+    expect(group?.parts).toHaveLength(3);
   });
 });
