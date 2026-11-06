@@ -40,7 +40,7 @@ export const MISSING_AFTER_USUAL_DAYS = 5;
 export const MISSING_BEFORE_DUE_DAYS = 3;
 const PRICE_HISTORY = 3;
 /** Total-based price rule only where the total does not depend on consumption. */
-const FIXED_PRICE_SECTORS: readonly Sector[] = ['telecom', 'other'];
+const FIXED_PRICE_SECTORS: readonly Sector[] = ['telecom', 'transport', 'other'];
 const ENERGY_SECTORS: readonly Sector[] = ['electricity', 'gas'];
 
 export type AlertDraft = Omit<Alert, 'id' | 'updatedAt' | 'createdAt' | 'message'> & {

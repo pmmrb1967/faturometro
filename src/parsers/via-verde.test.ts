@@ -23,7 +23,7 @@ describe('via-verde parser', () => {
 
     const result = viaVerdeParser.parse(ctx, qr);
     expect(result.warnings).toEqual([]);
-    expect(result.sector).toBe('other');
+    expect(result.sector).toBe('transport');
     expect(result.contractLabel?.value).toBe('Via Verde');
     expect(result.usageBased).toBe(true);
     // Cross-check with the fiscal QR code of this invoice, not another one of the statement.

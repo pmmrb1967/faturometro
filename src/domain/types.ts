@@ -2,7 +2,8 @@
 import type { Cents } from '../lib/money';
 import type { MeterCycle, MeterPeriod, PeriodsMap } from './time-cycles';
 
-export type Sector = 'telecom' | 'electricity' | 'gas' | 'water' | 'insurance' | 'other';
+export type Sector =
+  'telecom' | 'electricity' | 'gas' | 'water' | 'insurance' | 'transport' | 'other';
 export type Confidence = 'high' | 'low';
 export type Source = 'qr' | 'parser' | 'ai' | 'manual';
 export type IsoDate = string;

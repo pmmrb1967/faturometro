@@ -92,7 +92,7 @@ function detect(ctx: ParserContext): boolean {
 
 function parse(ctx: ParserContext, qr?: FiscalQr): ExtractedInvoice {
   const result = emptyExtraction();
-  result.sector = 'other';
+  result.sector = 'transport';
   result.contractLabel = { value: NAME, confidence: 'high' };
   result.contractHolder = { value: { nif: VIA_VERDE_NIF, name: NAME }, confidence: 'high' };
   result.usageBased = true;
@@ -141,9 +141,9 @@ function parse(ctx: ParserContext, qr?: FiscalQr): ExtractedInvoice {
 export const viaVerdeParser: Parser = {
   id: ID,
   name: NAME,
-  version: '1.0.0',
+  version: '1.1.0',
   updated: '2026-11-06',
-  sectors: ['other'],
+  sectors: ['transport'],
   issuerNifs: [VIA_VERDE_NIF],
   detect,
   parse,

@@ -7,6 +7,7 @@ export const SECTOR_GROUPS = [
   { id: 'telecom', sectors: ['telecom'] },
   { id: 'water', sectors: ['water'] },
   { id: 'insurance', sectors: ['insurance'] },
+  { id: 'transport', sectors: ['transport'] },
   { id: 'other', sectors: ['other'] },
 ] as const satisfies readonly { id: string; sectors: readonly Sector[] }[];
 

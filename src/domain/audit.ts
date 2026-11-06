@@ -41,7 +41,7 @@ export interface InvoiceAudit {
 }
 
 /** Sectors where a contracted monthly price makes sense (fixed price, not consumption). */
-export const MONTHLY_PRICE_SECTORS: readonly Sector[] = ['telecom', 'other'];
+export const MONTHLY_PRICE_SECTORS: readonly Sector[] = ['telecom', 'transport', 'other'];
 const ENERGY_SECTORS: readonly Sector[] = ['electricity', 'gas', 'water'];
 const FIXED_KINDS: readonly InvoiceLine['kind'][] = ['base_fee', 'addon', 'equipment'];
 /** Usage (calls, roaming…) comes and goes with consumption: not a new charge. */

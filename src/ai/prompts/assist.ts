@@ -41,6 +41,7 @@ const SECTOR_NAMES: Record<Contract['sector'], string> = {
   water: 'água',
   telecom: 'telecomunicações',
   insurance: 'seguro',
+  transport: 'portagens e estacionamento',
   other: 'outra despesa',
 };
 

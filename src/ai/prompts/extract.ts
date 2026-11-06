@@ -12,9 +12,17 @@ import type { InvoiceLine, Reading, Sector } from '../../domain/types';
 import { formatCents, parseDotDecimalAmount } from '../../lib/money';
 import type { ExtractedInvoice, ExtractedLine, ExtractedReading } from '../../parsers/types';
 
-export const EXTRACT_PROMPT_VERSION = 'extract-v3';
+export const EXTRACT_PROMPT_VERSION = 'extract-v4';
 
-const SECTORS = ['electricity', 'gas', 'water', 'telecom', 'insurance', 'other'] as const;
+const SECTORS = [
+  'electricity',
+  'gas',
+  'water',
+  'telecom',
+  'insurance',
+  'transport',
+  'other',
+] as const;
 const LINE_KINDS = [
   'base_fee',
   'addon',
@@ -38,7 +46,7 @@ Regras:
 - Datas no formato AAAA-MM-DD.
 - Valores em euros com ponto decimal e sem separador de milhares: "1234.56". Descontos com sinal negativo: "-5.00".
 - Quantidades com ponto decimal: "123.5".
-- sector: electricity, gas, water, telecom, insurance (recibos de prémio de seguros) ou other (portagens e o resto).
+- sector: electricity, gas, water, telecom, insurance (recibos de prémio de seguros), transport (portagens, estacionamento, passes de transportes, combustível) ou other (o resto).
 - docId: o número do documento tal como impresso (ex.: "FT 2026/123").
 - periodStart/periodEnd: o período faturado (consumo, mensalidade em telecomunicações, ou período coberto pelo prémio de um seguro).
 - loyaltyEndDate: fim do período de fidelização, se indicado.

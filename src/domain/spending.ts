@@ -36,6 +36,7 @@ const SECTOR_CATEGORY: Record<Sector, SpendingCategory> = {
   gas: 'bills',
   water: 'bills',
   insurance: 'insurance',
+  transport: 'transport',
   other: 'other',
 };
 

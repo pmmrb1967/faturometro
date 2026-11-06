@@ -13,7 +13,15 @@ import './household.css';
 
 const copy = t.household;
 /** Bottom to top in each month's bar. */
-const SECTOR_ORDER: Sector[] = ['electricity', 'gas', 'water', 'telecom', 'insurance', 'other'];
+const SECTOR_ORDER: Sector[] = [
+  'electricity',
+  'gas',
+  'water',
+  'telecom',
+  'insurance',
+  'transport',
+  'other',
+];
 const EXPENSES = 'expenses';
 const ONE_OFF = 'oneOff';
 const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });

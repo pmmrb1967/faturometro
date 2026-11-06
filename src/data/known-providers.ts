@@ -20,5 +20,6 @@ export const KNOWN_WITHOUT_READER: Record<SectorGroup, readonly string[]> = {
   telecom: ['Vodafone'],
   water: [],
   insurance: ['Ageas', 'Allianz', 'Zurich', 'Lusitania', 'Caravela'],
+  transport: [],
   other: [],
 };

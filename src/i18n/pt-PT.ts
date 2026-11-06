@@ -1176,7 +1176,8 @@ export const t = {
         'Já existe uma conta sincronizada com este email. Para a usar aqui, entra com ela num perfil novo (“Entrar com conta sincronizada”).',
       wrong_credentials: 'Email ou palavra-passe errados.',
       locked: 'Demasiadas tentativas. Espera 15 minutos e tenta de novo.',
-      too_many: 'Foram criadas várias contas a partir desta ligação. Espera um minuto e tenta de novo.',
+      too_many:
+        'Foram criadas várias contas a partir desta ligação. Espera um minuto e tenta de novo.',
       email_taken_locally: 'Já existe um perfil com este email neste dispositivo.',
       offline: 'Sem ligação ao servidor. Verifica a internet ou o endereço do servidor.',
       session_expired:
@@ -1285,6 +1286,7 @@ export const t = {
     telecom: 'Telecomunicações',
     water: 'Água e resíduos',
     insurance: 'Seguros',
+    transport: 'Transportes',
     other: 'Outras despesas',
     invoices: (count: number, total: string) =>
       `${count === 1 ? '1 fatura' : `${count} faturas`} · ${total} nos últimos 12 meses`,
@@ -1311,6 +1313,7 @@ export const t = {
     water: 'Água',
     telecom: 'Telecomunicações',
     insurance: 'Seguros',
+    transport: 'Transportes',
     other: 'Outras despesas',
   },
   invoices: {
@@ -1700,6 +1703,7 @@ export const t = {
         water: 'fornecimento de água',
         telecom: 'serviços de telecomunicações',
         insurance: 'seguros',
+        transport: 'serviço de portagens e estacionamento',
         other: 'serviço',
       },
       header: (nif: string, provider: string, date: string) =>

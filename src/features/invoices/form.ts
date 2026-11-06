@@ -20,6 +20,7 @@ export const SECTORS: readonly Sector[] = [
   'water',
   'telecom',
   'insurance',
+  'transport',
   'other',
 ];
 
