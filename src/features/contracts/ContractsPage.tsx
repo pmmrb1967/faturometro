@@ -12,6 +12,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import type { Invoice } from '../../domain/types';
 import { formatCents } from '../../lib/money';
+import { statementBills } from '../../domain/statements';
 import { useSession } from '../auth/session-context';
 import { CalendarExport } from './CalendarExport';
 import '../invoices/invoices.css';
@@ -58,7 +59,8 @@ export function ContractsPage() {
             contract,
             provider: providerById.get(contract.providerId),
             count: own.length,
-            last: own[0],
+            // Tolls: the latest statement, all its invoices (one per issuer) added up.
+            last: contract.usageBased ? statementBills(own).at(-1) : own[0],
             social:
               socialTariffState(contract, own, linesOf)?.state ??
               (suggested.has(contract.id) ? ('suggested' as const) : undefined),

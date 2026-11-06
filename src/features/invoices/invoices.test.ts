@@ -5,7 +5,7 @@ import { ProfileDb } from '../../db/schema';
 import { createAccountKeys } from '../../lib/crypto';
 import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
 import { emptyExtraction, type ExtractedInvoice } from '../../parsers/types';
-import { buildDraft, defaultContractId, emptyForm, formFromQr } from './form';
+import { buildDraft, contractProviderNif, defaultContractId, emptyForm, formFromQr } from './form';
 import { DuplicateInvoiceError, saveInvoice } from './save';
 import type { TelecomService } from '../../domain/types';
 
@@ -332,6 +332,68 @@ describe('saveInvoice', () => {
     expect(await repos.documents.getByFileHash('file-1')).toBeUndefined();
   });
 
+  it('puts every issuer of a statement on one contract with its holder', async () => {
+    // Synthetic statement: two issuers (500000000, 500000018), contract with 510000002.
+    const parsedFor = (issuerName: string) => ({
+      parserId: 'statement',
+      providerName: issuerName,
+      parserVersion: '1.0.0',
+      extraction: {
+        ...emptyExtraction(),
+        sector: 'other' as const,
+        issuerName: { value: issuerName, confidence: 'high' as const },
+        contractLabel: { value: 'Portagens', confidence: 'high' as const },
+        contractHolder: {
+          value: { nif: '510000002', name: 'Titular' },
+          confidence: 'high' as const,
+        },
+        usageBased: true,
+      },
+      check: { validation: 'passed' as const, failures: [], confidence: {} },
+    });
+    const build = (raw: string, issuerName: string, contractId = '') => {
+      const parsed = parsedFor(issuerName);
+      const statementQr = qr(raw);
+      const { form } = formFromQr(statementQr, parsed);
+      const result = buildDraft(
+        { ...form, contractId },
+        { fileHash: 'statement', qr: statementQr, docKey: statementQr.docId!, parsed },
+        { providerKnown: false },
+      );
+      if (!result.ok) throw new Error('invalid draft');
+      return result.draft;
+    };
+    const first = build(QR, 'Emitente A');
+    expect(first.contractHolder).toEqual({ nif: '510000002', name: 'Titular' });
+    expect(first.contractDetails?.usageBased).toBe(true);
+
+    const a = await saveInvoice(repos, first, { keepOriginalFile: false });
+    const b = await saveInvoice(
+      repos,
+      build(
+        QR.replace('A:500000000', 'A:500000018').replace('G:FT 1/100', 'G:FT 2/100'),
+        'B',
+        a.contractId,
+      ),
+      { keepOriginalFile: false },
+    );
+
+    const contracts = await repos.contracts.list();
+    expect(contracts).toHaveLength(1);
+    const holder = (await repos.providers.findBy('nif', '510000002'))[0];
+    expect(contracts[0]).toMatchObject({
+      providerId: holder?.id,
+      label: 'Portagens',
+      sector: 'other',
+      usageBased: true,
+    });
+    expect(holder).toMatchObject({ name: 'Titular', sectors: ['other'] });
+    // Each invoice keeps its own issuer.
+    expect((await repos.providers.get(a.providerId))?.nif).toBe('500000000');
+    expect((await repos.providers.get(b.providerId))?.nif).toBe('500000018');
+    expect(b.contractId).toBe(a.contractId);
+  });
+
   it('saves what a parser read: lines, readings, contract details and validation', async () => {
     const extraction: ExtractedInvoice = {
       ...emptyExtraction(),
@@ -406,6 +468,18 @@ describe('saveInvoice', () => {
       loyaltyEndDate: '2027-06-30',
       electricity: { powerKva: 6.9, cycle: 'simple', socialTariff: true },
     });
+  });
+});
+
+describe('contractProviderNif', () => {
+  it('proposes the contracts of the holder when a statement names one', () => {
+    const extraction = {
+      ...emptyExtraction(),
+      contractHolder: { value: { nif: '510000002', name: 'Titular' }, confidence: 'high' as const },
+    };
+    expect(contractProviderNif('500000000', extraction)).toBe('510000002');
+    expect(contractProviderNif('500000000', emptyExtraction())).toBe('500000000');
+    expect(contractProviderNif('500000000')).toBe('500000000');
   });
 });
 

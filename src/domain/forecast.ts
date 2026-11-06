@@ -8,6 +8,7 @@
 import type { Cents } from '../lib/money';
 import { daysBetween, invoiceRhythm, median } from './alerts';
 import { isYearlyReceipt } from './insurance';
+import { statementBills } from './statements';
 import { addMonthsTo, debitDateOf, monthOf } from './month';
 import type { Contract, Invoice, Sector } from './types';
 
@@ -51,11 +52,12 @@ export function forecastInvoices(
   for (const contract of contracts) {
     if (!contract.active) continue;
     // Credit notes are not bills to pay, and would break the rhythm.
-    const history = invoices
+    const own = invoices
       .filter((invoice) => invoice.contractId === contract.id && invoice.totalCents > 0)
       .sort(
         (a, b) => a.issueDate.localeCompare(b.issueDate) || a.createdAt.localeCompare(b.createdAt),
       );
+    const history = contract.usageBased ? statementBills(own) : own;
     const latest = history.at(-1);
     if (!latest) continue;
     // A single yearly receipt is enough: the policy renews every year.
@@ -124,6 +126,7 @@ function estimate(
   date: string,
 ): Cents {
   const latest = history.at(-1)!;
+  if (contract.usageBased) return average(history.slice(-AVERAGE_INVOICES));
   if (!SEASONAL.has(contract.sector)) return renewed(contract, latest, date) ?? latest.totalCents;
   const yearAgo = history
     .map((invoice) => ({
@@ -133,8 +136,13 @@ function estimate(
     .filter(({ off }) => off <= SAME_SEASON_DAYS)
     .sort((a, b) => a.off - b.off)[0];
   if (yearAgo) return yearAgo.invoice.totalCents;
-  const recent = history.slice(-AVERAGE_INVOICES);
-  return Math.round(recent.reduce((sum, invoice) => sum + invoice.totalCents, 0) / recent.length);
+  return average(history.slice(-AVERAGE_INVOICES));
+}
+
+function average(invoices: readonly Invoice[]): Cents {
+  return Math.round(
+    invoices.reduce((sum, invoice) => sum + invoice.totalCents, 0) / invoices.length,
+  );
 }
 
 /**

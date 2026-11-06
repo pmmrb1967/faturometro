@@ -11,6 +11,7 @@ import { getSettings } from '../settings/settings';
 import {
   SECTORS,
   buildDraft,
+  contractProviderNif,
   defaultContractId,
   type FormBase,
   type FormErrors,
@@ -41,14 +42,16 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
   const [contractChoice, setContractChoice] = useState<string | null>(null);
 
   const nif = form.issuerNif.trim();
+  // A statement with several issuers (Via Verde) puts them all on its holder's contract.
+  const ownerNif = contractProviderNif(nif, base.parsed?.extraction);
   const known = useLiveQuery(async () => {
     if (!session || !isValidNif(nif)) return { provider: undefined, contracts: [] };
     const provider = (await session.repos.providers.findBy('nif', nif))[0];
-    const contracts = provider
-      ? await session.repos.contracts.findBy('providerId', provider.id)
-      : [];
+    const owner =
+      ownerNif === nif ? provider : (await session.repos.providers.findBy('nif', ownerNif))[0];
+    const contracts = owner ? await session.repos.contracts.findBy('providerId', owner.id) : [];
     return { provider, contracts };
-  }, [session, nif]);
+  }, [session, nif, ownerNif]);
 
   if (!session) return null;
   const { repos } = session;

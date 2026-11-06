@@ -142,6 +142,25 @@ describe('forecastInvoices', () => {
     expect(forecasts[0]).toMatchObject({ issueDate: '2026-11-05', amountCents: 5199 });
   });
 
+  it('usage-based statements (tolls): one a month, the average of the latest statements', () => {
+    const tolls = contract({ sector: 'other', label: 'Via Verde', usageBased: true });
+    // Each statement holds several invoices (one per issuer), all on the same day.
+    const invoices = [
+      invoice('a1', '2026-07-31', 1000),
+      invoice('a2', '2026-07-31', 500),
+      invoice('b1', '2026-08-31', 2000),
+      invoice('b2', '2026-08-31', 400),
+      invoice('c1', '2026-09-30', 900),
+      invoice('c2', '2026-09-30', 300),
+    ];
+    const forecasts = forecastInvoices([tolls], invoices, '2026-10-26', 2);
+    expect(forecasts.map((forecast) => [forecast.issueDate, forecast.amountCents])).toEqual([
+      ['2026-10-30', 1700],
+      ['2026-11-30', 1700],
+      ['2026-12-30', 1700],
+    ]);
+  });
+
   it('a rhythm that is not whole months goes by days', () => {
     const forecasts = forecastInvoices(
       [contract()],

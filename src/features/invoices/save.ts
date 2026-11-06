@@ -13,6 +13,8 @@ export interface InvoiceDraft {
   fileHash: string;
   issuerNif: string;
   providerName: string;
+  /** Who the contract is with, when not the issuer (a statement with several issuers). */
+  contractHolder?: { nif: string; name: string };
   sector: Sector;
   contract: { id: string } | { label: string; customerNumber?: string };
   docType: string;
@@ -43,6 +45,7 @@ export interface InvoiceDraft {
     | 'supplyPointId'
     | 'tariffName'
     | 'loyaltyEndDate'
+    | 'usageBased'
     | 'electricity'
     | 'gas'
     | 'telecom'
@@ -101,6 +104,15 @@ export async function saveInvoice(
   }
 
   const provider = await ensureProvider(repos, draft.issuerNif, draft.providerName, draft.sector);
+  const holder =
+    draft.contractHolder && draft.contractHolder.nif !== provider.nif
+      ? await ensureProvider(
+          repos,
+          draft.contractHolder.nif,
+          draft.contractHolder.name,
+          draft.sector,
+        )
+      : provider;
 
   let contract: Contract | undefined;
   if ('id' in draft.contract) {
@@ -110,7 +122,7 @@ export async function saveInvoice(
   } else {
     const newContract: Omit<Contract, 'updatedAt'> = {
       id: crypto.randomUUID(),
-      providerId: provider.id,
+      providerId: holder.id,
       sector: draft.sector,
       label: draft.contract.label.trim(),
       active: true,

@@ -158,7 +158,8 @@ function priceAlert(
 ): AlertDraft | null {
   const latest = history.at(-1);
   const previous = history.at(-2);
-  if (!latest || !previous) return null;
+  // Tolls and parking: the amount follows usage, there is no price to compare.
+  if (!latest || !previous || contract.usageBased) return null;
   const threshold = input.settings.priceIncreaseThresholdPct / 100;
   const make = (reason: string, before: number, after: number): AlertDraft => ({
     key: `${contract.id}:price_increase:${latest.id}`,

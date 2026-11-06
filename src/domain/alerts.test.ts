@@ -126,6 +126,17 @@ describe('price increase', () => {
     expect(computeAlerts(input({ invoices: small }))).toEqual([]);
   });
 
+  it('usage-based (tolls, parking): a higher total is not a price rise', () => {
+    const tolls = contract({ sector: 'other', label: 'Via Verde', usageBased: true });
+    const invoices = [
+      invoice('a', '2026-02-28', 1000),
+      invoice('b', '2026-03-31', 1000),
+      invoice('c', '2026-04-30', 1000),
+      invoice('d', '2026-05-31', 5000),
+    ];
+    expect(computeAlerts(input({ contracts: [tolls], invoices }))).toEqual([]);
+  });
+
   it('electricity: compares the price per kWh, not the total (which follows consumption)', () => {
     const electricity = contract({ sector: 'electricity' });
     const energy = (invoiceId: string, unitPrice: string) =>

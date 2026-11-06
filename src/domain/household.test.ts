@@ -123,6 +123,21 @@ describe('contractForecast', () => {
     );
   });
 
+  it('usage-based statements (tolls): the invoices of one day are one month', () => {
+    const invoices = [
+      inv('v', '2026-08-31', 2000),
+      inv('v', '2026-08-31', 400),
+      inv('v', '2026-09-30', 1500),
+      inv('v', '2026-09-30', 300),
+      inv('v', '2026-10-31', 2100),
+      inv('v', '2026-10-31', 600),
+    ];
+    // Three statements (24 + 18 + 27 = 69 €) over three months → × 12.
+    expect(contractForecast('other', invoices, '2025-11', true)).toBe(
+      Math.round((6900 / 3 / (365 / 12)) * 365),
+    );
+  });
+
   it('returns null without invoices', () => {
     expect(contractForecast('gas', [], '2025-11')).toBeNull();
   });

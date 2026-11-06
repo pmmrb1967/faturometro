@@ -6,10 +6,11 @@
  */
 import type { Cents } from '../lib/money';
 import { expenseAmount, expenseDueDate } from './month';
+import { statementBills } from './statements';
 import type { Contract, Invoice, RecurringExpense, Sector } from './types';
 
 export interface HouseholdInput {
-  contracts: Pick<Contract, 'id' | 'sector' | 'active'>[];
+  contracts: Pick<Contract, 'id' | 'sector' | 'active' | 'usageBased'>[];
   invoices: Pick<
     Invoice,
     'contractId' | 'issueDate' | 'periodStart' | 'periodEnd' | 'totalCents'
@@ -57,13 +58,17 @@ type ForecastInvoice = HouseholdInput['invoices'][number];
  * A contract's next 12 months. Metered services with a whole year of history
  * repeat that year (winter and summer included); otherwise the cost per day of
  * the latest invoices (monthly when an invoice has no billing period) × 365.
+ * Usage-based statements (tolls) count the invoices of one day as one bill.
  */
 export function contractForecast(
   sector: Sector,
   invoices: readonly ForecastInvoice[],
   firstMonth: string,
+  usageBased = false,
 ): Cents | null {
-  const sorted = [...invoices].sort((a, b) => a.issueDate.localeCompare(b.issueDate));
+  const sorted = usageBased
+    ? statementBills(invoices)
+    : [...invoices].sort((a, b) => a.issueDate.localeCompare(b.issueDate));
   if (sorted.length === 0) return null;
   const first = sorted[0]!;
   if (YEARLY_SECTORS.includes(sector) && monthOf(first.issueDate) < firstMonth) {
@@ -159,7 +164,12 @@ export function householdSummary(input: HouseholdInput): HouseholdSummary {
   const forecasts = input.contracts
     .filter((contract) => contract.active)
     .map((contract) =>
-      contractForecast(contract.sector, byContract.get(contract.id) ?? [], firstMonth),
+      contractForecast(
+        contract.sector,
+        byContract.get(contract.id) ?? [],
+        firstMonth,
+        contract.usageBased,
+      ),
     )
     .filter((value): value is Cents => value !== null);
 

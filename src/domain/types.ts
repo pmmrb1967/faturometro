@@ -103,6 +103,8 @@ export interface Contract extends SyncMeta {
   loyaltyEndDate?: IsoDate;
   /** Monthly price with VAT the user says was contracted (fixed-price sectors), entered by hand. */
   monthlyPriceCents?: Cents;
+  /** The amount follows usage (tolls, parking): no price rise alert, forecast from the average. */
+  usageBased?: boolean;
   electricity?: {
     powerKva: number;
     cycle: 'simple' | 'bi' | 'tri';

@@ -190,6 +190,7 @@ export function buildDraft(
     }
   }
   if (base.parsed && extraction) {
+    if (extraction.contractHolder) draft.contractHolder = extraction.contractHolder.value;
     draft.parser = { id: base.parsed.parserId, version: base.parsed.parserVersion };
     draft.lines = extraction.lines;
     draft.readings = extraction.readings;
@@ -213,6 +214,7 @@ export function contractDetails(
   if (extraction.supplyPointId) details.supplyPointId = extraction.supplyPointId.value;
   if (extraction.tariffName) details.tariffName = extraction.tariffName.value;
   if (extraction.loyaltyEndDate) details.loyaltyEndDate = extraction.loyaltyEndDate.value;
+  if (extraction.usageBased) details.usageBased = true;
   if (sector === 'electricity' && extraction.powerKva) {
     // Cycle from how energy was billed (the meter may record more periods than are billed).
     const periods = new Set(
@@ -240,6 +242,14 @@ export function contractDetails(
     details.telecom = { services: extraction.telecomServices.value, fromInvoice: true };
   }
   return details;
+}
+
+/**
+ * NIF of the provider whose contracts an invoice goes to: the contract holder
+ * of a statement with several issuers (Via Verde), else the issuer.
+ */
+export function contractProviderNif(issuerNif: string, extraction?: ExtractedInvoice): string {
+  return extraction?.contractHolder?.value.nif ?? issuerNif;
 }
 
 /**
