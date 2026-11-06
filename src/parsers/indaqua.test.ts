@@ -41,14 +41,23 @@ describe('indaqua parser', () => {
     // Paid by direct debit: debited on or after the invoice date.
     if (result.directDebitDate) expect(result.directDebitDate.value >= qr.date).toBe(true);
     for (const line of result.lines) {
+      expect(['day', 'm3']).toContain(line.unit);
+      if (line.basis === 'adjustment') {
+        // "Acerto Per. Anterior": undoes an earlier estimate, without unit price.
+        expect(line.quantity).toBeLessThan(0);
+        expect(line.amountCents).toBeLessThan(0);
+        expect(line.unitPrice).toBeUndefined();
+        continue;
+      }
       expect(line.unitPrice).toMatch(/^\d+\.\d+$/);
       expect(line.quantity).toBeGreaterThan(0);
-      expect(['day', 'm3']).toContain(line.unit);
-      expect(line.basis).toBe('real');
+      // Estimated lines only on invoices that bill an estimated month before the real reading.
+      expect(['real', 'estimated']).toContain(line.basis);
     }
 
-    const water = result.lines.filter((line) =>
-      line.description.startsWith('Tarifa de Venda de Água'),
+    const water = result.lines.filter(
+      (line) =>
+        line.description.startsWith('Tarifa de Venda de Água') && line.basis !== 'adjustment',
     );
     if (water.length > 0) {
       // Indaqua: water, sanitation and water resources tax, 6 % VAT.
@@ -57,9 +66,11 @@ describe('indaqua parser', () => {
       expect(result.issuerName).toBeUndefined();
       expect(water.every((line) => /\(\dº escalão\)$/.test(line.description))).toBe(true);
       expect(result.lines.find((line) => line.kind === 'base_fee')?.unit).toBe('day');
-      // The meter reading matches the m³ billed across the tiers.
+      // The (latest) meter reading matches the m³ billed on it across the tiers.
       expect(result.readings).toHaveLength(1);
-      const billed = water.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
+      const billed = water
+        .filter((line) => line.basis === 'real')
+        .reduce((sum, line) => sum + (line.quantity ?? 0), 0);
       expect(result.readings[0]).toMatchObject({
         unit: 'm3',
         readingType: 'real',
@@ -71,6 +82,16 @@ describe('indaqua parser', () => {
       const window = result.readingWindow?.value;
       expect(window && window.start <= window.end).toBe(true);
       expect(window!.start > result.periodEnd!.value).toBe(true);
+      // An estimated month, then the real reading: the estimate is undone, nothing billed twice.
+      const adjusted = result.lines.filter((line) => line.basis === 'adjustment');
+      const estimated = result.lines.filter((line) => line.basis === 'estimated');
+      if (estimated.length > 0) {
+        const m3 = (lines: typeof estimated) =>
+          lines
+            .filter((line) => line.unit === 'm3' && line.description.startsWith('Tarifa de Venda'))
+            .reduce((sum, line) => sum + (line.quantity ?? 0), 0);
+        expect(m3(adjusted)).toBe(-m3(estimated));
+      }
       if (fixture.name.includes('synthetic-1')) {
         expect(window).toEqual({ start: '2026-08-28', end: '2026-09-02' });
         expect(result.directDebitDate?.value).toBe('2026-07-25');

@@ -1,0 +1,1226 @@
+{
+  "schemaVersion": 2,
+  "parserId": "indaqua",
+  "synthetic": true,
+  "qrs": [
+    {
+      "page": 2,
+      "text": "A:506925005*B:999999990*C:PT*D:FT*E:N*F:20260705*G:FA K1000FA/00000003*H:ABCD1234-00000003*I1:PT*I3:10.32*I4:0.62*N:0.62*O:10.94*Q:abcd*R:0000"
+    }
+  ],
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "DADOS DO SEU CONTRATO",
+          "x": 309,
+          "y": 28,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º de conta contrato: 1234567 N.º contribuinte: PT999999990",
+          "x": 309,
+          "y": 58,
+          "width": 276,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período ideal: de 28.08.2026 às 17h30 de 02.09.2026",
+          "x": 74,
+          "y": 168,
+          "width": 234.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "N.º fatura: K1000FA/00000003 *",
+          "x": 48,
+          "y": 238,
+          "width": 138,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Período de faturação: 01.05.2026 a 30.06.2026",
+          "x": 164,
+          "y": 238,
+          "width": 207,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Data de emissão: 05.07.2026",
+          "x": 301,
+          "y": 238,
+          "width": 124.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Até: 25.07.2026",
+          "x": 465,
+          "y": 328,
+          "width": 69,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "INDAQUA Matosinhos – Exemplo sintético | Morada exemplo | C.R.C. n.º 506925005",
+          "x": 20,
+          "y": 640,
+          "width": 358.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Tarifa: Doméstico",
+          "x": 32,
+          "y": 48,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Contador n.º",
+          "x": 32,
+          "y": 64,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura Anterior",
+          "x": 108,
+          "y": 64,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura Atual",
+          "x": 180,
+          "y": 64,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo Leitura",
+          "x": 250,
+          "y": 64,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumo Medido",
+          "x": 311,
+          "y": 64,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cons. Estim. Período",
+          "x": 384,
+          "y": 64,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cons. Estim. Acumulado",
+          "x": 468,
+          "y": 64,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.04.2026",
+          "x": 115,
+          "y": 74,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Água- 00EX000001",
+          "x": 32,
+          "y": 90,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100",
+          "x": 125,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Estimado",
+          "x": 253,
+          "y": 90,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5 m",
+          "x": 405,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5 m",
+          "x": 494,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "DETALHE DA FATURA N.º",
+          "x": 32,
+          "y": 114,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "K1000FA/00000003",
+          "x": 173,
+          "y": 114,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ATCUD:ABCD1234-00000003",
+          "x": 285,
+          "y": 114,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10,94 €",
+          "x": 486,
+          "y": 114,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descrição",
+          "x": 47,
+          "y": 132,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Esc. Tarifário",
+          "x": 147,
+          "y": 132,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Per. Início",
+          "x": 189,
+          "y": 132,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Per. Fim",
+          "x": 231,
+          "y": 132,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Origem",
+          "x": 271,
+          "y": 132,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Explicação",
+          "x": 322,
+          "y": 132,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Faturado",
+          "x": 382,
+          "y": 132,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor Unit.",
+          "x": 419,
+          "y": 132,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor",
+          "x": 478,
+          "y": 132,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 534,
+          "y": 132,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Água",
+          "x": 32,
+          "y": 158,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa de Disponibilidade",
+          "x": 32,
+          "y": 168,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 168,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31.05.2026",
+          "x": 226,
+          "y": 168,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 168,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tar d = Tar m / 30",
+          "x": 312,
+          "y": 168,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30",
+          "x": 391,
+          "y": 168,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,1000",
+          "x": 425,
+          "y": 168,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,00",
+          "x": 501,
+          "y": 168,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 168,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa de Venda de Água",
+          "x": 32,
+          "y": 178,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1º",
+          "x": 162,
+          "y": 178,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 178,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31.05.2026",
+          "x": 226,
+          "y": 178,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Estimado",
+          "x": 276,
+          "y": 178,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5 m em 31 dias",
+          "x": 312,
+          "y": 178,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5",
+          "x": 391,
+          "y": 178,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,5000",
+          "x": 425,
+          "y": 178,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "2,50",
+          "x": 501,
+          "y": 178,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 178,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Recursos Hídricos",
+          "x": 32,
+          "y": 200,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxa Rec. Hídricos - Água",
+          "x": 32,
+          "y": 210,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Único",
+          "x": 162,
+          "y": 210,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 210,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31.05.2026",
+          "x": 226,
+          "y": 210,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Estimado",
+          "x": 276,
+          "y": 210,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5 m em 31 dias",
+          "x": 312,
+          "y": 210,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "5",
+          "x": 391,
+          "y": 210,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,0400",
+          "x": 425,
+          "y": 210,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,20",
+          "x": 501,
+          "y": 210,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 210,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "width": 595,
+      "height": 842,
+      "items": [
+        {
+          "str": "Tarifa: Doméstico",
+          "x": 32,
+          "y": 48,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Contador n.º",
+          "x": 32,
+          "y": 64,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura Anterior",
+          "x": 108,
+          "y": 64,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Leitura Atual",
+          "x": 180,
+          "y": 64,
+          "width": 59.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tipo Leitura",
+          "x": 250,
+          "y": 64,
+          "width": 55.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Consumo Medido",
+          "x": 311,
+          "y": 64,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cons. Estim. Período",
+          "x": 384,
+          "y": 64,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Cons. Estim. Acumulado",
+          "x": 468,
+          "y": 64,
+          "width": 101.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.04.2026",
+          "x": 115,
+          "y": 74,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.06.2026",
+          "x": 183,
+          "y": 74,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Água- 00EX000001",
+          "x": 32,
+          "y": 90,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "100",
+          "x": 125,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "108",
+          "x": 193,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 261,
+          "y": 90,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8 m",
+          "x": 330,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0 m",
+          "x": 407,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0 m",
+          "x": 496,
+          "y": 90,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "DETALHE DA FATURA N.º",
+          "x": 32,
+          "y": 114,
+          "width": 96.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "K1000FA/00000003",
+          "x": 173,
+          "y": 114,
+          "width": 73.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "ATCUD:ABCD1234-00000003",
+          "x": 285,
+          "y": 114,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "10,94 €",
+          "x": 486,
+          "y": 114,
+          "width": 32.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Descrição",
+          "x": 47,
+          "y": 132,
+          "width": 41.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Esc. Tarifário",
+          "x": 147,
+          "y": 132,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Per. Início",
+          "x": 189,
+          "y": 132,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Per. Fim",
+          "x": 231,
+          "y": 132,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Origem",
+          "x": 271,
+          "y": 132,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Explicação",
+          "x": 322,
+          "y": 132,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Faturado",
+          "x": 382,
+          "y": 132,
+          "width": 36.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor Unit.",
+          "x": 419,
+          "y": 132,
+          "width": 50.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Valor",
+          "x": 478,
+          "y": 132,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 534,
+          "y": 132,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Água",
+          "x": 32,
+          "y": 158,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa de Disponibilidade",
+          "x": 32,
+          "y": 168,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.06.2026",
+          "x": 187,
+          "y": 168,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.06.2026",
+          "x": 226,
+          "y": 168,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 168,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tar d = Tar m / 30",
+          "x": 312,
+          "y": 168,
+          "width": 82.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30",
+          "x": 391,
+          "y": 168,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,1000",
+          "x": 425,
+          "y": 168,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "3,00",
+          "x": 501,
+          "y": 168,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 168,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa de Venda de Água",
+          "x": 32,
+          "y": 178,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 178,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31.05.2026",
+          "x": 226,
+          "y": 178,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 178,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Acerto Per. Anterior",
+          "x": 312,
+          "y": 178,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-5",
+          "x": 391,
+          "y": 178,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-2,50",
+          "x": 501,
+          "y": 178,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 178,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Tarifa de Venda de Água",
+          "x": 32,
+          "y": 188,
+          "width": 105.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "1º",
+          "x": 162,
+          "y": 188,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 188,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.06.2026",
+          "x": 226,
+          "y": 188,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 188,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8 m em 61 dias",
+          "x": 312,
+          "y": 188,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8",
+          "x": 391,
+          "y": 188,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,5000",
+          "x": 425,
+          "y": 188,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "4,00",
+          "x": 501,
+          "y": 188,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 188,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Recursos Hídricos",
+          "x": 32,
+          "y": 210,
+          "width": 78.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxa Rec. Hídricos - Água",
+          "x": 32,
+          "y": 220,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 220,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "31.05.2026",
+          "x": 226,
+          "y": 220,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 220,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Acerto Per. Anterior",
+          "x": 312,
+          "y": 220,
+          "width": 92,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-5",
+          "x": 391,
+          "y": 220,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "-0,20",
+          "x": 501,
+          "y": 220,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 220,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Taxa Rec. Hídricos - Água",
+          "x": 32,
+          "y": 230,
+          "width": 115,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Único",
+          "x": 162,
+          "y": 230,
+          "width": 23,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "01.05.2026",
+          "x": 187,
+          "y": 230,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "30.06.2026",
+          "x": 226,
+          "y": 230,
+          "width": 46,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "Real",
+          "x": 276,
+          "y": 230,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8 m em 61 dias",
+          "x": 312,
+          "y": 230,
+          "width": 64.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "8",
+          "x": 391,
+          "y": 230,
+          "width": 4.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,0400",
+          "x": 425,
+          "y": 230,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,32",
+          "x": 501,
+          "y": 230,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 534,
+          "y": 230,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "IVA",
+          "x": 32,
+          "y": 250,
+          "width": 13.8,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,62 €",
+          "x": 492,
+          "y": 250,
+          "width": 27.6,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "6%",
+          "x": 32,
+          "y": 260,
+          "width": 9.2,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        },
+        {
+          "str": "0,62",
+          "x": 501,
+          "y": 260,
+          "width": 18.4,
+          "height": 8,
+          "fontName": "g_d0_f1"
+        }
+      ]
+    }
+  ]
+}

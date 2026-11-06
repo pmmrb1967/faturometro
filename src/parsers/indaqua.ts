@@ -4,7 +4,10 @@
  * the Município de Matosinhos' (urban waste, not subject to VAT). Page 1 has the
  * invoice numbers, billing period, issue date and due date; page 2 the meter
  * reading and one "DETALHE DA FATURA N.º" block per invoice. Layout studied on
- * 2026 invoices (bimonthly billing).
+ * 2026 invoices (bimonthly billing). After an estimated month the detail takes
+ * one page per month (pages 2 and 3), each with a block per invoice: the
+ * second has the real reading, the "Acerto Per. Anterior" lines that undo the
+ * estimate (billed and value only, negative) and the VAT summary.
  */
 import type { InvoiceLine, Reading } from '../domain/types';
 import { sumCents } from '../lib/money';
@@ -62,6 +65,7 @@ function dateOf(item: TextItem): string | null {
 }
 
 interface Block {
+  page: PageText;
   /** Invoice number as printed ("K4026FA/06091253"). */
   printed: string;
   totalCents: number | null;
@@ -79,7 +83,7 @@ function detailBlocks(page: PageText): Block[] {
     const printed = normalize(row.items.find((item) => header && item.x > header.x)?.str ?? '');
     const total = [...row.items].reverse().find((item) => amount(item.str) !== null);
     const end = starts[n + 1]?.index ?? all.length;
-    return { printed, totalCents: amount(total?.str), rows: all.slice(index + 1, end) };
+    return { page, printed, totalCents: amount(total?.str), rows: all.slice(index + 1, end) };
   });
 }
 
@@ -102,7 +106,11 @@ function parseLine(row: Row, billedX: number): ExtractedLine | null {
   const description = normalize(first.str);
   const tail = row.items.filter((item) => item.x >= billedX - 15);
   const numbers = tail.filter((item) => quantity(item.str) !== null);
-  const [billedItem, priceItem, valueItem] = numbers.slice(-3);
+  // "Acerto Per. Anterior": billed and value only (negative), without unit price.
+  const adjustment = /Acerto Per\. Anterior/.test(row.text);
+  const [billedItem, priceItem, valueItem] = adjustment
+    ? [numbers.at(-2), undefined, numbers.at(-1)]
+    : numbers.slice(-3);
   const value = amount(valueItem?.str);
   if (value === null) return null;
   const perDay = /Tar d = Tar m/.test(row.text);
@@ -119,13 +127,18 @@ function parseLine(row: Row, billedX: number): ExtractedLine | null {
   if (unitPrice) line.unitPrice = unitPrice;
   const rate = tail.map((item) => PERCENT.exec(normalize(item.str))?.[1]).find(Boolean);
   if (rate) line.vatRate = Number(rate);
-  const basis = row.items.map((item) => readingTypeOf(item.str)).find(Boolean);
+  const basis = adjustment
+    ? 'adjustment'
+    : row.items.map((item) => readingTypeOf(item.str)).find(Boolean);
   if (basis) line.basis = basis;
   return line;
 }
 
-/** Fills lines and totals from the block; returns its first section's name ("Água", "Resíduos"). */
-function parseBlock(block: Block, result: ExtractedInvoice): string {
+/**
+ * Adds the block's lines to the result and its VAT summary to `vat`; returns
+ * its first section's name ("Água", "Resíduos").
+ */
+function parseBlock(block: Block, result: ExtractedInvoice, vat: number[]): string {
   const isBilled = (item: TextItem) => /^Faturado$/.test(normalize(item.str));
   const header = block.rows.find((row) => row.items.some(isBilled));
   const billedX = header?.items.find(isBilled)?.x;
@@ -133,7 +146,6 @@ function parseBlock(block: Block, result: ExtractedInvoice): string {
     result.warnings.push('Detail columns not found');
     return '';
   }
-  const vat: number[] = [];
   let section = '';
   for (const row of block.rows) {
     if (row === header) continue;
@@ -153,18 +165,21 @@ function parseBlock(block: Block, result: ExtractedInvoice): string {
     const name = description.replace(/\(.*$/, '').trim();
     if (!section && /\p{L}/u.test(name) && !/^IVA$/.test(name)) section = name;
   }
+  return section;
+}
 
+/** Net and VAT from the lines and VAT summaries of every block, against the printed total. */
+function totals(result: ExtractedInvoice, vat: number[], totalCents: number | null) {
   const net = sumCents(result.lines.map((line) => line.amountCents));
   const vatTotal = sumCents(vat);
   result.netCents = { value: net, confidence: 'high' };
   result.vatCents = { value: vatTotal, confidence: 'high' };
-  if (block.totalCents !== null) {
-    result.totalCents = { value: block.totalCents, confidence: 'high' };
-    if (net + vatTotal !== block.totalCents) {
-      result.warnings.push(`Lines ${net} + VAT ${vatTotal} ≠ total ${block.totalCents}`);
+  if (totalCents !== null) {
+    result.totalCents = { value: totalCents, confidence: 'high' };
+    if (net + vatTotal !== totalCents) {
+      result.warnings.push(`Lines ${net} + VAT ${vatTotal} ≠ total ${totalCents}`);
     }
   }
-  return section;
 }
 
 /**
@@ -267,8 +282,8 @@ function issuerName(page: PageText, nif: string): string | undefined {
 export const indaquaParser: Parser = {
   id: ID,
   name: 'Indaqua Matosinhos',
-  version: '1.2.0',
-  updated: '2026-10-18',
+  version: '1.3.0',
+  updated: '2026-11-06',
   sectors: ['water'],
   issuerNifs: [INDAQUA_NIF, MUNICIPALITY_NIF],
 
@@ -280,18 +295,24 @@ export const indaquaParser: Parser = {
   parse(ctx: ParserContext, qr?: FiscalQr) {
     const result = emptyExtraction();
     result.sector = 'water';
-    const detailPage = ctx.pages.find((page) => findItem(page, DETAIL));
     const summaryPage = ctx.pages.find((page) => findItem(page, /^N\.º fatura: /));
-    const blocks = detailPage ? detailBlocks(detailPage) : [];
-    const block = qr ? blocks.find((candidate) => matchesDocId(candidate.printed, qr)) : blocks[0];
-    if (!detailPage || !block) {
+    const blocks = ctx.pages.filter((page) => findItem(page, DETAIL)).flatMap(detailBlocks);
+    const first = qr ? blocks.find((candidate) => matchesDocId(candidate.printed, qr)) : blocks[0];
+    if (!first) {
       result.warnings.push('Invoice detail not found');
       return result;
     }
-    result.docId = { value: qr?.docId ? normalize(qr.docId) : block.printed, confidence: 'high' };
+    result.docId = { value: qr?.docId ? normalize(qr.docId) : first.printed, confidence: 'high' };
 
-    const section = parseBlock(block, result);
-    if (summaryPage) parseSummary(summaryPage, block.printed, result);
+    // The same invoice on every detail page (one page per month).
+    const own = blocks.filter((block) => block.printed === first.printed);
+    const vat: number[] = [];
+    const sections = own.map((block) => parseBlock(block, result, vat));
+    const section = sections.find(Boolean) ?? '';
+    totals(result, vat, first.totalCents);
+    if (summaryPage) parseSummary(summaryPage, first.printed, result);
+    // The latest meter table: the page of the last month.
+    const detailPage = own.at(-1)!.page;
 
     const isWater = result.lines.some((line) => /^Tarifa de Venda de Água/.test(line.description));
     if (isWater) {
