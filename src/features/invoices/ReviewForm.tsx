@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
 import { isValidNif } from '../../domain/nif';
 import type { Sector } from '../../domain/types';
@@ -18,7 +18,7 @@ import {
   type InvoiceForm,
   type LockedFields,
 } from './form';
-import { DuplicateInvoiceError, saveInvoice } from './save';
+import { DuplicateInvoiceError, proposeContractId, saveInvoice } from './save';
 import './invoices.css';
 
 const copy = t.invoices;
@@ -30,9 +30,19 @@ interface Props {
   title: string;
   intro: string;
   onDone: (saved: boolean) => void;
+  /** "Guardar todas": gives the parent a way to save this form as it stands (false if it cannot). */
+  onRegister?: (save: (() => Promise<boolean>) | undefined) => void;
 }
 
-export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }: Props) {
+export function ReviewForm({
+  base,
+  initial,
+  locked = {},
+  title,
+  intro,
+  onDone,
+  onRegister,
+}: Props) {
   const { session } = useSession();
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -53,6 +63,17 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
     return { provider, contracts };
   }, [session, nif, ownerNif]);
 
+  const persistRef = useRef<() => Promise<boolean>>(async () => false);
+  // The latest `persist` (declared below, hoisted), for "Guardar todas".
+  useEffect(() => {
+    if (session) persistRef.current = persist;
+  });
+  useEffect(() => {
+    if (!onRegister) return;
+    onRegister(() => persistRef.current());
+    return () => onRegister(undefined);
+  }, [onRegister]);
+
   if (!session) return null;
   const { repos } = session;
   const provider = known?.provider;
@@ -65,7 +86,6 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
       base.parsed?.extraction.supplyPointId?.value,
       base.parsed?.extraction.insurance?.value.policyNumber,
     );
-  const current = { ...form, contractId };
 
   const set =
     <K extends keyof InvoiceForm>(field: K) =>
@@ -78,13 +98,23 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
     if (contract) setForm((previous) => ({ ...previous, sector: contract.sector }));
   }
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    const result = buildDraft(current, base, { providerKnown: provider !== undefined });
+  /** Saves the form as it stands; false when something is missing or it failed. */
+  async function persist(): Promise<boolean> {
     setFormError(undefined);
+    // Not chosen by the user: read again now, an earlier document may have created the contract.
+    const chosen =
+      contractChoice ??
+      (await proposeContractId(repos, {
+        issuerNif: nif,
+        sector: form.sector,
+        ...(base.parsed ? { extraction: base.parsed.extraction } : {}),
+      }));
+    const providerKnown =
+      provider !== undefined || (await repos.providers.findBy('nif', nif)).length > 0;
+    const result = buildDraft({ ...form, contractId: chosen }, base, { providerKnown });
     if (!result.ok) {
       setErrors(result.errors);
-      return;
+      return false;
     }
     setErrors({});
     setSaving(true);
@@ -96,12 +126,18 @@ export function ReviewForm({ base, initial, locked = {}, title, intro, onDone }:
       await saveInvoice(repos, draft, { keepOriginalFile: settings.keepOriginalFiles });
       await refreshAlerts(repos);
       onDone(true);
+      return true;
     } catch (error) {
       setFormError(
         error instanceof DuplicateInvoiceError ? copy.errors.duplicate : copy.errors.unexpected,
       );
       setSaving(false);
+      return false;
     }
+  }
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    await persist();
   }
 
   const fields = copy.fields;

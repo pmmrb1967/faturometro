@@ -22,6 +22,7 @@ import { ContributeOffer } from '../contribute/ContributeOffer';
 import { shouldOffer } from '../contribute/eligible';
 import { AiExtractPanel } from '../ai/AiExtractPanel';
 import { AttachOriginal } from './AttachOriginal';
+import { saveInOrder } from './save-all';
 import {
   addPhotoPage,
   ingestFile,
@@ -377,6 +378,10 @@ function Outcome({
   const [status, setStatus] = useState<Record<number, DocStatus>>({});
   /** What the AI read, per document, when no parser knew the layout. */
   const [aiParsed, setAiParsed] = useState<Record<number, ParsedDocument>>({});
+  /** "Guardar todas": how each open form saves itself, by document index. */
+  const savers = useRef(new Map<number, () => Promise<boolean>>());
+  const [savingAll, setSavingAll] = useState(false);
+  const [saveAllStopped, setSaveAllStopped] = useState(false);
   if (outcome.kind === 'unsupported') return <p className="ingest-problem">{copy.unsupported}</p>;
   if (outcome.kind === 'duplicate_file') {
     return (
@@ -452,9 +457,37 @@ function Outcome({
   }
 
   const total = outcome.qrs.length;
+  const open = outcome.qrs.filter(
+    (qr, index) => qr.result.ok && !qr.duplicateInvoiceId && !status[index],
+  ).length;
+  const register = (index: number) => (save: (() => Promise<boolean>) | undefined) => {
+    if (save) savers.current.set(index, save);
+    else savers.current.delete(index);
+  };
+  async function saveAll() {
+    setSavingAll(true);
+    setSaveAllStopped(false);
+    const steps = [...savers.current.entries()].sort(([a], [b]) => a - b).map(([, save]) => save);
+    const { stopped } = await saveInOrder(steps);
+    setSaveAllStopped(stopped);
+    setSavingAll(false);
+  }
   return (
     <div className="ingest-result">
       <p role="status">{copy.foundCount(total)}</p>
+      {open > 1 && (
+        <div className="ingest-actions">
+          <button
+            type="button"
+            className="action-primary"
+            disabled={savingAll}
+            onClick={() => void saveAll()}
+          >
+            {savingAll ? copy.savingAll : copy.saveAll(open)}
+          </button>
+        </div>
+      )}
+      {saveAllStopped && <p className="ingest-problem">{copy.saveAllStopped}</p>}
       {contribute}
       {outcome.qrs.map((qr, index) => {
         if (status[index] === 'skipped') return null;
@@ -519,6 +552,7 @@ function Outcome({
               }
               intro={t.invoices.review.fromQr}
               onDone={done(index)}
+              onRegister={register(index)}
             />
           </div>
         );

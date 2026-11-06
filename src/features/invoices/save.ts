@@ -4,7 +4,8 @@
  */
 import type { Repositories } from '../../db/repositories';
 import type { Contract, Invoice, Provider, Sector, Source } from '../../domain/types';
-import type { ExtractedLine, ExtractedReading } from '../../parsers/types';
+import type { ExtractedInvoice, ExtractedLine, ExtractedReading } from '../../parsers/types';
+import { contractProviderNif, defaultContractId } from './form';
 import type { Cents } from '../../lib/money';
 
 export interface InvoiceDraft {
@@ -88,6 +89,28 @@ export async function ensureProvider(
   }
   if (provider.sectors.includes(sector)) return provider;
   return repos.providers.put({ ...provider, sectors: [...provider.sectors, sector] });
+}
+
+/**
+ * The contract to propose for a document, read when it is saved: with several
+ * documents saved in a row, the contract an earlier one created is already
+ * there (a statement's issuers all go to its holder's contract).
+ */
+export async function proposeContractId(
+  repos: Repositories,
+  input: { issuerNif: string; sector: Sector; extraction?: ExtractedInvoice },
+): Promise<string> {
+  const owner = await findProviderByNif(
+    repos,
+    contractProviderNif(input.issuerNif, input.extraction),
+  );
+  if (!owner) return '';
+  return defaultContractId(
+    await repos.contracts.findBy('providerId', owner.id),
+    input.sector,
+    input.extraction?.supplyPointId?.value,
+    input.extraction?.insurance?.value.policyNumber,
+  );
 }
 
 export async function saveInvoice(

@@ -6,7 +6,7 @@ import { createAccountKeys } from '../../lib/crypto';
 import { parseFiscalQr, type FiscalQr } from '../../qr/parse';
 import { emptyExtraction, type ExtractedInvoice } from '../../parsers/types';
 import { buildDraft, contractProviderNif, defaultContractId, emptyForm, formFromQr } from './form';
-import { DuplicateInvoiceError, saveInvoice } from './save';
+import { DuplicateInvoiceError, proposeContractId, saveInvoice } from './save';
 import type { TelecomService } from '../../domain/types';
 
 // Synthetic data only.
@@ -392,6 +392,27 @@ describe('saveInvoice', () => {
     expect((await repos.providers.get(a.providerId))?.nif).toBe('500000000');
     expect((await repos.providers.get(b.providerId))?.nif).toBe('500000018');
     expect(b.contractId).toBe(a.contractId);
+  });
+
+  it('proposes, when saving, the contract an earlier document of the batch created', async () => {
+    const extraction = {
+      ...emptyExtraction(),
+      sector: 'other' as const,
+      contractHolder: { value: { nif: '510000002', name: 'Titular' }, confidence: 'high' as const },
+    };
+    const propose = (issuerNif: string) =>
+      proposeContractId(repos, { issuerNif, sector: 'other', extraction });
+    expect(await propose('500000000')).toBe('');
+
+    const saved = await saveInvoice(
+      repos,
+      draft({ sector: 'other', contractHolder: { nif: '510000002', name: 'Titular' } }),
+      { keepOriginalFile: false },
+    );
+    // Another issuer of the same statement goes to the holder's contract.
+    expect(await propose('500000018')).toBe(saved.contractId);
+    // Without a holder, a new issuer has no contract yet.
+    expect(await proposeContractId(repos, { issuerNif: '500000018', sector: 'other' })).toBe('');
   });
 
   it('saves what a parser read: lines, readings, contract details and validation', async () => {

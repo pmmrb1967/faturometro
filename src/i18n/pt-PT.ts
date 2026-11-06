@@ -1845,6 +1845,10 @@ export const t = {
     invalidQr: 'Encontrei um código QR, mas não o consegui interpretar.',
     foundCount: (count: number) =>
       count === 1 ? 'Encontrei 1 documento.' : `Encontrei ${count} documentos neste ficheiro.`,
+    saveAll: (count: number) => `Guardar todas (${count})`,
+    savingAll: 'A guardar…',
+    saveAllStopped:
+      'Guardei as anteriores. A primeira que ficou por guardar precisa de dados: completa-a e carrega em "Guardar fatura" ou outra vez em "Guardar todas".',
     password: {
       title: 'Este PDF tem palavra-passe',
       needed: 'Em muitas faturas (por exemplo, da Repsol) a palavra-passe é o NIF do titular.',
