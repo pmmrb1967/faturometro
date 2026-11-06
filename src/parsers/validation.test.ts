@@ -13,6 +13,7 @@ const documents = [
   'aguas-porto',
   'generali',
   'fidelidade',
+  'via-verde',
 ].flatMap((provider) =>
   layoutFixtures(provider).flatMap((fixture) =>
     fixture.qrs.map((qr, index) => ({

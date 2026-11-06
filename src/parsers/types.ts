@@ -42,6 +42,13 @@ export interface ExtractedInvoice {
   issuerName?: Field<string>;
   /** Name for a new contract, when it differs from the sector's (e.g. "Resíduos"). */
   contractLabel?: Field<string>;
+  /**
+   * Who the contract is with, when it is not the issuer: a statement that
+   * groups invoices from several issuers under one contract (Via Verde).
+   */
+  contractHolder?: Field<{ nif: string; name: string }>;
+  /** The amount follows usage (tolls, parking): a higher invoice is not a price rise. */
+  usageBased?: boolean;
   docId?: Field<string>;
   issueDate?: Field<string>;
   periodStart?: Field<string>;

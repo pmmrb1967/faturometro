@@ -161,6 +161,7 @@ export const t = {
       'aguas-porto': 'Faturas de água e saneamento, com a de resíduos urbanos',
       generali: 'Recibos, cartas de renovação e condições particulares',
       fidelidade: 'Recibos e condições particulares (Multicare)',
+      'via-verde': 'Extratos mensais de portagens e estacionamento, num só contrato',
     },
     withoutTitle: 'Ainda sem leitor automático',
     withoutIntro:

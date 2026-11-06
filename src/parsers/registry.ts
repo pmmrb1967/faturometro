@@ -7,6 +7,7 @@ import { indaquaParser } from './indaqua';
 import { meoParser } from './meo';
 import { nosParser } from './nos';
 import { repsolParser } from './repsol';
+import { viaVerdeParser } from './via-verde';
 
 /** Every layout parser. Issuer NIFs come from field A of real invoices' QR codes (PLAN.md §4). */
 export const PARSERS: readonly Parser[] = [
@@ -18,6 +19,7 @@ export const PARSERS: readonly Parser[] = [
   aguasPortoParser,
   generaliParser,
   fidelidadeParser,
+  viaVerdeParser,
 ];
 
 /** By issuer NIF first (QR field A), then by text fingerprint. */
