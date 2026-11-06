@@ -1210,6 +1210,12 @@ export const t = {
       keyHint:
         'Guardada cifrada com a tua palavra-passe. Com a sincronização ligada, vai também (cifrada) para os teus outros dispositivos.',
       keySaved: 'Chave guardada.',
+      keyChanged: 'Chave alterada.',
+      keyCurrent: 'Chave guardada:',
+      newKey: 'Nova chave da API da Anthropic',
+      change: 'Alterar chave',
+      saveNew: 'Guardar nova chave',
+      cancel: 'Cancelar',
       model: 'Modelo',
       modelOption: (label: string, input: string, output: string) =>
         `${label} — ${input} / ${output} US$ por milhão de tokens (entrada / saída)`,

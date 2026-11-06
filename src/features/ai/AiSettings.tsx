@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
 import { AI_MODELS, DEFAULT_AI_MODEL, PRICES_CHECKED, formatMicroUsd } from '../../ai/models';
+import { maskApiKey } from '../../ai/key-mask';
 import { AiError } from '../../ai/provider';
 import { aiModelOf, providerFromSettings, recordUsage, usageSince } from '../../ai/session';
 import { isGuest } from '../../db/profiles';
@@ -32,6 +33,8 @@ export function AiSettings() {
   const [key, setKey] = useState('');
   const [message, setMessage] = useState<{ text: string; problem?: boolean }>();
   const [busy, setBusy] = useState(false);
+  /** Typing a new key over the saved one. */
+  const [changing, setChanging] = useState(false);
   if (!session || !settings) return null;
   if (isGuest(session.profile)) {
     return (
@@ -51,7 +54,8 @@ export function AiSettings() {
     if (!key.trim()) return;
     await updateSettings(repos, { aiProvider: 'anthropic', aiApiKey: key.trim() });
     setKey('');
-    setMessage({ text: copy.keySaved });
+    setMessage({ text: hasKey ? copy.keyChanged : copy.keySaved });
+    setChanging(false);
   }
 
   async function test() {
@@ -78,6 +82,7 @@ export function AiSettings() {
     const next = { ...current };
     delete next.aiApiKey;
     await repos.settings.put(next);
+    setChanging(false);
     setMessage({ text: copy.removed });
   }
 
@@ -95,31 +100,50 @@ export function AiSettings() {
             </a>
           </p>
         )}
-        <input
-          type="text"
-          name="username"
-          autoComplete="username"
-          value="anthropic"
-          readOnly
-          hidden
-        />
-        <Field
-          id="ai-key"
-          label={copy.key}
-          hint={copy.keyHint}
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder={hasKey ? '••••••••••••' : 'sk-ant-…'}
-          value={key}
-          onChange={(event) => setKey(event.target.value)}
-        />
+        {hasKey && !changing ? (
+          <>
+            {/* Never shown whole: a key in clear can be read over a shoulder or in a screenshot. */}
+            <p>
+              {copy.keyCurrent} <code>{maskApiKey(settings.aiApiKey ?? '')}</code>
+            </p>
+            <p className="muted">{copy.keyHint}</p>
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              name="username"
+              autoComplete="username"
+              value="anthropic"
+              readOnly
+              hidden
+            />
+            <Field
+              id="ai-key"
+              label={changing ? copy.newKey : copy.key}
+              hint={copy.keyHint}
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="sk-ant-…"
+              value={key}
+              onChange={(event) => setKey(event.target.value)}
+            />
+          </>
+        )}
         <div className="ingest-actions">
-          <button type="submit" className="action-primary" disabled={!key.trim()}>
-            {copy.save}
-          </button>
-          {hasKey && (
+          {hasKey && !changing ? (
             <>
+              <button
+                type="button"
+                className="action-secondary"
+                onClick={() => {
+                  setMessage(undefined);
+                  setChanging(true);
+                }}
+              >
+                {copy.change}
+              </button>
               <button
                 type="button"
                 className="action-secondary"
@@ -135,6 +159,24 @@ export function AiSettings() {
               >
                 {copy.remove}
               </button>
+            </>
+          ) : (
+            <>
+              <button type="submit" className="action-primary" disabled={!key.trim()}>
+                {changing ? copy.saveNew : copy.save}
+              </button>
+              {changing && (
+                <button
+                  type="button"
+                  className="action-secondary"
+                  onClick={() => {
+                    setKey('');
+                    setChanging(false);
+                  }}
+                >
+                  {copy.cancel}
+                </button>
+              )}
             </>
           )}
         </div>
