@@ -10,9 +10,11 @@
   --series-water: #56b4e9;
   --series-telecom: #0072b2;
   --series-insurance: #cc79a7;
-  /* Tol wine: the Okabe–Ito set is used up (its yellow fails contrast on the light surface). */
-  --series-transport: #882255;
-  --series-other: #8b918c;
+  /* Tol purple: the Okabe–Ito set is used up (its yellow fails contrast on the light surface). */
+  --series-transport: #aa3377;
+  /* A light neutral: a mid grey matched the greens and pinks in lightness and blurred with
+     them under colour blindness. Darker in dark mode, for the same reason. */
+  --series-other: #cfd3d0;
   --series-expenses: #009e73;
   /* Okabe–Ito black, lightened in dark mode to stay visible. */
   --series-one-off: #3d3d3d;
@@ -21,7 +23,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --series-one-off: #d4d4d4;
-    --series-transport: #a8336e;
+    --series-other: #454b47;
     --chart-mark: #34a87e;
     --chart-grid: #2b342f;
     --chart-context: #6b726d;
