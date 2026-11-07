@@ -10,6 +10,8 @@
   --series-water: #56b4e9;
   --series-telecom: #0072b2;
   --series-insurance: #cc79a7;
+  /* Tol wine: the Okabe–Ito set is used up (its yellow fails contrast on the light surface). */
+  --series-transport: #882255;
   --series-other: #8b918c;
   --series-expenses: #009e73;
   /* Okabe–Ito black, lightened in dark mode to stay visible. */
@@ -19,6 +21,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --series-one-off: #d4d4d4;
+    --series-transport: #a8336e;
     --chart-mark: #34a87e;
     --chart-grid: #2b342f;
     --chart-context: #6b726d;
