@@ -379,6 +379,9 @@ export const t = {
     intro:
       'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui. Com as receitas, vês também o saldo.',
     add: 'Registar gasto',
+    forecastTipLabel: 'Porque não inclui as faturas previstas',
+    forecastTip: (forecast: string, expected: string) =>
+      `Só valores reais: faturas guardadas, despesas sem fatura e compras. Faltam ≈ ${forecast} em faturas previstas (estão em Pagamentos). Com elas, os gastos do mês devem chegar a ≈ ${expected}.`,
     scan: 'Ler talão',
     scanHint: 'O talão é lido neste dispositivo e as imagens da câmara não ficam guardadas.',
     total: 'Total',

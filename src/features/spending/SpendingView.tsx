@@ -2,9 +2,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { SelectField } from '../../components/Field';
 import { GroupBlock } from '../../components/GroupBlock';
+import { InfoTip } from '../../components/InfoTip';
+import { forecastInvoices } from '../../domain/forecast';
 import { incomeMonth } from '../../domain/income';
 import { monthOf } from '../../domain/month';
 import {
+  forecastStillDue,
   monthProgress,
   sortSpendingItems,
   spendingMonth,
@@ -80,6 +83,17 @@ export function SpendingView({
   const repos = session.repos;
 
   const summary = spendingMonth(month, data);
+  // The forecasts of "Pagamentos", left out here: they are estimates.
+  const stillDue = forecastStillDue(
+    month,
+    summary.totalCents,
+    forecastInvoices(data.contracts, data.invoices, today()),
+  );
+  const forecastTip = stillDue && (
+    <InfoTip label={copy.forecastTipLabel}>
+      {copy.forecastTip(formatCents(stillDue.forecastCents), formatCents(stillDue.expectedCents))}
+    </InfoTip>
+  );
   const progress = monthProgress(month, data, today());
   const income = incomeMonth(month, data.incomes);
   const hasIncome = income.items.length > 0;
@@ -194,7 +208,10 @@ export function SpendingView({
       {hasIncome ? (
         <dl className="facts">
           <div>
-            <dt>{copy.income.spent}</dt>
+            <dt>
+              {copy.income.spent}
+              {forecastTip}
+            </dt>
             <dd>{formatCents(summary.totalCents)}</dd>
           </div>
           <div>
@@ -211,7 +228,10 @@ export function SpendingView({
       ) : (
         <dl className="facts">
           <div>
-            <dt>{copy.total}</dt>
+            <dt>
+              {copy.total}
+              {forecastTip}
+            </dt>
             <dd>
               <strong>{formatCents(summary.totalCents)}</strong>
             </dd>

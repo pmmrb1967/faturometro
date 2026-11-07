@@ -4,6 +4,7 @@
  * only one-off purchases are stored. Pure: no React, no database.
  */
 import { sumCents, type Cents } from '../lib/money';
+import type { ForecastInvoice } from './forecast';
 import { incomeMonth } from './income';
 import { addMonthsTo, lastDay, monthOf, monthSummary } from './month';
 import type {
@@ -154,6 +155,23 @@ export function spendingMonth(month: string, data: SpendingData): SpendingMonth 
     byCategory,
     previousTotalCents: total(monthItems(addMonthsTo(month, -1), data)),
   };
+}
+
+/**
+ * Invoices still to come in the month (the forecasts of "Pagamentos"), which
+ * "Gastos" leaves out because they are estimates; with them, what the month
+ * should reach. Null when the month has none. Same month rule as the forecasts
+ * of `monthSummary`: the expected payment date.
+ */
+export function forecastStillDue(
+  month: string,
+  spentCents: Cents,
+  forecasts: readonly Pick<ForecastInvoice, 'date' | 'amountCents'>[],
+): { forecastCents: Cents; expectedCents: Cents } | null {
+  const inMonth = forecasts.filter((forecast) => monthOf(forecast.date) === month);
+  if (inMonth.length === 0) return null;
+  const forecastCents = sumCents(inMonth.map((forecast) => forecast.amountCents));
+  return { forecastCents, expectedCents: spentCents + forecastCents };
 }
 
 /** Spent up to the end of each day: position 0 is day 1. */
