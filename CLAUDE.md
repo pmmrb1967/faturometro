@@ -4,11 +4,11 @@ Instruções para o Claude Code neste repositório. O plano completo está em `p
 
 ## O projeto
 
-**Faturómetro**: PWA gratuita e local-first para acompanhar faturas domésticas portuguesas (telecom, eletricidade, gás, água), detetar aumentos e fins de fidelização, e comparar a eletricidade com as ofertas da ERSE. IA opcional com a chave do próprio utilizador. Conta local com palavra-passe e sincronização opcional entre dispositivos, cifrada ponta a ponta.
+**Faturómetro**: PWA gratuita e local-first para acompanhar faturas domésticas portuguesas (telecom, eletricidade, gás, água), detetar aumentos e fins de fidelização, e comparar a eletricidade com as ofertas da ERSE. IA opcional: gratuita (Workers AI, pelo servidor) ou com a chave do próprio utilizador (Gemini, Claude). Conta local com palavra-passe e sincronização opcional entre dispositivos, cifrada ponta a ponta.
 
 ## Regras invioláveis
 
-1. **Nada de dados pessoais em claro fora do browser.** Não criar analytics nem logs remotos com dados de faturas. O único backend permitido é o servidor de sincronização opcional (`server/`), que só recebe email, hash de autenticação e dados **cifrados ponta a ponta no dispositivo** — nunca dados em claro nem a chave de cifra. Recebe também, só por ação explícita do utilizador, contribuições de layout anonimizadas e cifradas com a chave pública do responsável (só ele as decifra); é o único envio ao servidor sem a sincronização ligada. Ligações externas a partir da app: `https://api.anthropic.com` (só por ação do utilizador ou definição explícita), o servidor de sincronização (só se o utilizador a ativar) e o Cloudflare Web Analytics, só na página inicial e na de privacidade (nunca em `/app` nem onde se escreve a palavra-passe), sem cookies (`src/app/web-analytics.ts`).
+1. **Nada de dados pessoais em claro fora do browser.** Não criar analytics nem logs remotos com dados de faturas. O único backend permitido é o servidor de sincronização opcional (`server/`), que só recebe email, hash de autenticação e dados **cifrados ponta a ponta no dispositivo** — nunca dados em claro nem a chave de cifra. Recebe também, só por ação explícita do utilizador, contribuições de layout anonimizadas e cifradas com a chave pública do responsável (só ele as decifra). **Exceção: a IA gratuita** (`server/src/ai-free.ts`), por defeito mas só quando o utilizador pede uma leitura (ou ligou o envio automático): o texto da fatura vai em claro mas anonimizado no dispositivo e de novo no servidor (`src/ai/anonymize.ts`); fotografias e digitalizações vão como estão, com aviso antes de enviar. O servidor passa o pedido ao Workers AI e não o guarda nem o regista; guarda só, por dia, `sha256(dia + id aleatório do dispositivo)` com o número de leituras e os neurons gastos. Ligações externas a partir da app: `https://api.anthropic.com` e `https://generativelanguage.googleapis.com` (chave do utilizador, só por ação dele ou definição explícita), o servidor de sincronização (só se o utilizador a ativar, ou para a IA gratuita) e o Cloudflare Web Analytics, só na página inicial e na de privacidade (nunca em `/app` nem onde se escreve a palavra-passe), sem cookies (`src/app/web-analytics.ts`).
 2. **Nunca ler, copiar ou commitar ficheiros de `samples/`** para fixtures, testes, prompts ou documentação. Fixtures novas só através de `scripts/anonymize-fixture.ts`, que grava em `fixtures/private/` (ignorada pelo Git). **Fixtures feitas a partir de faturas reais nunca são commitadas**, mesmo anonimizadas: o repositório é público e seriam atribuíveis ao dono. No repositório só entram fixtures sintéticas em `fixtures/<providerId>/`.
 3. **Valores monetários em cêntimos inteiros** (`number` inteiro). Nunca somar euros em vírgula flutuante. Conversões só em `src/lib/money.ts`.
 4. **A app tem de funcionar sem IA.** Qualquer funcionalidade nova precisa de um caminho sem chave de API.
@@ -22,7 +22,7 @@ Instruções para o Claude Code neste repositório. O plano completo está em `p
 - `pdfjs-dist` para renderizar e extrair texto com coordenadas
 - `zxing-wasm` para QR (alternativa: `jsqr`)
 - `zod` para validar tudo o que vem de fora (IA, ERSE, importações)
-- `@anthropic-ai/sdk` com `dangerouslyAllowBrowser: true`
+- `@anthropic-ai/sdk` com `dangerouslyAllowBrowser: true`; Gemini por REST (`src/ai/gemini.ts`); IA gratuita com Workers AI (`@cf/google/gemma-4-26b-a4b-it`) através do servidor
 - `vite-plugin-pwa`
 - Vitest (unitários), Playwright (e2e mínimo)
 - Gestor de pacotes: pnpm
@@ -64,7 +64,8 @@ Antes de dar uma tarefa por concluída: `pnpm typecheck && pnpm lint && pnpm tes
 
 ## IA
 
-- Sempre por `src/ai/` (abstração `AiProvider`). Nada de chamadas diretas ao SDK espalhadas pela app.
+- Sempre por `src/ai/` (abstração `AiProvider`: `FreeProvider`, `GeminiProvider`, `AnthropicProvider`; escolha em `src/ai/session.ts`). Nada de chamadas diretas ao SDK espalhadas pela app.
+- A IA gratuita só aceita as tarefas e os prompts da app (o servidor constrói-os ou compara-os): nunca um modelo genérico aberto a qualquer pedido.
 - Saída estruturada (`output_config.format` com JSON schema); validar com zod; uma nova tentativa no máximo.
 - Mostrar ao utilizador o que vai ser enviado e o custo estimado antes de enviar (salvo se ativou o envio automático).
 - Prompts em `src/ai/prompts/`, versionados.

@@ -13,7 +13,7 @@ PWA gratuita e local-first para acompanhar as faturas da casa em Portugal — el
 - **Eletricidade:** comparação com as ofertas do simulador da ERSE.
 - **Casa:** gastos por mês e por tipo de despesa.
 - **Cartas** ao fornecedor, sem IA: pedir um preço melhor, contestar um aumento, reclamar de leituras estimadas, denunciar o contrato.
-- **IA opcional** com a tua própria chave da Anthropic, para fornecedores sem leitor: mostra o que vai ser enviado e o custo antes de enviar.
+- **IA opcional**, para fornecedores sem leitor: gratuita por defeito (Workers AI, através de <https://sync.faturometro.workers.dev>, com o texto anonimizado e 10 leituras por dia), ou com a tua própria chave do Gemini ou da Anthropic. Mostra o que vai ser enviado e o custo antes de enviar.
 
 ### Fornecedores com leitor automático
 
