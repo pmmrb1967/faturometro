@@ -9,7 +9,13 @@ import {
   type LetterKind,
 } from '../../ai/prompts/assist';
 import { AiError, type TextRequest } from '../../ai/provider';
-import { aiAvailable, aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import {
+  aiAvailable,
+  aiModelOf,
+  aiModeOf,
+  providerFromSettings,
+  recordUsage,
+} from '../../ai/session';
 import { isGuest } from '../../db/profiles';
 import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -97,7 +103,11 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
         {copy.title}
       </h2>
       {!aiAvailable(session.profile, settings) ? (
-        <p className="muted">{isGuest(session.profile) ? t.guest.aiNeedsAccount : copy.noKey}</p>
+        <p className="muted">
+          {isGuest(session.profile) && aiModeOf(settings) !== 'none'
+            ? t.guest.aiNeedsAccount
+            : copy.noKey}
+        </p>
       ) : (
         <>
           <p className="muted">{copy.intro}</p>
@@ -129,7 +139,15 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
 
           {pending && estimate && (
             <div className="ai-panel">
-              <p>{copy.confirm(formatMicroUsd(estimate.costMicroUsd), findModel(model).label)}</p>
+              <p>
+                {aiModeOf(settings) === 'free'
+                  ? copy.confirmFree(t.ai.destinations.free)
+                  : copy.confirm(
+                      t.ai.destinations[aiModeOf(settings)],
+                      findModel(model).label,
+                      formatMicroUsd(estimate.costMicroUsd),
+                    )}
+              </p>
               <details className="ai-sent">
                 <summary>{copy.showData}</summary>
                 <pre>{pending.request.user}</pre>
@@ -163,7 +181,9 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
             <article className="ai-answer">
               <div className="ai-answer-text">{answer.text}</div>
               {answer.letter && <p className="muted">{copy.placeholdersNote}</p>}
-              <p className="muted">{copy.cost(formatMicroUsd(answer.cost))}</p>
+              <p className="muted">
+                {aiModeOf(settings) === 'free' ? copy.free : copy.cost(formatMicroUsd(answer.cost))}
+              </p>
               <button type="button" className="action-secondary" onClick={() => void copyAnswer()}>
                 {copied ? copy.copied : copy.copy}
               </button>

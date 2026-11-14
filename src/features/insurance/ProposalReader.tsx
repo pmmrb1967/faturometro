@@ -2,12 +2,18 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState, type ChangeEvent } from 'react';
 import { invoiceSource } from '../../ai/document';
 import { estimateProposal } from '../../ai/estimate';
-import { findModel, formatMicroUsd } from '../../ai/models';
 import type { ProposalReading } from '../../ai/prompts/proposal';
 import { AiError, type AiUsage, type InvoiceSource } from '../../ai/provider';
-import { aiAvailable, aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import {
+  aiAvailable,
+  aiModelOf,
+  aiModeOf,
+  providerFromSettings,
+  recordUsage,
+} from '../../ai/session';
 import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
+import { AiSendSummary } from '../ai/AiSendSummary';
 import { aiErrorText } from '../ai/errors';
 import { useSession } from '../auth/session-context';
 import { getSettings } from '../settings/settings';
@@ -23,7 +29,7 @@ interface Prepared {
 /**
  * Reads a proposal's PDF (or photo) with the AI, after showing what will be
  * sent and the estimated cost, and hands the reading to the form for review.
- * Without a key the form is filled by hand (CLAUDE.md rule 4).
+ * Without AI the form is filled by hand (CLAUDE.md rule 4).
  */
 export function ProposalReader({
   coverages,
@@ -46,7 +52,11 @@ export function ProposalReader({
   if (!settings || !session) return null;
   if (!aiAvailable(session.profile, settings)) {
     return (
-      <p className="muted">{isGuest(session.profile) ? t.guest.aiNeedsAccount : copy.noKey}</p>
+      <p className="muted">
+        {isGuest(session.profile) && aiModeOf(settings) !== 'none'
+          ? t.guest.aiNeedsAccount
+          : copy.noKey}
+      </p>
     );
   }
 
@@ -139,22 +149,20 @@ export function ProposalReader({
       <p className="muted">{copy.intro}</p>
       {prepared && estimate && (
         <>
-          <p className="muted">
-            {t.ai.extract.willSend}{' '}
-            {prepared.source.kind === 'text'
-              ? copy.sendText(prepared.source.text.length)
-              : prepared.source.kind === 'pdf'
-                ? copy.sendPdf
-                : copy.sendImage}
-            . {t.ai.extract.model(findModel(model).label)}{' '}
-            {t.ai.extract.cost(formatMicroUsd(estimate.costMicroUsd))}
-          </p>
-          {prepared.source.kind === 'text' && (
-            <details className="ai-sent">
-              <summary>{t.ai.extract.showText}</summary>
-              <pre>{prepared.source.text}</pre>
-            </details>
-          )}
+          <AiSendSummary
+            settings={settings}
+            source={prepared.source}
+            costMicroUsd={estimate.costMicroUsd}
+            what={
+              prepared.source.kind === 'text'
+                ? copy.sendText(prepared.source.text.length)
+                : prepared.source.kind === 'pdf'
+                  ? aiModeOf(settings) === 'free'
+                    ? copy.sendScan
+                    : copy.sendPdf
+                  : copy.sendImage
+            }
+          />
           <div className="proposal-actions">
             <button
               type="button"

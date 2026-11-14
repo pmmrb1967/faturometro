@@ -3,7 +3,7 @@ export const t = {
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
   privacyPage: {
     title: 'Privacidade',
-    updated: 'Última atualização: 30 de outubro de 2026.',
+    updated: 'Última atualização: 14 de novembro de 2026.',
     intro:
       'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
     sections: [
@@ -18,7 +18,7 @@ export const t = {
         title: 'No teu dispositivo (sempre)',
         body: [
           'A conta, as faturas, os contratos, os alertas, os gastos e as receitas que registares, os PDFs originais e os consumos da E-Redes que importares (só os totais por dia) ficam no armazenamento do browser deste dispositivo (IndexedDB), cifrados com uma chave que só a tua palavra-passe ou a tua chave de recuperação abrem.',
-          'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA. Podes criar uma conta a qualquer momento sem perder nada.',
+          'Se usares a app sem conta, os dados ficam cifrados com uma chave guardada no próprio browser, sem palavra-passe: quem usar este browser consegue vê-los. Sem conta não há sincronização nem IA com chave tua (a IA gratuita funciona). Podes criar uma conta a qualquer momento sem perder nada.',
           'Não há cookies, publicidade nem registos com os teus dados.',
           'A câmara só abre quando carregas em "Ler talão". As imagens são analisadas neste dispositivo, só para encontrar o código QR, e não são guardadas nem enviadas.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
@@ -44,9 +44,11 @@ export const t = {
       {
         title: 'Inteligência artificial (só se a usares)',
         body: [
-          'Com uma chave tua da Anthropic, podes pedir à IA que leia uma fatura, a explique ou escreva uma carta. O pedido vai diretamente do teu dispositivo para a Anthropic, sem passar por nenhum servidor do Faturómetro, e é regido pelos termos entre ti e a Anthropic.',
+          'Podes pedir à IA que leia uma fatura, a explique ou escreva uma carta. Nas Definições escolhes qual: a IA gratuita do Faturómetro (por defeito), o Gemini ou o Claude com uma chave tua, ou nenhuma. Sem IA, nada sai do dispositivo.',
+          'IA gratuita: o pedido vai para o servidor do Faturómetro, que o passa à IA da Cloudflare (Workers AI), onde o servidor já funciona. Não precisa de chave nem de conta. Antes de enviar, a app apaga do texto da fatura o teu nome, morada, NIF, IBAN, telefone, email e números de cliente e de contrato (o CPE fica, porque a leitura precisa dele); fotografias e PDFs digitalizados vão tal como estão, porque de uma imagem não se conseguem apagar. A Cloudflare não usa o pedido para treinar modelos e não o guarda depois de responder; nós também não o guardamos nem o registamos. Para contar o limite de 10 leituras por dia, a app cria um identificador aleatório neste dispositivo; o servidor guarda só uma versão cifrada dele, que muda todos os dias, com o número de leituras do dia, e apaga-a no dia seguinte.',
+          'Com uma chave tua da Google (Gemini) ou da Anthropic (Claude): o pedido vai diretamente do teu dispositivo para essa empresa, sem passar por nenhum servidor do Faturómetro, e é regido pelos termos entre ti e ela.',
           'Antes de enviar, a app mostra o que vai ser enviado. Para ler uma fatura, envia o texto da fatura (ou o ficheiro, se não tiver texto). Para explicações e cartas, envia só valores, datas, linhas e consumos: nunca o teu nome, morada, NIF, número de cliente ou CPE.',
-          'A chave fica guardada cifrada com a tua conta e não é incluída nas exportações.',
+          'As chaves ficam guardadas cifradas com a tua conta e não são incluídas nas exportações.',
         ],
       },
       {
@@ -165,7 +167,7 @@ export const t = {
     },
     withoutTitle: 'Ainda sem leitor automático',
     withoutIntro:
-      'Destes, a app lê o código QR (total, IVA, data). O resto podes pedir à IA, com a tua chave da Anthropic (Definições), ou preencher à mão.',
+      'Destes, a app lê o código QR (total, IVA, data). O resto podes pedir à IA (Definições) ou preencher à mão.',
     andOthers: ' e outros',
     waterNote:
       'a entidade gestora do teu concelho (por agora, só a Indaqua Matosinhos e a Águas do Porto têm leitor)',
@@ -253,7 +255,7 @@ export const t = {
     badge: 'Sem conta',
     createAccount: 'Criar conta',
     aiNeedsAccount:
-      'Cria uma conta para usar a IA: a chave da API fica protegida pela tua palavra-passe.',
+      'Para usar a IA com uma chave tua, cria uma conta: a chave fica protegida pela tua palavra-passe. A IA gratuita funciona sem conta (Definições).',
     syncNeedsAccount: 'Cria uma conta para sincronizar entre dispositivos.',
     signOutLabel: 'Sair para a página de entrada (os dados ficam neste browser)',
     noticeTitle: 'Estás a usar a app sem conta',
@@ -338,12 +340,14 @@ export const t = {
         intro:
           'A IA lê a seguradora, o prémio anual e cada cobertura, e preenche o formulário. Revês os valores antes de guardar. Além da proposta, só vão os nomes das coberturas da tua apólice, para as fazer corresponder.',
         noKey:
-          'Com uma chave da Anthropic (Definições), a IA pode ler o PDF da proposta e preencher o formulário por ti.',
+          'Com a IA ligada (Definições), a IA pode ler o PDF da proposta e preencher o formulário por ti.',
         sendText: (chars: number) =>
           `o texto da proposta (${chars.toLocaleString('pt-PT')} carateres) e os nomes das coberturas da tua apólice`,
         sendPdf:
           'o PDF da proposta (não tem texto, é uma digitalização) e os nomes das coberturas da tua apólice',
         sendImage: 'a fotografia da proposta e os nomes das coberturas da tua apólice',
+        sendScan:
+          'as páginas da proposta, como imagens (o PDF não tem texto), e os nomes das coberturas da tua apólice',
         send: 'Ler com IA',
         sending: 'A ler com IA…',
         done: 'A IA preencheu o formulário. Confirma cada valor com a proposta antes de guardar: as coberturas que não encontrou ficam desmarcadas.',
@@ -1205,17 +1209,47 @@ export const t = {
     settings: {
       title: 'Inteligência artificial (opcional)',
       intro:
-        'Com uma chave tua da Anthropic, a IA lê faturas de fornecedores que a app ainda não conhece, explica faturas e escreve cartas. Sem chave, tudo o resto funciona igual.',
-      privacy:
-        'Só envia algo quando pedes (ou quando ligas o envio automático), diretamente do teu dispositivo para api.anthropic.com. Antes de enviar mostra o quê e quanto deve custar. Os custos são cobrados pela Anthropic na tua conta.',
-      getKey: 'Criar uma chave em console.anthropic.com',
-      key: 'Chave da API da Anthropic',
+        'A IA lê faturas de fornecedores que a app ainda não conhece, explica faturas e escreve cartas. Sem IA, tudo o resto funciona igual.',
+      chooseLegend: 'Que IA usar',
+      modes: {
+        free: 'Gratuita (IA do Faturómetro)',
+        gemini: 'Gemini, com a minha chave',
+        anthropic: 'Claude, com a minha chave',
+        none: 'Sem IA',
+      },
+      modeHints: {
+        free: 'Sem chave nem conta, com um limite de 10 leituras por dia neste dispositivo.',
+        gemini: 'A tua chave da Google, paga por ti à Google.',
+        anthropic: 'A tua chave da Anthropic, paga por ti à Anthropic.',
+        none: 'Só os leitores automáticos e o preenchimento à mão: as faturas nunca saem do dispositivo.',
+      },
+      privacy: {
+        free: 'Só envia algo quando pedes (ou quando ligas o envio automático). O texto da fatura vai sem os teus dados pessoais (nome, morada, NIF, IBAN, n.º de cliente), que a app apaga antes de enviar; fotografias e PDFs digitalizados vão tal como estão. Passa pelo servidor do Faturómetro até à IA da Cloudflare (Workers AI), que responde sem guardar o pedido; nós também não guardamos nem registamos o conteúdo.',
+        gemini:
+          'Só envia algo quando pedes (ou quando ligas o envio automático), diretamente do teu dispositivo para a Google (generativelanguage.googleapis.com). Antes de enviar mostra o quê e quanto deve custar. Os custos são cobrados pela Google na tua conta.',
+        anthropic:
+          'Só envia algo quando pedes (ou quando ligas o envio automático), diretamente do teu dispositivo para api.anthropic.com. Antes de enviar mostra o quê e quanto deve custar. Os custos são cobrados pela Anthropic na tua conta.',
+        none: 'Nada é enviado para nenhuma IA.',
+      },
+      geminiBilling:
+        'Atenção: na União Europeia, os termos da Google só permitem usar o Gemini numa app como esta com a faturação ativa (paga) num projeto do Google Cloud. A chave gratuita do Google AI Studio não serve. Se não tiveres faturação ativa, usa a IA gratuita.',
+      getKey: {
+        gemini: 'Criar uma chave em aistudio.google.com',
+        anthropic: 'Criar uma chave em console.anthropic.com',
+      },
+      key: {
+        gemini: 'Chave da API da Google (Gemini)',
+        anthropic: 'Chave da API da Anthropic',
+      },
+      newKey: {
+        gemini: 'Nova chave da API da Google (Gemini)',
+        anthropic: 'Nova chave da API da Anthropic',
+      },
       keyHint:
         'Guardada cifrada com a tua palavra-passe. Com a sincronização ligada, vai também (cifrada) para os teus outros dispositivos.',
       keySaved: 'Chave guardada.',
       keyChanged: 'Chave alterada.',
       keyCurrent: 'Chave guardada:',
-      newKey: 'Nova chave da API da Anthropic',
       change: 'Alterar chave',
       saveNew: 'Guardar nova chave',
       cancel: 'Cancelar',
@@ -1228,25 +1262,64 @@ export const t = {
       test: 'Testar ligação',
       testing: 'A testar…',
       testOk: (cost: string) => `Ligação a funcionar. Este teste custou cerca de ${cost}.`,
+      testOkFree: 'Ligação a funcionar. O teste não gasta leituras.',
+      freeLeft: (left: number, limit: number) =>
+        left === 0
+          ? `Hoje já usaste as ${limit} leituras gratuitas neste dispositivo. Amanhã há mais.`
+          : `Hoje restam ${left} de ${limit} leituras gratuitas neste dispositivo.`,
+      freePaused:
+        'A IA gratuita não está disponível hoje (o limite de todos foi atingido ou o serviço está em pausa). Tenta amanhã, ou usa a tua chave.',
       remove: 'Apagar a chave',
       removed: 'Chave apagada.',
       usage: (requests: number, cost: string) =>
         requests === 0
           ? 'Este mês ainda não usaste a IA neste dispositivo.'
-          : `Este mês, neste dispositivo: ${requests} ${requests === 1 ? 'pedido' : 'pedidos'}, cerca de ${cost}.`,
-      pricesNote: (date: string) => `Preços de tabela da Anthropic, verificados em ${date}.`,
+          : `Este mês, neste dispositivo: ${requests} ${requests === 1 ? 'pedido' : 'pedidos'}, cerca de ${cost} nas tuas chaves.`,
+      pricesNote: (date: string) => `Preços de tabela, verificados em ${date}.`,
+      needsAccount:
+        'Para usar uma chave tua, cria uma conta: a chave fica protegida pela tua palavra-passe. A IA gratuita funciona sem conta.',
+    },
+    destinations: {
+      free: 'o servidor do Faturómetro e a IA da Cloudflare',
+      gemini: 'a Google (Gemini)',
+      anthropic: 'api.anthropic.com',
+      none: '',
+    },
+    free: {
+      cost: 'Gratuito: conta como uma das 10 leituras de hoje neste dispositivo.',
+      removed: (what: string) => `Antes de enviar, a app apagou do texto: ${what}.`,
+      nothingRemoved: 'A app não encontrou dados pessoais no texto.',
+      imagesAsIs:
+        'As imagens vão tal como estão: a app não consegue apagar dados pessoais de uma fotografia. Se preferires, preenche à mão.',
+      kinds: {
+        NIF: ['NIF', 'NIF'],
+        NISS: ['NISS', 'NISS'],
+        IBAN: ['IBAN', 'IBAN'],
+        TELEFONE: ['telefone', 'telefones'],
+        EMAIL: ['email', 'emails'],
+        MATRÍCULA: ['matrícula', 'matrículas'],
+        REFERÊNCIA: [
+          'referência (n.º de cliente, contrato…)',
+          'referências (n.º de cliente, contrato…)',
+        ],
+        NÚMERO: ['outro número', 'outros números'],
+        MORADA: ['morada', 'moradas'],
+        'CÓDIGO POSTAL': ['código postal', 'códigos postais'],
+        NOME: ['nome', 'nomes'],
+      } as Record<string, [string, string]>,
     },
     extract: {
       noKey:
-        'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). O resto preenches à mão, ou, com uma chave da Anthropic (Definições), a IA pode lê-lo por ti. Para pedir um leitor, usa "Contribuir com este layout".',
+        'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). O resto preenches à mão, ou, com a IA ligada (Definições), a IA pode lê-lo por ti. Para pedir um leitor, usa "Contribuir com este layout".',
       intro:
         'Este fornecedor ainda não tem leitor automático: a app leu o código QR (total, IVA, data). Podes pedir à IA que leia o resto.',
       noKeyNoQr:
-        'Sem código QR nem leitor automático: preenche os dados à mão, ou, com uma chave da Anthropic (Definições), a IA pode lê-los por ti.',
+        'Sem código QR nem leitor automático: preenche os dados à mão, ou, com a IA ligada (Definições), a IA pode lê-los por ti.',
       introNoQr: 'Sem código QR nem leitor automático: podes pedir à IA que leia a fatura.',
-      willSend: 'Vai ser enviado para api.anthropic.com:',
+      willSend: (destination: string) => `Vai ser enviado para ${destination}:`,
       sendText: (chars: number) => `o texto da fatura (${chars.toLocaleString('pt-PT')} carateres)`,
       sendPdf: 'o PDF da fatura (não tem texto, é uma digitalização)',
+      sendScan: 'as páginas da fatura, como imagens (o PDF não tem texto, é uma digitalização)',
       sendImage: 'a fotografia da fatura',
       sendImages: (count: number) => `as ${count} fotografias da fatura`,
       showText: 'Ver o texto que vai ser enviado',
@@ -1262,7 +1335,7 @@ export const t = {
       title: 'Ajuda da IA',
       intro:
         'Envia só valores, datas, linhas e consumos guardados na app. Nunca o teu nome, morada, NIF, n.º de cliente ou CPE.',
-      noKey: 'Para usar, guarda uma chave da Anthropic nas Definições.',
+      noKey: 'Para usar, liga a IA nas Definições.',
       noInvoices: 'Ainda não há faturas neste contrato.',
       explain: 'Explica-me a última fatura',
       letters: {
@@ -1271,8 +1344,10 @@ export const t = {
         cancel: 'Carta: denunciar o contrato',
         estimated_reading: 'Carta: reclamar de leituras estimadas',
       },
-      confirm: (cost: string, model: string) =>
-        `Enviar para api.anthropic.com (${model})? Custo estimado: cerca de ${cost}.`,
+      confirm: (destination: string, model: string, cost: string) =>
+        `Enviar para ${destination} (${model})? Custo estimado: cerca de ${cost}.`,
+      confirmFree: (destination: string) =>
+        `Enviar para ${destination}? Gratuito: conta como uma das 10 leituras de hoje neste dispositivo.`,
       send: 'Enviar',
       cancel: 'Cancelar',
       working: 'A pensar…',
@@ -1282,17 +1357,23 @@ export const t = {
       placeholdersNote:
         'Os campos entre parênteses retos ([NOME], [MORADA], [NIF]…) ficam para preencheres tu. O n.º de cliente e o CPE foram preenchidos aqui, sem os enviar.',
       cost: (cost: string) => `Custou cerca de ${cost}.`,
+      free: 'Feito com a IA gratuita.',
     },
     errors: {
-      no_key: 'Falta a chave da API da Anthropic (Definições).',
+      no_key: 'Falta a chave da API (Definições).',
       invalid_key: 'A chave da API não é válida ou foi revogada.',
-      no_credit: 'A conta da Anthropic não tem crédito. Carrega-a em console.anthropic.com.',
+      no_credit:
+        'A conta não tem crédito ou faturação ativa. Carrega-a na consola da Anthropic ou ativa a faturação no Google Cloud.',
       rate_limited: 'Demasiados pedidos seguidos. Espera um minuto e tenta de novo.',
-      unavailable: 'O serviço da Anthropic não respondeu. Tenta mais tarde.',
+      unavailable: 'O serviço de IA não respondeu. Tenta mais tarde.',
       offline: 'Sem ligação à internet.',
       invalid_output: 'A IA não devolveu dados utilizáveis. Preenche à mão ou tenta outro modelo.',
       refused: 'A IA recusou este pedido.',
       too_large: 'O documento é demasiado grande para enviar.',
+      free_limit:
+        'Já usaste as 10 leituras gratuitas de hoje neste dispositivo. Amanhã há mais, ou usa a tua chave (Definições).',
+      free_quota:
+        'Hoje já se esgotaram as leituras gratuitas para todos. Tenta amanhã, ou usa a tua chave (Definições).',
     },
   },
   groups: {
@@ -2009,7 +2090,7 @@ export const t = {
         'As faturas ficam cifradas no teu dispositivo. Com conta, ficam protegidas pela tua palavra-passe; sem conta, quem usar o mesmo browser consegue vê-las.',
         'Sem publicidade e sem comissões dos fornecedores.',
         'Se quiseres os mesmos dados no telemóvel e no computador, ativas a sincronização: os dados saem cifrados e o servidor não os consegue ler.',
-        'A inteligência artificial é opcional e usa a tua própria chave.',
+        'A inteligência artificial é opcional: gratuita, com os teus dados pessoais apagados do texto antes de enviar, ou com uma chave tua.',
       ],
     },
     steps: {

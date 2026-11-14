@@ -82,3 +82,19 @@
     border-top: none;
   }
 }
+
+.ai-modes {
+  margin: 12px 0;
+  padding: 0;
+  border: none;
+}
+
+.ai-modes legend {
+  padding: 0;
+  font-weight: 600;
+}
+
+.ai-mode-hint {
+  display: block;
+  font-size: 0.9rem;
+}

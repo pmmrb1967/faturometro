@@ -1,7 +1,7 @@
 /**
  * AI abstraction (PLAN.md §10). The app never calls an SDK directly: it
- * goes through an AiProvider, so other providers can be added later and
- * tests can use a fake one.
+ * goes through an AiProvider (Anthropic or Gemini with the user's key, or the
+ * project's free AI), and tests can use a fake one.
  */
 import type { AiExtraction, DocumentTarget } from './prompts/extract';
 import type { ProposalReading } from './prompts/proposal';
@@ -15,7 +15,11 @@ export type AiErrorCode =
   | 'offline'
   | 'invalid_output'
   | 'refused'
-  | 'too_large';
+  | 'too_large'
+  /** Free AI: this device used today's readings. */
+  | 'free_limit'
+  /** Free AI: today's quota for everyone is spent. */
+  | 'free_quota';
 
 export class AiError extends Error {
   readonly code: AiErrorCode;

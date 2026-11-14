@@ -42,6 +42,7 @@ beforeEach(async () => {
   await source.settings.put({
     id: 'settings',
     aiApiKey: 'sk-ant-secreta',
+    aiGeminiKey: 'AIza-secreta',
     aiAutoSend: false,
     keepOriginalFiles: true,
     priceIncreaseThresholdPct: 5,
@@ -62,6 +63,7 @@ describe('backup', () => {
     const json = strFromU8(entries['faturometro.json']!);
     expect(json).toContain('Internet');
     expect(json).not.toContain('sk-ant-secreta');
+    expect(json).not.toContain('AIza-secreta');
     const original = Object.keys(entries).find((name) => name.startsWith('originais/'));
     expect(original).toMatch(/\.pdf$/);
     expect(strFromU8(entries[original!]!)).toBe('%PDF-1.7 fatura de teste');

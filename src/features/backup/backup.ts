@@ -74,10 +74,11 @@ export async function exportBackup(repos: Repositories): Promise<ExportResult> {
   for (const table of SYNCED_TABLES) {
     let rows: { id: string }[] = await repos[table].list();
     if (table === 'settings') {
-      // The AI key never leaves the app in clear.
+      // The AI keys never leave the app in clear.
       rows = rows.map((row) => {
         const copy: Record<string, unknown> = { ...row };
         delete copy.aiApiKey;
+        delete copy.aiGeminiKey;
         return copy as { id: string };
       });
     }

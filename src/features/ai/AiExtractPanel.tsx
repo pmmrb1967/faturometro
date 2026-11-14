@@ -1,14 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { estimateExtraction } from '../../ai/estimate';
-import { findModel, formatMicroUsd } from '../../ai/models';
 import {
   AI_PARSER_PREFIX,
   EXTRACT_PROMPT_VERSION,
   type DocumentTarget,
 } from '../../ai/prompts/extract';
 import { AiError, type AiUsage, type InvoiceSource } from '../../ai/provider';
-import { aiAvailable, aiModelOf, providerFromSettings, recordUsage } from '../../ai/session';
+import {
+  aiAvailable,
+  aiModelOf,
+  aiModeOf,
+  providerFromSettings,
+  recordUsage,
+} from '../../ai/session';
 import { isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import type { FiscalQr } from '../../qr/parse';
@@ -16,6 +21,7 @@ import { useSession } from '../auth/session-context';
 import type { ParsedDocument } from '../ingest/ingest';
 import { validateExtraction } from '../ingest/validate';
 import { getSettings } from '../settings/settings';
+import { AiSendSummary } from './AiSendSummary';
 import { aiErrorText } from './errors';
 
 const copy = t.ai.extract;
@@ -89,7 +95,7 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   if (!session || !aiAvailable(session.profile, settings)) {
     return (
       <p className="muted ai-panel">
-        {session && isGuest(session.profile)
+        {session && isGuest(session.profile) && aiModeOf(settings) !== 'none'
           ? t.guest.aiNeedsAccount
           : qr
             ? copy.noKey
@@ -99,28 +105,27 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   }
   if (!source) return <p className="muted ai-panel">{copy.cannotSend}</p>;
 
-  const model = aiModelOf(settings);
-  const estimate = estimateExtraction(model, source, pdfPages);
+  const mode = aiModeOf(settings);
+  const estimate = estimateExtraction(aiModelOf(settings), source, pdfPages);
   return (
     <div className="ai-panel">
       <p>{qr ? copy.intro : copy.introNoQr}</p>
-      <p className="muted">
-        {copy.willSend}{' '}
-        {source.kind === 'text'
-          ? copy.sendText(source.text.length)
-          : source.kind === 'pdf'
-            ? copy.sendPdf
-            : source.more?.length
-              ? copy.sendImages(source.more.length + 1)
-              : copy.sendImage}
-        . {copy.model(findModel(model).label)} {copy.cost(formatMicroUsd(estimate.costMicroUsd))}
-      </p>
-      {source.kind === 'text' && (
-        <details className="ai-sent">
-          <summary>{copy.showText}</summary>
-          <pre>{source.text}</pre>
-        </details>
-      )}
+      <AiSendSummary
+        settings={settings}
+        source={source}
+        costMicroUsd={estimate.costMicroUsd}
+        what={
+          source.kind === 'text'
+            ? copy.sendText(source.text.length)
+            : source.kind === 'pdf'
+              ? mode === 'free'
+                ? copy.sendScan
+                : copy.sendPdf
+              : source.more?.length
+                ? copy.sendImages(source.more.length + 1)
+                : copy.sendImage
+        }
+      />
       {problem && (
         <p className="ingest-problem" role="alert">
           {problem}

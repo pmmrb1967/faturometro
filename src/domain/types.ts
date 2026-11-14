@@ -395,11 +395,25 @@ export interface AiUsageRecord extends SyncMeta {
   costMicroUsd: number;
 }
 
+/** The free AI of the project, Gemini or Claude with the user's own key, or no AI. */
+export type AiMode = 'free' | 'gemini' | 'anthropic' | 'none';
+
 export interface Settings extends SyncMeta {
   id: 'settings';
+  /**
+   * Which AI reads and writes (Settings, "Inteligência artificial"). Unset in older
+   * settings: Claude when there is an Anthropic key, else the free AI.
+   */
+  aiMode?: AiMode;
+  /** Replaced by aiMode; still read from older settings, never written. */
   aiProvider?: 'anthropic';
+  /** The user's Anthropic key. */
   aiApiKey?: string;
+  /** Anthropic model. */
   aiModel?: string;
+  /** The user's Google Gemini key. */
+  aiGeminiKey?: string;
+  aiGeminiModel?: string;
   aiAutoSend: boolean;
   /** Holder's NIF, tried first to open password-protected PDFs. */
   ownNif?: string;

@@ -401,10 +401,18 @@ describe('aiAvailable', () => {
   const account: Profile = { id: 'a', email: 'a@b.pt', createdAt, wrappedKey: {} as never };
   const guest: Profile = { id: 'g', email: '', createdAt, guestKey: 'AAAA' };
 
-  it('needs an account and a key', () => {
+  it('needs an account and a key for the user own keys', () => {
     expect(aiAvailable(account, { aiApiKey: 'sk-ant-x' })).toBe(true);
-    expect(aiAvailable(account, {})).toBe(false);
+    expect(aiAvailable(account, { aiMode: 'anthropic' })).toBe(false);
     expect(aiAvailable(guest, { aiApiKey: 'sk-ant-x' })).toBe(false);
+    expect(aiAvailable(account, { aiMode: 'gemini', aiGeminiKey: 'AIza-x' })).toBe(true);
+    expect(aiAvailable(guest, { aiMode: 'gemini', aiGeminiKey: 'AIza-x' })).toBe(false);
+  });
+
+  it('offers the free AI by default, to guests too, and nothing with "Sem IA"', () => {
+    expect(aiAvailable(account, {})).toBe(true);
+    expect(aiAvailable(guest, {})).toBe(true);
+    expect(aiAvailable(account, { aiMode: 'none', aiApiKey: 'sk-ant-x' })).toBe(false);
   });
 });
 
