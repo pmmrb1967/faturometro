@@ -56,6 +56,16 @@ name = "CONTRIB_LIMITER"
 namespace_id = "1002"
 simple = { limit = 2, period = 60 }
 
+# Free AI requests per IP (the per-device daily limit is in server/src/ai-free.ts).
+[[ratelimits]]
+name = "AI_LIMITER"
+namespace_id = "1003"
+simple = { limit = 6, period = 60 }
+
+# Workers AI: the free AI (free daily Neurons, no card). Requests are never stored.
+[ai]
+binding = "AI"
+
 [triggers]
 # Daily maintenance: inactive accounts and usage totals (src/maintenance.ts).
 crons = ["17 3 * * *"]

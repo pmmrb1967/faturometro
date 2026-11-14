@@ -27,8 +27,13 @@
  *   POST   /v1/contributions  {v, epk, iv, data}          → 201 {id}; 413, or 503 when full
  *   GET    /v1/contributions  (Bearer CONTRIB_ADMIN_TOKEN) → {contributions: [{id, createdAt, envelope}]}
  *   DELETE /v1/contributions/:id (same token)             → 204
+ *
+ * The free AI (Workers AI, no key and no account; server/src/ai-free.ts):
+ *   GET    /v1/ai/free/status (header X-Device)            → {available, left, limit}
+ *   POST   /v1/ai/free        (header X-Device)            → {output, inputTokens, outputTokens, left}
  */
 import { z } from 'zod';
+import { createFreeAi, FreeAiError, MAX_BODY_LENGTH, type WorkersAi } from './ai-free';
 import type { Sql } from './db';
 
 export interface AppConfig {
@@ -71,9 +76,13 @@ export interface AppConfig {
    * worker.ts): false means refuse. The count stays with Cloudflare; nothing is stored here.
    */
   rateLimit?: (scope: RateLimitScope, ip: string) => Promise<boolean>;
+  /** Workers AI, for the free AI; without it the free AI answers 503. */
+  ai?: WorkersAi;
+  /** Free AI readings per device and per day. */
+  aiFreePerDevice?: number;
 }
 
-export type RateLimitScope = 'register' | 'contribution';
+export type RateLimitScope = 'register' | 'contribution' | 'ai';
 
 export const SESSION_DAYS = 30;
 export const MAX_FAILED_LOGINS = 10;
@@ -467,6 +476,38 @@ export function createApp(config: AppConfig) {
     throw new HttpError(404, 'Not found');
   }
 
+  const freeAi = createFreeAi({
+    sql,
+    ...(config.ai ? { ai: config.ai } : {}),
+    now,
+    ...(config.aiFreePerDevice !== undefined ? { readsPerDevice: config.aiFreePerDevice } : {}),
+  });
+
+  async function freeAiRoute(request: Request, method: string, path: string) {
+    try {
+      if (method === 'GET' && path === '/v1/ai/free/status') {
+        return json(await freeAi.status(request));
+      }
+      if (method === 'POST' && path === '/v1/ai/free') {
+        await limitPerIp(request, 'ai');
+        if (Number(request.headers.get('Content-Length') ?? 0) > MAX_BODY_LENGTH) {
+          throw new HttpError(413, 'too_large');
+        }
+        return json(await freeAi.read(request, await readCapped(request, MAX_BODY_LENGTH)));
+      }
+    } catch (error) {
+      if (error instanceof FreeAiError) throw new HttpError(error.status, error.message);
+      if (error instanceof HttpError && error.status === 413) {
+        throw new HttpError(413, 'too_large');
+      }
+      if (error instanceof HttpError && error.status === 429) {
+        throw new HttpError(429, 'rate_limited');
+      }
+      throw error;
+    }
+    throw new HttpError(404, 'Not found');
+  }
+
   async function route(request: Request, url: URL): Promise<Response> {
     const path = url.pathname;
     const method = request.method;
@@ -553,6 +594,10 @@ export function createApp(config: AppConfig) {
 
     if (path === '/v1/contributions' || path.startsWith('/v1/contributions/')) {
       return contributions(request, method, path);
+    }
+
+    if (path === '/v1/ai/free' || path === '/v1/ai/free/status') {
+      return freeAiRoute(request, method, path);
     }
 
     const user = await userFromToken(request);
@@ -822,7 +867,7 @@ export function createApp(config: AppConfig) {
           status: 204,
           headers: {
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Owner-Proof',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Owner-Proof, X-Device',
             'Access-Control-Max-Age': '86400',
           },
         }),

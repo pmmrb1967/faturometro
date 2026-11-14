@@ -80,18 +80,20 @@ function describeContract(context: ContractContext): string {
     .join('\n');
 }
 
+export const EXPLAIN_SYSTEM =
+  'Explicas faturas domésticas portuguesas a quem não é especialista, em português europeu, tratando a pessoa por "tu". ' +
+  'Sê claro e breve (até 250 palavras), com parágrafos curtos ou uma lista. ' +
+  'Usa só os dados fornecidos; se faltar informação para explicar algo, diz isso. ' +
+  'Explica as parcelas principais e, se houver faturas anteriores, o que mudou e porquê (preço, consumo, dias faturados, descontos que terminaram). ' +
+  'Termina com uma sugestão prática, se fizer sentido.';
+
 export function explainRequest(context: ContractContext): TextRequest {
   const [latest, ...previous] = context.invoices;
   return {
     task: 'explain',
     promptVersion: EXPLAIN_PROMPT_VERSION,
     maxOutputTokens: 2_000,
-    system:
-      'Explicas faturas domésticas portuguesas a quem não é especialista, em português europeu, tratando a pessoa por "tu". ' +
-      'Sê claro e breve (até 250 palavras), com parágrafos curtos ou uma lista. ' +
-      'Usa só os dados fornecidos; se faltar informação para explicar algo, diz isso. ' +
-      'Explica as parcelas principais e, se houver faturas anteriores, o que mudou e porquê (preço, consumo, dias faturados, descontos que terminaram). ' +
-      'Termina com uma sugestão prática, se fizer sentido.',
+    system: EXPLAIN_SYSTEM,
     user: [
       describeContract(context),
       '',
@@ -132,6 +134,17 @@ const CONTRACT_PLACEHOLDERS = Object.values(PLACEHOLDERS).filter(
   (placeholder) => placeholder !== PLACEHOLDERS.provider,
 );
 
+/** The letters' system prompt (also checked by the free AI's server: only these are accepted). */
+export function letterSystem(quote: boolean): string {
+  return (
+    'Escreves cartas formais curtas em português europeu, de um cliente doméstico para um fornecedor. ' +
+    'Usa exatamente estes marcadores para os dados pessoais, sem os inventar nem preencher: ' +
+    `${(quote ? QUOTE_PLACEHOLDERS : CONTRACT_PLACEHOLDERS).join(', ')}. ` +
+    'Não inventes factos, números de contrato, leis ou prazos que não te sejam dados. ' +
+    'Devolve só o texto da carta (com assunto), pronto a copiar para email.'
+  );
+}
+
 /**
  * A letter. For request_quote, `quoteDetails` (the service as the template
  * letter describes it) replaces the provider and the invoices.
@@ -147,12 +160,7 @@ export function letterRequest(
     task: 'letter',
     promptVersion: LETTER_PROMPT_VERSION,
     maxOutputTokens: 2_000,
-    system:
-      'Escreves cartas formais curtas em português europeu, de um cliente doméstico para um fornecedor. ' +
-      'Usa exatamente estes marcadores para os dados pessoais, sem os inventar nem preencher: ' +
-      `${(quote ? QUOTE_PLACEHOLDERS : CONTRACT_PLACEHOLDERS).join(', ')}. ` +
-      'Não inventes factos, números de contrato, leis ou prazos que não te sejam dados. ' +
-      'Devolve só o texto da carta (com assunto), pronto a copiar para email.',
+    system: letterSystem(quote),
     user: quote
       ? [
           `Objetivo: ${LETTER_GOALS[kind]}`,

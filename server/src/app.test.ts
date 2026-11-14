@@ -793,7 +793,7 @@ describe('requests per IP', () => {
   function limiter(allowed: number) {
     const seen: { scope: string; key: string }[] = [];
     const counts = new Map<string, number>();
-    const limit = (scope: 'register' | 'contribution', key: string) => {
+    const limit = (scope: 'register' | 'contribution' | 'ai', key: string) => {
       seen.push({ scope, key });
       const id = `${scope}:${key}`;
       counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -847,7 +847,14 @@ describe('requests per IP', () => {
   it('does not limit sign-in, syncing or anything else', async () => {
     const { limit, seen } = limiter(0);
     withLimiter(limit);
-    await call('POST', '/v1/prelogin', { email: 'a@b.pt' }, undefined, ORIGIN, fromIp('203.0.113.7'));
+    await call(
+      'POST',
+      '/v1/prelogin',
+      { email: 'a@b.pt' },
+      undefined,
+      ORIGIN,
+      fromIp('203.0.113.7'),
+    );
     await call(
       'POST',
       '/v1/login',

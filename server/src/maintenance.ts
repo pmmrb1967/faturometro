@@ -1,7 +1,7 @@
 /**
  * Daily job (Cron Trigger, server/wrangler.toml): removes accounts inactive
- * for too long, forgets old removal marks and stores usage totals for the
- * admission brake and the weekly alert. Only ids, dates and sizes are touched.
+ * for too long, forgets old removal marks and the free AI's past daily counts,
+ * and stores usage totals for the admission brake and the weekly alert. Only ids, dates and sizes are touched.
  */
 import type { Sql } from './db';
 
@@ -69,6 +69,9 @@ export async function runMaintenance(config: MaintenanceConfig): Promise<Mainten
     'DELETE FROM contributions WHERE created_at < ?',
     new Date(now.getTime() - CONTRIB_KEEP_DAYS * 86_400_000).toISOString(),
   );
+
+  // The free AI's daily counts are only needed on their day.
+  await sql.run('DELETE FROM ai_free_daily WHERE date < ?', today);
 
   const filesBytes =
     (await files?.first<{ total: number | null }>('SELECT SUM(size) AS total FROM chunks'))

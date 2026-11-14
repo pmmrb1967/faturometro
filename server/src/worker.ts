@@ -14,9 +14,14 @@ export default {
       allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),
       ...limitsFromEnv(env),
       ...(env.CONTRIB_ADMIN_TOKEN ? { contribAdminToken: env.CONTRIB_ADMIN_TOKEN } : {}),
+      ...(env.AI ? { ai: env.AI } : {}),
       rateLimit: async (scope, ip) => {
         const limiter: RateLimiter | undefined =
-          scope === 'register' ? env.REGISTER_LIMITER : env.CONTRIB_LIMITER;
+          scope === 'register'
+            ? env.REGISTER_LIMITER
+            : scope === 'ai'
+              ? env.AI_LIMITER
+              : env.CONTRIB_LIMITER;
         // Without the binding (local runs), no limit.
         return limiter ? (await limiter.limit({ key: ip })).success : true;
       },

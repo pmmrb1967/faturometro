@@ -1,4 +1,5 @@
 /** Worker environment (server/wrangler.toml) turned into the app's limits. */
+import type { WorkersAi } from './ai-free';
 import type { D1Like } from './db';
 
 export interface Env {
@@ -25,6 +26,9 @@ export interface Env {
   /** Workers rate limiters (wrangler.toml, [[ratelimits]]): per IP, counted by Cloudflare. */
   REGISTER_LIMITER?: RateLimiter;
   CONTRIB_LIMITER?: RateLimiter;
+  AI_LIMITER?: RateLimiter;
+  /** Workers AI (wrangler.toml, [ai]): the free AI. */
+  AI?: WorkersAi;
 }
 
 /** The Workers rate limiting binding. */
