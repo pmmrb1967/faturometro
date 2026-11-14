@@ -505,8 +505,9 @@ describe('files', () => {
   });
 
   it('gives administrators, and only them, usage totals', async () => {
+    const memory = memorySql();
     handle = createApp({
-      sql: memorySql().sql,
+      sql: memory.sql,
       adminEmails: ['admin@example.pt'],
       preloginSecret: 'secret',
       allowedOrigins: [ORIGIN],
@@ -514,6 +515,11 @@ describe('files', () => {
     });
     const admin = await register('admin@example.pt');
     const ana = await register('ana@example.pt');
+    // The free AI: today's rows count, yesterday's do not.
+    memory.db.exec(
+      `INSERT INTO ai_free_daily (date, device, calls, neurons) VALUES
+         ('2026-10-13', 'a', 3, 60), ('2026-10-13', 'b', 1, 20), ('2026-10-12', 'c', 9, 900)`,
+    );
     expect((await call('GET', '/v1/admin/stats', undefined, ana)).status).toBe(403);
     const stats = await call('GET', '/v1/admin/stats', undefined, admin);
     expect(stats.status).toBe(200);
@@ -524,6 +530,14 @@ describe('files', () => {
       devices: 2,
       removedForInactivity30: 0,
       contributions: 0,
+      freeAi: {
+        enabled: false,
+        calls: 4,
+        devices: 2,
+        neurons: 80,
+        neuronsCap: 9000,
+        neuronsFree: 10000,
+      },
     });
     // Totals only: nothing that names an account.
     expect(JSON.stringify(stats.body)).not.toContain('example.pt');

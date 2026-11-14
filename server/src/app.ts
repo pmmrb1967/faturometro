@@ -33,7 +33,14 @@
  *   POST   /v1/ai/free        (header X-Device)            → {output, inputTokens, outputTokens, left}
  */
 import { z } from 'zod';
-import { createFreeAi, FreeAiError, MAX_BODY_LENGTH, type WorkersAi } from './ai-free';
+import {
+  createFreeAi,
+  FREE_NEURONS_PER_DAY,
+  FreeAiError,
+  MAX_BODY_LENGTH,
+  NEURON_RESERVE,
+  type WorkersAi,
+} from './ai-free';
 import type { Sql } from './db';
 
 export interface AppConfig {
@@ -255,6 +262,9 @@ export function createApp(config: AppConfig) {
       records_bytes: number | null;
       files_bytes: number | null;
       contributions: number;
+      ai_calls: number;
+      ai_neurons: number;
+      ai_devices: number;
     }>(
       `SELECT
          (SELECT COUNT(*) FROM users) AS accounts,
@@ -267,7 +277,10 @@ export function createApp(config: AppConfig) {
          (SELECT COUNT(*) FROM removed_accounts WHERE removed_at >= ?2) AS removed30,
          (SELECT SUM(records_bytes) FROM users) AS records_bytes,
          (SELECT files_bytes FROM stats WHERE id = 1) AS files_bytes,
-         (SELECT COUNT(*) FROM contributions) AS contributions`,
+         (SELECT COUNT(*) FROM contributions) AS contributions,
+         (SELECT COALESCE(SUM(calls), 0) FROM ai_free_daily WHERE date = ?3) AS ai_calls,
+         (SELECT COALESCE(SUM(neurons), 0) FROM ai_free_daily WHERE date = ?3) AS ai_neurons,
+         (SELECT COUNT(*) FROM ai_free_daily WHERE date = ?3) AS ai_devices`,
       daysAgo(7),
       daysAgo(30),
       today(),
@@ -289,6 +302,15 @@ export function createApp(config: AppConfig) {
       filesBytes: files ? (files.used ?? 0) : (row?.files_bytes ?? 0),
       filesTotalBytes: config.filesTotalBytes ?? FILES_TOTAL_BYTES,
       contributions: row?.contributions ?? 0,
+      // The free AI today (UTC day): estimated Neurons, and where it stops (free minus reserve).
+      freeAi: {
+        enabled: Boolean(config.ai),
+        calls: row?.ai_calls ?? 0,
+        devices: row?.ai_devices ?? 0,
+        neurons: row?.ai_neurons ?? 0,
+        neuronsCap: FREE_NEURONS_PER_DAY - NEURON_RESERVE,
+        neuronsFree: FREE_NEURONS_PER_DAY,
+      },
     };
   }
 

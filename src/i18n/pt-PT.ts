@@ -1061,7 +1061,7 @@ export const t = {
   adminStats: {
     title: 'Utilização do servidor (administrador)',
     intro:
-      'Totais do servidor de sincronização: só contam contas com sincronização ligada. Quem usa a app sem conta, ou sem sincronização, não chega ao servidor e não é contado.',
+      'Totais do servidor de sincronização. As contas, os dados e os originais só contam quem tem a sincronização ligada; quem usa a app sem conta, ou sem sincronização, não é contado. A IA gratuita conta todos os que a usam, com ou sem conta.',
     failed: 'Não foi possível obter os números do servidor.',
     accounts: 'Contas',
     ofMax: (count: number, max: number) => `${count} de ${max} possíveis`,
@@ -1079,6 +1079,12 @@ export const t = {
     spaceNote:
       'Dados: faturas, contratos e definições, cifrados. Originais: PDF e fotografias das faturas, só de quem ligou a sincronização dos originais. Quando um dos dois passa de 80 %, o servidor deixa de aceitar contas novas.',
     contributions: 'Contribuições por recolher',
+    freeAi: 'IA gratuita hoje',
+    freeAiValue: (neurons: string, cap: string, percent: string, calls: number, devices: number) =>
+      `≈ ${neurons} de ${cap} neurons (${percent} %) · ${calls} ${calls === 1 ? 'leitura' : 'leituras'} · ${devices} ${devices === 1 ? 'dispositivo' : 'dispositivos'}`,
+    freeAiOff: 'Desligada (o servidor não tem o Workers AI)',
+    freeAiNote: (free: string) =>
+      `IA gratuita: neurons estimados a partir dos tokens de cada leitura (a Cloudflare conta os seus, que podem diferir um pouco). O dia conta-se em UTC, por isso recomeça à 0h ou à 1h de Lisboa. A Cloudflare dá ${free} neurons gratuitos por dia; a IA gratuita para 1 000 antes, para nenhuma leitura falhar a meio, e volta no dia seguinte.`,
   },
   settings: {
     title: 'Definições',

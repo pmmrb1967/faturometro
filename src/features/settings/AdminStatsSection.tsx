@@ -7,15 +7,18 @@ import { formatMegabytes } from './format';
 
 const copy = t.adminStats;
 
+/** "2,5", or "< 0,1" for a little above zero. */
+function percentOf(used: number, total: number): string {
+  const percent = (used / total) * 100;
+  return used > 0 && percent < 0.1
+    ? '< 0,1'
+    : percent.toLocaleString('pt-PT', { maximumFractionDigits: 1 });
+}
+
 /** "12,3 MB de 500 MB (2,5 %)"; without a known capacity, just the size. */
 function usage(used: number, total: number | undefined): string {
   if (!total) return formatMegabytes(used);
-  const percent = (used / total) * 100;
-  const shown =
-    used > 0 && percent < 0.1
-      ? '< 0,1'
-      : percent.toLocaleString('pt-PT', { maximumFractionDigits: 1 });
-  return copy.ofTotal(formatMegabytes(used), formatMegabytes(total), shown);
+  return copy.ofTotal(formatMegabytes(used), formatMegabytes(total), percentOf(used, total));
 }
 
 /** Administrator only: how the sync server is being used (totals, no accounts named). */
@@ -45,6 +48,22 @@ export function AdminStatsSection() {
         [copy.records, usage(stats.recordsBytes, stats.recordsTotalBytes)],
         [copy.files, usage(stats.filesBytes, stats.filesTotalBytes)],
         [copy.contributions, stats.contributions],
+        ...(stats.freeAi
+          ? [
+              [
+                copy.freeAi,
+                stats.freeAi.enabled
+                  ? copy.freeAiValue(
+                      stats.freeAi.neurons.toLocaleString('pt-PT'),
+                      stats.freeAi.neuronsCap.toLocaleString('pt-PT'),
+                      percentOf(stats.freeAi.neurons, stats.freeAi.neuronsCap),
+                      stats.freeAi.calls,
+                      stats.freeAi.devices,
+                    )
+                  : copy.freeAiOff,
+              ] satisfies [string, ReactNode],
+            ]
+          : []),
       ]
     : [];
 
@@ -66,6 +85,9 @@ export function AdminStatsSection() {
         </table>
       )}
       {stats && <p className="muted">{copy.spaceNote}</p>}
+      {stats?.freeAi && (
+        <p className="muted">{copy.freeAiNote(stats.freeAi.neuronsFree.toLocaleString('pt-PT'))}</p>
+      )}
     </section>
   );
 }

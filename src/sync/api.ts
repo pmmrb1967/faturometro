@@ -177,6 +177,17 @@ export class SyncApi {
         filesBytes: count,
         filesTotalBytes: count.optional(),
         contributions: count,
+        /** Absent on an older server. */
+        freeAi: z
+          .object({
+            enabled: z.boolean(),
+            calls: count,
+            devices: count,
+            neurons: count,
+            neuronsCap: count,
+            neuronsFree: count,
+          })
+          .optional(),
       }),
       { token },
     );
