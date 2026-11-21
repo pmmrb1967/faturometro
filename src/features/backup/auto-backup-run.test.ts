@@ -7,6 +7,8 @@ import { createAccountKeys, sha256Hex, type NewAccountKeys } from '../../lib/cry
 import { getSettings } from '../settings/settings';
 import { importBackup } from './backup';
 import { runAutoBackup } from './auto-backup-run';
+import { CLOUD_BACKUP_FOLDER, cloudTarget } from './backup-target';
+import { MemoryDrive } from '../../cloud/memory-drive';
 import { isEncryptedBackup } from './encrypted-backup';
 import type { BackupFolder, FolderPermission } from './fs-access';
 
@@ -270,5 +272,71 @@ describe('runAutoBackup', () => {
   it('runs before it is due when asked from a click', async () => {
     const config = configFor(account, { lastRunAt: new Date('2026-11-21T09:00').toISOString() });
     expect((await run(account, config, { force: true })).kind).toBe('written');
+  });
+});
+
+describe('automatic backup to the cloud folder', () => {
+  const cloudConfig = (patch: Partial<AutoBackupConfig> = {}): AutoBackupConfig => {
+    const { dir: _dir, ...rest } = configFor(account, { target: 'cloud', dirName: '', ...patch });
+    void _dir;
+    return rest;
+  };
+  const runCloud = (drive: MemoryDrive, config: AutoBackupConfig, now = NOW) =>
+    runAutoBackup({
+      session: { profile: account, repos, masterKey: keys.masterKey },
+      config,
+      now,
+      force: true,
+      interactive: false,
+      target: cloudTarget(drive),
+    });
+  const copies = (drive: MemoryDrive) =>
+    [...drive.files.keys()].filter((path) => path.startsWith(`${CLOUD_BACKUP_FOLDER}/`)).sort();
+
+  it('writes an encrypted copy in the cloud folder', async () => {
+    const drive = new MemoryDrive();
+    const outcome = await runCloud(drive, cloudConfig());
+    expect(outcome).toEqual({ kind: 'written', name: name('2026-11-21-1230') });
+    expect(copies(drive)).toEqual([`${CLOUD_BACKUP_FOLDER}/${name('2026-11-21-1230')}`]);
+    const bytes = drive.files.get(copies(drive)[0] ?? '')?.bytes ?? new Uint8Array();
+    expect(isEncryptedBackup(bytes)).toBe(true);
+  });
+
+  it('keeps only the newest copies of this profile', async () => {
+    const drive = new MemoryDrive();
+    const other = `${CLOUD_BACKUP_FOLDER}/${name('2026-01-01-0000', true, 'ffffffff')}`;
+    await drive.write(other, new Uint8Array([1]));
+    for (let day = 1; day <= 4; day++) {
+      await runCloud(drive, cloudConfig({ keep: 3 }), new Date(`2026-11-0${day}T10:00`));
+    }
+    expect(copies(drive)).toEqual(
+      [
+        other,
+        `${CLOUD_BACKUP_FOLDER}/${name('2026-11-02-1000')}`,
+        `${CLOUD_BACKUP_FOLDER}/${name('2026-11-03-1000')}`,
+        `${CLOUD_BACKUP_FOLDER}/${name('2026-11-04-1000')}`,
+      ].sort(),
+    );
+  });
+
+  it('asks to link the cloud again, without writing, when the sign-in expired', async () => {
+    const drive = new MemoryDrive();
+    drive.failNext('needs_reconnect');
+    expect(await runCloud(drive, cloudConfig())).toEqual({ kind: 'needs_permission' });
+    expect(copies(drive)).toEqual([]);
+  });
+
+  it('says the cloud is full', async () => {
+    const drive = new MemoryDrive();
+    drive.failNext('quota_full', 'write');
+    expect(await runCloud(drive, cloudConfig())).toEqual({ kind: 'error', code: 'cloud_full' });
+    expect((await profilesDb.autoBackups.get(account.id))?.lastError).toBe('cloud_full');
+  });
+
+  it('treats an old saved configuration as a folder', async () => {
+    const { target: _target, ...old } = configFor(account, { target: 'folder' });
+    void _target;
+    expect(await run(account, old, { force: true })).toMatchObject({ kind: 'written' });
+    expect(autoNames()).toHaveLength(1);
   });
 });

@@ -74,7 +74,8 @@ export interface ProfileSync {
   files?: boolean;
 }
 
-export type AutoBackupErrorCode = 'permission_denied' | 'write_failed' | 'folder_missing';
+export type AutoBackupErrorCode =
+  'permission_denied' | 'write_failed' | 'folder_missing' | 'cloud_full' | 'cloud_unavailable';
 
 /**
  * Automatic backup of one profile on this device: each device has its own folder, so
@@ -82,7 +83,10 @@ export type AutoBackupErrorCode = 'permission_denied' | 'write_failed' | 'folder
  */
 export interface AutoBackupConfig {
   profileId: string;
-  dir: FileSystemDirectoryHandle;
+  /** Saved before cloud backups: missing means a folder. */
+  target?: 'folder' | 'cloud';
+  /** The folder (target folder only). */
+  dir?: FileSystemDirectoryHandle;
   /** The browser gives only the folder's name, not its path. */
   dirName: string;
   every: AutoBackupEvery;

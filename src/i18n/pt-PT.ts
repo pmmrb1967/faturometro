@@ -156,6 +156,10 @@ export const t = {
         write_failed:
           'Não foi possível gravar a cópia na pasta (falta de espaço?). Tenta outra vez.',
         folder_missing: 'A pasta da cópia automática já não existe. Escolhe outra pasta.',
+        cloud_full:
+          'O teu OneDrive está cheio: a cópia não foi gravada. Liberta espaço e tenta outra vez.',
+        cloud_unavailable:
+          'Não foi possível chegar ao OneDrive (sem ligação?). A cópia é feita mais tarde.',
       },
     },
   },

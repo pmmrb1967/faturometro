@@ -79,6 +79,14 @@ describe('automatic backup state', () => {
     expect(run).toHaveBeenCalledTimes(2);
     expect(autoBackupState().outcome).toEqual({ kind: 'needs_permission' });
   });
+
+  it('tries again on schedule when the cloud was only out of reach', async () => {
+    await profilesDb.autoBackups.put({ ...config, target: 'cloud' });
+    run.mockResolvedValue({ kind: 'error', code: 'cloud_unavailable' });
+    await autoBackupTick(session);
+    await autoBackupTick(session);
+    expect(run).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('after a password change', () => {

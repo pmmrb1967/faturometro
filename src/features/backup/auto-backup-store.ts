@@ -64,7 +64,8 @@ async function runFor(
   } catch {
     outcome = { kind: 'error', code: 'write_failed' };
   }
-  blocked = outcome.kind === 'error';
+  // A cloud out of reach (offline) is tried again on schedule; other errors wait for a click.
+  blocked = outcome.kind === 'error' && outcome.code !== 'cloud_unavailable';
   // "Not due" says nothing new: keep showing the last real outcome.
   set({ running: false, outcome: outcome.kind === 'not_due' ? state.outcome : outcome });
   return outcome;
