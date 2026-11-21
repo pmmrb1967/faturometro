@@ -106,6 +106,12 @@ export async function oneDriveToken(accountId?: string): Promise<string> {
   }
 }
 
+/** The signed-in Microsoft account's email (or name), to show which OneDrive is linked. */
+export async function oneDriveAccountLabel(accountId?: string): Promise<string | undefined> {
+  const account = accountFor(await msal(), accountId);
+  return account?.username || account?.name || undefined;
+}
+
 /** Forgets the Microsoft sign-in in this browser (the files in OneDrive stay). */
 export async function signOutOfOneDrive(accountId?: string): Promise<void> {
   const client = await msal();

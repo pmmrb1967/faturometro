@@ -188,6 +188,21 @@ describe('OneDrive', () => {
     }
   });
 
+  it('names the account by the signed-in Microsoft account first', async () => {
+    const fetch = fakeFetch([json({ owner: {} })]);
+    const onedrive = new OneDrive(async () => 'token-1', {
+      fetch: fetch.impl,
+      label: async () => 'ana@outlook.pt',
+    });
+    expect(await onedrive.account()).toEqual({ label: 'ana@outlook.pt' });
+    expect(fetch.calls).toHaveLength(0);
+  });
+
+  it('has no name for a personal drive without its owner’s name (never "OneDrive")', async () => {
+    const { onedrive } = drive([json({ owner: {} })]);
+    await expect(onedrive.account()).rejects.toBeInstanceOf(CloudError);
+  });
+
   it('names the account', async () => {
     const { onedrive, calls } = drive([json({ owner: { user: { displayName: 'Maria' } } })]);
     expect(await onedrive.account()).toEqual({ label: 'Maria' });

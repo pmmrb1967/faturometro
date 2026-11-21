@@ -6,12 +6,14 @@ import type { FileSyncResult } from '../sync/files';
 import { downloadOriginals, uploadOriginals } from './cloud-files';
 import type { CloudDrive } from './drive';
 import { OneDrive } from './onedrive';
-import { oneDriveToken } from './onedrive-auth';
+import { oneDriveAccountLabel, oneDriveToken } from './onedrive-auth';
 import { cloudSync, type CloudSyncState } from './sync-protocol';
 
 /** The OneDrive of a signed-in Microsoft account (the last one when not given). */
 export function oneDriveFor(accountId?: string): CloudDrive {
-  return new OneDrive(() => oneDriveToken(accountId));
+  return new OneDrive(() => oneDriveToken(accountId), {
+    label: () => oneDriveAccountLabel(accountId),
+  });
 }
 
 /** The drive of the profile's cloud account. */

@@ -23,6 +23,8 @@ const MAX_WAIT_SECONDS = 30;
 export interface OneDriveOptions {
   fetch?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
+  /** The signed-in Microsoft account's name (its email), when known. */
+  label?: () => Promise<string | undefined>;
 }
 
 const encodePath = (path: string) => path.split('/').map(encodeURIComponent).join('/');
@@ -58,11 +60,13 @@ export class OneDrive implements CloudDrive {
   private readonly getToken: () => Promise<string>;
   private readonly fetchImpl: typeof fetch;
   private readonly sleep: (ms: number) => Promise<void>;
+  private readonly label: (() => Promise<string | undefined>) | undefined;
 
   constructor(getToken: () => Promise<string>, options: OneDriveOptions = {}) {
     this.getToken = getToken;
     this.fetchImpl = options.fetch ?? ((input, init) => fetch(input, init));
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.label = options.label;
   }
 
   /**
@@ -196,9 +200,14 @@ export class OneDrive implements CloudDrive {
   }
 
   async account(): Promise<{ label: string }> {
+    const signedIn = await this.label?.();
+    if (signedIn) return { label: signedIn };
     const response = await this.request(`${GRAPH}/me/drive?$select=owner`);
     if (!response) throw new CloudError('unexpected');
     const drive = (await response.json()) as { owner?: { user?: { displayName?: string } } };
-    return { label: drive.owner?.user?.displayName ?? 'OneDrive' };
+    // Personal drives often leave the owner's name out: then the account has no name here.
+    const name = drive.owner?.user?.displayName;
+    if (!name) throw new CloudError('unexpected');
+    return { label: name };
   }
 }
