@@ -54,7 +54,7 @@ const backupSchema = z.object({
 export type BackupData = z.infer<typeof backupSchema>;
 
 export class BackupError extends Error {
-  readonly code: 'not_a_backup' | 'too_large';
+  readonly code: 'not_a_backup' | 'too_large' | 'wrong_secret';
   constructor(code: BackupError['code']) {
     super(code);
     this.name = 'BackupError';

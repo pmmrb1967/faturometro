@@ -101,6 +101,8 @@ export const t = {
     errors: {
       not_a_backup: 'Este ficheiro não é uma exportação do Faturómetro.',
       too_large: 'O ficheiro é demasiado grande.',
+      wrong_secret:
+        'A palavra-passe ou a chave de recuperação não abre esta cópia. Usa a da conta que a fez (a palavra-passe que tinha nesse dia).',
     },
   },
   install: {
