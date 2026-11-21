@@ -30,6 +30,16 @@ export const t = {
           'No Chrome e no Edge de computador, a app pode gravar sozinha uma cópia de segurança numa pasta que escolhes. A cópia vai só para essa pasta: a app não a envia para lado nenhum.',
           'Por omissão a cópia é cifrada e só abre com a palavra-passe da tua conta ou com a chave de recuperação. Se desligares a cifra, fica em claro, como a exportação manual.',
           'Se a pasta for de um serviço de cloud (OneDrive, Google Drive, Dropbox…), é o programa desse serviço no teu computador que envia o ficheiro, nos termos desse serviço.',
+          'Se sincronizares pelo OneDrive, podes também guardar a cópia automática na pasta da app no teu OneDrive (em qualquer browser).',
+        ],
+      },
+      {
+        title: 'Sincronização pelo teu OneDrive (só se a ligares)',
+        body: [
+          'A app liga-se à Microsoft para entrares na tua conta e pede só acesso a uma pasta própria no teu OneDrive (Aplicações/Faturómetro). Não vê os teus outros ficheiros.',
+          'Nessa pasta ficam: o teu email e a chave das tuas faturas cifrada com a palavra-passe e com a chave de recuperação (ficheiro conta.json); e ficheiros cifrados no teu dispositivo com as alterações, os originais (se os ligares) e as cópias automáticas (se as guardares lá). A Microsoft guarda-os nos termos do OneDrive, mas não os consegue ler.',
+          'O início de sessão na Microsoft fica guardado neste browser (para não teres de entrar sempre) e só é enviado à Microsoft. O Faturómetro não recebe nada desta sincronização.',
+          'Ao desligares, os ficheiros ficam no teu OneDrive até os apagares lá.',
         ],
       },
       {
@@ -39,6 +49,7 @@ export const t = {
           'O servidor guarda: o teu email e o dia em que sincronizaste pela última vez; um código derivado da palavra-passe para confirmar que és tu (só o seu hash); a chave das tuas faturas cifrada com chaves que ele não tem; e os registos cifrados, cada um com um identificador, o tipo (fatura, contrato…) e a data da última alteração. Se ligares a sincronização dos originais, guarda também os PDFs, cifrados da mesma forma.',
           'O servidor funciona na Cloudflare, com as bases de dados restritas à União Europeia. A Cloudflare processa os pedidos (por exemplo, o endereço IP) para entregar o serviço e protegê-lo de abusos, nos termos da sua política de privacidade; o Faturómetro não guarda registos de acesso.',
           'As sessões expiram ao fim de 30 dias. Os dados ficam no servidor até desligares a sincronização com a opção de apagar ou até apagares tudo (Definições).',
+          'Se mudares do servidor para o OneDrive e escolheres apagar os dados do servidor, os registos e os originais saem logo; o email e o código da palavra-passe ficam mais 30 dias, para os teus outros dispositivos saberem da mudança, e depois são apagados.',
           'Para o serviço continuar gratuito há limites: os PDFs originais com mais de 12 meses saem do servidor e ficam só nos teus dispositivos; uma conta que não sincronize há 12 meses é apagada do servidor (os dados nos teus dispositivos ficam); e, quando o servidor está perto da lotação, não é possível ligar a sincronização em contas novas.',
         ],
       },
