@@ -3,7 +3,7 @@ export const t = {
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
   privacyPage: {
     title: 'Privacidade',
-    updated: 'Última atualização: 14 de novembro de 2026.',
+    updated: 'Última atualização: 21 de novembro de 2026.',
     intro:
       'O Faturómetro foi feito para que as tuas faturas fiquem contigo. Esta página explica, sem letra miudinha, que dados existem, onde ficam e quem os pode ver.',
     sections: [
@@ -22,6 +22,14 @@ export const t = {
           'Não há cookies, publicidade nem registos com os teus dados.',
           'A câmara só abre quando carregas em "Ler talão". As imagens são analisadas neste dispositivo, só para encontrar o código QR, e não são guardadas nem enviadas.',
           'Se limpares os dados do site ou desinstalares a app, esses dados desaparecem deste dispositivo. Por isso existe a exportação (Definições → Os teus dados).',
+        ],
+      },
+      {
+        title: 'Cópia automática (só se a ligares)',
+        body: [
+          'No Chrome e no Edge de computador, a app pode gravar sozinha uma cópia de segurança numa pasta que escolhes. A cópia vai só para essa pasta: a app não a envia para lado nenhum.',
+          'Por omissão a cópia é cifrada e só abre com a palavra-passe da tua conta ou com a chave de recuperação. Se desligares a cifra, fica em claro, como a exportação manual.',
+          'Se a pasta for de um serviço de cloud (OneDrive, Google Drive, Dropbox…), é o programa desse serviço no teu computador que envia o ficheiro, nos termos desse serviço.',
         ],
       },
       {
