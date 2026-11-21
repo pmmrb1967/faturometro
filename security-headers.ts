@@ -36,7 +36,7 @@ export function contentSecurityPolicy(syncUrl: string, frameAncestors = "'none'"
     "worker-src 'self' blob:",
     `connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com ${syncOrigin} ${BEACON_REPORT_ORIGIN} ${MICROSOFT_LOGIN} ${ONEDRIVE_ORIGINS.join(' ')}`,
     // Silent renewal of the Microsoft sign-in (hidden frame).
-    `frame-src ${MICROSOFT_LOGIN}`,
+    `frame-src 'self' ${MICROSOFT_LOGIN}`,
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

@@ -222,7 +222,7 @@ export function CloudPanel({
     if (!session) return;
     setBusy(true);
     try {
-      updateProfile(await disableCloudSync(session.profile));
+      updateProfile(await disableCloudSync(session.profile, session.repos));
       setNotice(copy.disabled);
     } finally {
       setBusy(false);

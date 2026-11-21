@@ -183,6 +183,8 @@ export function AutoBackupSection() {
           </SelectField>
           {guest ? (
             <p className="muted">{copy.guestPlain}</p>
+          ) : toCloud ? (
+            <p className="muted">{copy.cloudEncrypted}</p>
           ) : (
             <>
               <label className="check settings-check">

@@ -13,6 +13,7 @@ import {
   type ProfileCloud,
 } from '../db/profiles';
 import {
+  deriveOwnerProof,
   PBKDF2_ITERATIONS,
   rewrapWithPassword,
   unlockWithPassword,
@@ -90,6 +91,25 @@ async function unlock(wrapped: WrappedMasterKey, password: string): Promise<Cryp
   }
 }
 
+/**
+ * The account file is this profile's: same email and the same master key. A new local
+ * account made with the same email has other keys; joining would mix records nobody reads.
+ */
+async function assertSameAccount(
+  file: z.infer<typeof accountSchema>,
+  profile: Profile,
+  masterKey: CryptoKey,
+  password: string,
+): Promise<void> {
+  if (normalizeEmail(file.email) !== normalizeEmail(profile.email)) {
+    throw new CloudAccountError('other_account');
+  }
+  const theirs = await unlock(file.wrappedKey, password);
+  if ((await deriveOwnerProof(theirs)) !== (await deriveOwnerProof(masterKey))) {
+    throw new CloudAccountError('other_account');
+  }
+}
+
 /** Turns on the sync through the cloud for this profile (not yet syncing through the server). */
 export async function enableCloudSync(input: {
   profile: Profile;
@@ -103,10 +123,8 @@ export async function enableCloudSync(input: {
   const { profile, drive } = input;
   await unlock(wrappedKeyOf(profile), input.password);
   const existing = await readJson(drive, CLOUD_ACCOUNT_FILE, accountSchema);
-  if (existing && normalizeEmail(existing.email) !== normalizeEmail(profile.email)) {
-    throw new CloudAccountError('other_account');
-  }
-  if (!existing) {
+  if (existing) await assertSameAccount(existing, profile, input.masterKey, input.password);
+  else {
     try {
       await writeJson(
         drive,
@@ -120,9 +138,8 @@ export async function enableCloudSync(input: {
       // Another device created it a moment ago: it must be this account's.
       if (!(error instanceof CloudError && error.code === 'conflict')) throw error;
       const created = await readJson(drive, CLOUD_ACCOUNT_FILE, accountSchema);
-      if (!created || normalizeEmail(created.email) !== normalizeEmail(profile.email)) {
-        throw new CloudAccountError('other_account');
-      }
+      if (!created) throw new CloudAccountError('other_account');
+      await assertSameAccount(created, profile, input.masterKey, input.password);
     }
   }
   const updated: Profile = {

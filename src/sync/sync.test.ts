@@ -760,4 +760,18 @@ describe('moved to the user’s cloud', () => {
       expect((await b.repos.contracts.list()).map((row) => row.label)).toEqual(['Casa']);
     });
   });
+
+  it('a device with changes to send learns of the move too', async () => {
+    const a = await deviceA();
+    await runSync({ ...a, api });
+    const b = await deviceB();
+    const token = (await decryptJson(a.masterKey, a.profile.sync?.token as never)) as string;
+    await api.moved(token, await deriveOwnerProof(a.masterKey), true);
+    await on(b.profile, async () => {
+      await b.repos.contracts.put(contract('c2', 'Escritório'));
+      await expect(runSync({ ...b, api })).rejects.toMatchObject({ code: 'moved_to_cloud' });
+      // Kept here, for the cloud.
+      expect((await b.repos.contracts.list()).map((row) => row.label)).toEqual(['Escritório']);
+    });
+  });
 });

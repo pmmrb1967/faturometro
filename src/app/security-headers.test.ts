@@ -14,7 +14,9 @@ describe('security headers', () => {
     expect(connect).toContain('https://login.microsoftonline.com');
     expect(connect).toContain('https://graph.microsoft.com');
     expect(connect).toContain(SYNC);
+    // The silent renewal frame goes to Microsoft and comes back to the app's own page.
     expect(directive(contentSecurityPolicy(SYNC), 'frame-src')).toEqual([
+      "'self'",
       'https://login.microsoftonline.com',
     ]);
   });

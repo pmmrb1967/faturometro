@@ -302,6 +302,14 @@ describe('automatic backup to the cloud folder', () => {
     expect(isEncryptedBackup(bytes)).toBe(true);
   });
 
+  it('encrypts the cloud copy even when the folder copies were set to plain', async () => {
+    const drive = new MemoryDrive();
+    const outcome = await runCloud(drive, cloudConfig({ encrypted: false }));
+    expect(outcome).toEqual({ kind: 'written', name: name('2026-11-21-1230') });
+    const bytes = drive.files.get(copies(drive)[0] ?? '')?.bytes ?? new Uint8Array();
+    expect(isEncryptedBackup(bytes)).toBe(true);
+  });
+
   it('keeps only the newest copies of this profile', async () => {
     const drive = new MemoryDrive();
     const other = `${CLOUD_BACKUP_FOLDER}/${name('2026-01-01-0000', true, 'ffffffff')}`;

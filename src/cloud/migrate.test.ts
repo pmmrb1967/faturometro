@@ -117,6 +117,62 @@ describe('migrateToCloud', () => {
     expect([...drive.files.keys()].some((path) => path.startsWith('originais/'))).toBe(true);
   });
 
+  it('after another device moved and deleted the server data, takes the originals from the cloud', async () => {
+    const a = await syncingDevice();
+    const aFiles = await setFileSync(a.profile, true);
+    const pdf = new TextEncoder().encode('%PDF-1.7 já na nuvem');
+    const fileHash = await sha256Hex(new Uint8Array(pdf));
+    await a.repos.documents.put({ fileHash, mime: 'application/pdf', bytes: new Uint8Array(pdf) });
+    await runSync({ ...a, profile: aFiles, api });
+
+    // B knows of the original (only on the server so far).
+    const own = await profilesDb.profiles.get(a.profile.id);
+    await profilesDb.profiles.clear();
+    const connected = await connectFromServer({
+      serverUrl: SERVER,
+      email: 'ana@example.pt',
+      password: PASSWORD,
+      api,
+      localIterations: ITERATIONS,
+    });
+    const bRepos = createRepositories(new ProfileDb(crypto.randomUUID()), connected.masterKey);
+    const bProfile = await setFileSync(connected.profile, true);
+    await runSync({
+      ...connected,
+      profile: { ...bProfile, sync: { ...bProfile.sync!, files: false } },
+      repos: bRepos,
+      api,
+    });
+    const bStored = await profilesDb.profiles.get(connected.profile.id);
+    expect(await bRepos.documents.stateOf(fileHash)).toBe('remote');
+
+    // A moves first and deletes the server data.
+    await profilesDb.profiles.clear();
+    if (own) await profilesDb.profiles.put(own);
+    const moved = await migrate({
+      ...a,
+      profile: (await profilesDb.profiles.get(a.profile.id)) ?? aFiles,
+    });
+    await finishServerData({
+      previous: moved.previous,
+      masterKey: a.masterKey,
+      deleteData: true,
+      api,
+    });
+
+    // Then B.
+    await profilesDb.profiles.clear();
+    if (bStored)
+      await profilesDb.profiles.put({ ...bStored, sync: { ...bStored.sync!, files: true } });
+    const b: Device = {
+      masterKey: connected.masterKey,
+      repos: bRepos,
+      profile: (await profilesDb.profiles.get(connected.profile.id)) as Profile,
+    };
+    await migrate(b);
+    expect((await bRepos.documents.getByFileHash(fileHash))?.bytes).toEqual(pdf);
+  });
+
   it('keeps syncing through the server when the cloud fails', async () => {
     const a = await syncingDevice();
     await a.repos.providers.put(provider);

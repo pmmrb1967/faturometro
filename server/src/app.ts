@@ -13,6 +13,7 @@
  *          (contributions: layout contributions waiting, for administrators only)
  *   POST   /v1/changes    {records}                       → {latest}
  *   PUT    /v1/owner      {ownerProof}                    → 204; 409 if another one is set
+ *   (POST /v1/changes and PUT /v1/files/… answer 410 once the account moved to the cloud)
  *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → {token}  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
  *   POST   /v1/moved      {to: 'cloud', deleteData}       → 204  (sync moved to the user's cloud;
@@ -681,6 +682,8 @@ export function createApp(config: AppConfig) {
     }
 
     if (method === 'POST' && path === '/v1/changes') {
+      // Moved to the user's cloud: a device that has not learned it yet must not put data back.
+      if (user.moved_to) throw new HttpError(410, 'Moved to the cloud');
       const { records } = await body(request, schemas.push);
       // One last-write-wins upsert for the whole batch (D1 on the free plan
       // allows only 50 queries per request); an equal timestamp is the same
@@ -801,6 +804,7 @@ export function createApp(config: AppConfig) {
       const [, fileId, chunk] = fileRoute ?? [];
 
       if (method === 'PUT' && fileId && chunk !== undefined) {
+        if (user.moved_to) throw new HttpError(410, 'Moved to the cloud');
         const n = Number(chunk);
         const total = Number(url.searchParams.get('total'));
         if (!Number.isInteger(total) || total < 1 || total > MAX_CHUNKS || n >= total) {

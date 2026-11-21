@@ -54,19 +54,46 @@ export async function setCloudFileSync(profile: Profile, enabled: boolean): Prom
 }
 
 /** Stops syncing through the cloud on this device; the files in the cloud stay. */
-export async function disableCloudSync(profile: Profile): Promise<Profile> {
+export async function disableCloudSync(profile: Profile, repos?: Repositories): Promise<Profile> {
+  // A server sync turned on later sends them again.
+  await repos?.documents.forgetUploads();
   return saveCloud(profile, undefined);
 }
 
-export async function runCloudSync(input: {
+type CloudRunInput = {
   profile: Profile;
   masterKey: CryptoKey;
   repos: Repositories;
   drive?: CloudDrive;
-}): Promise<{ profile: Profile; result: CloudRunResult; files?: FileSyncResult }> {
-  const cloud = input.profile.cloud;
+};
+type CloudRunOutput = { profile: Profile; result: CloudRunResult; files?: FileSyncResult };
+
+/** Runs in this tab while no other run holds the lock (between tabs: the Web Locks API). */
+const queues = new Map<string, Promise<unknown>>();
+function exclusive<T>(name: string, run: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  if (locks) return locks.request(name, run);
+  const previous = queues.get(name) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(run);
+  queues.set(name, next);
+  return next;
+}
+
+/**
+ * One sync at a time per profile: two tabs (the installed app and the browser) share the
+ * profile's numbers, and two writers would write the same change file.
+ */
+export function runCloudSync(input: CloudRunInput): Promise<CloudRunOutput> {
+  return exclusive(`faturometro-cloud-sync:${input.profile.id}`, () => cloudSyncOnce(input));
+}
+
+async function cloudSyncOnce(input: CloudRunInput): Promise<CloudRunOutput> {
+  // The saved profile, not the caller's copy: an older copy would send numbers already
+  // used and undo changes made since (files toggle, a new sign-in).
+  const stored = (await profilesDb.profiles.get(input.profile.id)) ?? input.profile;
+  const cloud = stored.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');
-  const drive = input.drive ?? driveFor(input.profile);
+  const drive = input.drive ?? driveFor(stored);
   const { repos } = input;
 
   // Tables added since the last sync were skipped by the older version: read again from
@@ -75,14 +102,24 @@ export async function runCloudSync(input: {
   const start = stateOf(cloud);
   if (missesTables) start.cursors = {};
 
+  // First sync through the cloud on this device: originals sent only to the server go too.
+  if (!cloud.lastSyncAt) await repos.documents.forgetUploads();
   const upload = cloud.files ? await uploadOriginals(repos, drive) : undefined;
   const synced = await cloudSync(repos, drive, start, {
     ...(upload ? { extraOutgoing: upload.records } : {}),
     baseExtras: () => repos.documents.cloudRecords(),
+    onPushed: async (state) => {
+      // Sent: the originals' records are out, and their numbers are taken.
+      await upload?.confirm();
+      await saveCloud(stored, {
+        ...((await profilesDb.profiles.get(stored.id))?.cloud ?? cloud),
+        ...state,
+      });
+    },
   });
   let files: FileSyncResult | undefined;
   if (upload) {
-    await upload.confirm();
+    if (synced.pushed === 0) await upload.confirm();
     const { downloaded } = await downloadOriginals(repos, drive, input.masterKey);
     files = {
       uploaded: upload.records.length,
@@ -92,8 +129,9 @@ export async function runCloudSync(input: {
     };
   }
 
-  const profile = await saveCloud(input.profile, {
-    ...cloud,
+  const latest = (await profilesDb.profiles.get(stored.id))?.cloud ?? cloud;
+  const profile = await saveCloud(stored, {
+    ...latest,
     ...synced.state,
     pulledTables: [...SYNCED_TABLES],
     lastSyncAt: new Date().toISOString(),

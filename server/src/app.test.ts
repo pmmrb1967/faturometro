@@ -964,6 +964,27 @@ describe('moved to the user’s cloud', () => {
     expect((await call('GET', '/v1/admin/stats', undefined, token)).status).toBe(200);
   });
 
+  it('takes no more changes or files once moved (lagging devices learn it)', async () => {
+    const { token } = await setUp();
+    await call('POST', '/v1/moved', { to: 'cloud', deleteData: true }, token, ORIGIN, withProof);
+    const push = await call(
+      'POST',
+      '/v1/changes',
+      { records: [record('r2', '2026-10-14T10:00:00Z')] },
+      token,
+    );
+    expect(push.status).toBe(410);
+    const put = await handle(
+      new Request('https://sync.example/v1/files/g/0?total=1', {
+        method: 'PUT',
+        headers: { Origin: ORIGIN, Authorization: `Bearer ${token}` },
+        body: 'QUJD',
+      }),
+    );
+    expect(put.status).toBe(410);
+    expect((await call('GET', '/v1/changes', undefined, token)).body?.records).toEqual([]);
+  });
+
   it('says nothing of a move to accounts that did not move', async () => {
     const { token } = await setUp();
     expect((await call('GET', '/v1/changes', undefined, token)).body?.movedTo).toBeUndefined();

@@ -54,6 +54,14 @@ describe('enableCloudSync', () => {
     expect(again.cloud).toBeDefined();
   });
 
+  it('refuses a folder of an account with the same email but other keys', async () => {
+    // A new local account made with the same email, instead of "Entrar com o OneDrive".
+    const fresh = await createAccountKeys(PASSWORD, ITERATIONS);
+    await enable(profile, keys.masterKey);
+    const twin = accountProfile('EU@exemplo.pt', fresh);
+    await expect(enable(twin, fresh.masterKey)).rejects.toMatchObject({ code: 'other_account' });
+  });
+
   it('refuses a folder of another account', async () => {
     const other = await createAccountKeys('outra-palavra-passe', ITERATIONS);
     await enable(accountProfile('outra@exemplo.pt', other), other.masterKey, 'outra-palavra-passe');

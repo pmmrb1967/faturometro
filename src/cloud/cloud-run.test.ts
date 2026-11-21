@@ -77,6 +77,57 @@ describe('runCloudSync', () => {
     expect(synced.cloud).toEqual(saved?.cloud);
   });
 
+  it('starts from the profile as saved, not from an older copy of it', async () => {
+    await repos.providers.put(provider);
+    await runCloudSync({ profile, masterKey: keys.masterKey, repos, drive });
+    const relinked = await setCloudFileSync(
+      (await profilesDb.profiles.get(profile.id)) ?? profile,
+      true,
+    );
+    expect(relinked.cloud?.nextSeq).toBe(2);
+    // `profile` is the copy from before both: nextSeq 1, files off.
+    await runCloudSync({ profile, masterKey: keys.masterKey, repos, drive });
+    const saved = await profilesDb.profiles.get(profile.id);
+    expect(saved?.cloud?.files).toBe(true);
+    expect(saved?.cloud?.nextSeq).toBe(2);
+  });
+
+  it('keeps the state of what was sent when the rest of the sync fails', async () => {
+    const other = await secondDevice();
+    await other.repos.providers.put({ id: 'p2', nif: '5', name: 'Repsol', sectors: [] } as never);
+    await runCloudSync({ ...other, drive });
+    await repos.providers.put(provider);
+    drive.failNext('throttled', 'read');
+    await expect(
+      runCloudSync({ profile, masterKey: keys.masterKey, repos, drive }),
+    ).rejects.toMatchObject({ code: 'throttled' });
+    const saved = await profilesDb.profiles.get(profile.id);
+    expect(saved?.cloud?.nextSeq).toBe(2);
+    expect(saved?.cloud?.lastPushedAt).not.toBe('');
+  });
+
+  it('runs one sync at a time for a profile (two tabs share its numbers)', async () => {
+    let running = 0;
+    let most = 0;
+    const list = drive.list.bind(drive);
+    drive.list = async (folder) => {
+      running++;
+      most = Math.max(most, running);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      try {
+        return await list(folder);
+      } finally {
+        running--;
+      }
+    };
+    await repos.providers.put(provider);
+    await Promise.all([
+      runCloudSync({ profile, masterKey: keys.masterKey, repos, drive }),
+      runCloudSync({ profile, masterKey: keys.masterKey, repos, drive }),
+    ]);
+    expect(most).toBe(1);
+  });
+
   it('stops when the Microsoft link expired, keeping the changes to send later', async () => {
     await repos.providers.put(provider);
     drive.failNext('needs_reconnect');
@@ -112,14 +163,37 @@ describe('runCloudSync', () => {
     expect(again.profile.cloud?.pulledTables?.length).toBeGreaterThan(0);
   });
 
+  it('sends to the cloud the originals that were only sent to the server before', async () => {
+    const pdf = new TextEncoder().encode('%PDF-1.7 servidor');
+    const fileHash = await sha256Hex(new Uint8Array(pdf));
+    const id = await repos.documents.put({ fileHash, mime: 'application/pdf', bytes: pdf });
+    await repos.documents.markUploaded(id);
+    const withFiles = await setCloudFileSync(profile, true);
+    const { files } = await runCloudSync({
+      profile: withFiles,
+      masterKey: keys.masterKey,
+      repos,
+      drive,
+    });
+    expect(files?.uploaded).toBe(1);
+  });
+
+  it('turning the cloud off makes the originals sent there count as only here', async () => {
+    const pdf = new TextEncoder().encode('%PDF-1.7 nuvem');
+    const fileHash = await sha256Hex(new Uint8Array(pdf));
+    await repos.documents.put({ fileHash, mime: 'application/pdf', bytes: pdf });
+    const withFiles = await setCloudFileSync(profile, true);
+    await runCloudSync({ profile: withFiles, masterKey: keys.masterKey, repos, drive });
+    expect(await repos.documents.stateOf(fileHash)).toBe('uploaded');
+    await disableCloudSync(withFiles, repos);
+    expect(await repos.documents.stateOf(fileHash)).toBe('local');
+  });
+
   it('sends originals when this device syncs them', async () => {
     const pdf = new TextEncoder().encode('%PDF-1.7 teste');
     const fileHash = await sha256Hex(new Uint8Array(pdf));
     await repos.documents.put({ fileHash, mime: 'application/pdf', bytes: new Uint8Array(pdf) });
-    const withFiles: Profile = {
-      ...profile,
-      cloud: { ...(profile.cloud as NonNullable<Profile['cloud']>), files: true },
-    };
+    const withFiles = await setCloudFileSync(profile, true);
     const { files } = await runCloudSync({
       profile: withFiles,
       masterKey: keys.masterKey,
@@ -129,10 +203,7 @@ describe('runCloudSync', () => {
     expect(files).toMatchObject({ uploaded: 1, storageFull: false });
 
     const other = await secondDevice();
-    const otherWithFiles: Profile = {
-      ...other.profile,
-      cloud: { ...(other.profile.cloud as NonNullable<Profile['cloud']>), files: true },
-    };
+    const otherWithFiles = await setCloudFileSync(other.profile, true);
     const received = await runCloudSync({ ...other, profile: otherWithFiles, drive });
     expect(received.files?.downloaded).toBe(1);
     expect((await other.repos.documents.getByFileHash(fileHash))?.bytes).toEqual(pdf);

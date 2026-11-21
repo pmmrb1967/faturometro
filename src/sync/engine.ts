@@ -105,8 +105,13 @@ export async function applyIncoming(
   for (const remote of records) {
     if (remote.table === 'documents') {
       // Original files: only the metadata here; contents come with the file sync.
-      if (!remote.deletedAt && (await repos.documents.applyRemote(remote.enc, remote.updatedAt)))
-        received++;
+      if (remote.deletedAt) continue;
+      try {
+        if (await repos.documents.applyRemote(remote.enc, remote.updatedAt)) received++;
+      } catch {
+        // Cannot be opened with this key: the others still apply.
+        conflicts++;
+      }
       continue;
     }
     if (!isSyncedTable(remote.table)) continue;

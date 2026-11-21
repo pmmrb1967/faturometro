@@ -235,7 +235,8 @@ export async function runSync(input: {
       await saveSync(input.profile, undefined);
       throw new SyncError('account_removed');
     }
-    fromHttp(error, { 401: 'session_expired', 507: 'records_full' });
+    // 410: moved to the user's cloud; this device's changes stay here for it.
+    fromHttp(error, { 401: 'session_expired', 410: 'moved_to_cloud', 507: 'records_full' });
   }
   const profile = await saveSync(input.profile, {
     ...sync,

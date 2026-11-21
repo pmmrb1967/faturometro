@@ -221,6 +221,14 @@ export class DocumentStore {
    * The server account and its files are gone: what is here becomes local
    * again (sent anew if sync is turned back on); what was only there is gone.
    */
+  /**
+   * Switching where originals sync (server ↔ cloud): those sent to the other place count as
+   * only here again, so they are sent to the new one. Those only elsewhere stay as they are.
+   */
+  async forgetUploads(): Promise<void> {
+    await this.table.where('syncState').anyOf('uploaded', 'pruned').modify({ syncState: 'local' });
+  }
+
   async forgetServer(): Promise<void> {
     await this.table.where('syncState').anyOf('uploaded', 'pruned').modify({ syncState: 'local' });
     await this.table.where('syncState').equals('remote').modify({ syncState: 'gone' });

@@ -144,6 +144,8 @@ export const t = {
       useCloud: 'Usar o OneDrive',
       useFolder: 'Usar uma pasta deste computador',
       cloudFolder: 'Destino: o teu OneDrive (Aplicações/Faturómetro/copias).',
+      cloudEncrypted:
+        'No OneDrive, a cópia vai sempre cifrada: abre com a palavra-passe da tua conta ou com a chave de recuperação.',
       cloudNeedsReconnect:
         'A ligação ao OneDrive terminou. Liga de novo na sincronização, acima; a cópia é feita a seguir.',
       change: 'Mudar pasta',

@@ -38,11 +38,19 @@ export function useSyncStatus(): SyncStatus {
 }
 
 export async function syncSession(
-  session: Session,
+  given: Session,
   updateProfile: (profile: Session['profile']) => void,
 ): Promise<void> {
-  if (!(session.profile.sync || session.profile.cloud) || status.running) return;
+  if (status.running) return;
   set({ ...status, running: true });
+  // The profile as saved: the automatic sync holds the session from when it started, and
+  // since then the profile may have moved to the cloud or changed its sync state.
+  const stored = await profilesDb.profiles.get(given.profile.id).catch(() => undefined);
+  const session: Session = stored ? { ...given, profile: stored } : given;
+  if (!(session.profile.sync || session.profile.cloud)) {
+    set({ ...status, running: false });
+    return;
+  }
   try {
     // A profile syncs through the server or through the user's cloud, never both.
     const synced = session.profile.cloud ? await runCloudSync(session) : await runSync(session);

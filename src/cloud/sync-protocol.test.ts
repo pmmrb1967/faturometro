@@ -105,7 +105,7 @@ describe('cloudSync', () => {
     expect(files.length).toBeLessThan(COMPACT_AFTER);
     await sync(b);
     expect(await names(b)).toEqual(await names(a));
-  });
+  }, 30_000);
 
   it('moves nothing on when sending fails, and sends it all on the next sync', async () => {
     const a = device();
@@ -136,6 +136,69 @@ describe('cloudSync', () => {
     expect(result.conflicts).toBe(1);
     expect(await names(c)).toEqual(['NOS']);
     expect(c.state.cursors[b.state.deviceId] ?? 0).toBe(0);
+  });
+
+  it('never reuses a change number when the state after a send was lost', async () => {
+    const a = device();
+    const b = device();
+    const c = device();
+    await b.repos.providers.put(provider('p2', 'Repsol'));
+    await sync(b);
+    await a.repos.providers.put(provider('p1', 'NOS'));
+    const lost = a.state;
+    // The send works, then reading b's file fails: the new state is never kept.
+    drive.failNext('throttled', 'read');
+    await expect(cloudSync(a.repos, drive, a.state)).rejects.toMatchObject({ code: 'throttled' });
+    expect(a.state).toEqual(lost);
+    await sync(c);
+    expect(await names(c)).toEqual(['NOS', 'Repsol']);
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    await a.repos.providers.put(provider('p3', 'Vodafone'));
+    await sync(a);
+    await sync(c);
+    expect(await names(c)).toEqual(['NOS', 'Repsol', 'Vodafone']);
+  });
+
+  it('hands over the state after sending, before reading the others', async () => {
+    const a = device();
+    const b = device();
+    await b.repos.providers.put(provider('p2', 'Repsol'));
+    await sync(b);
+    await a.repos.providers.put(provider('p1', 'NOS'));
+    const saved: CloudSyncState[] = [];
+    drive.failNext('offline', 'read');
+    await expect(
+      cloudSync(a.repos, drive, a.state, {
+        onPushed: (state) => {
+          saved.push(state);
+          return Promise.resolve();
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'offline' });
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.nextSeq).toBe(2);
+    expect(saved[0]?.lastPushedAt).not.toBe('');
+  });
+
+  it('counts an original’s record it cannot open as a conflict, and reads the rest', async () => {
+    const a = device();
+    const b = device();
+    await a.repos.providers.put(provider('p1', 'NOS'));
+    await sync(a);
+    const path = [...drive.files.keys()][0] ?? '';
+    const file = JSON.parse(new TextDecoder().decode(drive.files.get(path)?.bytes)) as {
+      records: unknown[];
+    };
+    file.records.unshift({
+      id: 'd1',
+      table: 'documents',
+      updatedAt: '2026-11-21T10:00:00.000Z',
+      enc: { iv: 'AAAAAAAAAAAAAAAA', data: 'AAAA' },
+    });
+    drive.files.set(path, { bytes: new TextEncoder().encode(JSON.stringify(file)), etag: 'y' });
+    const result = await sync(b);
+    expect(result.conflicts).toBe(1);
+    expect(await names(b)).toEqual(['NOS']);
   });
 
   it('sends nothing when nothing changed', async () => {

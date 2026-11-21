@@ -82,7 +82,8 @@ export async function runAutoBackup(run: AutoBackupRun): Promise<AutoBackupOutco
     if (allowed === null) return { kind: 'needs_permission' };
     if (!allowed) throw new DOMException('Folder permission refused', 'NotAllowedError');
 
-    const encrypted = config.encrypted && !isGuest(session.profile);
+    // Never in clear outside the device: a copy in the cloud is always encrypted.
+    const encrypted = (config.encrypted || config.target === 'cloud') && !isGuest(session.profile);
     const { zip } = await exportBackup(session.repos);
     const bytes = encrypted
       ? await encryptBackup(zip, session.masterKey, wrappedKeyOf(session.profile))

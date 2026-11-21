@@ -46,11 +46,13 @@ export async function migrateToCloud(input: {
 
   // 1. Everything the server has, so the cloud gets it all.
   let profile = input.profile;
+  let alreadyMoved = false;
   try {
     profile = (await runSync({ profile, masterKey, repos, api })).profile;
   } catch (error) {
     // Another device of the account moved first: what the server had is here already.
     if (!(error instanceof SyncError && error.code === 'moved_to_cloud')) throw error;
+    alreadyMoved = true;
     profile = (await profilesDb.profiles.get(profile.id)) ?? profile;
   }
   const previous = profile.sync;
@@ -70,8 +72,11 @@ export async function migrateToCloud(input: {
   const cloud = profile.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');
   profile = await saveCloud(profile, { ...cloud, files: previous.files ?? false });
-  // Originals sent to the server count as only here again, so they go to the cloud.
-  await repos.documents.forgetServer();
+  // Originals sent to the server count as only here again, so they go to the cloud. Those
+  // only on the server are lost with it, unless another device moved first: then they are
+  // in the cloud already and come from there.
+  if (alreadyMoved) await repos.documents.forgetUploads();
+  else await repos.documents.forgetServer();
   try {
     profile = (await runCloudSync({ profile, masterKey, repos, drive })).profile;
   } catch (error) {

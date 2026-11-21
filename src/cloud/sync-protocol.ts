@@ -11,6 +11,7 @@
  * last write wins, so reading one twice does no harm.
  */
 import { z } from 'zod';
+import type { PendingPush } from '../db/pending-push';
 import type { Repositories } from '../db/repositories';
 import type { OutgoingRecord } from '../sync/api';
 import { applyIncoming, batches, collectOutgoing, SYNCED_TABLES } from '../sync/engine';
@@ -43,6 +44,11 @@ export interface CloudSyncOptions {
   extraOutgoing?: readonly OutgoingRecord[];
   /** More records a base must hold (original files' metadata), as they stand now. */
   baseExtras?: () => Promise<OutgoingRecord[]>;
+  /**
+   * Keeps the state right after the send, before anything else can fail: the files are
+   * written, so their numbers are used. Restored records leave the queue only after it.
+   */
+  onPushed?: (state: CloudSyncState) => Promise<void>;
 }
 
 export function bootstrapState(deviceId: string): CloudSyncState {
@@ -97,12 +103,11 @@ async function push(
   drive: CloudDrive,
   state: CloudSyncState,
   extra: readonly OutgoingRecord[],
-): Promise<{ state: CloudSyncState; pushed: number }> {
+): Promise<{ state: CloudSyncState; pushed: number; pending: PendingPush[] }> {
   const { records, pending } = await collectOutgoing(repos, state.lastPushedAt);
   const outgoing = [...records, ...extra];
-  if (outgoing.length === 0) return { state, pushed: 0 };
+  if (outgoing.length === 0) return { state, pushed: 0, pending: [] };
   let seq = state.nextSeq;
-  // A file left by a write whose state was never saved is overwritten with the same changes.
   for (const batch of batches(outgoing)) {
     await writeJson(drive, changePath(state.deviceId, seq), {
       format: 'faturometro-changes',
@@ -113,12 +118,15 @@ async function push(
     });
     seq++;
   }
-  await repos.pendingPush.remove(pending);
   const lastPushedAt = records.reduce(
     (latest, row) => (row.updatedAt > latest ? row.updatedAt : latest),
     state.lastPushedAt,
   );
-  return { state: { ...state, nextSeq: seq, lastPushedAt }, pushed: outgoing.length };
+  return {
+    state: { ...state, nextSeq: seq, lastPushedAt },
+    pushed: outgoing.length,
+    pending: [...pending],
+  };
 }
 
 async function pull(
@@ -201,13 +209,24 @@ export async function cloudSync(
   state: CloudSyncState,
   options: CloudSyncOptions = {},
 ): Promise<CloudSyncResult> {
-  const pushed = await push(repos, drive, state, options.extraOutgoing ?? []);
   const devices = byDevice((await drive.list(CHANGES_FOLDER)).map((entry) => entry.name));
+  // Numbers already in the folder are never written again, even when the state that
+  // counted them was lost (a sync cut short, an older copy of the state): another device
+  // may have read them.
+  const own = devices.get(state.deviceId) ?? { changes: [], bases: [] };
+  const highest = Math.max(0, ...own.changes, ...own.bases);
+  const start = { ...state, nextSeq: Math.max(state.nextSeq, highest + 1) };
+
+  const pushed = await push(repos, drive, start, options.extraOutgoing ?? []);
+  if (pushed.pushed > 0) {
+    await options.onPushed?.(pushed.state);
+    await repos.pendingPush.remove(pushed.pending);
+    for (let n = start.nextSeq; n < pushed.state.nextSeq; n++) own.changes.push(n);
+  }
   const pulled = await pull(repos, drive, pushed.state, devices);
   const next: CloudSyncState = { ...pushed.state, cursors: pulled.cursors };
 
-  const own = devices.get(next.deviceId);
-  if (own && own.changes.length > COMPACT_AFTER) {
+  if (own.changes.length > COMPACT_AFTER) {
     await compact(repos, drive, next, own, options.baseExtras);
   }
   return {

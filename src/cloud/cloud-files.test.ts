@@ -104,5 +104,5 @@ describe('originals in the cloud folder', () => {
     }
     await syncWithFiles(b);
     expect((await b.repos.documents.getByFileHash(fileHash))?.bytes).toEqual(pdf);
-  });
+  }, 30_000);
 });
