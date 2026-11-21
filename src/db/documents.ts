@@ -144,6 +144,41 @@ export class DocumentStore {
     return { id: upload.id, updatedAt: upload.updatedAt, enc: await encryptJson(this.key, remote) };
   }
 
+  /**
+   * Cloud sync: the records of every original whose contents are in the cloud
+   * folder (sent from here or known from another device), for a base file.
+   */
+  async cloudRecords(): Promise<
+    { table: 'documents'; id: string; updatedAt: string; enc: EncryptedBlob }[]
+  > {
+    const ids = await this.table.where('syncState').anyOf('uploaded', 'remote').primaryKeys();
+    const records: { table: 'documents'; id: string; updatedAt: string; enc: EncryptedBlob }[] = [];
+    for (const id of ids) {
+      const row = await this.table.get(id);
+      if (!row || row.deletedAt) continue;
+      if (row.syncState === 'remote' || !row.encBytes) {
+        records.push({ table: 'documents', id, updatedAt: row.updatedAt, enc: row.enc });
+        continue;
+      }
+      const meta = (await decryptJson(this.key, row.enc)) as DocumentMeta;
+      const remote: RemoteDocumentMeta = {
+        id: meta.id,
+        fileHash: meta.fileHash,
+        mime: meta.mime,
+        addedAt: meta.addedAt,
+        bytesIv: row.encBytes.iv,
+        chunks: 1,
+      };
+      records.push({
+        table: 'documents',
+        id,
+        updatedAt: row.updatedAt,
+        enc: await encryptJson(this.key, remote),
+      });
+    }
+    return records;
+  }
+
   async markUploaded(id: string): Promise<void> {
     await this.table.update(id, { syncState: 'uploaded' });
   }
