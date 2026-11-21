@@ -1340,6 +1340,8 @@ export const t = {
       cancel: 'Cancelar',
       signInFailed: (s: CloudService) =>
         `Não foi possível entrar na ${s.company}. Tenta outra vez.`,
+      signInLost:
+        'A entrada na cloud não terminou (abriu noutra janela ou separador). Tenta outra vez a partir daqui.',
       serverTitle: 'Servidor do Faturómetro (espaço limitado)',
       serverIntro:
         'Para quem não usa nenhum destes serviços. O espaço é limitado e as contas sem uso durante 12 meses são apagadas.',

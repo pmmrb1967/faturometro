@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { freshTokens, holdFreshTokens, tokenSource } from './cloud-tokens';
+import { dropAllFreshTokens, freshTokens, holdFreshTokens, tokenSource } from './cloud-tokens';
 import type { CloudError } from './drive';
 
 class MemoryStorage {
   readonly items = new Map<string, string>();
+  get length() {
+    return this.items.size;
+  }
+  key(index: number) {
+    return [...this.items.keys()][index] ?? null;
+  }
   getItem(key: string) {
     return this.items.get(key) ?? null;
   }
@@ -75,5 +81,22 @@ describe('tokenSource', () => {
     });
     const error = await getToken().catch((e: unknown) => e);
     expect((error as CloudError).code).toBe('needs_reconnect');
+  });
+});
+
+describe('dropAllFreshTokens', () => {
+  it('forgets every sign-in left in this tab, and nothing else', () => {
+    const storage = new MemoryStorage();
+    holdFreshTokens(
+      { provider: 'gdrive', accessToken: 'a', refreshToken: 'r', expiresAt: NOW },
+      storage,
+    );
+    holdFreshTokens(
+      { provider: 'dropbox', accessToken: 'b', refreshToken: 's', expiresAt: NOW },
+      storage,
+    );
+    storage.setItem('faturometro.cloud.oauth', 'pendente');
+    dropAllFreshTokens(storage);
+    expect([...storage.items.keys()]).toEqual(['faturometro.cloud.oauth']);
   });
 });

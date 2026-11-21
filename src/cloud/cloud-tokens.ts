@@ -65,6 +65,23 @@ export function dropFreshTokens(key: string, storage?: KeyValueStorage): void {
   }
 }
 
+/** On start: sign-ins left in this tab (cancelled, abandoned) are forgotten. */
+export function dropAllFreshTokens(
+  storage?: KeyValueStorage & Pick<Storage, 'key' | 'length'>,
+): void {
+  try {
+    const store = storage ?? window.sessionStorage;
+    const keys: string[] = [];
+    for (let i = 0; i < store.length; i++) {
+      const key = store.key(i);
+      if (key?.startsWith(FRESH_PREFIX)) keys.push(key);
+    }
+    for (const key of keys) store.removeItem(key);
+  } catch {
+    // No sessionStorage: nothing was held.
+  }
+}
+
 /** Access tokens already obtained, by lasting link: shared by every drive of this tab. */
 const cache = new Map<string, AccessToken>();
 

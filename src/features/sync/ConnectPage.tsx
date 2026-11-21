@@ -25,7 +25,7 @@ export function ConnectPage() {
       <CloudConnect provider={back.provider} accountId={back.accountId} onCancel={back.clear} />
     );
   }
-  return <ServerConnect failed={back.failed ? back.provider : null} />;
+  return <ServerConnect failed={back.failed} failedProvider={back.provider} />;
 }
 
 function CloudConnect({
@@ -87,7 +87,13 @@ function CloudConnect({
   );
 }
 
-function ServerConnect({ failed }: { failed: CloudProvider | null }) {
+function ServerConnect({
+  failed,
+  failedProvider,
+}: {
+  failed: boolean;
+  failedProvider: CloudProvider | null;
+}) {
   const { signIn } = useSession();
   const navigate = useNavigate();
   const [serverUrl, setServerUrl] = useState(DEFAULT_SYNC_URL);
@@ -133,7 +139,15 @@ function ServerConnect({ failed }: { failed: CloudProvider | null }) {
 
   return (
     <AuthLayout title={copy.connect.title} intro={copy.connect.intro}>
-      {failed && <FormError message={copy.cloud.signInFailed(serviceOf(failed))} />}
+      {failed && (
+        <FormError
+          message={
+            failedProvider
+              ? copy.cloud.signInFailed(serviceOf(failedProvider))
+              : copy.cloud.signInLost
+          }
+        />
+      )}
       {offered.length > 0 && (
         <>
           {offered.map(({ provider, service }, index) => (

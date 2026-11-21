@@ -191,10 +191,13 @@ export class GoogleDrive implements CloudDrive {
     const name = parts.at(-1) ?? GOOGLE_ROOT_FOLDER;
     const parent = path === '' ? 'root' : await this.folder(parentPath, create);
     if (!parent) return null;
-    const [oldest] = await this.find(
-      `name = ${quoted(name)} and ${quoted(parent)} in parents and mimeType = '${FOLDER}'`,
-    );
-    const id = oldest?.id ?? (create ? await this.createFolder(name, parent) : null);
+    const query = `name = ${quoted(name)} and ${quoted(parent)} in parents and mimeType = '${FOLDER}'`;
+    let id = (await this.find(query))[0]?.id ?? null;
+    if (!id && create) {
+      const created = await this.createFolder(name, parent);
+      // Another device may have created it at the same time: the oldest is everyone's.
+      id = (await this.find(query))[0]?.id ?? created;
+    }
     if (id) this.folders.set(path, id);
     return id;
   }

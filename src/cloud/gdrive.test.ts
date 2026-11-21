@@ -342,3 +342,25 @@ describe('GoogleDrive', () => {
     expect(await drive.account()).toEqual({ label: 'ana@gmail.com' });
   });
 });
+
+describe('GoogleDrive, two devices creating a folder at once', () => {
+  it('writes into the oldest copy of the folder, which every device reads', async () => {
+    const { google, drive, text } = setUp();
+    const root = google.add('Faturometro', 'root', FOLDER);
+    let raced = false;
+    const racing = new GoogleDrive(async () => 't', {
+      fetch: async (input, init) => {
+        const q = new URL(String(input)).searchParams.get('q') ?? '';
+        if (!raced && q.includes("name = 'alteracoes'") && q.includes(FOLDER)) {
+          raced = true;
+          // Not there yet when this device looks; the other device creates it right after.
+          google.add('alteracoes', root.id, FOLDER);
+          return google.reply({ files: [] });
+        }
+        return google.fetch(input, init);
+      },
+    });
+    await racing.write('alteracoes/a.json', bytes('deste'));
+    expect(text((await drive.read('alteracoes/a.json'))?.bytes)).toBe('deste');
+  });
+});
