@@ -136,6 +136,8 @@ export class SyncApi {
         admin: z.boolean(),
         /** Layout contributions waiting (administrators only). */
         contributions: z.number().int().nonnegative().optional(),
+        /** The account's sync moved to the user's own cloud. */
+        movedTo: z.literal('cloud').optional(),
       }),
       { token },
     );
@@ -226,6 +228,15 @@ export class SyncApi {
     );
     if (!response.ok) throw new SyncHttpError(response.status);
     return response.text();
+  }
+
+  /** The sync moved to the user's cloud; `deleteData` removes records and files, keeping the account. */
+  moved(token: string, ownerProof: string, deleteData: boolean) {
+    return this.call('POST', '/v1/moved', null, {
+      body: { to: 'cloud', deleteData },
+      token,
+      ownerProof,
+    });
   }
 
   deleteAccount(token: string, ownerProof: string) {

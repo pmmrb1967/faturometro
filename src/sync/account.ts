@@ -43,7 +43,9 @@ export type SyncErrorCode =
   | 'capacity'
   | 'records_full'
   | 'account_removed'
-  | 'too_many';
+  | 'too_many'
+  /** Another device moved the account's sync to the user's cloud. */
+  | 'moved_to_cloud';
 
 export class SyncError extends Error {
   readonly code: SyncErrorCode;
@@ -241,6 +243,8 @@ export async function runSync(input: {
     admin: result.admin,
     ...(result.contributions !== undefined ? { contributions: result.contributions } : {}),
   });
+  // What the server still had was applied; from now on this device must link the cloud.
+  if (result.movedTo === 'cloud') throw new SyncError('moved_to_cloud');
   return { profile, result, ...(files ? { files } : {}) };
 }
 

@@ -23,7 +23,7 @@ import {
 } from './account';
 import type { Invoice } from '../domain/types';
 import { chunk, monthsBefore } from './files';
-import { decryptJson } from '../lib/crypto';
+import { decryptJson, deriveOwnerProof } from '../lib/crypto';
 import { SYNCED_TABLES } from './engine';
 
 const ITERATIONS = 1_000;
@@ -743,5 +743,21 @@ describe('free plan limits', () => {
     serverDb.prepare('DELETE FROM sessions').run();
     await expect(runSync({ ...a, api })).rejects.toMatchObject({ code: 'session_expired' });
     expect((await profilesDb.profiles.get(a.profile.id))?.sync).toBeDefined();
+  });
+});
+
+describe('moved to the user’s cloud', () => {
+  it('tells the other devices the account now syncs through the cloud', async () => {
+    const a = await deviceA();
+    await a.repos.contracts.put(contract('c1', 'Casa'));
+    await runSync({ ...a, api });
+    const b = await deviceB();
+    const token = (await decryptJson(a.masterKey, a.profile.sync?.token as never)) as string;
+    await api.moved(token, await deriveOwnerProof(a.masterKey), false);
+    await on(b.profile, async () => {
+      await expect(runSync({ ...b, api })).rejects.toMatchObject({ code: 'moved_to_cloud' });
+      // What the server still had arrived all the same.
+      expect((await b.repos.contracts.list()).map((row) => row.label)).toEqual(['Casa']);
+    });
   });
 });

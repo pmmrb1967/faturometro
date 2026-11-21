@@ -9,13 +9,15 @@
  *   GET    /v1/admin/stats                                → totals only (administrators)
  *   GET    /v1/removed/:accountId                         → {removed}  (no token; random id only)
  *   POST   /v1/logout                                     → 204
- *   GET    /v1/changes?since=N                            → {records, latest, more, admin, contributions?}
+ *   GET    /v1/changes?since=N                            → {records, latest, more, admin, contributions?, movedTo?}
  *          (contributions: layout contributions waiting, for administrators only)
  *   POST   /v1/changes    {records}                       → {latest}
  *   PUT    /v1/owner      {ownerProof}                    → 204; 409 if another one is set
  *   PUT    /v1/keys       {authKey, salt, iterations, wrappedKey} → {token}  (password change)
  *   DELETE /v1/account                                    → 204  (deletes everything)
- *   (/v1/keys and DELETE /v1/account also need the header X-Owner-Proof once the account has one)
+ *   POST   /v1/moved      {to: 'cloud', deleteData}       → 204  (sync moved to the user's cloud;
+ *          deleteData removes records and files, keeping the account: administrators keep their link)
+ *   (/v1/keys, DELETE /v1/account and /v1/moved also need the header X-Owner-Proof once the account has one)
  *
  * Original files (optional, separate database), as base64 ciphertext chunks:
  *   GET    /v1/files/usage                                → {used, quota}
@@ -167,6 +169,7 @@ const schemas = {
     ownerProof: hex64.optional(),
   }),
   owner: z.object({ ownerProof: hex64 }),
+  moved: z.object({ to: z.literal('cloud'), deleteData: z.boolean() }),
   login: z.object({ email, authKey: hex64 }),
   push: z.object({ records: z.array(record).max(MAX_RECORDS_PER_REQUEST) }),
   keys: z.object({
@@ -232,6 +235,8 @@ interface UserRow {
   last_seen_at: string;
   /** Size of the encrypted records, refreshed daily and grown by each push. */
   records_bytes: number;
+  /** Set once the account's sync moved to the user's own cloud (migration 0006). */
+  moved_to: string | null;
   /** SHA-256 of the owner proof (migration 0004); null until the app sends it. */
   owner_hash: string | null;
 }
@@ -664,6 +669,7 @@ export function createApp(config: AppConfig) {
         latest: rows.at(-1)?.seq ?? since,
         more: rows.length === MAX_RECORDS_PER_REQUEST,
         admin: isAdmin(user.email),
+        ...(user.moved_to === 'cloud' ? { movedTo: 'cloud' } : {}),
         // The maintainer learns in the app that contributions are waiting to be pulled.
         ...(isAdmin(user.email)
           ? {
@@ -853,6 +859,18 @@ export function createApp(config: AppConfig) {
         return new Response(null, { status: 204 });
       }
       throw new HttpError(404, 'Not found');
+    }
+
+    if (method === 'POST' && path === '/v1/moved') {
+      await requireOwner(request, user);
+      const input = await body(request, schemas.moved);
+      await sql.run('UPDATE users SET moved_to = ? WHERE id = ?', input.to, user.id);
+      if (input.deleteData) {
+        await config.files?.run('DELETE FROM chunks WHERE user_id = ?', user.id);
+        await sql.run('DELETE FROM records WHERE user_id = ?', user.id);
+        await sql.run('UPDATE users SET records_bytes = 0 WHERE id = ?', user.id);
+      }
+      return new Response(null, { status: 204 });
     }
 
     if (method === 'DELETE' && path === '/v1/account') {

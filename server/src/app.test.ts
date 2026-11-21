@@ -887,3 +887,85 @@ describe('requests per IP', () => {
     expect(seen).toEqual([]);
   });
 });
+
+describe('moved to the user’s cloud', () => {
+  const PROOF = 'b'.repeat(64);
+  const withProof = { 'X-Owner-Proof': PROOF };
+
+  async function setUp(email = 'ana@example.pt') {
+    const memory = memorySql();
+    const files = memorySql('migrations-files');
+    handle = createApp({
+      sql: memory.sql,
+      files: files.sql,
+      adminEmails: ['admin@example.pt'],
+      preloginSecret: 'secret',
+      allowedOrigins: [ORIGIN],
+      now: () => clock,
+    });
+    const result = await call('POST', '/v1/register', {
+      email,
+      salt: 'c2FsdHNhbHQ=',
+      iterations: 600_000,
+      authKey: AUTH,
+      wrappedKey: WRAPPED,
+      ownerProof: PROOF,
+    });
+    const token = result.body?.token as string;
+    await call('POST', '/v1/changes', { records: [record('r1', '2026-10-13T10:00:00Z')] }, token);
+    const put = await handle(
+      new Request('https://sync.example/v1/files/f/0?total=1', {
+        method: 'PUT',
+        headers: { Origin: ORIGIN, Authorization: `Bearer ${token}` },
+        body: 'QUJD',
+      }),
+    );
+    expect(put.status).toBe(204);
+    return { token, files: files.db };
+  }
+
+  it('needs the owner proof', async () => {
+    const { token } = await setUp();
+    expect((await call('POST', '/v1/moved', { to: 'cloud', deleteData: true }, token)).status).toBe(
+      403,
+    );
+  });
+
+  it('deletes the data but keeps the account, and tells the other devices', async () => {
+    const { token, files } = await setUp();
+    const moved = await call(
+      'POST',
+      '/v1/moved',
+      { to: 'cloud', deleteData: true },
+      token,
+      ORIGIN,
+      withProof,
+    );
+    expect(moved.status).toBe(204);
+    const pull = await call('GET', '/v1/changes', undefined, token);
+    expect(pull.body?.records).toEqual([]);
+    expect(pull.body?.movedTo).toBe('cloud');
+    expect(files.prepare('SELECT COUNT(*) AS n FROM chunks').get()).toEqual({ n: 0 });
+    const login = await call('POST', '/v1/login', { email: 'ana@example.pt', authKey: AUTH });
+    expect(login.status).toBe(200);
+  });
+
+  it('keeps the data when asked to', async () => {
+    const { token } = await setUp();
+    await call('POST', '/v1/moved', { to: 'cloud', deleteData: false }, token, ORIGIN, withProof);
+    const pull = await call('GET', '/v1/changes', undefined, token);
+    expect(pull.body?.records).toHaveLength(1);
+    expect(pull.body?.movedTo).toBe('cloud');
+  });
+
+  it('keeps an administrator’s link working', async () => {
+    const { token } = await setUp('admin@example.pt');
+    await call('POST', '/v1/moved', { to: 'cloud', deleteData: true }, token, ORIGIN, withProof);
+    expect((await call('GET', '/v1/admin/stats', undefined, token)).status).toBe(200);
+  });
+
+  it('says nothing of a move to accounts that did not move', async () => {
+    const { token } = await setUp();
+    expect((await call('GET', '/v1/changes', undefined, token)).body?.movedTo).toBeUndefined();
+  });
+});
