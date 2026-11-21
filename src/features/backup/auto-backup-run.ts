@@ -70,7 +70,7 @@ export async function runAutoBackup(run: AutoBackupRun): Promise<AutoBackupOutco
     await profilesDb.autoBackups.put(config);
   }
 
-  const target = run.target ?? targetFor(config, session.profile);
+  const target = run.target ?? targetFor(config, session.profile, session.masterKey);
   if (!target) {
     const code: AutoBackupErrorCode =
       config.target === 'cloud' ? 'cloud_unavailable' : 'folder_missing';

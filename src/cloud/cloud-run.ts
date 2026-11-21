@@ -5,21 +5,8 @@ import { SYNCED_TABLES } from '../sync/engine';
 import type { FileSyncResult } from '../sync/files';
 import { downloadOriginals, uploadOriginals } from './cloud-files';
 import type { CloudDrive } from './drive';
-import { OneDrive } from './onedrive';
-import { oneDriveAccountLabel, oneDriveToken } from './onedrive-auth';
+import { driveFor } from './cloud-drives';
 import { cloudSync, type CloudSyncState } from './sync-protocol';
-
-/** The OneDrive of a signed-in Microsoft account (the last one when not given). */
-export function oneDriveFor(accountId?: string): CloudDrive {
-  return new OneDrive(() => oneDriveToken(accountId), {
-    label: () => oneDriveAccountLabel(accountId),
-  });
-}
-
-/** The drive of the profile's cloud account. */
-export function driveFor(profile: Profile): CloudDrive {
-  return oneDriveFor(profile.cloud?.accountId);
-}
 
 export interface CloudRunResult {
   pushed: number;
@@ -95,7 +82,7 @@ async function cloudSyncOnce(input: CloudRunInput): Promise<CloudRunOutput> {
   const stored = (await profilesDb.profiles.get(input.profile.id)) ?? input.profile;
   const cloud = stored.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');
-  const drive = input.drive ?? driveFor(stored);
+  const drive = input.drive ?? driveFor(stored, input.masterKey);
   const { repos } = input;
 
   // Tables added since the last sync were skipped by the older version: read again from

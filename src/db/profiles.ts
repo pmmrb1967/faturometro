@@ -38,6 +38,8 @@ export interface ProfileCloud extends CloudSyncState {
   accountId?: string;
   /** Tables this version reads; a newer version reads the others' files again from the start. */
   pulledTables?: string[];
+  /** Dropbox and Google Drive: the lasting link to the account, encrypted with the master key. */
+  refreshToken?: EncryptedBlob;
 }
 
 export interface AdminLink {

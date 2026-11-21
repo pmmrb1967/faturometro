@@ -14,9 +14,11 @@ import {
 } from '../db/profiles';
 import {
   deriveOwnerProof,
+  encryptJson,
   PBKDF2_ITERATIONS,
   rewrapWithPassword,
   unlockWithPassword,
+  type EncryptedBlob,
   type WrappedMasterKey,
 } from '../lib/crypto';
 import { CloudError, readJson, readJsonWithEtag, writeJson, type CloudDrive } from './drive';
@@ -119,6 +121,8 @@ export async function enableCloudSync(input: {
   provider: CloudProvider;
   /** The signed-in cloud account (MSAL `homeAccountId`). */
   accountId?: string;
+  /** Dropbox and Google Drive: the lasting link, stored encrypted. */
+  refreshToken?: string;
 }): Promise<Profile> {
   const { profile, drive } = input;
   await unlock(wrappedKeyOf(profile), input.password);
@@ -142,9 +146,10 @@ export async function enableCloudSync(input: {
       await assertSameAccount(created, profile, input.masterKey, input.password);
     }
   }
+  const cloud = profile.cloud ?? newCloudState(input.provider, await label(drive), input.accountId);
   const updated: Profile = {
     ...profile,
-    cloud: profile.cloud ?? newCloudState(input.provider, await label(drive), input.accountId),
+    cloud: { ...cloud, ...(await sealedLink(input.masterKey, input.refreshToken)) },
   };
   await profilesDb.profiles.put(updated);
   return updated;
@@ -157,6 +162,7 @@ export async function connectFromCloud(input: {
   provider: CloudProvider;
   localIterations?: number;
   accountId?: string;
+  refreshToken?: string;
 }): Promise<{ profile: Profile; masterKey: CryptoKey }> {
   const account = await readJson(input.drive, CLOUD_ACCOUNT_FILE, accountSchema);
   if (!account) throw new CloudAccountError('no_account');
@@ -177,7 +183,10 @@ export async function connectFromCloud(input: {
     email,
     createdAt: new Date().toISOString(),
     wrappedKey,
-    cloud: newCloudState(input.provider, await label(input.drive), input.accountId),
+    cloud: {
+      ...newCloudState(input.provider, await label(input.drive), input.accountId),
+      ...(await sealedLink(masterKey, input.refreshToken)),
+    },
   };
   await profilesDb.profiles.add(profile);
   return { profile, masterKey };
@@ -191,6 +200,9 @@ export async function relinkCloud(input: {
   profile: Profile;
   drive: CloudDrive;
   accountId: string;
+  /** Dropbox and Google Drive: the new lasting link, stored encrypted. */
+  masterKey?: CryptoKey;
+  refreshToken?: string;
 }): Promise<Profile> {
   const cloud = input.profile.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');
@@ -201,10 +213,23 @@ export async function relinkCloud(input: {
   const stored = (await profilesDb.profiles.get(input.profile.id)) ?? input.profile;
   const updated: Profile = {
     ...stored,
-    cloud: { ...cloud, accountId: input.accountId, ...(await labelled(input.drive)) },
+    cloud: {
+      ...cloud,
+      accountId: input.accountId,
+      ...(await labelled(input.drive)),
+      ...(input.masterKey ? await sealedLink(input.masterKey, input.refreshToken) : {}),
+    },
   };
   await profilesDb.profiles.put(updated);
   return updated;
+}
+
+/** The lasting link to Dropbox or Google Drive, encrypted for the profile. */
+async function sealedLink(
+  masterKey: CryptoKey,
+  refreshToken: string | undefined,
+): Promise<{ refreshToken?: EncryptedBlob }> {
+  return refreshToken ? { refreshToken: await encryptJson(masterKey, refreshToken) } : {};
 }
 
 async function labelled(drive: CloudDrive): Promise<{ accountLabel?: string }> {

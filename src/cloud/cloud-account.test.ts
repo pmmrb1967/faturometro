@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { profilesDb, type Profile } from '../db/profiles';
 import { createRepositories } from '../db/repositories';
 import { ProfileDb } from '../db/schema';
-import { createAccountKeys, rewrapWithPassword, type NewAccountKeys } from '../lib/crypto';
+import {
+  createAccountKeys,
+  decryptJson,
+  rewrapWithPassword,
+  type NewAccountKeys,
+} from '../lib/crypto';
 import {
   CloudAccountError,
   CLOUD_ACCOUNT_FILE,
@@ -188,5 +193,57 @@ describe('the Microsoft account in use', () => {
       accountId: 'conta-9',
     });
     expect(connected.profile.cloud?.accountId).toBe('conta-9');
+  });
+});
+
+describe('the lasting link to Dropbox or Google Drive', () => {
+  const LINK = 'ligacao-duradoura-secreta';
+  const stored = async (id: string) => JSON.stringify(await profilesDb.profiles.get(id));
+
+  it('is kept encrypted with the account key when the sync is turned on', async () => {
+    const enabled = await enableCloudSync({
+      profile,
+      masterKey: keys.masterKey,
+      password: PASSWORD,
+      drive,
+      provider: 'dropbox',
+      refreshToken: LINK,
+    });
+    expect(enabled.cloud?.provider).toBe('dropbox');
+    expect(await stored(profile.id)).not.toContain(LINK);
+    const blob = enabled.cloud?.refreshToken;
+    if (!blob) throw new Error('no link');
+    expect(await decryptJson(keys.masterKey, blob)).toBe(LINK);
+  });
+
+  it('is kept encrypted on a new device, never in clear', async () => {
+    await enable(profile, keys.masterKey);
+    await profilesDb.profiles.clear();
+    const { profile: joined, masterKey } = await connectFromCloud({
+      drive,
+      password: PASSWORD,
+      provider: 'gdrive',
+      localIterations: ITERATIONS,
+      refreshToken: LINK,
+    });
+    expect(await stored(joined.id)).not.toContain(LINK);
+    const blob = joined.cloud?.refreshToken;
+    if (!blob) throw new Error('no link');
+    expect(await decryptJson(masterKey, blob)).toBe(LINK);
+  });
+
+  it('is replaced, encrypted, when linking again', async () => {
+    const enabled = await enable(profile, keys.masterKey);
+    const relinked = await relinkCloud({
+      profile: enabled,
+      drive,
+      accountId: 'chave',
+      masterKey: keys.masterKey,
+      refreshToken: LINK,
+    });
+    expect(await stored(profile.id)).not.toContain(LINK);
+    const blob = relinked.cloud?.refreshToken;
+    if (!blob) throw new Error('no link');
+    expect(await decryptJson(keys.masterKey, blob)).toBe(LINK);
   });
 });

@@ -3,7 +3,7 @@
  * through the server until the cloud holds everything; then the server is
  * told (other devices learn of the move) and, if the user wants, its data goes.
  */
-import { profilesDb, type Profile, type ProfileSync } from '../db/profiles';
+import { profilesDb, type CloudProvider, type Profile, type ProfileSync } from '../db/profiles';
 import type { Repositories } from '../db/repositories';
 import { decryptJson, deriveOwnerProof } from '../lib/crypto';
 import { fromHttp, runSync, SyncError } from '../sync/account';
@@ -38,7 +38,11 @@ export async function migrateToCloud(input: {
   drive: CloudDrive;
   password: string;
   api?: SyncApi;
+  /** The cloud moved to (OneDrive when not given). */
+  provider?: CloudProvider;
   accountId?: string;
+  /** Dropbox and Google Drive: the lasting link of the sign-in. */
+  refreshToken?: string;
 }): Promise<{ profile: Profile; previous: ProfileSync; originalsMissing: number }> {
   const { masterKey, repos, drive } = input;
   if (!input.profile.sync) throw new Error('Sync is not enabled');
@@ -66,8 +70,9 @@ export async function migrateToCloud(input: {
     masterKey,
     password: input.password,
     drive,
-    provider: 'onedrive',
+    provider: input.provider ?? 'onedrive',
     ...(input.accountId ? { accountId: input.accountId } : {}),
+    ...(input.refreshToken ? { refreshToken: input.refreshToken } : {}),
   });
   const cloud = profile.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');

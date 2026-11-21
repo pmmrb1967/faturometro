@@ -9,7 +9,7 @@ import { validateEmail } from '../auth/validation';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 import { connectFromCloud } from '../../cloud/cloud-account';
-import { oneDriveFor } from '../../cloud/cloud-run';
+import { oneDriveFor } from '../../cloud/cloud-drives';
 import { oneDriveAvailable, signInToOneDrive } from '../../cloud/onedrive-auth';
 import { cloudErrorText } from './cloud-errors';
 import { useOneDriveReturn } from './onedrive-return';

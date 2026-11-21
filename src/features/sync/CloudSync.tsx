@@ -2,7 +2,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Field } from '../../components/Field';
 import { enableCloudSync, relinkCloud } from '../../cloud/cloud-account';
-import { disableCloudSync, oneDriveFor, setCloudFileSync } from '../../cloud/cloud-run';
+import { oneDriveFor } from '../../cloud/cloud-drives';
+import { disableCloudSync, setCloudFileSync } from '../../cloud/cloud-run';
 import { finishServerData, migrateToCloud } from '../../cloud/migrate';
 import { signInToOneDrive } from '../../cloud/onedrive-auth';
 import type { ProfileSync } from '../../db/profiles';

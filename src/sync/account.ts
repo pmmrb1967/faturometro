@@ -3,7 +3,7 @@
  * The password is needed only to derive the sync keys; it is never stored.
  */
 import { rewrapCloudAccount } from '../cloud/cloud-account';
-import { driveFor } from '../cloud/cloud-run';
+import { driveFor } from '../cloud/cloud-drives';
 import type { CloudDrive } from '../cloud/drive';
 import {
   normalizeEmail,
@@ -401,7 +401,7 @@ export async function changeAccountPassword(input: {
   if (input.profile.cloud) {
     // First the cloud: if it fails, the password stays the old one everywhere.
     await rewrapCloudAccount({
-      drive: input.drive ?? driveFor(input.profile),
+      drive: input.drive ?? driveFor(input.profile, input.masterKey),
       email: input.profile.email,
       wrappedKey,
     });
@@ -432,7 +432,7 @@ export async function syncPasswordAfterRecovery(input: {
   if (input.profile.cloud) {
     try {
       await rewrapCloudAccount({
-        drive: input.drive ?? driveFor(input.profile),
+        drive: input.drive ?? driveFor(input.profile, input.masterKey),
         email: input.profile.email,
         wrappedKey: wrappedKeyOf(input.profile),
       });

@@ -3,7 +3,7 @@
  * Access, Chrome and Edge on computers) or `copias/` in the user's cloud
  * folder (any browser, once the cloud is linked).
  */
-import { driveFor } from '../../cloud/cloud-run';
+import { driveFor } from '../../cloud/cloud-drives';
 import type { CloudDrive } from '../../cloud/drive';
 import { TEMP_SUFFIX } from '../../domain/auto-backup';
 import type { AutoBackupConfig, Profile } from '../../db/profiles';
@@ -20,8 +20,14 @@ export interface BackupTarget {
 }
 
 /** The target of a saved configuration (saved before cloud backups: a folder). */
-export function targetFor(config: AutoBackupConfig, profile: Profile): BackupTarget | null {
-  if (config.target === 'cloud') return profile.cloud ? cloudTarget(driveFor(profile)) : null;
+export function targetFor(
+  config: AutoBackupConfig,
+  profile: Profile,
+  masterKey: CryptoKey,
+): BackupTarget | null {
+  if (config.target === 'cloud') {
+    return profile.cloud ? cloudTarget(driveFor(profile, masterKey)) : null;
+  }
   return config.dir ? folderTarget(config.dir) : null;
 }
 
