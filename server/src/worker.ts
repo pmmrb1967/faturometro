@@ -15,6 +15,9 @@ export default {
       ...limitsFromEnv(env),
       ...(env.CONTRIB_ADMIN_TOKEN ? { contribAdminToken: env.CONTRIB_ADMIN_TOKEN } : {}),
       ...(env.AI ? { ai: env.AI } : {}),
+      ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+        ? { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } }
+        : {}),
       rateLimit: async (scope, ip) => {
         const limiter: RateLimiter | undefined =
           scope === 'register'

@@ -27,6 +27,9 @@ export interface Env {
   REGISTER_LIMITER?: RateLimiter;
   CONTRIB_LIMITER?: RateLimiter;
   AI_LIMITER?: RateLimiter;
+  /** Secrets (wrangler secret put): the app's Google OAuth client, for Google Drive sign-in. */
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
   /** Workers AI (wrangler.toml, [ai]): the free AI. */
   AI?: WorkersAi;
 }

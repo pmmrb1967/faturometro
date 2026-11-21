@@ -34,8 +34,13 @@
  * The free AI (Workers AI, no key and no account; server/src/ai-free.ts):
  *   GET    /v1/ai/free/status (header X-Device)            → {available, left, limit}
  *   POST   /v1/ai/free        (header X-Device)            → {output, inputTokens, outputTokens, left}
+ *
+ * Google Drive sign-in (no account; server/src/google-token.ts): adds the app secret and
+ * passes the request to Google, storing and logging nothing:
+ *   POST   /v1/google/token   {grant: 'code'|'refresh', …}  → {accessToken, expiresIn, refreshToken?}
  */
 import { z } from 'zod';
+import { googleToken, GoogleTokenError, type GoogleApp } from './google-token';
 import {
   createFreeAi,
   FREE_NEURONS_PER_DAY,
@@ -90,6 +95,10 @@ export interface AppConfig {
   ai?: WorkersAi;
   /** Free AI readings per device and per day. */
   aiFreePerDevice?: number;
+  /** The app's Google OAuth client; without it /v1/google/token answers 404. */
+  google?: GoogleApp;
+  /** For tests: how Google's token endpoint is called. */
+  googleFetch?: typeof fetch;
 }
 
 export type RateLimitScope = 'register' | 'contribution' | 'ai';
@@ -626,6 +635,22 @@ export function createApp(config: AppConfig) {
 
     if (path === '/v1/ai/free' || path === '/v1/ai/free/status') {
       return freeAiRoute(request, method, path);
+    }
+
+    if (method === 'POST' && path === '/v1/google/token') {
+      try {
+        return json(
+          await googleToken({
+            body: await request.json().catch(() => null),
+            app: config.google,
+            allowedOrigins: config.allowedOrigins,
+            fetch: config.googleFetch ?? ((input, init) => fetch(input, init)),
+          }),
+        );
+      } catch (error) {
+        if (error instanceof GoogleTokenError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
     }
 
     const user = await userFromToken(request);
