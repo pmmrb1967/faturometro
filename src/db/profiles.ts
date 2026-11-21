@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { CloudSyncState } from '../cloud/sync-protocol';
 import type { AutoBackupEvery, AutoBackupKeep } from '../domain/auto-backup';
 import type { EncryptedBlob, WrappedMasterKey } from '../lib/crypto';
 
@@ -15,8 +16,32 @@ export interface Profile {
   wrappedKey?: WrappedMasterKey;
   /** Guest only: the raw master key in base64. */
   guestKey?: string;
-  /** Present when this profile syncs with a server (device-local state). */
+  /** Present when this profile syncs with a server (device-local state). Never with `cloud`. */
   sync?: ProfileSync;
+  /** Present when this profile syncs through the user's own cloud. Never with `sync`. */
+  cloud?: ProfileCloud;
+  /** Administrators who do not sync through the server: their link to it (badge, contributions). */
+  adminLink?: AdminLink;
+}
+
+export type CloudProvider = 'onedrive';
+
+/** Device-local state of the sync through the user's cloud. */
+export interface ProfileCloud extends CloudSyncState {
+  provider: CloudProvider;
+  /** The cloud account's name, only to show which one is linked. */
+  accountLabel?: string;
+  lastSyncAt?: string;
+  /** Also sync original files (PDF, photos) on this device. */
+  files?: boolean;
+}
+
+export interface AdminLink {
+  serverUrl: string;
+  /** Session token on the server, encrypted with the master key. */
+  token: EncryptedBlob;
+  contributions?: number;
+  checkedAt?: string;
 }
 
 export interface ProfileSync {

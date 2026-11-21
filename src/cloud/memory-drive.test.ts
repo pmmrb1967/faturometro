@@ -9,7 +9,7 @@ describe('MemoryDrive', () => {
   it('reads back what was written, and null for a missing file', async () => {
     const drive = new MemoryDrive();
     await drive.write('conta.json', bytes('{}'));
-    expect(await drive.read('conta.json')).toEqual(bytes('{}'));
+    expect((await drive.read('conta.json'))?.bytes).toEqual(bytes('{}'));
     expect(await drive.read('nada.json')).toBeNull();
   });
 
@@ -48,7 +48,7 @@ describe('MemoryDrive', () => {
     drive.failNext('quota_full');
     await expect(drive.write('a.json', bytes('1'))).rejects.toBeInstanceOf(CloudError);
     await drive.write('a.json', bytes('1'));
-    expect(await drive.read('a.json')).toEqual(bytes('1'));
+    expect((await drive.read('a.json'))?.bytes).toEqual(bytes('1'));
   });
 
   it('removes quietly, even a missing file', async () => {

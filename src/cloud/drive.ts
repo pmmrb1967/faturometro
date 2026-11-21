@@ -12,6 +12,11 @@ export interface CloudEntry {
   etag: string;
 }
 
+export interface CloudFile {
+  bytes: Uint8Array;
+  etag: string;
+}
+
 export interface CloudWriteOptions {
   /** Write only if the file is still this version. */
   ifMatch?: string;
@@ -21,7 +26,7 @@ export interface CloudWriteOptions {
 
 export interface CloudDrive {
   /** Null when the file does not exist. */
-  read(path: string): Promise<Uint8Array | null>;
+  read(path: string): Promise<CloudFile | null>;
   write(path: string, bytes: Uint8Array, options?: CloudWriteOptions): Promise<{ etag: string }>;
   /** Files directly in the folder (not in subfolders); empty when the folder does not exist. */
   list(folder: string): Promise<CloudEntry[]>;
@@ -64,10 +69,19 @@ export async function readJson<T>(
   path: string,
   schema: z.ZodType<T>,
 ): Promise<T | null> {
-  const bytes = await drive.read(path);
-  if (bytes === null) return null;
+  return (await readJsonWithEtag(drive, path, schema))?.value ?? null;
+}
+
+/** With the version read, to write it back only if nobody changed it meanwhile. */
+export async function readJsonWithEtag<T>(
+  drive: CloudDrive,
+  path: string,
+  schema: z.ZodType<T>,
+): Promise<{ value: T; etag: string } | null> {
+  const file = await drive.read(path);
+  if (file === null) return null;
   try {
-    return schema.parse(JSON.parse(decoder.decode(bytes)));
+    return { value: schema.parse(JSON.parse(decoder.decode(file.bytes))), etag: file.etag };
   } catch {
     throw new CloudError('unexpected');
   }
