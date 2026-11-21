@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import type { AutoBackupEvery, AutoBackupKeep } from '../domain/auto-backup';
 import type { EncryptedBlob, WrappedMasterKey } from '../lib/crypto';
 
 /**
@@ -44,12 +45,36 @@ export interface ProfileSync {
   files?: boolean;
 }
 
+export type AutoBackupErrorCode = 'permission_denied' | 'write_failed' | 'folder_missing';
+
+/**
+ * Automatic backup of one profile on this device: each device has its own folder, so
+ * this never syncs. Kept here, in clear, because the folder handle cannot be encrypted.
+ */
+export interface AutoBackupConfig {
+  profileId: string;
+  dir: FileSystemDirectoryHandle;
+  /** The browser gives only the folder's name, not its path. */
+  dirName: string;
+  every: AutoBackupEvery;
+  keep: AutoBackupKeep;
+  /** Always false for the guest, who has no password. */
+  encrypted: boolean;
+  lastRunAt?: string;
+  lastError?: AutoBackupErrorCode;
+}
+
+export const DEFAULT_AUTO_BACKUP = { every: 'week', keep: 5, encrypted: true } as const;
+
 export class ProfilesDb extends Dexie {
   profiles!: Table<Profile, string>;
+  autoBackups!: Table<AutoBackupConfig, string>;
 
-  constructor() {
-    super('faturometro-profiles');
+  constructor(name = 'faturometro-profiles') {
+    super(name);
     this.version(1).stores({ profiles: 'id, &email' });
+    // v2: automatic backups to a folder (one row per profile). New table only.
+    this.version(2).stores({ profiles: 'id, &email', autoBackups: 'profileId' });
   }
 }
 

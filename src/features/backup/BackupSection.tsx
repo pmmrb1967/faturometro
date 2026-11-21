@@ -93,6 +93,7 @@ export function BackupSection() {
       session.db.close();
       await session.db.delete();
       await profilesDb.profiles.delete(session.profile.id);
+      await profilesDb.autoBackups.delete(session.profile.id);
       lock();
       navigate('/', { replace: true });
     } catch (error) {
