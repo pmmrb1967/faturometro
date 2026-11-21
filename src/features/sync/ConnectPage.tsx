@@ -150,19 +150,21 @@ function ServerConnect({
       )}
       {offered.length > 0 && (
         <>
-          {offered.map(({ provider, service }, index) => (
-            <button
-              key={provider}
-              type="button"
-              className={`${index === 0 ? 'action-primary' : 'action-secondary'} action-wide`}
-              disabled={leaving !== null}
-              onClick={() => void viaCloud(provider)}
-            >
-              {leaving === provider
-                ? copy.cloud.redirecting(service)
-                : copy.cloud.enter.button(service)}
-            </button>
-          ))}
+          <div className="auth-choices">
+            {offered.map(({ provider, service }, index) => (
+              <button
+                key={provider}
+                type="button"
+                className={`${index === 0 ? 'action-primary' : 'action-secondary'} action-wide`}
+                disabled={leaving !== null}
+                onClick={() => void viaCloud(provider)}
+              >
+                {leaving === provider
+                  ? copy.cloud.redirecting(service)
+                  : copy.cloud.enter.button(service)}
+              </button>
+            ))}
+          </div>
           <p className="auth-alt">{copy.cloud.enter.or}</p>
         </>
       )}

@@ -108,3 +108,10 @@
   margin: 1px 0 0;
   accent-color: var(--accent);
 }
+
+/* Several sign-in choices (one per cloud service), one under the other. */
+.auth-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
