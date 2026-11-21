@@ -56,9 +56,9 @@ Lógica pura em `src/domain/auto-backup.ts` (sem React): `isDue(lastRunAt, every
 
 ### Ficheiros
 
-- Nome: `faturometro-auto-AAAA-MM-DD-HHmm.zip` (em claro) ou `faturometro-auto-AAAA-MM-DD-HHmm-cifrado.zip`.
+- Nome: `faturometro-auto-<perfil>-AAAA-MM-DD-HHmm.zip` (em claro) ou `…-cifrado.zip`, em que `<perfil>` são 8 caracteres hexadecimais do `sha256` do id do perfil: dois perfis que escolham a mesma pasta não contam nem apagam as cópias um do outro (decidido na revisão final).
 - Limpeza: depois de gravar, apaga as mais antigas para além de `keep`, **só** entre os ficheiros com esse padrão de nome.
-- Grava primeiro com um nome temporário e muda o nome no fim (ou usa `createWritable`, que só substitui no `close()`), para uma falha não deixar uma cópia meio escrita com nome válido.
+- Grava primeiro em `<nome>.tmp` e muda o nome no fim com `move()`, para uma falha (ou o browser fechar a meio) não deixar uma cópia meio escrita com nome válido; os `.tmp` deixados por escritas interrompidas apagam-se na cópia seguinte. Sem `move()`, grava direto no nome final.
 
 ### Formato cifrado
 

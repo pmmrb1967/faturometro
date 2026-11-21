@@ -2,7 +2,14 @@
  * One run of the automatic backup: export, encrypt (unless turned off, or for
  * the guest), write to the chosen folder, then remove our oldest copies.
  */
-import { autoBackupFileName, filesToPrune, isDue } from '../../domain/auto-backup';
+import {
+  autoBackupFileName,
+  filesToPrune,
+  isDue,
+  TEMP_SUFFIX,
+  tempFilesOf,
+} from '../../domain/auto-backup';
+import { sha256Hex } from '../../lib/crypto';
 import {
   isGuest,
   profilesDb,
@@ -50,23 +57,64 @@ async function hasPermission(folder: BackupFolder, interactive: boolean): Promis
   return (await folder.requestPermission(mode)) === 'granted';
 }
 
-async function write(folder: BackupFolder, name: string, bytes: Uint8Array): Promise<void> {
-  const file = await folder.getFileHandle(name, { create: true });
+/** 8 hex characters of the profile id: tells this profile's files from another's. */
+export async function profileTag(profileId: string): Promise<string> {
+  return (await sha256Hex(profileId)).slice(0, 8);
+}
+
+interface MovableFile {
+  move?: (newName: string) => Promise<void>;
+}
+
+/**
+ * Writes under a temporary name the backup names never match, then renames it:
+ * a write cut short (the browser closed) never looks like a backup.
+ */
+async function writeTo(file: FileSystemFileHandle, bytes: Uint8Array): Promise<void> {
+  const writable = await file.createWritable();
+  await writable.write(new Uint8Array(bytes));
+  await writable.close();
+}
+
+async function exists(folder: BackupFolder, name: string): Promise<boolean> {
   try {
-    const writable = await file.createWritable();
-    await writable.write(new Uint8Array(bytes));
-    await writable.close();
+    await folder.getFileHandle(name);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function write(folder: BackupFolder, name: string, bytes: Uint8Array): Promise<void> {
+  const temp = `${name}${TEMP_SUFFIX}`;
+  const file = (await folder.getFileHandle(temp, { create: true })) as FileSystemFileHandle &
+    MovableFile;
+  if (file.move) {
+    try {
+      await writeTo(file, bytes);
+      await file.move(name);
+    } catch (error) {
+      await folder.removeEntry(temp).catch(() => undefined);
+      throw error;
+    }
+    return;
+  }
+  // Without move() (older browsers): straight to the final name.
+  await folder.removeEntry(temp).catch(() => undefined);
+  const existed = await exists(folder, name);
+  try {
+    await writeTo(await folder.getFileHandle(name, { create: true }), bytes);
   } catch (error) {
-    // The handle already created an empty file with a valid name: never leave it behind.
-    await folder.removeEntry(name).catch(() => undefined);
+    // Remove only what this run created: a good backup already under `name` stays.
+    if (!existed) await folder.removeEntry(name).catch(() => undefined);
     throw error;
   }
 }
 
-async function prune(folder: BackupFolder, keep: number): Promise<void> {
+async function prune(folder: BackupFolder, keep: number, tag: string): Promise<void> {
   const names: string[] = [];
   for await (const name of folder.keys()) names.push(name);
-  for (const name of filesToPrune(names, keep)) {
+  for (const name of [...filesToPrune(names, keep, tag), ...tempFilesOf(names, tag)]) {
     // An old copy that cannot be removed now goes on the next run.
     await folder.removeEntry(name).catch(() => undefined);
   }
@@ -99,9 +147,10 @@ export async function runAutoBackup(run: AutoBackupRun): Promise<AutoBackupOutco
     const bytes = encrypted
       ? await encryptBackup(zip, session.masterKey, wrappedKeyOf(session.profile))
       : zip;
-    const name = autoBackupFileName(now, encrypted);
+    const tag = await profileTag(config.profileId);
+    const name = autoBackupFileName(now, encrypted, tag);
     await write(folder, name, bytes);
-    await prune(folder, config.keep);
+    await prune(folder, config.keep, tag);
 
     await record(config.profileId, { lastRunAt: now.toISOString(), lastError: undefined });
     await updateSettings(session.repos, { lastBackupAt: now.toISOString().slice(0, 10) });

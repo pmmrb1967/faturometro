@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { autoBackupFileName, filesToPrune, isAutoBackupFileName, isDue } from './auto-backup';
+import {
+  autoBackupFileName,
+  filesToPrune,
+  isAutoBackupFileName,
+  isDue,
+  tempFilesOf,
+} from './auto-backup';
 
 /** Local time, like the user's clock. */
 const d = (text: string) => new Date(text);
@@ -34,46 +40,73 @@ describe('isDue', () => {
   });
 });
 
+const TAG = '1a2b3c4d';
+const OTHER = '9f8e7d6c';
+const auto = (stamp: string, tag = TAG, suffix = '') =>
+  `faturometro-auto-${tag}-${stamp}${suffix}.zip`;
+
 describe('file names', () => {
-  it('names the file by local date and time, marking encrypted ones', () => {
-    expect(autoBackupFileName(d('2026-11-21T12:30'), true)).toBe(
-      'faturometro-auto-2026-11-21-1230-cifrado.zip',
+  it('names the file by profile and local date and time, marking encrypted ones', () => {
+    expect(autoBackupFileName(d('2026-11-21T12:30'), true, TAG)).toBe(
+      'faturometro-auto-1a2b3c4d-2026-11-21-1230-cifrado.zip',
     );
-    expect(autoBackupFileName(d('2026-03-05T07:04'), false)).toBe(
-      'faturometro-auto-2026-03-05-0704.zip',
+    expect(autoBackupFileName(d('2026-03-05T07:04'), false, TAG)).toBe(
+      'faturometro-auto-1a2b3c4d-2026-03-05-0704.zip',
     );
   });
 
-  it('recognises only automatic backups', () => {
-    expect(isAutoBackupFileName('faturometro-auto-2026-11-21-1230.zip')).toBe(true);
-    expect(isAutoBackupFileName('faturometro-auto-2026-11-21-1230-cifrado.zip')).toBe(true);
-    expect(isAutoBackupFileName('faturometro-2026-11-21.zip')).toBe(false);
-    expect(isAutoBackupFileName('faturometro-auto-2026-11-21-1230.zip.bak')).toBe(false);
-    expect(isAutoBackupFileName('notas.txt')).toBe(false);
+  it('recognises only the automatic backups of this profile', () => {
+    expect(isAutoBackupFileName(auto('2026-11-21-1230'), TAG)).toBe(true);
+    expect(isAutoBackupFileName(auto('2026-11-21-1230', TAG, '-cifrado'), TAG)).toBe(true);
+    expect(isAutoBackupFileName(auto('2026-11-21-1230', OTHER), TAG)).toBe(false);
+    expect(isAutoBackupFileName('faturometro-2026-11-21.zip', TAG)).toBe(false);
+    expect(isAutoBackupFileName(`${auto('2026-11-21-1230')}.tmp`, TAG)).toBe(false);
+    expect(isAutoBackupFileName('notas.txt', TAG)).toBe(false);
   });
 });
 
 describe('filesToPrune', () => {
   it('drops the oldest automatic backups beyond the kept number, and nothing else', () => {
     const names = [
-      'faturometro-auto-2026-11-21-1230-cifrado.zip',
-      'faturometro-auto-2026-10-01-0900.zip',
+      auto('2026-11-21-1230', TAG, '-cifrado'),
+      auto('2026-10-01-0900'),
       'notas.txt',
-      'faturometro-auto-2026-11-14-1000-cifrado.zip',
+      auto('2026-11-14-1000', TAG, '-cifrado'),
       'faturometro-2026-11-21.zip',
-      'faturometro-auto-2026-11-07-1000.zip',
-      'faturometro-auto-2026-10-31-2359-cifrado.zip',
-      'faturometro-auto-2026-10-24-1000-cifrado.zip',
+      auto('2026-11-07-1000'),
+      auto('2026-10-31-2359', TAG, '-cifrado'),
+      auto('2026-10-24-1000', TAG, '-cifrado'),
     ];
-    expect(filesToPrune(names, 5)).toEqual(['faturometro-auto-2026-10-01-0900.zip']);
-    expect(filesToPrune(names, 3)).toEqual([
-      'faturometro-auto-2026-10-01-0900.zip',
-      'faturometro-auto-2026-10-24-1000-cifrado.zip',
-      'faturometro-auto-2026-10-31-2359-cifrado.zip',
+    expect(filesToPrune(names, 5, TAG)).toEqual([auto('2026-10-01-0900')]);
+    expect(filesToPrune(names, 3, TAG)).toEqual([
+      auto('2026-10-01-0900'),
+      auto('2026-10-24-1000', TAG, '-cifrado'),
+      auto('2026-10-31-2359', TAG, '-cifrado'),
     ]);
   });
 
+  it('never counts nor removes the backups of another profile in the same folder', () => {
+    const names = [
+      ...['01', '02', '03', '04', '05', '06'].map((day) => auto(`2026-11-${day}-1000`, OTHER)),
+      auto('2026-11-07-1000'),
+    ];
+    expect(filesToPrune(names, 5, TAG)).toEqual([]);
+    expect(filesToPrune(names, 5, OTHER)).toEqual([auto('2026-11-01-1000', OTHER)]);
+  });
+
   it('keeps everything while under the limit', () => {
-    expect(filesToPrune(['faturometro-auto-2026-11-21-1230.zip'], 5)).toEqual([]);
+    expect(filesToPrune([auto('2026-11-21-1230')], 5, TAG)).toEqual([]);
+  });
+});
+
+describe('tempFilesOf', () => {
+  it('lists the unfinished writes of this profile only', () => {
+    const names = [
+      `${auto('2026-11-21-1230')}.tmp`,
+      `${auto('2026-11-21-1230', OTHER)}.tmp`,
+      auto('2026-11-14-1000'),
+      'outro.tmp',
+    ];
+    expect(tempFilesOf(names, TAG)).toEqual([`${auto('2026-11-21-1230')}.tmp`]);
   });
 });

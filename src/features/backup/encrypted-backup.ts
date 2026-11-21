@@ -15,7 +15,7 @@ import {
   unlockWithRecoveryKey,
   type WrappedMasterKey,
 } from '../../lib/crypto';
-import { BackupError } from './backup';
+import { BackupError, MAX_UNZIPPED_BYTES } from './backup';
 
 export const ENCRYPTED_BACKUP_FORMAT = 'faturometro-encrypted-backup';
 export const ENCRYPTED_BACKUP_VERSION = 1;
@@ -63,8 +63,20 @@ export async function encryptBackup(
   });
 }
 
+/** Uncompressed limits, checked before inflating: a hostile file must not fill memory. */
+const MAX_SIZE: Record<string, number> = {
+  [HEADER_FILE]: 64_000,
+  [DATA_FILE]: MAX_UNZIPPED_BYTES,
+};
+
 function entriesOf(bytes: Uint8Array, names: readonly string[]): Record<string, Uint8Array> {
-  return unzipSync(bytes, { filter: (file) => names.includes(file.name) });
+  return unzipSync(bytes, {
+    filter: (file) => {
+      if (!names.includes(file.name)) return false;
+      if (file.originalSize > (MAX_SIZE[file.name] ?? 0)) throw new BackupError('too_large');
+      return true;
+    },
+  });
 }
 
 export function isEncryptedBackup(bytes: Uint8Array): boolean {
@@ -88,7 +100,8 @@ export async function decryptBackup(
     data = entries[DATA_FILE];
     if (!raw || !data) throw new Error('missing');
     header = headerSchema.parse(JSON.parse(strFromU8(raw)));
-  } catch {
+  } catch (error) {
+    if (error instanceof BackupError) throw error;
     throw new BackupError('not_a_backup');
   }
 

@@ -49,10 +49,18 @@ async function runFor(
   // Read each time: the settings page may have changed it since the last run.
   const config = await profilesDb.autoBackups.get(session.profile.id);
   if (!config) return null;
+  // The password may have changed since sign-in (the hook keeps the first session):
+  // encrypt with the key as wrapped now, never with a password the user replaced.
+  const profile = (await profilesDb.profiles.get(session.profile.id)) ?? session.profile;
   set({ ...state, running: true });
   let outcome: AutoBackupOutcome;
   try {
-    outcome = await runAutoBackup({ session, config, now: new Date(), ...options });
+    outcome = await runAutoBackup({
+      session: { ...session, profile },
+      config,
+      now: new Date(),
+      ...options,
+    });
   } catch {
     outcome = { kind: 'error', code: 'write_failed' };
   }

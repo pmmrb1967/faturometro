@@ -10,7 +10,10 @@ export const AUTO_BACKUP_KEEP = [3, 5, 10] as const;
 export type AutoBackupKeep = (typeof AUTO_BACKUP_KEEP)[number];
 
 const PREFIX = 'faturometro-auto-';
-const NAME = /^faturometro-auto-(\d{4}-\d{2}-\d{2}-\d{4})(-cifrado)?\.zip$/;
+/** Unfinished write: renamed to the final name only once complete. */
+export const TEMP_SUFFIX = '.tmp';
+/** Profile tag, date stamp, encrypted mark. The tag keeps profiles sharing a folder apart. */
+const NAME = /^faturometro-auto-([0-9a-f]{8})-(\d{4}-\d{2}-\d{2}-\d{4})(-cifrado)?\.zip$/;
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -37,22 +40,34 @@ export function isDue(lastRunAt: string | undefined, every: AutoBackupEvery, now
 
 const pad = (value: number, size = 2) => String(value).padStart(size, '0');
 
-export function autoBackupFileName(now: Date, encrypted: boolean): string {
+/** `tag`: 8 hex characters that tell this profile's files from another's in the same folder. */
+export function autoBackupFileName(now: Date, encrypted: boolean, tag: string): string {
   const stamp =
     `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-` +
     `${pad(now.getHours())}${pad(now.getMinutes())}`;
-  return `${PREFIX}${stamp}${encrypted ? '-cifrado' : ''}.zip`;
+  return `${PREFIX}${tag}-${stamp}${encrypted ? '-cifrado' : ''}.zip`;
 }
 
-export function isAutoBackupFileName(name: string): boolean {
-  return NAME.test(name);
+export function isAutoBackupFileName(name: string, tag: string): boolean {
+  return NAME.exec(name)?.[1] === tag;
 }
 
-/** The oldest automatic backups beyond `keep`, oldest first; other files are never listed. */
-export function filesToPrune(names: readonly string[], keep: number): string[] {
+/** This profile's oldest automatic backups beyond `keep`, oldest first; other files are never listed. */
+export function filesToPrune(names: readonly string[], keep: number, tag: string): string[] {
   const ours = names
-    .map((name) => ({ name, stamp: NAME.exec(name)?.[1] }))
+    .map((name) => {
+      const match = NAME.exec(name);
+      return { name, stamp: match?.[1] === tag ? match[2] : undefined };
+    })
     .filter((entry): entry is { name: string; stamp: string } => entry.stamp !== undefined)
     .sort((a, b) => a.stamp.localeCompare(b.stamp) || a.name.localeCompare(b.name));
   return ours.slice(0, Math.max(0, ours.length - keep)).map((entry) => entry.name);
+}
+
+/** This profile's writes left unfinished (the browser closed mid-write). */
+export function tempFilesOf(names: readonly string[], tag: string): string[] {
+  return names.filter(
+    (name) =>
+      name.endsWith(TEMP_SUFFIX) && isAutoBackupFileName(name.slice(0, -TEMP_SUFFIX.length), tag),
+  );
 }

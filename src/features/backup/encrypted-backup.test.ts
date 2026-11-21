@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { strFromU8, unzipSync } from 'fflate';
+import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createRepositories, type Repositories } from '../../db/repositories';
 import { ProfileDb } from '../../db/schema';
@@ -74,5 +74,13 @@ describe('encrypted backups', () => {
     expect((await target.providers.list()).map((provider) => provider.name)).toEqual([
       'Fornecedor Inconfundível',
     ]);
+  });
+
+  it('does not inflate an oversized header (a hostile file)', async () => {
+    const bomb = zipSync({ 'faturometro-cifrado.json': strToU8(' '.repeat(200_000)) });
+    expect(isEncryptedBackup(bomb)).toBe(false);
+    await expect(decryptBackup(bomb, { password: PASSWORD })).rejects.toMatchObject({
+      code: 'too_large',
+    });
   });
 });

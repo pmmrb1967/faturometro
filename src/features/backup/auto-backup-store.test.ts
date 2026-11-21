@@ -80,3 +80,19 @@ describe('automatic backup state', () => {
     expect(autoBackupState().outcome).toEqual({ kind: 'needs_permission' });
   });
 });
+
+describe('after a password change', () => {
+  it('encrypts scheduled backups with the profile as saved now, not as it was at sign-in', async () => {
+    await profilesDb.autoBackups.put(config);
+    const renewed = { ...session.profile, wrappedKey: { renewed: true } as never };
+    await profilesDb.profiles.put(renewed);
+    run.mockResolvedValue(written);
+    await autoBackupTick(session);
+    expect(run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        session: expect.objectContaining({ profile: renewed }) as unknown,
+      }),
+    );
+    await profilesDb.profiles.delete(renewed.id);
+  });
+});
