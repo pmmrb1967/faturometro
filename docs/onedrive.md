@@ -4,7 +4,7 @@ A sincronização pelo OneDrive precisa de um registo da app na plataforma de id
 
 Sem id, a app não mostra a opção OneDrive e tudo o resto funciona igual.
 
-**Registo atual** (2026-11-21): id `0af920e6-fd52-456f-9f4d-c1fc3d11f436`, em `src/cloud/onedrive-config.ts`.
+**Registo atual** (2026-11-21): id `0af920e6-fd52-456f-9f4d-c1fc3d11f436`, em `src/cloud/cloud-config.ts`.
 
 ## Que conta usar
 
@@ -28,7 +28,7 @@ A conta onde a app está registada não importa para os utilizadores: qualquer c
    - **Register**.
 4. **Authentication** (experiência nova): na linha *Single-page application*, **Edit** (ou **+ Add Redirect URI**) e acrescentar `http://localhost:5173/auth-redirect.html`. A lista fica com os dois endereços, ambos do tipo SPA. No separador **Settings**, *Access tokens* e *ID tokens* (implicit grant) ficam desligados: a app usa o fluxo de código com PKCE.
 5. **API permissions → Add a permission → Microsoft Graph → Delegated permissions**: `Files.ReadWrite.AppFolder` e `offline_access` (`openid` e `profile` vêm por defeito). Remover `User.Read` se aparecer: a app não lê o perfil. Não é preciso consentimento de administrador.
-6. **Overview**: copiar o **Application (client) ID** e pô-lo em `src/cloud/onedrive-config.ts` (`PROJECT_ONEDRIVE_CLIENT_ID`). Em alternativa, `VITE_ONEDRIVE_CLIENT_ID` no ambiente da compilação sobrepõe-se.
+6. **Overview**: copiar o **Application (client) ID** e pô-lo em `src/cloud/cloud-config.ts` (`PROJECT_ONEDRIVE_CLIENT_ID`). Em alternativa, `VITE_ONEDRIVE_CLIENT_ID` no ambiente da compilação sobrepõe-se.
 7. Opcional, antes de abrir a toda a gente: em **Branding & properties**, página inicial `https://app.faturometro.workers.dev` e declaração de privacidade `https://app.faturometro.workers.dev/privacidade`. Sem editor verificado, a Microsoft mostra a app como "não verificada" no ecrã de autorização; funciona na mesma.
 
 Uma origem nova (por exemplo um domínio próprio) precisa do seu `…/auth-redirect.html` acrescentado no passo 4.

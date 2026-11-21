@@ -6,7 +6,7 @@
  */
 import type { AccountInfo, IPublicClientApplication } from '@azure/msal-browser';
 import { CloudError } from './drive';
-import { PROJECT_ONEDRIVE_CLIENT_ID } from './onedrive-config';
+import { providerClientId } from './providers';
 
 const AUTHORITY = 'https://login.microsoftonline.com/common';
 /** Only the app's own folder; `offline_access` keeps the link without signing in each time. */
@@ -17,8 +17,7 @@ const REDIRECT_PATH = '/auth-redirect.html';
 const PENDING_KEY = 'faturometro.onedrive.intent';
 
 function clientId(): string {
-  const fromBuild: unknown = import.meta.env.VITE_ONEDRIVE_CLIENT_ID;
-  return typeof fromBuild === 'string' && fromBuild ? fromBuild : PROJECT_ONEDRIVE_CLIENT_ID;
+  return providerClientId('onedrive');
 }
 
 /** OneDrive is offered only when the app has an id with Microsoft. */

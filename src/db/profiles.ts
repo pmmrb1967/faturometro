@@ -24,7 +24,7 @@ export interface Profile {
   adminLink?: AdminLink;
 }
 
-export type CloudProvider = 'onedrive';
+export type CloudProvider = 'onedrive' | 'dropbox' | 'gdrive';
 
 /** Device-local state of the sync through the user's cloud. */
 export interface ProfileCloud extends CloudSyncState {
