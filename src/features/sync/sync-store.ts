@@ -4,6 +4,7 @@ import { runCloudSync } from '../../cloud/cloud-run';
 import { CloudError, type CloudErrorCode } from '../../cloud/drive';
 import { profilesDb } from '../../db/profiles';
 import { runSync, SyncError, type SyncErrorCode } from '../../sync/account';
+import { refreshAdminLink } from '../../sync/admin-link';
 import type { FileSyncResult } from '../../sync/files';
 import { refreshAlerts } from '../alerts/refresh';
 import type { Session } from '../auth/session-context';
@@ -44,9 +45,13 @@ export async function syncSession(
   set({ ...status, running: true });
   try {
     // A profile syncs through the server or through the user's cloud, never both.
-    const { profile, result, files } = session.profile.cloud
-      ? await runCloudSync(session)
-      : await runSync(session);
+    const synced = session.profile.cloud ? await runCloudSync(session) : await runSync(session);
+    const { result, files } = synced;
+    let { profile } = synced;
+    if (profile.adminLink) {
+      // Administrators syncing through the cloud: contributions waiting on the server.
+      profile = await refreshAdminLink({ ...session, profile }).catch(() => profile);
+    }
     updateProfile(profile);
     if (result.received > 0) await refreshAlerts(session.repos);
     set({

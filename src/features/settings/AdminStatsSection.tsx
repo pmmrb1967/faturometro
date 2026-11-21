@@ -4,6 +4,7 @@ import { t } from '../../i18n/pt-PT';
 import { adminStats } from '../../sync/account';
 import { useSession } from '../auth/session-context';
 import { formatMegabytes } from './format';
+import { isAdmin } from '../../sync/admin-link';
 
 const copy = t.adminStats;
 
@@ -24,7 +25,7 @@ function usage(used: number, total: number | undefined): string {
 /** Administrator only: how the sync server is being used (totals, no accounts named). */
 export function AdminStatsSection() {
   const { session } = useSession();
-  const admin = Boolean(session?.profile.sync?.admin);
+  const admin = Boolean(session && isAdmin(session.profile));
   const stats = useLiveQuery(async () => {
     if (!session || !admin) return null;
     try {

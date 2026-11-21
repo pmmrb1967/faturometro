@@ -10,6 +10,7 @@ import { t } from '../i18n/pt-PT';
 import { NavIcon } from './NavIcon';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
+import { isAdmin } from '../sync/admin-link';
 
 /** Per-device choice: side menu reduced to its icons (wide screens only). */
 const NAV_COLLAPSED_KEY = 'faturometro.nav.collapsed';
@@ -77,7 +78,9 @@ export function AppShell() {
             </>
           ) : (
             <>
-              {session?.profile.sync?.admin && <span className="topbar-badge">{t.adminBadge}</span>}
+              {session && isAdmin(session.profile) && (
+                <span className="topbar-badge">{t.adminBadge}</span>
+              )}
               <span className="topbar-email">{session?.profile.email}</span>
               <button
                 type="button"

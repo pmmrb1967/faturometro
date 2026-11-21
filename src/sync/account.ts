@@ -45,7 +45,9 @@ export type SyncErrorCode =
   | 'account_removed'
   | 'too_many'
   /** Another device moved the account's sync to the user's cloud. */
-  | 'moved_to_cloud';
+  | 'moved_to_cloud'
+  /** The server account is not an administrator's. */
+  | 'not_admin';
 
 export class SyncError extends Error {
   readonly code: SyncErrorCode;
@@ -56,7 +58,8 @@ export class SyncError extends Error {
   }
 }
 
-function fromHttp(error: unknown, byStatus: Partial<Record<number, SyncErrorCode>>): never {
+/** Turns an HTTP or network failure into a `SyncError` (other errors pass through). */
+export function fromHttp(error: unknown, byStatus: Partial<Record<number, SyncErrorCode>>): never {
   if (error instanceof SyncHttpError) {
     const code = byStatus[error.status];
     if (code) throw new SyncError(code);
@@ -277,10 +280,11 @@ export async function adminStats(input: {
   masterKey: CryptoKey;
   api?: SyncApi;
 }): Promise<AdminStats> {
-  const sync = input.profile.sync;
-  if (!sync) throw new Error('Sync is not enabled');
-  const api = input.api ?? new SyncApi(sync.serverUrl);
-  const token = (await decryptJson(input.masterKey, sync.token)) as string;
+  // Through the server sync, or the administrator link when syncing through the cloud.
+  const source = input.profile.sync ?? input.profile.adminLink;
+  if (!source) throw new Error('Not linked to the sync server');
+  const api = input.api ?? new SyncApi(source.serverUrl);
+  const token = (await decryptJson(input.masterKey, source.token)) as string;
   try {
     return await api.adminStats(token);
   } catch (error) {

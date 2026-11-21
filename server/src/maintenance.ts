@@ -1,12 +1,17 @@
 /**
  * Daily job (Cron Trigger, server/wrangler.toml): removes accounts inactive
- * for too long, forgets old removal marks and the free AI's past daily counts,
+ * for too long (or moved to the user's cloud with their data deleted, after 30 days), forgets old removal marks and the free AI's past daily counts,
  * and stores usage totals for the admission brake and the weekly alert. Only ids, dates and sizes are touched.
  */
 import type { Sql } from './db';
 
 export const INACTIVE_MONTHS = 12;
 export const TOMBSTONE_MONTHS = 24;
+/**
+ * Accounts whose sync moved to the user's cloud and whose data was deleted: kept this
+ * long after their last use, so the account's other devices learn of the move.
+ */
+export const MOVED_KEEP_DAYS = 30;
 /** Layout contributions are deleted after this many days, read or not. */
 export const CONTRIB_KEEP_DAYS = 90;
 
@@ -43,9 +48,13 @@ export async function runMaintenance(config: MaintenanceConfig): Promise<Mainten
   const today = now.toISOString().slice(0, 10);
 
   const inactive = await sql.all<{ id: string }>(
-    'SELECT id FROM users WHERE last_seen_at < ? AND email NOT IN (SELECT value FROM json_each(?))',
-    monthsBefore(now, config.inactiveMonths ?? INACTIVE_MONTHS),
+    `SELECT id FROM users WHERE email NOT IN (SELECT value FROM json_each(?)) AND (
+       last_seen_at < ?
+       OR (moved_to IS NOT NULL AND last_seen_at < ?
+           AND NOT EXISTS (SELECT 1 FROM records WHERE records.user_id = users.id)))`,
     JSON.stringify(config.adminEmails ?? []),
+    monthsBefore(now, config.inactiveMonths ?? INACTIVE_MONTHS),
+    new Date(now.getTime() - MOVED_KEEP_DAYS * 86_400_000).toISOString().slice(0, 10),
   );
   if (inactive.length > 0) {
     // Set-based statements: a handful of queries whatever the number of accounts.

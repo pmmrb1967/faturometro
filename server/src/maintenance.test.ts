@@ -126,3 +126,28 @@ describe('contributions purge', () => {
     expect(left.map((row) => row.id)).toEqual(['new']);
   });
 });
+
+describe('accounts moved to the user’s cloud', () => {
+  it('removes them 30 days after the last use once their data is gone, except administrators', async () => {
+    const ana = await register('ana@example.pt');
+    const rui = await register('rui@example.pt');
+    await register('admin@example.pt');
+    main.db.exec("UPDATE users SET moved_to = 'cloud'");
+    // Rui kept his data on the server for now.
+    main.db
+      .prepare(
+        "INSERT INTO records (user_id, id, tbl, updated_at, enc, seq) VALUES (?, 'r1', 'invoices', '2026-10-13', '{}', 1)",
+      )
+      .run(rui.accountId);
+    const run = () =>
+      runMaintenance({ sql: main.sql, adminEmails: ['admin@example.pt'], now: () => clock });
+
+    clock = new Date('2026-11-12T12:00:00Z'); // exactly 30 days: kept
+    expect((await run()).removed).toBe(0);
+    clock = new Date('2026-11-13T12:00:00Z');
+    expect((await run()).removed).toBe(1);
+    expect(main.db.prepare('SELECT id FROM removed_accounts').all()).toEqual([
+      { id: ana.accountId },
+    ]);
+  });
+});

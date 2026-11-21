@@ -27,6 +27,7 @@ import { validateNewPassword, type FieldErrors } from '../auth/validation';
 import { syncSession, useSyncStatus } from '../sync/sync-store';
 import { getSettings, updateSettings } from './settings';
 import './settings.css';
+import { isAdmin } from '../../sync/admin-link';
 
 const copy = t.sync;
 const DEFAULT_SERVER = DEFAULT_SYNC_URL;
@@ -473,7 +474,7 @@ function AccountSection() {
     <section className="settings-section" aria-labelledby="account-title">
       <h2 id="account-title">{accountCopy.title}</h2>
       <p className="muted">{accountCopy.signedInAs(session.profile.email)}</p>
-      {session.profile.sync?.admin && <p className="muted">{accountCopy.admin}</p>}
+      {isAdmin(session.profile) && <p className="muted">{accountCopy.admin}</p>}
       <h3>{accountCopy.changePassword}</h3>
       {session.profile.sync && <p className="muted">{accountCopy.syncNote}</p>}
       <form onSubmit={submit} noValidate>

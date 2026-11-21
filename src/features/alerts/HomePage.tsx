@@ -14,6 +14,7 @@ import { HouseholdSection } from '../household/HouseholdSection';
 import { GuestHomeNotice } from './GuestHomeNotice';
 import { dismissAlert, refreshAlerts, today } from './refresh';
 import './alerts.css';
+import { adminContributions, isAdmin } from '../../sync/admin-link';
 
 /** Administrator only: the weekly COM.escolha check (maintainer's PC) has not passed lately. */
 function staleComEscolhaCheck(): string | null {
@@ -56,8 +57,9 @@ export function HomePage() {
       : autoOutcome?.kind === 'error'
         ? t.alerts.backup.autoFailed(t.backup.auto.errors[autoOutcome.code])
         : null;
-  const staleCheck = session.profile.sync?.admin ? staleComEscolhaCheck() : null;
-  const waiting = session.profile.sync?.admin ? (session.profile.sync.contributions ?? 0) : 0;
+  const admin = isAdmin(session.profile);
+  const staleCheck = admin ? staleComEscolhaCheck() : null;
+  const waiting = admin ? adminContributions(session.profile) : 0;
 
   return (
     <>

@@ -239,6 +239,10 @@ export class SyncApi {
     });
   }
 
+  logout(token: string) {
+    return this.call('POST', '/v1/logout', null, { token });
+  }
+
   deleteAccount(token: string, ownerProof: string) {
     return this.call('DELETE', '/v1/account', null, { token, ownerProof });
   }
