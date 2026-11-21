@@ -104,6 +104,52 @@ export const t = {
       wrong_secret:
         'A palavra-passe ou a chave de recuperação não abre esta cópia. Usa a da conta que a fez (a palavra-passe que tinha nesse dia).',
     },
+    encrypted: {
+      intro: 'Esta cópia está cifrada. Escreve a palavra-passe da conta que a fez para a abrir.',
+      password: 'Palavra-passe da conta',
+      recoveryKey: 'Chave de recuperação',
+      useRecoveryKey: 'Usar antes a chave de recuperação',
+      usePassword: 'Usar antes a palavra-passe',
+      open: 'Abrir e importar',
+      cancel: 'Cancelar',
+      opening: 'A abrir…',
+    },
+    auto: {
+      title: 'Cópia automática',
+      intro:
+        'Grava sozinha uma cópia numa pasta à tua escolha, por exemplo uma pasta do OneDrive, do Google Drive ou do Dropbox no computador, que depois a envia para a cloud. Funciona com a app aberta: se estiver na hora, faz a cópia ao abrires a app.',
+      unsupported:
+        'A cópia automática para uma pasta precisa do Chrome ou do Edge num computador. Neste browser, usa “Exportar tudo”.',
+      choose: 'Escolher pasta',
+      change: 'Mudar pasta',
+      turnOff: 'Desligar a cópia automática',
+      folder: (name: string) => `Pasta: ${name}`,
+      every: 'Periodicidade',
+      everyOptions: { day: 'Diária', week: 'Semanal', month: 'Mensal' },
+      keep: 'Guardar as últimas',
+      keepOption: (count: number) => `${count} cópias`,
+      encrypt: 'Cifrar com a palavra-passe da conta (recomendado)',
+      encryptHint:
+        'Para abrir a cópia, num computador novo ou noutra conta, basta a palavra-passe da conta ou a chave de recuperação. Se mudares de palavra-passe, as cópias antigas abrem com a palavra-passe antiga ou com a chave de recuperação.',
+      plainWarning:
+        'Sem cifra, a cópia fica legível por quem tiver acesso à pasta, e à cloud se for uma pasta sincronizada.',
+      guestPlain:
+        'Sem conta não há palavra-passe para cifrar: a cópia fica em claro. Cria uma conta para a cifrar.',
+      lastRun: (when: string) => `Última cópia automática: ${when}.`,
+      never: 'Ainda não foi feita nenhuma cópia automática.',
+      now: 'Fazer cópia agora',
+      working: 'A fazer a cópia…',
+      written: (name: string) => `Cópia gravada: ${name}.`,
+      needsPermission:
+        'O browser pede outra vez autorização para gravar na pasta. Carrega em “Fazer cópia agora”.',
+      errors: {
+        permission_denied:
+          'O browser não deu autorização para gravar na pasta. Tenta outra vez ou escolhe outra pasta.',
+        write_failed:
+          'Não foi possível gravar a cópia na pasta (falta de espaço?). Tenta outra vez.',
+        folder_missing: 'A pasta da cópia automática já não existe. Escolhe outra pasta.',
+      },
+    },
   },
   install: {
     title: 'Aplicação',
@@ -829,6 +875,9 @@ export const t = {
       recent: (date: string) => `Última cópia de segurança: ${date}.`,
       banner: 'Os teus dados estão só neste browser e não têm uma cópia de segurança recente.',
       bannerAction: 'Fazer cópia',
+      autoWaiting:
+        'A cópia automática está por fazer: o browser pede outra vez autorização para gravar na pasta.',
+      autoFailed: (reason: string) => `A cópia automática falhou. ${reason}`,
     },
     admin: {
       contributions: (count: number) =>

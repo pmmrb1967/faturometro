@@ -38,7 +38,8 @@ class FakeFolder implements BackupFolder {
             return Promise.resolve();
           },
           close: () => {
-            if (this.failClose) return Promise.reject(new DOMException('full', 'QuotaExceededError'));
+            if (this.failClose)
+              return Promise.reject(new DOMException('full', 'QuotaExceededError'));
             this.files.set(name, chunks[0] ?? new Uint8Array());
             return Promise.resolve();
           },
@@ -75,7 +76,11 @@ function configFor(profile: Profile, patch: Partial<AutoBackupConfig> = {}): Aut
   };
 }
 
-function run(profile: Profile, config: AutoBackupConfig, options: { force?: boolean; interactive?: boolean } = {}) {
+function run(
+  profile: Profile,
+  config: AutoBackupConfig,
+  options: { force?: boolean; interactive?: boolean } = {},
+) {
   return runAutoBackup({
     session: { profile, repos, masterKey: keys.masterKey },
     config,
@@ -85,14 +90,25 @@ function run(profile: Profile, config: AutoBackupConfig, options: { force?: bool
   });
 }
 
-const autoNames = () => [...folder.files.keys()].filter((name) => name.startsWith('faturometro-auto-'));
+const autoNames = () =>
+  [...folder.files.keys()].filter((name) => name.startsWith('faturometro-auto-'));
 
 beforeEach(async () => {
   keys = await createAccountKeys('palavra-passe', 1_000);
   repos = createRepositories(new ProfileDb(crypto.randomUUID()), keys.masterKey);
-  await repos.providers.put({ id: 'p1', nif: '500000000', name: 'NOS', sectors: ['telecom'] } as never);
+  await repos.providers.put({
+    id: 'p1',
+    nif: '500000000',
+    name: 'NOS',
+    sectors: ['telecom'],
+  } as never);
   folder = new FakeFolder();
-  account = { id: crypto.randomUUID(), email: 'a@b.pt', createdAt: '2026-11-01', wrappedKey: keys.wrapped };
+  account = {
+    id: crypto.randomUUID(),
+    email: 'a@b.pt',
+    createdAt: '2026-11-01',
+    wrappedKey: keys.wrapped,
+  };
   guest = { id: crypto.randomUUID(), email: '', createdAt: '2026-11-01', guestKey: 'AAAA' };
 });
 
@@ -105,10 +121,15 @@ describe('runAutoBackup', () => {
 
   it('writes an encrypted backup and records it', async () => {
     const outcome = await run(account, configFor(account));
-    expect(outcome).toEqual({ kind: 'written', name: 'faturometro-auto-2026-11-21-1230-cifrado.zip' });
+    expect(outcome).toEqual({
+      kind: 'written',
+      name: 'faturometro-auto-2026-11-21-1230-cifrado.zip',
+    });
     const bytes = folder.files.get('faturometro-auto-2026-11-21-1230-cifrado.zip');
     expect(bytes && isEncryptedBackup(bytes)).toBe(true);
-    expect(await profilesDb.autoBackups.get(account.id)).toMatchObject({ lastRunAt: NOW.toISOString() });
+    expect(await profilesDb.autoBackups.get(account.id)).toMatchObject({
+      lastRunAt: NOW.toISOString(),
+    });
     expect((await getSettings(repos)).lastBackupAt).toBe(NOW.toISOString().slice(0, 10));
   });
 
@@ -176,7 +197,10 @@ describe('runAutoBackup', () => {
 
   it('reports a folder that no longer exists', async () => {
     folder.missing = true;
-    expect(await run(account, configFor(account))).toEqual({ kind: 'error', code: 'folder_missing' });
+    expect(await run(account, configFor(account))).toEqual({
+      kind: 'error',
+      code: 'folder_missing',
+    });
   });
 
   it('runs before it is due when asked from a click', async () => {

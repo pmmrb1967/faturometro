@@ -7,6 +7,7 @@ import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { isGuest } from '../../db/profiles';
 import { useSession } from '../auth/session-context';
+import { backupNow, useAutoBackupState } from '../backup/auto-backup-store';
 import { BACKUP_ANCHOR } from '../backup/backup';
 import { useBackupStatus } from '../backup/use-backup-status';
 import { HouseholdSection } from '../household/HouseholdSection';
@@ -44,9 +45,17 @@ export function HomePage() {
   }, [session]);
 
   const backup = useBackupStatus();
+  const autoBackup = useAutoBackupState();
 
   if (!session) return null;
   const backupDue = backup?.kind === 'never' || backup?.kind === 'overdue';
+  const autoOutcome = autoBackup.outcome;
+  const autoProblem =
+    autoOutcome?.kind === 'needs_permission'
+      ? t.alerts.backup.autoWaiting
+      : autoOutcome?.kind === 'error'
+        ? t.alerts.backup.autoFailed(t.backup.auto.errors[autoOutcome.code])
+        : null;
   const staleCheck = session.profile.sync?.admin ? staleComEscolhaCheck() : null;
   const waiting = session.profile.sync?.admin ? (session.profile.sync.contributions ?? 0) : 0;
 
@@ -56,10 +65,26 @@ export function HomePage() {
       <h1 className="visually-hidden">{t.nav.home}</h1>
       {isGuest(session.profile) && <GuestHomeNotice />}
       <h2 className="section-title">{t.alerts.title}</h2>
-      {alerts?.length === 0 && !staleCheck && waiting === 0 && !backupDue && (
+      {alerts?.length === 0 && !staleCheck && waiting === 0 && !backupDue && !autoProblem && (
         <p className="muted">{t.alerts.empty}</p>
       )}
       <ul className="alerts">
+        {autoProblem && (
+          <li className="alert alert-warning">
+            <span className="alert-icon" aria-hidden="true">
+              !
+            </span>
+            <span className="alert-message">{autoProblem}</span>
+            <button
+              type="button"
+              className="action-secondary action-compact"
+              disabled={autoBackup.running}
+              onClick={() => void backupNow(session)}
+            >
+              {t.backup.auto.now}
+            </button>
+          </li>
+        )}
         {backupDue && (
           <li className="alert alert-warning">
             <span className="alert-icon" aria-hidden="true">

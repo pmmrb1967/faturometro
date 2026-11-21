@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
 import { isGuest } from '../db/profiles';
 import { useSession } from '../features/auth/session-context';
+import { useAutoBackup } from '../features/backup/auto-backup-store';
 import { BackupBanner } from '../features/backup/BackupBanner';
 import { useAutoSync } from '../features/sync/sync-store';
 import { t } from '../i18n/pt-PT';
@@ -25,6 +26,7 @@ export function AppShell() {
   const { session, lock, updateProfile } = useSession();
   const navigate = useNavigate();
   useAutoSync(session, updateProfile);
+  useAutoBackup(session);
   const updateAvailable = useUpdateAvailable();
   const [collapsed, setCollapsed] = useState(savedCollapsed);
   // The long title is for search results (index.html); inside the app the tab shows the name.
