@@ -95,6 +95,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,woff2}'],
         importScripts: ['share-target.js'],
+        // The Microsoft sign-in return page must load itself, never the app (src/cloud/auth-redirect.ts).
+        navigateFallbackDenylist: [/^\/auth-redirect\.html/],
         // ERSE offers (about 4 MB, refreshed weekly): fetched when the comparator opens, then
         // cached. The URL carries the format version (OFFERS_URL), so an update never reads an
         // older cached file.
@@ -112,6 +114,9 @@ export default defineConfig(({ mode }) => ({
     // Pages load in their own files (src/app/lazy-page.ts), but the CSS stays in one file:
     // classes are shared across features, and a page must never show before its styles.
     cssCodeSplit: false,
+    rollupOptions: {
+      input: { main: 'index.html', 'auth-redirect': 'auth-redirect.html' },
+    },
   },
   // HTTPS tunnel for testing on a phone (pnpm tunnel); see README.
   server: { allowedHosts: ['.trycloudflare.com'] },
