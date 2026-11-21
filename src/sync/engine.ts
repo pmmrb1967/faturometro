@@ -3,8 +3,9 @@
  * clear index fields), then pull remote changes and apply them when newer
  * (last write wins). Indexes are rebuilt locally after decrypting.
  */
+import type { PendingPush } from '../db/pending-push';
 import type { Repositories } from '../db/repositories';
-import type { OutgoingRecord, SyncApi } from './api';
+import type { OutgoingRecord, RemoteRecord, SyncApi } from './api';
 
 /** Everything except original files (documents), which sync separately (optional). */
 export const SYNCED_TABLES = [
@@ -67,6 +68,59 @@ function isSyncedTable(table: string): table is SyncedTable {
   return (SYNCED_TABLES as readonly string[]).includes(table);
 }
 
+/** A record received from another device, by the server or by the cloud. */
+export type IncomingRecord = Omit<RemoteRecord, 'seq'>;
+
+/** What to send: changed since the cursor, plus the queue of records restored from a backup. */
+export async function collectOutgoing(
+  repos: Repositories,
+  lastPushedAt: string,
+): Promise<{ records: OutgoingRecord[]; pending: PendingPush[] }> {
+  const records: OutgoingRecord[] = [];
+  for (const table of SYNCED_TABLES) {
+    for (const row of await repos[table].changedSince(lastPushedAt)) {
+      records.push({ table, ...row });
+    }
+  }
+  // Restored from a backup: older than the cursor, so `changedSince` does not see them.
+  const pending = await repos.pendingPush.list();
+  const listed = new Set(records.map(({ table, id }) => `${table}:${id}`));
+  for (const { table, id } of pending) {
+    if (!isSyncedTable(table) || listed.has(`${table}:${id}`)) continue;
+    const row = await repos[table].encryptedRow(id);
+    if (row) records.push({ table, ...row });
+  }
+  return { records, pending };
+}
+
+/** Applies records from another device when newer (last write wins). */
+export async function applyIncoming(
+  repos: Repositories,
+  records: readonly IncomingRecord[],
+): Promise<{ received: number; conflicts: number }> {
+  let received = 0;
+  let conflicts = 0;
+  for (const remote of records) {
+    if (remote.table === 'documents') {
+      // Original files: only the metadata here; contents come with the file sync.
+      if (!remote.deletedAt && (await repos.documents.applyRemote(remote.enc, remote.updatedAt)))
+        received++;
+      continue;
+    }
+    if (!isSyncedTable(remote.table)) continue;
+    const repo = repos[remote.table];
+    const local = await repo.updatedAtOf(remote.id);
+    if (local !== undefined && local >= remote.updatedAt) continue;
+    try {
+      await repo.applyRemote(remote.enc);
+      received++;
+    } catch {
+      conflicts++;
+    }
+  }
+  return { received, conflicts };
+}
+
 export async function syncNow(
   repos: Repositories,
   api: SyncApi,
@@ -74,20 +128,7 @@ export async function syncNow(
   state: SyncState,
 ): Promise<SyncResult> {
   // Push.
-  const outgoing: OutgoingRecord[] = [];
-  for (const table of SYNCED_TABLES) {
-    for (const row of await repos[table].changedSince(state.lastPushedAt)) {
-      outgoing.push({ table, ...row });
-    }
-  }
-  // Restored from a backup: older than the cursor, so `changedSince` does not see them.
-  const pending = await repos.pendingPush.list();
-  const listed = new Set(outgoing.map(({ table, id }) => `${table}:${id}`));
-  for (const { table, id } of pending) {
-    if (!isSyncedTable(table) || listed.has(`${table}:${id}`)) continue;
-    const row = await repos[table].encryptedRow(id);
-    if (row) outgoing.push({ table, ...row });
-  }
+  const { records: outgoing, pending } = await collectOutgoing(repos, state.lastPushedAt);
   for (const batch of batches(outgoing)) await api.push(token, batch);
   await repos.pendingPush.remove(pending);
   const lastPushedAt = outgoing.reduce(
@@ -105,24 +146,9 @@ export async function syncNow(
     const page = await api.pull(token, since);
     admin = page.admin;
     contributions = page.contributions;
-    for (const remote of page.records) {
-      if (remote.table === 'documents') {
-        // Original files: only the metadata here; contents come with syncFiles.
-        if (!remote.deletedAt && (await repos.documents.applyRemote(remote.enc, remote.updatedAt)))
-          received++;
-        continue;
-      }
-      if (!isSyncedTable(remote.table)) continue;
-      const repo = repos[remote.table];
-      const local = await repo.updatedAtOf(remote.id);
-      if (local !== undefined && local >= remote.updatedAt) continue;
-      try {
-        await repo.applyRemote(remote.enc);
-        received++;
-      } catch {
-        conflicts++;
-      }
-    }
+    const applied = await applyIncoming(repos, page.records);
+    received += applied.received;
+    conflicts += applied.conflicts;
     since = page.latest;
     if (!page.more) break;
   }
