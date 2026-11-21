@@ -7,8 +7,10 @@ import { BEACON_REPORT_ORIGIN, BEACON_SCRIPT_ORIGIN } from './src/app/web-analyt
  * The app may only connect to itself, the Anthropic and Google Gemini APIs
  * (AI, with the user's key), the sync server (also the free AI) and
  * Cloudflare Web Analytics (public pages only, src/app/web-analytics.ts),
- * and, only once the user links OneDrive, Microsoft sign-in and Graph (the
- * app's own folder) and the hosts OneDrive downloads files from.
+ * and, only once the user links a cloud: Microsoft sign-in and Graph (the
+ * app's own folder) and the hosts OneDrive downloads files from; the Dropbox
+ * API (its token endpoint and the app folder); the Google Drive API. Dropbox
+ * and Google sign-in are full-page redirects, so their pages need no entry.
  * 'wasm-unsafe-eval' lets the QR reader's WebAssembly run; it does not allow
  * eval() of JavaScript.
  */
@@ -24,6 +26,10 @@ const ONEDRIVE_ORIGINS = [
   'https://my.microsoftpersonalcontent.com',
   'https://*.sharepoint.com',
 ];
+/** Dropbox: token renewal and metadata (api), file contents (content). */
+const DROPBOX_ORIGINS = ['https://api.dropboxapi.com', 'https://content.dropboxapi.com'];
+/** Google Drive API v3, uploads included (tokens go through the sync server). */
+const GOOGLE_DRIVE_ORIGIN = 'https://www.googleapis.com';
 
 export function contentSecurityPolicy(syncUrl: string, frameAncestors = "'none'"): string {
   const syncOrigin = new URL(syncUrl).origin;
@@ -34,7 +40,7 @@ export function contentSecurityPolicy(syncUrl: string, frameAncestors = "'none'"
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     "worker-src 'self' blob:",
-    `connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com ${syncOrigin} ${BEACON_REPORT_ORIGIN} ${MICROSOFT_LOGIN} ${ONEDRIVE_ORIGINS.join(' ')}`,
+    `connect-src 'self' https://api.anthropic.com https://generativelanguage.googleapis.com ${syncOrigin} ${BEACON_REPORT_ORIGIN} ${MICROSOFT_LOGIN} ${ONEDRIVE_ORIGINS.join(' ')} ${DROPBOX_ORIGINS.join(' ')} ${GOOGLE_DRIVE_ORIGIN}`,
     // Silent renewal of the Microsoft sign-in (hidden frame).
     `frame-src 'self' ${MICROSOFT_LOGIN}`,
     "manifest-src 'self'",

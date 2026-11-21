@@ -7,6 +7,8 @@
 #   pnpm exec wrangler d1 migrations apply faturometro-files --remote
 #   pnpm exec wrangler secret put PRELOGIN_SECRET    # long random string
 #   pnpm exec wrangler secret put ADMIN_EMAILS       # administrator emails, comma-separated (never in this file)
+#   pnpm exec wrangler secret put GOOGLE_CLIENT_ID     # Google Drive sign-in (docs/google-drive.md); optional
+#   pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET # without both, /v1/google/token answers 404
 #   pnpm exec wrangler deploy
 name = "sync"
 main = "src/worker.ts"

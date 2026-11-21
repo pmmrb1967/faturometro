@@ -21,6 +21,16 @@ describe('security headers', () => {
     ]);
   });
 
+  it('lets the app reach the Dropbox and Google Drive APIs, and nothing else of theirs', () => {
+    const connect = directive(contentSecurityPolicy(SYNC), 'connect-src');
+    expect(connect).toContain('https://api.dropboxapi.com');
+    expect(connect).toContain('https://content.dropboxapi.com');
+    expect(connect).toContain('https://www.googleapis.com');
+    // Sign-in is a full-page redirect: their sign-in pages are never fetched or framed.
+    expect(connect.some((origin) => origin.includes('dropbox.com/'))).toBe(false);
+    expect(connect).not.toContain('https://accounts.google.com');
+  });
+
   it('keeps every page unframeable except the sign-in return page, framed by the app only', () => {
     const file = headersFile(SYNC);
     const [general = '', ...rest] = file.split(`\n${AUTH_REDIRECT_PATH}\n`);
