@@ -34,6 +34,10 @@ export interface ProfileCloud extends CloudSyncState {
   lastSyncAt?: string;
   /** Also sync original files (PDF, photos) on this device. */
   files?: boolean;
+  /** Which signed-in cloud account this profile uses (MSAL `homeAccountId`). */
+  accountId?: string;
+  /** Tables this version reads; a newer version reads the others' files again from the start. */
+  pulledTables?: string[];
 }
 
 export interface AdminLink {

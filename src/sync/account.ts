@@ -2,6 +2,9 @@
  * Turning sync on and off, signing in on a new device, and running a sync.
  * The password is needed only to derive the sync keys; it is never stored.
  */
+import { rewrapCloudAccount } from '../cloud/cloud-account';
+import { driveFor } from '../cloud/cloud-run';
+import type { CloudDrive } from '../cloud/drive';
 import {
   normalizeEmail,
   profilesDb,
@@ -213,7 +216,12 @@ export async function runSync(input: {
     // Tables added since the last pull were skipped by the older version: pull from the start
     // (last write wins, so what is already here is not applied again).
     const missesTables = SYNCED_TABLES.some((table) => !sync.pulledTables?.includes(table));
-    result = await syncNow(input.repos, api, token, missesTables ? { ...sync, lastPulledSeq: 0 } : sync);
+    result = await syncNow(
+      input.repos,
+      api,
+      token,
+      missesTables ? { ...sync, lastPulledSeq: 0 } : sync,
+    );
     if (sync.files) files = await syncFiles(input.repos, api, token, input.masterKey);
   } catch (error) {
     if (await wasRemoved(error, api, sync)) {
@@ -364,6 +372,8 @@ export async function changeAccountPassword(input: {
   newPassword: string;
   api?: SyncApi;
   iterations?: number;
+  /** Cloud sync: the drive holding the account file (the profile's own by default). */
+  drive?: CloudDrive;
 }): Promise<Profile> {
   try {
     await unlockWithPassword(wrappedKeyOf(input.profile), input.currentPassword);
@@ -379,6 +389,14 @@ export async function changeAccountPassword(input: {
     iterations,
   );
   const updated: Profile = { ...input.profile, wrappedKey };
+  if (input.profile.cloud) {
+    // First the cloud: if it fails, the password stays the old one everywhere.
+    await rewrapCloudAccount({
+      drive: input.drive ?? driveFor(input.profile),
+      email: input.profile.email,
+      wrappedKey,
+    });
+  }
   if (input.profile.sync) {
     updated.sync = await updateServerPassword({
       ...input,
@@ -400,7 +418,20 @@ export async function syncPasswordAfterRecovery(input: {
   newPassword: string;
   api?: SyncApi;
   iterations?: number;
+  drive?: CloudDrive;
 }): Promise<{ profile: Profile; serverUpdated: boolean }> {
+  if (input.profile.cloud) {
+    try {
+      await rewrapCloudAccount({
+        drive: input.drive ?? driveFor(input.profile),
+        email: input.profile.email,
+        wrappedKey: wrappedKeyOf(input.profile),
+      });
+      return { profile: input.profile, serverUpdated: true };
+    } catch {
+      return { profile: input.profile, serverUpdated: false };
+    }
+  }
   if (!input.profile.sync) return { profile: input.profile, serverUpdated: true };
   try {
     const sync = await updateServerPassword({

@@ -1,5 +1,7 @@
 /** Shared sync status (used by the automatic sync and by the settings page). */
 import { useEffect, useSyncExternalStore } from 'react';
+import { runCloudSync } from '../../cloud/cloud-run';
+import { CloudError, type CloudErrorCode } from '../../cloud/drive';
 import { profilesDb } from '../../db/profiles';
 import { runSync, SyncError, type SyncErrorCode } from '../../sync/account';
 import type { FileSyncResult } from '../../sync/files';
@@ -10,7 +12,7 @@ export const AUTO_SYNC_MINUTES = 5;
 
 export interface SyncStatus {
   running: boolean;
-  error?: SyncErrorCode | 'unexpected';
+  error?: SyncErrorCode | CloudErrorCode;
   lastReceived?: number;
   lastConflicts?: number;
   files?: FileSyncResult;
@@ -38,10 +40,13 @@ export async function syncSession(
   session: Session,
   updateProfile: (profile: Session['profile']) => void,
 ): Promise<void> {
-  if (!session.profile.sync || status.running) return;
+  if (!(session.profile.sync || session.profile.cloud) || status.running) return;
   set({ ...status, running: true });
   try {
-    const { profile, result, files } = await runSync(session);
+    // A profile syncs through the server or through the user's cloud, never both.
+    const { profile, result, files } = session.profile.cloud
+      ? await runCloudSync(session)
+      : await runSync(session);
     updateProfile(profile);
     if (result.received > 0) await refreshAlerts(session.repos);
     set({
@@ -56,7 +61,10 @@ export async function syncSession(
       const profile = await profilesDb.profiles.get(session.profile.id);
       if (profile) updateProfile(profile);
     }
-    set({ running: false, error: error instanceof SyncError ? error.code : 'unexpected' });
+    set({
+      running: false,
+      error: error instanceof SyncError || error instanceof CloudError ? error.code : 'unexpected',
+    });
   }
 }
 
@@ -65,7 +73,7 @@ export function useAutoSync(
   session: Session | null,
   updateProfile: (profile: Session['profile']) => void,
 ): void {
-  const enabled = Boolean(session?.profile.sync);
+  const enabled = Boolean(session?.profile.sync || session?.profile.cloud);
   const profileId = session?.profile.id;
   useEffect(() => {
     if (!session || !enabled) return;
