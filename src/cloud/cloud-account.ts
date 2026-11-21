@@ -199,7 +199,8 @@ export async function connectFromCloud(input: {
 export async function relinkCloud(input: {
   profile: Profile;
   drive: CloudDrive;
-  accountId: string;
+  /** OneDrive: the MSAL account signed in again. */
+  accountId?: string;
   /** Dropbox and Google Drive: the new lasting link, stored encrypted. */
   masterKey?: CryptoKey;
   refreshToken?: string;
@@ -215,7 +216,7 @@ export async function relinkCloud(input: {
     ...stored,
     cloud: {
       ...cloud,
-      accountId: input.accountId,
+      ...(input.accountId ? { accountId: input.accountId } : {}),
       ...(await labelled(input.drive)),
       ...(input.masterKey ? await sealedLink(input.masterKey, input.refreshToken) : {}),
     },

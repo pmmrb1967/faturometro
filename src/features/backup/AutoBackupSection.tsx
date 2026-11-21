@@ -7,7 +7,8 @@ import {
   type AutoBackupKeep,
 } from '../../domain/auto-backup';
 import { DEFAULT_AUTO_BACKUP, isGuest, profilesDb, type AutoBackupConfig } from '../../db/profiles';
-import { t } from '../../i18n/pt-PT';
+import { t, type CloudService } from '../../i18n/pt-PT';
+import { serviceOf } from '../sync/cloud-service';
 import { useSession } from '../auth/session-context';
 import type { AutoBackupOutcome } from './auto-backup-run';
 import { backupNow, useAutoBackupState } from './auto-backup-store';
@@ -23,12 +24,15 @@ function formatDateTime(iso: string): string {
 /** What the last run means for the user; null when there is nothing to say. */
 function autoBackupMessage(
   outcome: AutoBackupOutcome | undefined,
-  toCloud: boolean,
+  service: CloudService | null,
 ): { text: string; problem: boolean } | null {
   if (!outcome || outcome.kind === 'not_due') return null;
   if (outcome.kind === 'written') return { text: copy.written(outcome.name), problem: false };
   if (outcome.kind === 'needs_permission') {
-    return { text: toCloud ? copy.cloudNeedsReconnect : copy.needsPermission, problem: true };
+    return {
+      text: service ? copy.cloudNeedsReconnect(service) : copy.needsPermission,
+      problem: true,
+    };
   }
   return { text: copy.errors[outcome.code], problem: true };
 }
@@ -47,6 +51,7 @@ export function AutoBackupSection() {
   const cloudLinked = Boolean(session.profile.cloud);
   const folders = supportsFolderBackup();
   const toCloud = config?.target === 'cloud';
+  const service = session.profile.cloud ? serviceOf(session.profile.cloud.provider) : null;
 
   if (!folders && !cloudLinked) {
     return (
@@ -84,7 +89,7 @@ export function AutoBackupSection() {
     }
   }
 
-  /** To `copias/` in the linked OneDrive: works in any browser. */
+  /** To `copias/` in the linked cloud: works in any browser. */
   async function chooseCloud() {
     if (!session) return;
     const base = config ?? { profileId: session.profile.id, ...DEFAULT_AUTO_BACKUP };
@@ -101,7 +106,7 @@ export function AutoBackupSection() {
   }
 
   const message =
-    autoBackupMessage(outcome, toCloud) ??
+    autoBackupMessage(outcome, toCloud ? service : null) ??
     (config?.lastError ? { text: copy.errors[config.lastError], problem: true } : null);
   const busy = running || picking;
 
@@ -118,7 +123,7 @@ export function AutoBackupSection() {
               disabled={busy}
               onClick={() => void chooseCloud()}
             >
-              {copy.chooseCloud}
+              {service && copy.chooseCloud(service)}
             </button>
           )}
           {folders && (
@@ -135,7 +140,7 @@ export function AutoBackupSection() {
       ) : (
         <>
           <p>
-            {toCloud ? copy.cloudFolder : copy.folder(config.dirName)}{' '}
+            {toCloud && service ? copy.cloudFolder(service) : copy.folder(config.dirName)}{' '}
             {folders && (
               <button
                 type="button"
@@ -153,7 +158,7 @@ export function AutoBackupSection() {
                 disabled={busy}
                 onClick={() => void chooseCloud()}
               >
-                {copy.useCloud}
+                {service && copy.useCloud(service)}
               </button>
             )}
           </p>
@@ -184,7 +189,7 @@ export function AutoBackupSection() {
           {guest ? (
             <p className="muted">{copy.guestPlain}</p>
           ) : toCloud ? (
-            <p className="muted">{copy.cloudEncrypted}</p>
+            <p className="muted">{service && copy.cloudEncrypted(service)}</p>
           ) : (
             <>
               <label className="check settings-check">

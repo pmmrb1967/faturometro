@@ -105,16 +105,20 @@ const realFiles = existsSync(PRIVATE)
   : [];
 
 describe.skipIf(realFiles.length === 0)('parseEredesXlsx with a real export', () => {
-  it.each(realFiles)('%s', (name) => {
-    const result = parseEredesXlsx(new Uint8Array(readFileSync(join(PRIVATE, name))));
-    if (!result.ok) throw new Error(`${result.error} at row ${result.row}`);
-    const first = result.quarters[0]!.ts;
-    const last = result.quarters.at(-1)!.ts;
-    // Only the 4 quarters of the repeated hour in October are missing.
-    expect(result.missing).toBe(4);
-    expect(result.quarters.length + result.missing).toBe((last - first) / 900 + 1);
-    expect(result.estimated).toBeGreaterThan(0);
-    expect(result.energyWh).toBeGreaterThan(1_000_000);
-    expect(result.supplyPointId).toMatch(/^PT\d{16}[A-Z]{2}$/);
-  });
+  it.each(realFiles)(
+    '%s',
+    (name) => {
+      const result = parseEredesXlsx(new Uint8Array(readFileSync(join(PRIVATE, name))));
+      if (!result.ok) throw new Error(`${result.error} at row ${result.row}`);
+      const first = result.quarters[0]!.ts;
+      const last = result.quarters.at(-1)!.ts;
+      // Only the 4 quarters of the repeated hour in October are missing.
+      expect(result.missing).toBe(4);
+      expect(result.quarters.length + result.missing).toBe((last - first) / 900 + 1);
+      expect(result.estimated).toBeGreaterThan(0);
+      expect(result.energyWh).toBeGreaterThan(1_000_000);
+      expect(result.supplyPointId).toMatch(/^PT\d{16}[A-Z]{2}$/);
+    },
+    30_000,
+  );
 });

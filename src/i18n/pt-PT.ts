@@ -1,3 +1,18 @@
+/** A cloud service, for the texts that name it. */
+export interface CloudService {
+  name: string;
+  company: string;
+  /** Where the app's folder is, as the service shows it. */
+  folder: string;
+}
+
+/** "OneDrive, Google Drive ou Dropbox". */
+export function orList(names: readonly string[]): string {
+  return names.length < 2
+    ? (names[0] ?? '')
+    : `${names.slice(0, -1).join(', ')} ou ${names.at(-1)}`;
+}
+
 export const t = {
   appName: 'Faturómetro',
   tagline: 'As faturas da casa, sem os teus dados saírem do dispositivo.',
@@ -138,16 +153,16 @@ export const t = {
       intro:
         'Grava sozinha uma cópia numa pasta à tua escolha, por exemplo uma pasta do OneDrive, do Google Drive ou do Dropbox no computador, que depois a envia para a cloud. Funciona com a app aberta: se estiver na hora, faz a cópia ao abrires a app.',
       unsupported:
-        'A cópia automática para uma pasta precisa do Chrome ou do Edge num computador. Neste browser, liga o OneDrive na sincronização ou usa “Exportar tudo”.',
+        'A cópia automática para uma pasta precisa do Chrome ou do Edge num computador. Neste browser, liga a sincronização ao OneDrive, ao Google Drive ou ao Dropbox, ou usa “Exportar tudo”.',
       choose: 'Escolher pasta',
-      chooseCloud: 'Guardar no meu OneDrive',
-      useCloud: 'Usar o OneDrive',
+      chooseCloud: (s: CloudService) => `Guardar no meu ${s.name}`,
+      useCloud: (s: CloudService) => `Usar o ${s.name}`,
       useFolder: 'Usar uma pasta deste computador',
-      cloudFolder: 'Destino: o teu OneDrive (Aplicações/Faturómetro/copias).',
-      cloudEncrypted:
-        'No OneDrive, a cópia vai sempre cifrada: abre com a palavra-passe da tua conta ou com a chave de recuperação.',
-      cloudNeedsReconnect:
-        'A ligação ao OneDrive terminou. Liga de novo na sincronização, acima; a cópia é feita a seguir.',
+      cloudFolder: (s: CloudService) => `Destino: o teu ${s.name} (${s.folder}/copias).`,
+      cloudEncrypted: (s: CloudService) =>
+        `No ${s.name}, a cópia vai sempre cifrada: abre com a palavra-passe da tua conta ou com a chave de recuperação.`,
+      cloudNeedsReconnect: (s: CloudService) =>
+        `A ligação ao ${s.name} terminou. Liga de novo na sincronização, acima; a cópia é feita a seguir.`,
       change: 'Mudar pasta',
       turnOff: 'Desligar a cópia automática',
       folder: (name: string) => `Pasta: ${name}`,
@@ -176,9 +191,9 @@ export const t = {
           'Não foi possível gravar a cópia na pasta (falta de espaço?). Tenta outra vez.',
         folder_missing: 'A pasta da cópia automática já não existe. Escolhe outra pasta.',
         cloud_full:
-          'O teu OneDrive está cheio: a cópia não foi gravada. Liberta espaço e tenta outra vez.',
+          'O espaço na tua cloud acabou: a cópia não foi gravada. Liberta espaço e tenta outra vez.',
         cloud_unavailable:
-          'Não foi possível chegar ao OneDrive (sem ligação?). A cópia é feita mais tarde.',
+          'Não foi possível chegar à tua cloud (sem ligação?). A cópia é feita mais tarde.',
       },
     },
   },
@@ -1292,58 +1307,69 @@ export const t = {
         'A tua conta de sincronização foi removida por inatividade (12 meses sem sincronizar). Os teus dados estão neste dispositivo; podes voltar a ligar a sincronização.',
       serverUrl: 'Escreve um endereço https:// válido.',
       moved_to_cloud:
-        'Esta conta passou a sincronizar pelo OneDrive noutro dispositivo. Liga o OneDrive também aqui.',
+        'Esta conta passou a sincronizar por uma cloud (OneDrive, Google Drive ou Dropbox) noutro dispositivo. Liga-a também aqui.',
       not_admin: 'Esta conta não é de administrador.',
       needs_reconnect:
-        'A ligação ao OneDrive terminou (acontece de vez em quando). As alterações ficam guardadas neste dispositivo até voltares a ligar.',
-      quota_full: 'O teu OneDrive está cheio: as alterações novas ficam só neste dispositivo.',
+        'A ligação à tua cloud terminou (acontece de vez em quando). As alterações ficam guardadas neste dispositivo até voltares a ligar.',
+      quota_full: 'O espaço na tua cloud acabou: as alterações novas ficam só neste dispositivo.',
       throttled:
-        'O OneDrive pediu para esperar um pouco. A sincronização continua daqui a minutos.',
+        'A tua cloud pediu para esperar um pouco. A sincronização continua daqui a minutos.',
       conflict: 'Outro dispositivo alterou o mesmo ficheiro ao mesmo tempo. Tenta outra vez.',
       other_account:
-        'Essa pasta do OneDrive é de outra conta do Faturómetro. Entra na Microsoft com a conta certa.',
+        'Essa pasta na cloud é de outra conta do Faturómetro. Entra com a conta certa.',
       no_account:
-        'Este OneDrive ainda não tem uma conta do Faturómetro. Liga o OneDrive primeiro no outro dispositivo (Definições → Sincronização).',
+        'Esta cloud ainda não tem uma conta do Faturómetro. Liga-a primeiro no outro dispositivo (Definições → Sincronização).',
     },
     cloud: {
-      title: 'O meu OneDrive (recomendado)',
-      intro:
-        'Os dados ficam numa pasta da app no teu OneDrive (Aplicações/Faturómetro), cifrados aqui antes de saírem. A app só vê essa pasta, e a Microsoft guarda apenas conteúdo cifrado, que não consegue ler.',
+      services: {
+        onedrive: { name: 'OneDrive', company: 'Microsoft', folder: 'Aplicações/Faturómetro' },
+        gdrive: { name: 'Google Drive', company: 'Google', folder: 'O meu disco/Faturometro' },
+        dropbox: { name: 'Dropbox', company: 'Dropbox', folder: 'Aplicações/Faturometro' },
+      } satisfies Record<string, CloudService>,
+      title: 'Na minha cloud (recomendado)',
+      intro: (names: string) =>
+        `Os dados ficam numa pasta da app no teu ${names}, cifrados aqui antes de saírem. A app só vê essa pasta, e o serviço guarda apenas conteúdo cifrado, que não consegue ler.`,
       sees: 'Na pasta fica o teu email (no ficheiro da conta) e ficheiros cifrados: as alterações, os originais se os ligares e as cópias automáticas se as guardares lá. O Faturómetro não recebe nada.',
-      connect: 'Ligar ao OneDrive',
-      redirecting: 'A abrir a página da Microsoft…',
-      confirmIntro:
-        'Já entraste na Microsoft. Confirma a palavra-passe desta conta do Faturómetro para ligar o OneDrive.',
-      confirm: 'Ligar o OneDrive',
+      connect: (s: CloudService) => `Ligar ao ${s.name}`,
+      redirecting: (s: CloudService) => `A abrir a página da ${s.company}…`,
+      confirmIntro: (s: CloudService) =>
+        `Já entraste na ${s.company}. Confirma a palavra-passe desta conta do Faturómetro para ligar o ${s.name}.`,
+      confirm: (s: CloudService) => `Ligar o ${s.name}`,
       confirming: 'A ligar…',
       cancel: 'Cancelar',
+      signInFailed: (s: CloudService) =>
+        `Não foi possível entrar na ${s.company}. Tenta outra vez.`,
       serverTitle: 'Servidor do Faturómetro (espaço limitado)',
       serverIntro:
-        'Para quem não tem OneDrive. O espaço é limitado e as contas sem uso durante 12 meses são apagadas.',
-      onIntro: (account: string | undefined) =>
-        account ? `Ligada ao OneDrive de ${account}.` : 'Ligada ao teu OneDrive.',
-      reconnect: 'Ligar de novo ao OneDrive',
-      offline:
-        'Sem ligação ao OneDrive. Verifica a internet; a sincronização continua quando voltar.',
+        'Para quem não usa nenhum destes serviços. O espaço é limitado e as contas sem uso durante 12 meses são apagadas.',
+      onIntro: (s: CloudService, account: string | undefined) =>
+        account ? `Ligada ao ${s.name} de ${account}.` : `Ligada ao teu ${s.name}.`,
+      reconnect: (s: CloudService) => `Ligar de novo ao ${s.name}`,
+      offlineAny:
+        'Sem ligação à tua cloud. Verifica a internet; a sincronização continua quando voltar.',
+      offline: (s: CloudService) =>
+        `Sem ligação ao ${s.name}. Verifica a internet; a sincronização continua quando voltar.`,
       files: {
         label: 'Sincronizar também os PDFs e fotografias originais neste dispositivo',
-        hint: 'Cifrados aqui, como o resto. Ocupam espaço no teu OneDrive.',
-        full: 'O teu OneDrive está cheio: os originais novos ficam só neste dispositivo.',
+        hint: (s: CloudService) => `Cifrados aqui, como o resto. Ocupam espaço no teu ${s.name}.`,
+        full: (s: CloudService) =>
+          `O teu ${s.name} está cheio: os originais novos ficam só neste dispositivo.`,
       },
-      disable: 'Desligar o OneDrive neste dispositivo',
-      disableHint:
-        'Os ficheiros na pasta do OneDrive ficam; podes apagá-los no OneDrive, em Aplicações/Faturómetro.',
-      disabled: 'OneDrive desligado neste dispositivo.',
+      disable: (s: CloudService) => `Desligar o ${s.name} neste dispositivo`,
+      disableHint: (s: CloudService) =>
+        `Os ficheiros na pasta do ${s.name} ficam; podes apagá-los no ${s.name}, em ${s.folder}.`,
+      disabled: (s: CloudService) => `${s.name} desligado neste dispositivo.`,
       moved: {
-        action: 'Ligar o OneDrive neste dispositivo',
+        intro: 'Escolhe a cloud que os outros dispositivos usam:',
+        action: (s: CloudService) => `Ligar o ${s.name} neste dispositivo`,
       },
       move: {
-        title: 'Mudar para o meu OneDrive',
+        title: 'Mudar para a minha cloud',
         intro:
-          'Copia tudo o que está no servidor e neste dispositivo para o teu OneDrive e passa a sincronizar por lá. Os outros dispositivos desta conta são avisados para ligarem o OneDrive.',
-        button: 'Mudar para o meu OneDrive',
-        working: 'A copiar tudo para o OneDrive…',
-        done: 'Já sincronizas pelo OneDrive.',
+          'Copia tudo o que está no servidor e neste dispositivo para a tua cloud e passa a sincronizar por lá. Os outros dispositivos desta conta são avisados para a ligarem.',
+        button: (s: CloudService) => `Mudar para o meu ${s.name}`,
+        working: (s: CloudService) => `A copiar tudo para o ${s.name}…`,
+        done: (s: CloudService) => `Já sincronizas pelo ${s.name}.`,
         missing: (count: number) =>
           count === 1
             ? '1 original que só estava no servidor não foi possível descarregar.'
@@ -1371,16 +1397,17 @@ export const t = {
         linked: 'Ligação de administrador ativa.',
       },
       enter: {
-        button: 'Entrar com o OneDrive',
+        button: (s: CloudService) => `Entrar com o ${s.name}`,
         or: 'Ou com o servidor do Faturómetro:',
-        intro:
-          'Já entraste na Microsoft. Escreve a palavra-passe da tua conta do Faturómetro para trazer os dados para este dispositivo.',
+        intro: (s: CloudService) =>
+          `Já entraste na ${s.company}. Escreve a palavra-passe da tua conta do Faturómetro para trazer os dados para este dispositivo.`,
         submit: 'Entrar e sincronizar',
         working: 'A preparar…',
       },
       banner: {
-        reconnect: 'A ligação ao OneDrive terminou: a sincronização está em pausa.',
-        moved: 'Esta conta passou a sincronizar pelo OneDrive.',
+        reconnect: (s: CloudService) =>
+          `A ligação ao ${s.name} terminou: a sincronização está em pausa.`,
+        moved: 'Esta conta passou a sincronizar por uma cloud.',
         action: 'Resolver',
       },
     },

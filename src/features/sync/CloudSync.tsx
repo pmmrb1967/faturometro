@@ -1,41 +1,48 @@
-/** Sync through the user's OneDrive: turning it on, its panel, moving from the server. */
+/** Sync through the user's cloud (OneDrive, Google Drive, Dropbox): turning it on, its panel, moving from the server. */
 import { useEffect, useState, type FormEvent } from 'react';
 import { Field } from '../../components/Field';
 import { enableCloudSync, relinkCloud } from '../../cloud/cloud-account';
-import { oneDriveFor } from '../../cloud/cloud-drives';
+import { forgetSignIn, signInToCloud } from '../../cloud/cloud-drives';
 import { disableCloudSync, setCloudFileSync } from '../../cloud/cloud-run';
 import { finishServerData, migrateToCloud } from '../../cloud/migrate';
-import { signInToOneDrive } from '../../cloud/onedrive-auth';
-import type { ProfileSync } from '../../db/profiles';
-import { t } from '../../i18n/pt-PT';
+import type { CloudProvider, ProfileSync } from '../../db/profiles';
+import { orList, t, type CloudService } from '../../i18n/pt-PT';
 import { disableSync } from '../../sync/account';
 import { linkAdmin } from '../../sync/admin-link';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { useSession } from '../auth/session-context';
 import { cloudErrorText } from './cloud-errors';
-import { useOneDriveReturn, type OneDriveIntent } from './onedrive-return';
+import { useCloudReturn, type CloudIntent } from './cloud-return';
+import { offeredServices, serviceOf, signInParts } from './cloud-service';
 import { syncSession, useSyncStatus } from './sync-store';
 
 const copy = t.sync.cloud;
 
 function SignInButton({
+  provider,
   intent,
   label,
   primary = true,
+  before,
 }: {
-  intent: OneDriveIntent;
+  provider: CloudProvider;
+  intent: CloudIntent;
   label: string;
   primary?: boolean;
+  /** Runs just before leaving for the sign-in page. */
+  before?: () => Promise<void>;
 }) {
+  const service = serviceOf(provider);
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string>();
   async function go() {
     setLeaving(true);
     setError(undefined);
     try {
-      await signInToOneDrive(intent);
+      await before?.();
+      await signInToCloud(provider, intent);
     } catch (caught) {
-      setError(cloudErrorText(caught));
+      setError(cloudErrorText(caught, service));
       setLeaving(false);
     }
   }
@@ -47,7 +54,7 @@ function SignInButton({
         disabled={leaving}
         onClick={() => void go()}
       >
-        {leaving ? copy.redirecting : label}
+        {leaving ? copy.redirecting(service) : label}
       </button>
       {error && (
         <p className="ingest-problem" role="alert">
@@ -58,17 +65,29 @@ function SignInButton({
   );
 }
 
-/** Back from Microsoft: the account's password, then `run`. */
+/** The sign-in did not finish: say so, once. */
+function SignInFailed({ provider }: { provider: CloudProvider | null }) {
+  if (!provider) return null;
+  return (
+    <p className="ingest-problem" role="alert">
+      {copy.signInFailed(serviceOf(provider))}
+    </p>
+  );
+}
+
+/** Back from the service: the account's password, then `run`. */
 function PasswordStep({
   intro,
   submit,
   working,
+  service,
   run,
   onCancel,
 }: {
   intro: string;
   submit: string;
   working: string;
+  service: CloudService;
   run: (password: string) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -84,7 +103,7 @@ function PasswordStep({
       await run(password);
       setPassword('');
     } catch (caught) {
-      setError(cloudErrorText(caught));
+      setError(cloudErrorText(caught, service));
     } finally {
       setBusy(false);
     }
@@ -125,23 +144,23 @@ function PasswordStep({
   );
 }
 
-/** No sync yet: the OneDrive option, first and recommended. */
-export function OneDriveChoice() {
+/** No sync yet: the clouds this build offers, first and recommended. */
+export function CloudChoice() {
   const { session, updateProfile } = useSession();
-  const back = useOneDriveReturn('enable');
+  const back = useCloudReturn('enable');
   if (!session) return null;
-  const { accountId } = back;
+  const offered = offeredServices();
+  const { provider, accountId } = back;
 
   async function enable(password: string) {
-    if (!session || !accountId) return;
+    if (!session || !provider || !accountId) return;
     const profile = await enableCloudSync({
       profile: session.profile,
       masterKey: session.masterKey,
       password,
-      drive: oneDriveFor(accountId),
-      provider: 'onedrive',
-      accountId,
+      ...signInParts(provider, accountId),
     });
+    forgetSignIn(provider, accountId);
     back.clear();
     updateProfile(profile);
     await syncSession({ ...session, profile }, updateProfile);
@@ -150,18 +169,30 @@ export function OneDriveChoice() {
   return (
     <>
       <h3>{copy.title}</h3>
-      <p>{copy.intro}</p>
+      <p>{copy.intro(orList(offered.map(({ service }) => service.name)))}</p>
       <p className="muted">{copy.sees}</p>
-      {accountId ? (
+      {back.failed && <SignInFailed provider={provider} />}
+      {provider && accountId ? (
         <PasswordStep
-          intro={copy.confirmIntro}
-          submit={copy.confirm}
+          intro={copy.confirmIntro(serviceOf(provider))}
+          submit={copy.confirm(serviceOf(provider))}
           working={copy.confirming}
+          service={serviceOf(provider)}
           run={enable}
           onCancel={back.clear}
         />
       ) : (
-        <SignInButton intent="enable" label={copy.connect} />
+        <div className="ingest-actions">
+          {offered.map(({ provider: each, service }, index) => (
+            <SignInButton
+              key={each}
+              provider={each}
+              intent="enable"
+              label={copy.connect(service)}
+              primary={index === 0}
+            />
+          ))}
+        </div>
       )}
       <h3>{copy.serverTitle}</h3>
       <p className="muted">{copy.serverIntro}</p>
@@ -169,7 +200,7 @@ export function OneDriveChoice() {
   );
 }
 
-/** Syncing through OneDrive. */
+/** Syncing through the user's cloud. */
 export function CloudPanel({
   previous,
   onFinished,
@@ -180,31 +211,38 @@ export function CloudPanel({
 }) {
   const { session, updateProfile } = useSession();
   const status = useSyncStatus();
-  const back = useOneDriveReturn('reconnect');
+  const back = useCloudReturn('reconnect');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const cloud = session?.profile.cloud;
-  const relinkTo = back.accountId;
+  const provider = cloud?.provider ?? 'onedrive';
+  const service = serviceOf(provider);
+  const relinkTo = back.provider === provider ? back.accountId : null;
   const { clear } = back;
 
   // Back from "Ligar de novo": keep the new sign-in if it opens this account's folder.
   useEffect(() => {
     if (!session || !relinkTo) return;
+    const { drive, accountId, refreshToken } = signInParts(provider, relinkTo);
     void relinkCloud({
       profile: session.profile,
-      drive: oneDriveFor(relinkTo),
-      accountId: relinkTo,
+      drive,
+      masterKey: session.masterKey,
+      ...(accountId ? { accountId } : {}),
+      ...(refreshToken ? { refreshToken } : {}),
     })
       .then(async (profile) => {
+        forgetSignIn(provider, relinkTo);
         clear();
         setError(undefined);
         updateProfile(profile);
         await syncSession({ ...session, profile }, updateProfile);
       })
       .catch((caught: unknown) => {
+        forgetSignIn(provider, relinkTo);
         clear();
-        setError(cloudErrorText(caught));
+        setError(cloudErrorText(caught, service));
       });
     // Only when a sign-in comes back.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,7 +262,7 @@ export function CloudPanel({
     setBusy(true);
     try {
       updateProfile(await disableCloudSync(session.profile, session.repos));
-      setNotice(copy.disabled);
+      setNotice(copy.disabled(service));
     } finally {
       setBusy(false);
     }
@@ -233,8 +271,8 @@ export function CloudPanel({
   const files = status.files;
   return (
     <>
-      {previous && <FinishServerChoice previous={previous} onDone={onFinished} />}
-      <p>{copy.onIntro(cloud.accountLabel)}</p>
+      {previous && <FinishServerChoice previous={previous} service={service} onDone={onFinished} />}
+      <p>{copy.onIntro(service, cloud.accountLabel)}</p>
       <p className="muted">
         {cloud.lastSyncAt
           ? t.sync.lastSync(new Date(cloud.lastSyncAt).toLocaleString('pt-PT'))
@@ -247,17 +285,18 @@ export function CloudPanel({
       {!!status.lastConflicts && (
         <p className="ingest-problem">{t.sync.conflicts(status.lastConflicts)}</p>
       )}
+      {back.failed && back.provider === provider && <SignInFailed provider={provider} />}
       {(status.error || error) && (
         <p className="ingest-problem" role="alert">
           {error ??
             (status.error === 'offline'
-              ? copy.offline
+              ? copy.offline(service)
               : ((t.sync.errors as Record<string, string>)[status.error ?? ''] ??
                 t.sync.errors.unexpected))}
         </p>
       )}
       {status.error === 'needs_reconnect' && (
-        <SignInButton intent="reconnect" label={copy.reconnect} />
+        <SignInButton provider={provider} intent="reconnect" label={copy.reconnect(service)} />
       )}
       <label className="check settings-check">
         <input
@@ -267,12 +306,12 @@ export function CloudPanel({
         />
         {copy.files.label}
       </label>
-      <p className="muted">{copy.files.hint}</p>
+      <p className="muted">{copy.files.hint(service)}</p>
       {files && files.uploaded > 0 && <p role="status">{t.sync.files.sent(files.uploaded)}</p>}
       {files && files.downloaded > 0 && (
         <p role="status">{t.sync.files.received(files.downloaded)}</p>
       )}
-      {files?.storageFull && <p className="ingest-problem">{copy.files.full}</p>}
+      {files?.storageFull && <p className="ingest-problem">{copy.files.full(service)}</p>}
       <div className="ingest-actions">
         <button
           type="button"
@@ -285,14 +324,14 @@ export function CloudPanel({
       </div>
       {!session.profile.adminLink && <AdminLinkForm />}
       <h3>{t.sync.disableTitle}</h3>
-      <p className="muted">{copy.disableHint}</p>
+      <p className="muted">{copy.disableHint(service)}</p>
       <button
         type="button"
         className="action-secondary"
         disabled={busy}
         onClick={() => void disable()}
       >
-        {copy.disable}
+        {copy.disable(service)}
       </button>
       {notice && (
         <p role="status" className="doc-saved">
@@ -303,23 +342,23 @@ export function CloudPanel({
   );
 }
 
-/** Syncing through the server: move to OneDrive. */
+/** Syncing through the server: move to the user's cloud. */
 export function MoveToCloud({ onMoved }: { onMoved: (previous: ProfileSync) => void }) {
   const { session, updateProfile } = useSession();
-  const back = useOneDriveReturn('migrate');
+  const back = useCloudReturn('migrate');
   if (!session) return null;
-  const { accountId } = back;
+  const { provider, accountId } = back;
 
   async function move(password: string) {
-    if (!session || !accountId) return;
+    if (!session || !provider || !accountId) return;
     const moved = await migrateToCloud({
       profile: session.profile,
       masterKey: session.masterKey,
       repos: session.repos,
-      drive: oneDriveFor(accountId),
       password,
-      accountId,
+      ...signInParts(provider, accountId),
     });
+    forgetSignIn(provider, accountId);
     back.clear();
     updateProfile(moved.profile);
     onMoved(moved.previous);
@@ -329,53 +368,75 @@ export function MoveToCloud({ onMoved }: { onMoved: (previous: ProfileSync) => v
     <>
       <h3>{copy.move.title}</h3>
       <p className="muted">{copy.move.intro}</p>
-      {accountId ? (
+      {back.failed && <SignInFailed provider={provider} />}
+      {provider && accountId ? (
         <PasswordStep
-          intro={copy.confirmIntro}
-          submit={copy.move.button}
-          working={copy.move.working}
+          intro={copy.confirmIntro(serviceOf(provider))}
+          submit={copy.move.button(serviceOf(provider))}
+          working={copy.move.working(serviceOf(provider))}
+          service={serviceOf(provider)}
           run={move}
           onCancel={back.clear}
         />
       ) : (
-        <SignInButton intent="migrate" label={copy.move.button} primary={false} />
+        <div className="ingest-actions">
+          {offeredServices().map(({ provider: each, service }) => (
+            <SignInButton
+              key={each}
+              provider={each}
+              intent="migrate"
+              label={copy.move.button(service)}
+              primary={false}
+            />
+          ))}
+        </div>
       )}
     </>
   );
 }
 
-/** Another device moved the account to OneDrive: turn it on here too. */
+/** Another device moved the account to a cloud: turn it on here too. */
 export function MovedNotice() {
   const { session, updateProfile } = useSession();
-  const [busy, setBusy] = useState(false);
   if (!session) return null;
-  async function go() {
+  // Off here first (the server data stays for the other devices), then the sign-in.
+  async function turnOffServer() {
     if (!session) return;
-    setBusy(true);
-    try {
-      // Off here (the server data stays for the other devices), then the OneDrive sign-in.
-      updateProfile(
-        await disableSync({
-          profile: session.profile,
-          masterKey: session.masterKey,
-          deleteRemote: false,
-        }),
-      );
-      await signInToOneDrive('enable');
-    } finally {
-      setBusy(false);
-    }
+    updateProfile(
+      await disableSync({
+        profile: session.profile,
+        masterKey: session.masterKey,
+        deleteRemote: false,
+      }),
+    );
   }
   return (
-    <div className="ingest-actions">
-      <button type="button" className="action-primary" disabled={busy} onClick={() => void go()}>
-        {busy ? copy.redirecting : copy.moved.action}
-      </button>
-    </div>
+    <>
+      <p>{copy.moved.intro}</p>
+      <div className="ingest-actions">
+        {offeredServices().map(({ provider, service }) => (
+          <SignInButton
+            key={provider}
+            provider={provider}
+            intent="enable"
+            label={copy.moved.action(service)}
+            before={turnOffServer}
+          />
+        ))}
+      </div>
+    </>
   );
 }
 
-function FinishServerChoice({ previous, onDone }: { previous: ProfileSync; onDone: () => void }) {
+function FinishServerChoice({
+  previous,
+  service,
+  onDone,
+}: {
+  previous: ProfileSync;
+  service: CloudService;
+  onDone: () => void;
+}) {
   const { session } = useSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -406,7 +467,7 @@ function FinishServerChoice({ previous, onDone }: { previous: ProfileSync; onDon
   }
   return (
     <div role="status">
-      <p className="doc-saved">{copy.move.done}</p>
+      <p className="doc-saved">{copy.move.done(service)}</p>
       <p>{copy.move.question}</p>
       {previous.admin && <p className="muted">{copy.move.admin}</p>}
       <p className="muted">{copy.move.deleteHint}</p>

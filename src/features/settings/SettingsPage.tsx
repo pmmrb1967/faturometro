@@ -28,9 +28,9 @@ import { syncSession, useSyncStatus } from '../sync/sync-store';
 import { getSettings, updateSettings } from './settings';
 import './settings.css';
 import { isAdmin } from '../../sync/admin-link';
-import { oneDriveAvailable } from '../../cloud/onedrive-auth';
+import { availableProviders } from '../../cloud/providers';
 import { SYNC_ANCHOR } from '../sync/anchor';
-import { CloudPanel, MovedNotice, MoveToCloud, OneDriveChoice } from '../sync/CloudSync';
+import { CloudChoice, CloudPanel, MovedNotice, MoveToCloud } from '../sync/CloudSync';
 
 const copy = t.sync;
 const DEFAULT_SERVER = DEFAULT_SYNC_URL;
@@ -65,7 +65,7 @@ function SyncSection() {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [notice, setNotice] = useState<string>();
-  /** Just moved from the server to OneDrive: what to do with the data there. */
+  /** Just moved from the server to a cloud: what to do with the data there. */
   const [previous, setPrevious] = useState<ProfileSync | null>(null);
 
   if (!session) return null;
@@ -80,7 +80,7 @@ function SyncSection() {
   }
   const sync = session.profile.sync;
   const cloud = session.profile.cloud;
-  const offerOneDrive = oneDriveAvailable();
+  const offerCloud = availableProviders().length > 0;
 
   if (cloud) {
     return (
@@ -147,7 +147,7 @@ function SyncSection() {
         </p>
       )}
 
-      {!sync && offerOneDrive && <OneDriveChoice />}
+      {!sync && offerCloud && <CloudChoice />}
       {!sync && (
         <form onSubmit={enable} noValidate>
           <p>{copy.offIntro}</p>
@@ -215,7 +215,7 @@ function SyncSection() {
             </p>
           )}
           {status.error === 'session_expired' && <ReconnectForm />}
-          {status.error === 'moved_to_cloud' && offerOneDrive && <MovedNotice />}
+          {status.error === 'moved_to_cloud' && offerCloud && <MovedNotice />}
           <FileSyncOption />
           <div className="ingest-actions">
             <button
@@ -228,7 +228,7 @@ function SyncSection() {
             </button>
           </div>
 
-          {offerOneDrive && <MoveToCloud onMoved={setPrevious} />}
+          {offerCloud && <MoveToCloud onMoved={setPrevious} />}
 
           <h3>{copy.disableTitle}</h3>
           <div className="ingest-actions">

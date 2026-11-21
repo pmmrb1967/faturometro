@@ -9,21 +9,35 @@ import { validateEmail } from '../auth/validation';
 import { DEFAULT_SYNC_URL } from '../../sync/config';
 import { isValidServerUrl } from '../../sync/url';
 import { connectFromCloud } from '../../cloud/cloud-account';
-import { oneDriveFor } from '../../cloud/cloud-drives';
-import { oneDriveAvailable, signInToOneDrive } from '../../cloud/onedrive-auth';
+import { forgetSignIn, signInToCloud } from '../../cloud/cloud-drives';
+import type { CloudProvider } from '../../db/profiles';
 import { cloudErrorText } from './cloud-errors';
-import { useOneDriveReturn } from './onedrive-return';
+import { useCloudReturn } from './cloud-return';
+import { offeredServices, serviceOf, signInParts } from './cloud-service';
 
 const copy = t.sync;
 
-/** New device: sign in through OneDrive or the sync server, and bring the data here. */
+/** New device: sign in through a cloud or the sync server, and bring the data here. */
 export function ConnectPage() {
-  const back = useOneDriveReturn('connect');
-  if (back.accountId) return <OneDriveConnect accountId={back.accountId} onCancel={back.clear} />;
-  return <ServerConnect />;
+  const back = useCloudReturn('connect');
+  if (back.provider && back.accountId) {
+    return (
+      <CloudConnect provider={back.provider} accountId={back.accountId} onCancel={back.clear} />
+    );
+  }
+  return <ServerConnect failed={back.failed ? back.provider : null} />;
 }
 
-function OneDriveConnect({ accountId, onCancel }: { accountId: string; onCancel: () => void }) {
+function CloudConnect({
+  provider,
+  accountId,
+  onCancel,
+}: {
+  provider: CloudProvider;
+  accountId: string;
+  onCancel: () => void;
+}) {
+  const service = serviceOf(provider);
   const { signIn } = useSession();
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
@@ -36,23 +50,17 @@ function OneDriveConnect({ accountId, onCancel }: { accountId: string; onCancel:
     setBusy(true);
     try {
       // The first sync runs as soon as the app opens (automatic sync).
-      signIn(
-        await connectFromCloud({
-          drive: oneDriveFor(accountId),
-          password,
-          provider: 'onedrive',
-          accountId,
-        }),
-      );
+      signIn(await connectFromCloud({ password, ...signInParts(provider, accountId) }));
+      forgetSignIn(provider, accountId);
       navigate('/app', { replace: true });
     } catch (caught) {
-      setError(cloudErrorText(caught));
+      setError(cloudErrorText(caught, service));
       setBusy(false);
     }
   }
 
   return (
-    <AuthLayout title={copy.connect.title} intro={copy.cloud.enter.intro}>
+    <AuthLayout title={copy.connect.title} intro={copy.cloud.enter.intro(service)}>
       <form onSubmit={submit} noValidate>
         <Field
           id="connect-cloud-password"
@@ -79,7 +87,7 @@ function OneDriveConnect({ accountId, onCancel }: { accountId: string; onCancel:
   );
 }
 
-function ServerConnect() {
+function ServerConnect({ failed }: { failed: CloudProvider | null }) {
   const { signIn } = useSession();
   const navigate = useNavigate();
   const [serverUrl, setServerUrl] = useState(DEFAULT_SYNC_URL);
@@ -87,16 +95,17 @@ function ServerConnect() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+  const [leaving, setLeaving] = useState<CloudProvider | null>(null);
+  const offered = offeredServices();
 
-  async function viaOneDrive() {
-    setLeaving(true);
+  async function viaCloud(provider: CloudProvider) {
+    setLeaving(provider);
     setError(undefined);
     try {
-      await signInToOneDrive('connect');
+      await signInToCloud(provider, 'connect');
     } catch (caught) {
-      setError(cloudErrorText(caught));
-      setLeaving(false);
+      setError(cloudErrorText(caught, serviceOf(provider)));
+      setLeaving(null);
     }
   }
 
@@ -124,16 +133,22 @@ function ServerConnect() {
 
   return (
     <AuthLayout title={copy.connect.title} intro={copy.connect.intro}>
-      {oneDriveAvailable() && (
+      {failed && <FormError message={copy.cloud.signInFailed(serviceOf(failed))} />}
+      {offered.length > 0 && (
         <>
-          <button
-            type="button"
-            className="action-primary action-wide"
-            disabled={leaving}
-            onClick={() => void viaOneDrive()}
-          >
-            {leaving ? copy.cloud.redirecting : copy.cloud.enter.button}
-          </button>
+          {offered.map(({ provider, service }, index) => (
+            <button
+              key={provider}
+              type="button"
+              className={`${index === 0 ? 'action-primary' : 'action-secondary'} action-wide`}
+              disabled={leaving !== null}
+              onClick={() => void viaCloud(provider)}
+            >
+              {leaving === provider
+                ? copy.cloud.redirecting(service)
+                : copy.cloud.enter.button(service)}
+            </button>
+          ))}
           <p className="auth-alt">{copy.cloud.enter.or}</p>
         </>
       )}
