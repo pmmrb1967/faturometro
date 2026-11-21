@@ -19,7 +19,7 @@ export const BACKUP_ANCHOR = 'os-teus-dados';
 const DATA_FILE = 'faturometro.json';
 const FILES_DIR = 'originais/';
 /** Large enough for years of invoices; stops a wrong or hostile file from filling memory. */
-const MAX_UNZIPPED_BYTES = 500_000_000;
+export const MAX_UNZIPPED_BYTES = 500_000_000;
 
 const EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -54,7 +54,7 @@ const backupSchema = z.object({
 export type BackupData = z.infer<typeof backupSchema>;
 
 export class BackupError extends Error {
-  readonly code: 'not_a_backup' | 'too_large';
+  readonly code: 'not_a_backup' | 'too_large' | 'wrong_secret';
   constructor(code: BackupError['code']) {
     super(code);
     this.name = 'BackupError';

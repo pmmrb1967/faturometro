@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { Field } from '../../components/Field';
 import { profilesDb } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import { disableSync, SyncError } from '../../sync/account';
@@ -8,7 +9,9 @@ import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { syncSession } from '../sync/sync-store';
+import { AutoBackupSection } from './AutoBackupSection';
 import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
+import { decryptBackup, isEncryptedBackup } from './encrypted-backup';
 
 const copy = t.backup;
 
@@ -31,6 +34,10 @@ export function BackupSection() {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteRemote, setDeleteRemote] = useState(true);
+  const [encrypted, setEncrypted] = useState<Uint8Array | null>(null);
+  const [secret, setSecret] = useState('');
+  const [useRecovery, setUseRecovery] = useState(false);
+  const encryptedCopy = copy.encrypted;
   const { hash } = useLocation();
   const section = useRef<HTMLElement>(null);
   // The sections above wait for the settings and then grow, so scroll once they have loaded.
@@ -64,10 +71,44 @@ export function BackupSection() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    setMessage(undefined);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (isEncryptedBackup(bytes)) {
+      setEncrypted(bytes);
+      setSecret('');
+      return;
+    }
+    await importBytes(bytes);
+  }
+
+  async function openEncrypted(event: FormEvent) {
+    event.preventDefault();
+    if (!encrypted || !secret) return;
     setBusy(true);
     setMessage(undefined);
     try {
-      const result = await importBackup(repos, new Uint8Array(await file.arrayBuffer()));
+      const opened = await decryptBackup(
+        encrypted,
+        useRecovery ? { recoveryKey: secret } : { password: secret },
+      );
+      setEncrypted(null);
+      setSecret('');
+      await importBytes(opened);
+    } catch (error) {
+      // A wrong password keeps the chosen file and the form, to try again.
+      setMessage({
+        text: error instanceof BackupError ? copy.errors[error.code] : copy.failed,
+        problem: true,
+      });
+      setBusy(false);
+    }
+  }
+
+  async function importBytes(bytes: Uint8Array) {
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      const result = await importBackup(repos, bytes);
       await refreshAlerts(repos);
       setMessage({ text: copy.imported(result.added, result.skipped, result.files) });
       // The other devices get it now, not at the next automatic sync.
@@ -93,6 +134,7 @@ export function BackupSection() {
       session.db.close();
       await session.db.delete();
       await profilesDb.profiles.delete(session.profile.id);
+      await profilesDb.autoBackups.delete(session.profile.id);
       lock();
       navigate('/', { replace: true });
     } catch (error) {
@@ -123,6 +165,8 @@ export function BackupSection() {
         {copy.export}
       </button>
 
+      <AutoBackupSection />
+
       <h3>{copy.importTitle}</h3>
       <p className="muted">{copy.importHint}</p>
       <input
@@ -140,6 +184,45 @@ export function BackupSection() {
       >
         {copy.import}
       </button>
+      {encrypted && (
+        <form onSubmit={(event) => void openEncrypted(event)} noValidate>
+          <p className="muted">{encryptedCopy.intro}</p>
+          <Field
+            id="encrypted-backup-secret"
+            label={useRecovery ? encryptedCopy.recoveryKey : encryptedCopy.password}
+            type={useRecovery ? 'text' : 'password'}
+            autoComplete={useRecovery ? 'off' : 'current-password'}
+            value={secret}
+            onChange={(event) => setSecret(event.target.value)}
+          />
+          <p>
+            <button
+              type="button"
+              className="action-secondary action-compact"
+              onClick={() => {
+                setUseRecovery(!useRecovery);
+                setSecret('');
+              }}
+            >
+              {useRecovery ? encryptedCopy.usePassword : encryptedCopy.useRecoveryKey}
+            </button>
+          </p>
+          <button type="submit" className="action-primary" disabled={busy || !secret}>
+            {busy ? encryptedCopy.opening : encryptedCopy.open}
+          </button>{' '}
+          <button
+            type="button"
+            className="action-secondary"
+            disabled={busy}
+            onClick={() => {
+              setEncrypted(null);
+              setSecret('');
+            }}
+          >
+            {encryptedCopy.cancel}
+          </button>
+        </form>
+      )}
 
       {message && (
         <p className={message.problem ? 'ingest-problem' : 'doc-saved'} role="status">
