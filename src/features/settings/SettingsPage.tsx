@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { Field } from '../../components/Field';
-import { isGuest } from '../../db/profiles';
+import { isGuest, type ProfileSync } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import {
   changeAccountPassword,
@@ -28,6 +28,9 @@ import { syncSession, useSyncStatus } from '../sync/sync-store';
 import { getSettings, updateSettings } from './settings';
 import './settings.css';
 import { isAdmin } from '../../sync/admin-link';
+import { oneDriveAvailable } from '../../cloud/onedrive-auth';
+import { SYNC_ANCHOR } from '../sync/anchor';
+import { CloudPanel, MovedNotice, MoveToCloud, OneDriveChoice } from '../sync/CloudSync';
 
 const copy = t.sync;
 const DEFAULT_SERVER = DEFAULT_SYNC_URL;
@@ -62,6 +65,8 @@ function SyncSection() {
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [notice, setNotice] = useState<string>();
+  /** Just moved from the server to OneDrive: what to do with the data there. */
+  const [previous, setPrevious] = useState<ProfileSync | null>(null);
 
   if (!session) return null;
   if (isGuest(session.profile)) {
@@ -74,6 +79,17 @@ function SyncSection() {
     );
   }
   const sync = session.profile.sync;
+  const cloud = session.profile.cloud;
+  const offerOneDrive = oneDriveAvailable();
+
+  if (cloud) {
+    return (
+      <section className="settings-section" id={SYNC_ANCHOR} aria-labelledby="sync-title">
+        <h2 id="sync-title">{copy.title}</h2>
+        <CloudPanel previous={previous} onFinished={() => setPrevious(null)} />
+      </section>
+    );
+  }
 
   async function enable(event: FormEvent) {
     event.preventDefault();
@@ -123,7 +139,7 @@ function SyncSection() {
   }
 
   return (
-    <section className="settings-section" aria-labelledby="sync-title">
+    <section className="settings-section" id={SYNC_ANCHOR} aria-labelledby="sync-title">
       <h2 id="sync-title">{copy.title}</h2>
       {notice && !sync && (
         <p role="status" className="doc-saved">
@@ -131,6 +147,7 @@ function SyncSection() {
         </p>
       )}
 
+      {!sync && offerOneDrive && <OneDriveChoice />}
       {!sync && (
         <form onSubmit={enable} noValidate>
           <p>{copy.offIntro}</p>
@@ -198,6 +215,7 @@ function SyncSection() {
             </p>
           )}
           {status.error === 'session_expired' && <ReconnectForm />}
+          {status.error === 'moved_to_cloud' && offerOneDrive && <MovedNotice />}
           <FileSyncOption />
           <div className="ingest-actions">
             <button
@@ -209,6 +227,8 @@ function SyncSection() {
               {copy.syncNow}
             </button>
           </div>
+
+          {offerOneDrive && <MoveToCloud onMoved={setPrevious} />}
 
           <h3>{copy.disableTitle}</h3>
           <div className="ingest-actions">

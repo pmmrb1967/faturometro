@@ -9,6 +9,7 @@ import {
   CLOUD_ACCOUNT_FILE,
   connectFromCloud,
   enableCloudSync,
+  relinkCloud,
   rewrapCloudAccount,
 } from './cloud-account';
 import { MemoryDrive } from './memory-drive';
@@ -138,5 +139,46 @@ describe('rewrapCloudAccount', () => {
       localIterations: ITERATIONS,
     });
     expect(connected.profile.email).toBe('eu@exemplo.pt');
+  });
+});
+
+describe('relinkCloud', () => {
+  it('takes the new Microsoft sign-in when it opens the same account folder', async () => {
+    const enabled = await enable(profile, keys.masterKey);
+    const relinked = await relinkCloud({ profile: enabled, drive, accountId: 'conta-2' });
+    expect(relinked.cloud?.accountId).toBe('conta-2');
+    expect((await profilesDb.profiles.get(profile.id))?.cloud?.accountId).toBe('conta-2');
+  });
+
+  it('refuses a Microsoft account whose folder belongs to someone else or is empty', async () => {
+    const enabled = await enable(profile, keys.masterKey);
+    const empty = new MemoryDrive();
+    await expect(
+      relinkCloud({ profile: enabled, drive: empty, accountId: 'outra' }),
+    ).rejects.toMatchObject({ code: 'other_account' });
+    expect((await profilesDb.profiles.get(profile.id))?.cloud?.accountId).toBeUndefined();
+  });
+});
+
+describe('the Microsoft account in use', () => {
+  it('is kept when enabling and when signing in on a new device', async () => {
+    const enabled = await enableCloudSync({
+      profile,
+      masterKey: keys.masterKey,
+      password: PASSWORD,
+      drive,
+      provider: 'onedrive',
+      accountId: 'conta-1',
+    });
+    expect(enabled.cloud?.accountId).toBe('conta-1');
+    await profilesDb.profiles.delete(profile.id);
+    const connected = await connectFromCloud({
+      drive,
+      password: PASSWORD,
+      provider: 'onedrive',
+      localIterations: ITERATIONS,
+      accountId: 'conta-9',
+    });
+    expect(connected.profile.cloud?.accountId).toBe('conta-9');
   });
 });

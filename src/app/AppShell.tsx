@@ -11,6 +11,7 @@ import { NavIcon } from './NavIcon';
 import { applyUpdate, useUpdateAvailable } from './pwa';
 import { SECTIONS, type SectionId } from './sections';
 import { isAdmin } from '../sync/admin-link';
+import { CloudBanner } from '../features/sync/CloudBanner';
 
 /** Per-device choice: side menu reduced to its icons (wide screens only). */
 const NAV_COLLAPSED_KEY = 'faturometro.nav.collapsed';
@@ -145,6 +146,7 @@ export function AppShell() {
           </div>
         )}
         <BackupBanner />
+        <CloudBanner />
         {/* Pages load in their own files: the shell and the menu stay while one arrives. */}
         <Suspense fallback={<p className="hint">{t.loadingPage}</p>}>
           <Outlet />

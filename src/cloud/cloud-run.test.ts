@@ -6,7 +6,7 @@ import { ProfileDb } from '../db/schema';
 import { createAccountKeys, sha256Hex, type NewAccountKeys } from '../lib/crypto';
 import { changeAccountPassword } from '../sync/account';
 import { connectFromCloud, enableCloudSync } from './cloud-account';
-import { runCloudSync } from './cloud-run';
+import { disableCloudSync, runCloudSync, setCloudFileSync } from './cloud-run';
 import { MemoryDrive } from './memory-drive';
 
 const PASSWORD = 'palavra-passe-longa';
@@ -198,5 +198,17 @@ describe('syncPasswordAfterRecovery with the cloud', () => {
       localIterations: ITERATIONS,
     });
     expect(connected.profile.email).toBe('eu@exemplo.pt');
+  });
+});
+
+describe('cloud settings of the profile', () => {
+  it('turns originals on and off, and the cloud sync off, keeping the rest', async () => {
+    const withFiles = await setCloudFileSync(profile, true);
+    expect((await profilesDb.profiles.get(profile.id))?.cloud?.files).toBe(true);
+    expect(withFiles.cloud?.deviceId).toBe(profile.cloud?.deviceId);
+    const off = await disableCloudSync(withFiles);
+    expect(off.cloud).toBeUndefined();
+    expect((await profilesDb.profiles.get(profile.id))?.cloud).toBeUndefined();
+    expect((await profilesDb.profiles.get(profile.id))?.wrappedKey).toEqual(profile.wrappedKey);
   });
 });

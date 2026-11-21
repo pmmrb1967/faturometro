@@ -61,11 +61,16 @@ const accountFile = (email: string, wrappedKey: WrappedMasterKey): CloudAccount 
   wrappedKey,
 });
 
-function newCloudState(provider: CloudProvider, accountLabel?: string): ProfileCloud {
+function newCloudState(
+  provider: CloudProvider,
+  accountLabel?: string,
+  accountId?: string,
+): ProfileCloud {
   return {
     provider,
     ...bootstrapState(crypto.randomUUID()),
     ...(accountLabel ? { accountLabel } : {}),
+    ...(accountId ? { accountId } : {}),
   };
 }
 
@@ -92,6 +97,8 @@ export async function enableCloudSync(input: {
   password: string;
   drive: CloudDrive;
   provider: CloudProvider;
+  /** The signed-in cloud account (MSAL `homeAccountId`). */
+  accountId?: string;
 }): Promise<Profile> {
   const { profile, drive } = input;
   await unlock(wrappedKeyOf(profile), input.password);
@@ -120,7 +127,7 @@ export async function enableCloudSync(input: {
   }
   const updated: Profile = {
     ...profile,
-    cloud: profile.cloud ?? newCloudState(input.provider, await label(drive)),
+    cloud: profile.cloud ?? newCloudState(input.provider, await label(drive), input.accountId),
   };
   await profilesDb.profiles.put(updated);
   return updated;
@@ -132,6 +139,7 @@ export async function connectFromCloud(input: {
   password: string;
   provider: CloudProvider;
   localIterations?: number;
+  accountId?: string;
 }): Promise<{ profile: Profile; masterKey: CryptoKey }> {
   const account = await readJson(input.drive, CLOUD_ACCOUNT_FILE, accountSchema);
   if (!account) throw new CloudAccountError('no_account');
@@ -152,10 +160,39 @@ export async function connectFromCloud(input: {
     email,
     createdAt: new Date().toISOString(),
     wrappedKey,
-    cloud: newCloudState(input.provider, await label(input.drive)),
+    cloud: newCloudState(input.provider, await label(input.drive), input.accountId),
   };
   await profilesDb.profiles.add(profile);
   return { profile, masterKey };
+}
+
+/**
+ * Signed in to the cloud again (the link expired): keeps the new sign-in only if its
+ * folder holds this account, so the sync never writes into someone else's folder.
+ */
+export async function relinkCloud(input: {
+  profile: Profile;
+  drive: CloudDrive;
+  accountId: string;
+}): Promise<Profile> {
+  const cloud = input.profile.cloud;
+  if (!cloud) throw new Error('Cloud sync is not enabled');
+  const account = await readJson(input.drive, CLOUD_ACCOUNT_FILE, accountSchema);
+  if (!account || normalizeEmail(account.email) !== normalizeEmail(input.profile.email)) {
+    throw new CloudAccountError('other_account');
+  }
+  const stored = (await profilesDb.profiles.get(input.profile.id)) ?? input.profile;
+  const updated: Profile = {
+    ...stored,
+    cloud: { ...cloud, accountId: input.accountId, ...(await labelled(input.drive)) },
+  };
+  await profilesDb.profiles.put(updated);
+  return updated;
+}
+
+async function labelled(drive: CloudDrive): Promise<{ accountLabel?: string }> {
+  const accountLabel = await label(drive);
+  return accountLabel ? { accountLabel } : {};
 }
 
 /** After a password change: the account file opens with the new password only. */

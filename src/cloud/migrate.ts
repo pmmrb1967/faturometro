@@ -38,6 +38,7 @@ export async function migrateToCloud(input: {
   drive: CloudDrive;
   password: string;
   api?: SyncApi;
+  accountId?: string;
 }): Promise<{ profile: Profile; previous: ProfileSync; originalsMissing: number }> {
   const { masterKey, repos, drive } = input;
   if (!input.profile.sync) throw new Error('Sync is not enabled');
@@ -64,6 +65,7 @@ export async function migrateToCloud(input: {
     password: input.password,
     drive,
     provider: 'onedrive',
+    ...(input.accountId ? { accountId: input.accountId } : {}),
   });
   const cloud = profile.cloud;
   if (!cloud) throw new Error('Cloud sync is not enabled');

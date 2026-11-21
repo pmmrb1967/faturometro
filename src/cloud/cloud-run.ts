@@ -9,10 +9,14 @@ import { OneDrive } from './onedrive';
 import { oneDriveToken } from './onedrive-auth';
 import { cloudSync, type CloudSyncState } from './sync-protocol';
 
+/** The OneDrive of a signed-in Microsoft account (the last one when not given). */
+export function oneDriveFor(accountId?: string): CloudDrive {
+  return new OneDrive(() => oneDriveToken(accountId));
+}
+
 /** The drive of the profile's cloud account. */
 export function driveFor(profile: Profile): CloudDrive {
-  const accountId = profile.cloud?.accountId;
-  return new OneDrive(() => oneDriveToken(accountId));
+  return oneDriveFor(profile.cloud?.accountId);
 }
 
 export interface CloudRunResult {
@@ -41,6 +45,17 @@ export async function saveCloud(
   else delete updated.cloud;
   await profilesDb.profiles.put(updated);
   return updated;
+}
+
+/** Turns the sync of original files through the cloud on or off on this device. */
+export async function setCloudFileSync(profile: Profile, enabled: boolean): Promise<Profile> {
+  if (!profile.cloud) return profile;
+  return saveCloud(profile, { ...profile.cloud, files: enabled });
+}
+
+/** Stops syncing through the cloud on this device; the files in the cloud stay. */
+export async function disableCloudSync(profile: Profile): Promise<Profile> {
+  return saveCloud(profile, undefined);
 }
 
 export async function runCloudSync(input: {

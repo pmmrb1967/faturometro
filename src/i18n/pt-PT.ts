@@ -127,8 +127,14 @@ export const t = {
       intro:
         'Grava sozinha uma cópia numa pasta à tua escolha, por exemplo uma pasta do OneDrive, do Google Drive ou do Dropbox no computador, que depois a envia para a cloud. Funciona com a app aberta: se estiver na hora, faz a cópia ao abrires a app.',
       unsupported:
-        'A cópia automática para uma pasta precisa do Chrome ou do Edge num computador. Neste browser, usa “Exportar tudo”.',
+        'A cópia automática para uma pasta precisa do Chrome ou do Edge num computador. Neste browser, liga o OneDrive na sincronização ou usa “Exportar tudo”.',
       choose: 'Escolher pasta',
+      chooseCloud: 'Guardar no meu OneDrive',
+      useCloud: 'Usar o OneDrive',
+      useFolder: 'Usar uma pasta deste computador',
+      cloudFolder: 'Destino: o teu OneDrive (Aplicações/Faturómetro/copias).',
+      cloudNeedsReconnect:
+        'A ligação ao OneDrive terminou. Liga de novo na sincronização, acima; a cópia é feita a seguir.',
       change: 'Mudar pasta',
       turnOff: 'Desligar a cópia automática',
       folder: (name: string) => `Pasta: ${name}`,
@@ -1272,6 +1278,98 @@ export const t = {
       account_removed:
         'A tua conta de sincronização foi removida por inatividade (12 meses sem sincronizar). Os teus dados estão neste dispositivo; podes voltar a ligar a sincronização.',
       serverUrl: 'Escreve um endereço https:// válido.',
+      moved_to_cloud:
+        'Esta conta passou a sincronizar pelo OneDrive noutro dispositivo. Liga o OneDrive também aqui.',
+      not_admin: 'Esta conta não é de administrador.',
+      needs_reconnect:
+        'A ligação ao OneDrive terminou (acontece de vez em quando). As alterações ficam guardadas neste dispositivo até voltares a ligar.',
+      quota_full: 'O teu OneDrive está cheio: as alterações novas ficam só neste dispositivo.',
+      throttled:
+        'O OneDrive pediu para esperar um pouco. A sincronização continua daqui a minutos.',
+      conflict: 'Outro dispositivo alterou o mesmo ficheiro ao mesmo tempo. Tenta outra vez.',
+      other_account:
+        'Essa pasta do OneDrive é de outra conta do Faturómetro. Entra na Microsoft com a conta certa.',
+      no_account:
+        'Este OneDrive ainda não tem uma conta do Faturómetro. Liga o OneDrive primeiro no outro dispositivo (Definições → Sincronização).',
+    },
+    cloud: {
+      title: 'O meu OneDrive (recomendado)',
+      intro:
+        'Os dados ficam numa pasta da app no teu OneDrive (Aplicações/Faturómetro), cifrados aqui antes de saírem. A app só vê essa pasta, e a Microsoft guarda apenas conteúdo cifrado, que não consegue ler.',
+      sees: 'Na pasta fica o teu email (no ficheiro da conta) e ficheiros cifrados: as alterações, os originais se os ligares e as cópias automáticas se as guardares lá. O Faturómetro não recebe nada.',
+      connect: 'Ligar ao OneDrive',
+      redirecting: 'A abrir a página da Microsoft…',
+      confirmIntro:
+        'Já entraste na Microsoft. Confirma a palavra-passe desta conta do Faturómetro para ligar o OneDrive.',
+      confirm: 'Ligar o OneDrive',
+      confirming: 'A ligar…',
+      cancel: 'Cancelar',
+      serverTitle: 'Servidor do Faturómetro (espaço limitado)',
+      serverIntro:
+        'Para quem não tem OneDrive. O espaço é limitado e as contas sem uso durante 12 meses são apagadas.',
+      onIntro: (account: string | undefined) =>
+        account ? `Ligada ao OneDrive de ${account}.` : 'Ligada ao teu OneDrive.',
+      reconnect: 'Ligar de novo ao OneDrive',
+      offline:
+        'Sem ligação ao OneDrive. Verifica a internet; a sincronização continua quando voltar.',
+      files: {
+        label: 'Sincronizar também os PDFs e fotografias originais neste dispositivo',
+        hint: 'Cifrados aqui, como o resto. Ocupam espaço no teu OneDrive.',
+        full: 'O teu OneDrive está cheio: os originais novos ficam só neste dispositivo.',
+      },
+      disable: 'Desligar o OneDrive neste dispositivo',
+      disableHint:
+        'Os ficheiros na pasta do OneDrive ficam; podes apagá-los no OneDrive, em Aplicações/Faturómetro.',
+      disabled: 'OneDrive desligado neste dispositivo.',
+      moved: {
+        action: 'Ligar o OneDrive neste dispositivo',
+      },
+      move: {
+        title: 'Mudar para o meu OneDrive',
+        intro:
+          'Copia tudo o que está no servidor e neste dispositivo para o teu OneDrive e passa a sincronizar por lá. Os outros dispositivos desta conta são avisados para ligarem o OneDrive.',
+        button: 'Mudar para o meu OneDrive',
+        working: 'A copiar tudo para o OneDrive…',
+        done: 'Já sincronizas pelo OneDrive.',
+        missing: (count: number) =>
+          count === 1
+            ? '1 original que só estava no servidor não foi possível descarregar.'
+            : `${count} originais que só estavam no servidor não foi possível descarregar.`,
+        question: 'E os dados que estão no servidor do Faturómetro?',
+        delete: 'Apagar os dados do servidor',
+        keep: 'Manter no servidor por agora',
+        deleteHint:
+          'Os registos e os originais saem já do servidor. O email fica lá mais 30 dias, para avisar os outros dispositivos da mudança, e depois é apagado.',
+        keepHint:
+          'Os dados ficam no servidor, que deixa de os atualizar. Uma conta sem uso durante 12 meses é apagada.',
+        admin:
+          'Como administrador, continuas ligado ao servidor só para as contribuições e as estatísticas.',
+        deleted: 'Os dados saíram do servidor.',
+        kept: 'Os dados ficam no servidor.',
+        close: 'Fechar',
+      },
+      admin: {
+        summary: 'Administrador do Faturómetro',
+        intro:
+          'Liga-te ao servidor só para veres as contribuições e as estatísticas. Não são enviados dados.',
+        password: 'Palavra-passe da conta no servidor',
+        submit: 'Ligar como administrador',
+        working: 'A ligar…',
+        linked: 'Ligação de administrador ativa.',
+      },
+      enter: {
+        button: 'Entrar com o OneDrive',
+        or: 'Ou com o servidor do Faturómetro:',
+        intro:
+          'Já entraste na Microsoft. Escreve a palavra-passe da tua conta do Faturómetro para trazer os dados para este dispositivo.',
+        submit: 'Entrar e sincronizar',
+        working: 'A preparar…',
+      },
+      banner: {
+        reconnect: 'A ligação ao OneDrive terminou: a sincronização está em pausa.',
+        moved: 'Esta conta passou a sincronizar pelo OneDrive.',
+        action: 'Resolver',
+      },
     },
   },
   ai: {

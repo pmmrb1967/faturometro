@@ -23,10 +23,13 @@ function formatDateTime(iso: string): string {
 /** What the last run means for the user; null when there is nothing to say. */
 function autoBackupMessage(
   outcome: AutoBackupOutcome | undefined,
+  toCloud: boolean,
 ): { text: string; problem: boolean } | null {
   if (!outcome || outcome.kind === 'not_due') return null;
   if (outcome.kind === 'written') return { text: copy.written(outcome.name), problem: false };
-  if (outcome.kind === 'needs_permission') return { text: copy.needsPermission, problem: true };
+  if (outcome.kind === 'needs_permission') {
+    return { text: toCloud ? copy.cloudNeedsReconnect : copy.needsPermission, problem: true };
+  }
   return { text: copy.errors[outcome.code], problem: true };
 }
 
@@ -41,8 +44,11 @@ export function AutoBackupSection() {
   );
   if (!session || config === undefined) return null;
   const guest = isGuest(session.profile);
+  const cloudLinked = Boolean(session.profile.cloud);
+  const folders = supportsFolderBackup();
+  const toCloud = config?.target === 'cloud';
 
-  if (!supportsFolderBackup()) {
+  if (!folders && !cloudLinked) {
     return (
       <>
         <h3>{copy.title}</h3>
@@ -65,6 +71,7 @@ export function AutoBackupSection() {
       const base = config ?? { profileId: session.profile.id, ...DEFAULT_AUTO_BACKUP };
       const next: AutoBackupConfig = {
         ...base,
+        target: 'folder',
         dir,
         dirName: dir.name,
         encrypted: guest ? false : base.encrypted,
@@ -77,13 +84,24 @@ export function AutoBackupSection() {
     }
   }
 
+  /** To `copias/` in the linked OneDrive: works in any browser. */
+  async function chooseCloud() {
+    if (!session) return;
+    const base = config ?? { profileId: session.profile.id, ...DEFAULT_AUTO_BACKUP };
+    const next: AutoBackupConfig = { ...base, target: 'cloud', dirName: '' };
+    delete next.dir;
+    delete next.lastError;
+    await profilesDb.autoBackups.put(next);
+    await backupNow(session);
+  }
+
   async function turnOff() {
     if (!session) return;
     await profilesDb.autoBackups.delete(session.profile.id);
   }
 
   const message =
-    autoBackupMessage(outcome) ??
+    autoBackupMessage(outcome, toCloud) ??
     (config?.lastError ? { text: copy.errors[config.lastError], problem: true } : null);
   const busy = running || picking;
 
@@ -92,26 +110,52 @@ export function AutoBackupSection() {
       <h3>{copy.title}</h3>
       <p className="muted">{copy.intro}</p>
       {!config ? (
-        <button
-          type="button"
-          className="action-primary"
-          disabled={busy}
-          onClick={() => void chooseFolder()}
-        >
-          {copy.choose}
-        </button>
-      ) : (
-        <>
-          <p>
-            {copy.folder(config.dirName)}{' '}
+        <div className="ingest-actions">
+          {cloudLinked && (
             <button
               type="button"
-              className="action-secondary action-compact"
+              className="action-primary"
+              disabled={busy}
+              onClick={() => void chooseCloud()}
+            >
+              {copy.chooseCloud}
+            </button>
+          )}
+          {folders && (
+            <button
+              type="button"
+              className={cloudLinked ? 'action-secondary' : 'action-primary'}
               disabled={busy}
               onClick={() => void chooseFolder()}
             >
-              {copy.change}
+              {copy.choose}
             </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <p>
+            {toCloud ? copy.cloudFolder : copy.folder(config.dirName)}{' '}
+            {folders && (
+              <button
+                type="button"
+                className="action-secondary action-compact"
+                disabled={busy}
+                onClick={() => void chooseFolder()}
+              >
+                {toCloud ? copy.useFolder : copy.change}
+              </button>
+            )}{' '}
+            {!toCloud && cloudLinked && (
+              <button
+                type="button"
+                className="action-secondary action-compact"
+                disabled={busy}
+                onClick={() => void chooseCloud()}
+              >
+                {copy.useCloud}
+              </button>
+            )}
           </p>
           <SelectField
             id="auto-backup-every"

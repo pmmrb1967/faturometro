@@ -13,8 +13,8 @@ const AUTHORITY = 'https://login.microsoftonline.com/common';
 const SCOPES = ['Files.ReadWrite.AppFolder', 'offline_access'];
 /** Same path as AUTH_REDIRECT_PATH in security-headers.ts. */
 const REDIRECT_PATH = '/auth-redirect.html';
-/** Set before leaving for the sign-in page: where to continue when back. */
-const PENDING_KEY = 'faturometro.onedrive.returnTo';
+/** Set before leaving for the sign-in page: what to continue when back. */
+const PENDING_KEY = 'faturometro.onedrive.intent';
 
 function clientId(): string {
   const fromBuild: unknown = import.meta.env.VITE_ONEDRIVE_CLIENT_ID;
@@ -50,12 +50,12 @@ function readPending(): string | null {
   }
 }
 
-/** Leaves for the Microsoft sign-in page; comes back to this page, then `returnTo`. */
-export async function signInToOneDrive(returnTo: string): Promise<void> {
+/** Leaves for the Microsoft sign-in page; comes back to this page to continue `intent`. */
+export async function signInToOneDrive(intent: string): Promise<void> {
   try {
-    window.sessionStorage.setItem(PENDING_KEY, returnTo);
+    window.sessionStorage.setItem(PENDING_KEY, intent);
   } catch {
-    // Without sessionStorage the app still comes back, only not to `returnTo`.
+    // Without sessionStorage the app still comes back, only without continuing.
   }
   const client = await msal();
   await client.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
@@ -66,11 +66,11 @@ export async function signInToOneDrive(returnTo: string): Promise<void> {
  * or it was cancelled or failed.
  */
 export async function completeOneDriveSignIn(): Promise<{
-  returnTo: string;
+  intent: string;
   accountId: string;
 } | null> {
-  const returnTo = readPending();
-  if (returnTo === null) return null;
+  const intent = readPending();
+  if (intent === null) return null;
   try {
     window.sessionStorage.removeItem(PENDING_KEY);
   } catch {
@@ -81,7 +81,7 @@ export async function completeOneDriveSignIn(): Promise<{
     const result = await client.handleRedirectPromise();
     if (!result?.account) return null;
     client.setActiveAccount(result.account);
-    return { returnTo, accountId: result.account.homeAccountId };
+    return { intent, accountId: result.account.homeAccountId };
   } catch {
     return null;
   }
