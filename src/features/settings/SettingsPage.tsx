@@ -28,6 +28,7 @@ import { syncSession, useSyncStatus } from '../sync/sync-store';
 import { getSettings, updateSettings } from './settings';
 import './settings.css';
 import { isAdmin } from '../../sync/admin-link';
+import { submittedPassword } from '../../lib/submitted-password';
 import { availableProviders } from '../../cloud/providers';
 import { SYNC_ANCHOR } from '../sync/anchor';
 import { CloudChoice, CloudPanel, MovedNotice, MoveToCloud } from '../sync/CloudSync';
@@ -93,7 +94,8 @@ function SyncSection() {
 
   async function enable(event: FormEvent) {
     event.preventDefault();
-    if (!session) return;
+    const entered = submittedPassword(event, password);
+    if (!session || !entered) return;
     setError(undefined);
     if (!isValidServerUrl(serverUrl.trim())) {
       setError(copy.errors.serverUrl);
@@ -104,7 +106,7 @@ function SyncSection() {
       const profile = await enableSync({
         profile: session.profile,
         masterKey: session.masterKey,
-        password,
+        password: entered,
         serverUrl: serverUrl.trim(),
       });
       setPassword('');
@@ -188,7 +190,7 @@ function SyncSection() {
               {error}
             </p>
           )}
-          <button type="submit" className="action-primary" disabled={busy || !password}>
+          <button type="submit" className="action-primary" disabled={busy}>
             {busy ? copy.enabling : copy.enable}
           </button>
         </form>
@@ -393,11 +395,12 @@ function ReconnectForm() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!session) return;
+    const entered = submittedPassword(event, password);
+    if (!session || !entered) return;
     setBusy(true);
     setError(undefined);
     try {
-      const profile = await reconnectSync({ ...session, password });
+      const profile = await reconnectSync({ ...session, password: entered });
       setPassword('');
       updateProfile(profile);
       await syncSession({ ...session, profile }, updateProfile);
@@ -432,7 +435,7 @@ function ReconnectForm() {
           {error}
         </p>
       )}
-      <button type="submit" className="action-primary" disabled={busy || !password}>
+      <button type="submit" className="action-primary" disabled={busy}>
         {busy ? copy.reconnect.working : copy.reconnect.submit}
       </button>
     </form>

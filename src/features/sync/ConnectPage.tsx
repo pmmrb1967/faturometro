@@ -14,6 +14,7 @@ import type { CloudProvider } from '../../db/profiles';
 import { cloudErrorText } from './cloud-errors';
 import { useCloudReturn } from './cloud-return';
 import { offeredServices, serviceOf, signInParts } from './cloud-service';
+import { submittedPassword } from '../../lib/submitted-password';
 
 const copy = t.sync;
 
@@ -46,11 +47,13 @@ function CloudConnect({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    const entered = submittedPassword(event, password);
+    if (!entered) return;
     setError(undefined);
     setBusy(true);
     try {
       // The first sync runs as soon as the app opens (automatic sync).
-      signIn(await connectFromCloud({ password, ...signInParts(provider, accountId) }));
+      signIn(await connectFromCloud({ password: entered, ...signInParts(provider, accountId) }));
       forgetSignIn(provider, accountId);
       navigate('/app', { replace: true });
     } catch (caught) {
@@ -71,7 +74,7 @@ function CloudConnect({
           onChange={(event) => setPassword(event.target.value)}
         />
         <FormError message={error} />
-        <button type="submit" className="action-primary action-wide" disabled={busy || !password}>
+        <button type="submit" className="action-primary action-wide" disabled={busy}>
           {busy ? copy.cloud.enter.working : copy.cloud.enter.submit}
         </button>
         <button
@@ -117,6 +120,8 @@ function ServerConnect({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    const entered = submittedPassword(event, password);
+    if (!entered) return;
     setError(undefined);
     if (!isValidServerUrl(serverUrl.trim())) return setError(copy.errors.serverUrl);
     const emailError = validateEmail(email);
@@ -124,7 +129,7 @@ function ServerConnect({
     setBusy(true);
     try {
       // The first sync runs as soon as the app opens (automatic sync).
-      signIn(await connectFromServer({ serverUrl: serverUrl.trim(), email, password }));
+      signIn(await connectFromServer({ serverUrl: serverUrl.trim(), email, password: entered }));
       navigate('/app', { replace: true });
     } catch (caught) {
       const code = caught instanceof SyncError ? caught.code : 'unexpected';
@@ -194,7 +199,7 @@ function ServerConnect({
           onChange={(event) => setPassword(event.target.value)}
         />
         <FormError message={error} />
-        <button type="submit" className="action-primary action-wide" disabled={busy || !password}>
+        <button type="submit" className="action-primary action-wide" disabled={busy}>
           {busy ? copy.connect.working : copy.connect.submit}
         </button>
       </form>

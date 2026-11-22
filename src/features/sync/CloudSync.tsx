@@ -15,6 +15,7 @@ import { cloudErrorText } from './cloud-errors';
 import { useCloudReturn, type CloudIntent } from './cloud-return';
 import { offeredServices, serviceOf, signInParts } from './cloud-service';
 import { syncSession, useSyncStatus } from './sync-store';
+import { submittedPassword } from '../../lib/submitted-password';
 
 const copy = t.sync.cloud;
 
@@ -97,10 +98,12 @@ function PasswordStep({
   const [error, setError] = useState<string>();
   async function send(event: FormEvent) {
     event.preventDefault();
+    const entered = submittedPassword(event, password);
+    if (!entered) return;
     setBusy(true);
     setError(undefined);
     try {
-      await run(password);
+      await run(entered);
       setPassword('');
     } catch (caught) {
       setError(cloudErrorText(caught, service));
@@ -133,7 +136,7 @@ function PasswordStep({
         </p>
       )}
       <div className="ingest-actions">
-        <button type="submit" className="action-primary" disabled={busy || !password}>
+        <button type="submit" className="action-primary" disabled={busy}>
           {busy ? working : submit}
         </button>
         <button type="button" className="action-secondary" disabled={busy} onClick={onCancel}>
@@ -508,7 +511,8 @@ function AdminLinkForm() {
   if (!session) return null;
   async function link(event: FormEvent) {
     event.preventDefault();
-    if (!session) return;
+    const entered = submittedPassword(event, password);
+    if (!session || !entered) return;
     setBusy(true);
     setError(undefined);
     try {
@@ -516,7 +520,7 @@ function AdminLinkForm() {
         await linkAdmin({
           profile: session.profile,
           masterKey: session.masterKey,
-          password,
+          password: entered,
           serverUrl: DEFAULT_SYNC_URL,
         }),
       );
@@ -545,7 +549,7 @@ function AdminLinkForm() {
             {error}
           </p>
         )}
-        <button type="submit" className="action-secondary" disabled={busy || !password}>
+        <button type="submit" className="action-secondary" disabled={busy}>
           {busy ? copy.admin.working : copy.admin.submit}
         </button>
       </form>
