@@ -1395,11 +1395,15 @@ export const t = {
         delete: 'Apagar os dados do servidor',
         keep: 'Manter no servidor por agora',
         deleteHint:
-          'Os registos e os originais saem já do servidor. O email fica lá mais 30 dias, para avisar os outros dispositivos da mudança, e depois é apagado.',
+          'Apagar: os registos e os originais saem já do servidor. O email fica lá mais 30 dias, para avisar os outros dispositivos da mudança, e depois é apagado.',
         keepHint:
-          'Os dados ficam no servidor, que deixa de os atualizar. Uma conta sem uso durante 12 meses é apagada.',
+          'Manter: os dados ficam no servidor, que deixa de os atualizar. Uma conta sem uso durante 12 meses é apagada.',
         admin:
-          'Como administrador, continuas ligado ao servidor só para as contribuições e as estatísticas.',
+          'Como administrador, continuas ligado ao servidor só para as contribuições e as estatísticas. A tua conta no servidor nunca é apagada, escolhas o que escolheres.',
+        adminDeleteHint:
+          'Apagar: os registos e os originais saem já do servidor. Os outros dispositivos desta conta são avisados da mudança.',
+        adminKeepHint:
+          'Manter: os dados ficam no servidor como estão agora, sem serem atualizados.',
         deleted: 'Os dados saíram do servidor.',
         kept: 'Os dados ficam no servidor.',
         close: 'Fechar',

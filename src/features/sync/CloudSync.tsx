@@ -473,8 +473,8 @@ function FinishServerChoice({
       <p className="doc-saved">{copy.move.done(service)}</p>
       <p>{copy.move.question}</p>
       {previous.admin && <p className="muted">{copy.move.admin}</p>}
-      <p className="muted">{copy.move.deleteHint}</p>
-      <p className="muted">{copy.move.keepHint}</p>
+      <p className="muted">{previous.admin ? copy.move.adminDeleteHint : copy.move.deleteHint}</p>
+      <p className="muted">{previous.admin ? copy.move.adminKeepHint : copy.move.keepHint}</p>
       {error && (
         <p className="ingest-problem" role="alert">
           {error}
