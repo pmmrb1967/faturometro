@@ -16,7 +16,7 @@ Os nomes dos menus podem mudar com o tempo; se algum não bater certo, procura o
    - **Choose the type of access you need**: **App folder**. A app só vê a sua pasta (Aplicações/<nome da app>), nunca o resto do Dropbox do utilizador.
    - **Name your app**: `Faturometro`. É o nome da pasta e o que o utilizador vê ao dar autorização. Os textos da app (`src/i18n/pt-PT.ts`, `services.dropbox.folder`) assumem `Aplicações/Faturometro`: se o nome for outro, muda-o lá também.
    - **Create app**.
-3. Separador **Permissions**: marca `files.metadata.read`, `files.content.read`, `files.content.write` e `account_info.read` (este último dá o email que aparece nas Definições) e carrega em **Submit**. As permissões têm de estar escolhidas **antes** de os utilizadores ligarem; quem ligou antes de uma mudança tem de ligar de novo.
+3. Separador **Permissions**: marca `files.metadata.read`, `files.content.read`, `files.content.write` e `account_info.read` (este último dá o email que aparece nas Definições) e carrega em **Submit**. Na secção **OpenID Scopes** (`profile`, `openid`, `email`) não marques nada: a app não usa o OpenID Connect e lê o email com `account_info.read`. As permissões têm de estar escolhidas **antes** de os utilizadores ligarem; quem ligou antes de uma mudança tem de ligar de novo.
 4. Separador **Settings**:
    - **OAuth 2 → Redirect URIs**: acrescenta `https://app.faturometro.workers.dev/nuvem-retorno` e `http://localhost:5173/nuvem-retorno` (um de cada vez, com **Add**).
    - **Allow public clients (Implicit Grant & PKCE)**: **Allow**. Sem isto, a troca do código falha.
