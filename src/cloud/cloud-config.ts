@@ -22,4 +22,5 @@ export const PROJECT_DROPBOX_APP_KEY = 'iqmbjnabbdaopun';
  * client secret lives only in the sync server. VITE_GOOGLE_CLIENT_ID overrides it.
  * Without it, Google Drive is not offered.
  */
-export const PROJECT_GOOGLE_CLIENT_ID = '';
+export const PROJECT_GOOGLE_CLIENT_ID =
+  '804503719887-3jb207f4gfh9dvrf60r1am07mva3p7op.apps.googleusercontent.com';

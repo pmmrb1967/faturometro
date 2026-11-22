@@ -10,7 +10,7 @@ Ao contrário do OneDrive e do Dropbox, há **um segredo**. A Google só dá ace
 
 Sem o Client ID na app, a opção Google Drive não aparece. Sem os dois secrets no servidor, a rota responde 404 e a entrada falha.
 
-**Registo atual:** ainda não feito.
+**Registo atual** (2026-11-22): projeto `Faturometro`, registado com a conta Google `pmmrb1967@gmail.com` (é com ela que se entra na consola para mudar a app). Client ID `804503719887-3jb207f4gfh9dvrf60r1am07mva3p7op.apps.googleusercontent.com`, em `src/cloud/cloud-config.ts`.
 
 ## Passos (consola em inglês)
 
@@ -20,13 +20,19 @@ Os nomes dos menus mudam com frequência; se algum não bater certo, procura o e
 2. **Novo projeto**: no seletor de projetos do topo, **New project**, com o nome `Faturometro`. Não é preciso faturação.
 3. **Ativar a API**: **APIs & Services → Library**, procura **Google Drive API** e carrega em **Enable**.
 4. **Ecrã de consentimento** (**Google Auth Platform**, antes chamado *OAuth consent screen*):
-   - **Branding**: nome da app `Faturómetro`, email de apoio e email de contacto do programador. A página inicial e a de privacidade (`https://app.faturometro.workers.dev/` e `…/privacidade`) também podem ser indicadas.
+   - **Branding**: nome da app `Faturómetro`, email de apoio e email de contacto do programador (**Developer contact information**). Para poder publicar, a Google exige também:
+     - **Application home page**: `https://app.faturometro.workers.dev/`;
+     - **Application privacy policy link**: `https://app.faturometro.workers.dev/privacidade`;
+     - **Authorised domains**: `faturometro.workers.dev` (sem `app.` nem `https://`: no `workers.dev`, o domínio de cada conta é o principal).
+
+     Sem estes, a página **Audience** diz "To publish your app, you must complete your configuration on the Branding page" e não mostra **Publish app**. O **App logo** fica vazio: com logótipo, a Google exige a verificação da marca. O **Save** só fica ativo quando há alterações por guardar.
    - **Audience**: **External**.
    - **Data access → Add or remove scopes**: só `https://www.googleapis.com/auth/drive.file` ("See, edit, create and delete only the specific Google Drive files you use with this app"). É uma permissão **não sensível**, o que evita a verificação de segurança da Google. Não acrescentes `drive` nem `drive.appdata`.
    - **Publishing status**: carrega em **Publish app** para passar a **In production**. Em *Testing*, só os utilizadores de teste listados conseguem entrar e **a ligação expira ao fim de 7 dias**. Se a Google pedir a verificação da marca (nome e logótipo), segue o pedido; com `drive.file` não há verificação da permissão.
 5. **Cliente OAuth** (**Clients → Create client**):
    - **Application type**: **Web application**. Não escolher outro tipo: só este tem segredo e endereços de regresso.
    - **Name**: `Faturometro web`.
+   - **Use this client for an AI-powered agent**: desmarcado (o cliente é usado pela app, não por um agente de IA).
    - **Authorized redirect URIs**: `https://app.faturometro.workers.dev/nuvem-retorno` e `http://localhost:5173/nuvem-retorno`.
    - **Authorized JavaScript origins**: não é preciso (a troca do código é feita pelo servidor).
    - **Create**. Copia o **Client ID** e o **Client secret**. O segredo pode não voltar a aparecer por inteiro: se o perderes, cria um novo no mesmo cliente.
