@@ -4,7 +4,7 @@ A sincronização pelo OneDrive precisa de um registo da app na plataforma de id
 
 Sem id, a app não mostra a opção OneDrive e tudo o resto funciona igual.
 
-**Registo atual** (2026-11-21): id `0af920e6-fd52-456f-9f4d-c1fc3d11f436`, em `src/cloud/cloud-config.ts`.
+**Registo atual** (2026-11-21): id `0af920e6-fd52-456f-9f4d-c1fc3d11f436`, em `src/cloud/cloud-config.ts`. Registada com a conta `rocha.barbosa@netcabo.pt` (é com ela que se entra no portal Entra para mudar a app).
 
 ## Que conta usar
 
