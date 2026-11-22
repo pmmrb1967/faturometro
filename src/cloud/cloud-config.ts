@@ -15,7 +15,7 @@ export const PROJECT_ONEDRIVE_CLIENT_ID = '0af920e6-fd52-456f-9f4d-c1fc3d11f436'
  * The app key in the Dropbox App Console (see docs/dropbox.md). Not a secret.
  * VITE_DROPBOX_APP_KEY overrides it at build time. Without it, Dropbox is not offered.
  */
-export const PROJECT_DROPBOX_APP_KEY = '';
+export const PROJECT_DROPBOX_APP_KEY = 'iqmbjnabbdaopun';
 
 /**
  * The OAuth client id in Google Cloud (see docs/google-drive.md). Not a secret; the

@@ -4,7 +4,7 @@ A sincronização pelo Dropbox precisa de uma app registada na consola de progra
 
 Sem *App key*, a app não mostra a opção Dropbox e tudo o resto funciona igual.
 
-**Registo atual:** ainda não feito. A chave vai para `PROJECT_DROPBOX_APP_KEY` em `src/cloud/cloud-config.ts`; para testar sem a commitar, usa `VITE_DROPBOX_APP_KEY` no `.env.local`.
+**Registo atual:** feito (App key `iqmbjnabbdaopun`). A chave está em `PROJECT_DROPBOX_APP_KEY` em `src/cloud/cloud-config.ts`; para testar sem a commitar, usa `VITE_DROPBOX_APP_KEY` no `.env.local`.
 
 ## Passos (consola em inglês)
 
