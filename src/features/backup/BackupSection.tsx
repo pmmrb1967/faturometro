@@ -12,6 +12,8 @@ import { syncSession } from '../sync/sync-store';
 import { AutoBackupSection } from './AutoBackupSection';
 import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
 import { decryptBackup, isEncryptedBackup } from './encrypted-backup';
+import { SettingsBlock } from '../settings/SettingsBlock';
+import { backupStatus } from '../settings/section-status';
 
 const copy = t.backup;
 
@@ -39,18 +41,32 @@ export function BackupSection() {
   const [useRecovery, setUseRecovery] = useState(false);
   const encryptedCopy = copy.encrypted;
   const { hash } = useLocation();
-  const section = useRef<HTMLElement>(null);
-  // The sections above wait for the settings and then grow, so scroll once they have loaded.
-  const settingsLoaded = useLiveQuery(
-    async () => (session ? (await getSettings(session.repos), true) : false),
+  const facts = useLiveQuery(
+    async () =>
+      session
+        ? {
+            settings: await getSettings(session.repos),
+            auto: await profilesDb.autoBackups.get(session.profile.id),
+          }
+        : null,
     [session],
   );
+  // The sections above wait for the settings and then grow, so scroll once they have loaded.
+  const settingsLoaded = Boolean(facts);
   useEffect(() => {
-    if (settingsLoaded && hash === `#${BACKUP_ANCHOR}`) section.current?.scrollIntoView();
+    if (settingsLoaded && hash === `#${BACKUP_ANCHOR}`) {
+      document.getElementById(BACKUP_ANCHOR)?.scrollIntoView();
+    }
   }, [settingsLoaded, hash]);
   if (!session) return null;
   const { repos } = session;
   const synced = Boolean(session.profile.sync);
+  const line = facts
+    ? backupStatus({
+        ...(facts.settings.lastBackupAt ? { lastExport: facts.settings.lastBackupAt } : {}),
+        ...(facts.auto ? { auto: facts.auto } : {}),
+      })
+    : null;
 
   async function exportAll() {
     setBusy(true);
@@ -150,8 +166,11 @@ export function BackupSection() {
   }
 
   return (
-    <section ref={section} className="settings-section" aria-labelledby="backup-title">
-      <h2 id="backup-title">{copy.title}</h2>
+    <SettingsBlock
+      id={BACKUP_ANCHOR}
+      title={copy.title}
+      {...(line ? { status: line.text, attention: line.attention } : {})}
+    >
       {!synced && <p className="ingest-problem">{copy.localOnlyWarning}</p>}
 
       <h3>{copy.exportTitle}</h3>
@@ -258,6 +277,6 @@ export function BackupSection() {
       >
         {copy.delete}
       </button>
-    </section>
+    </SettingsBlock>
   );
 }

@@ -5,6 +5,7 @@ import { adminStats } from '../../sync/account';
 import { useSession } from '../auth/session-context';
 import { formatMegabytes } from './format';
 import { isAdmin } from '../../sync/admin-link';
+import { SettingsBlock } from './SettingsBlock';
 
 const copy = t.adminStats;
 
@@ -69,8 +70,7 @@ export function AdminStatsSection() {
     : [];
 
   return (
-    <section className="settings-section" aria-labelledby="admin-stats-title">
-      <h2 id="admin-stats-title">{copy.title}</h2>
+    <SettingsBlock id="administrador" title={copy.title}>
       <p className="muted">{copy.intro}</p>
       {stats === undefined && <p className="ingest-problem">{copy.failed}</p>}
       {stats && (
@@ -89,6 +89,6 @@ export function AdminStatsSection() {
       {stats?.freeAi && (
         <p className="muted">{copy.freeAiNote(stats.freeAi.neuronsFree.toLocaleString('pt-PT'))}</p>
       )}
-    </section>
+    </SettingsBlock>
   );
 }

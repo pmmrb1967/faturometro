@@ -1193,6 +1193,20 @@ export const t = {
     spendingEnabled:
       'Mostrar o separador Gastos em "Este mês", para registar também as compras do dia a dia e as receitas',
     saved: 'Guardado.',
+    /** The line next to each closed block of the page. */
+    status: {
+      syncNeedsAccount: 'Precisa de uma conta',
+      syncOff: 'Desligada',
+      syncCloud: (name: string) => `Ligada ao ${name}`,
+      syncServer: 'Ligada ao servidor do Faturómetro',
+      syncEnded: (name: string) => `A ligação ao ${name} terminou`,
+      attention: 'Precisa de atenção',
+      noBackups: 'Sem cópias',
+      lastExport: (date: string) => `Última exportação: ${date}`,
+      autoBackupOn: 'Cópia automática ligada',
+      autoBackupLast: (date: string) => `Cópia automática · última ${date}`,
+      autoBackupFailed: 'A última cópia automática falhou',
+    },
     account: {
       title: 'Conta',
       signedInAs: (email: string) => `Email: ${email}`,

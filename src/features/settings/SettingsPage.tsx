@@ -32,6 +32,10 @@ import { submittedPassword } from '../../lib/submitted-password';
 import { availableProviders } from '../../cloud/providers';
 import { SYNC_ANCHOR } from '../sync/anchor';
 import { CloudChoice, CloudPanel, MovedNotice, MoveToCloud } from '../sync/CloudSync';
+import { useSignInBackToSettings } from '../sync/cloud-return';
+import { BACKUP_ANCHOR } from '../backup/backup';
+import { SettingsBlock, SettingsBlocks } from './SettingsBlock';
+import { syncStatus } from './section-status';
 
 const copy = t.sync;
 const DEFAULT_SERVER = DEFAULT_SYNC_URL;
@@ -41,18 +45,32 @@ function errorText(code: string | undefined): string | undefined {
   return (copy.errors as Record<string, string>)[code] ?? copy.errors.unexpected;
 }
 
+/** The page's blocks, for "Abrir todos" / "Fechar todos". */
+const BLOCK_IDS = [
+  'conta',
+  SYNC_ANCHOR,
+  'administrador',
+  'ia',
+  'preferencias',
+  'app',
+  'sugestoes',
+  BACKUP_ANCHOR,
+] as const;
+
 export function SettingsPage() {
   return (
     <>
       <h1>{t.settings.title}</h1>
-      <AccountSection />
-      <SyncSection />
-      <AdminStatsSection />
-      <AiSettings />
-      <PreferencesSection />
-      <AppSection />
-      <FeedbackSection />
-      <BackupSection />
+      <SettingsBlocks ids={BLOCK_IDS}>
+        <AccountSection />
+        <SyncSection />
+        <AdminStatsSection />
+        <AiSettings />
+        <PreferencesSection />
+        <AppSection />
+        <FeedbackSection />
+        <BackupSection />
+      </SettingsBlocks>
     </>
   );
 }
@@ -68,27 +86,40 @@ function SyncSection() {
   const [notice, setNotice] = useState<string>();
   /** Just moved from the server to a cloud: what to do with the data there. */
   const [previous, setPrevious] = useState<ProfileSync | null>(null);
+  const signInBack = useSignInBackToSettings();
 
   if (!session) return null;
-  if (isGuest(session.profile)) {
-    return (
-      <section className="settings-section" aria-labelledby="sync-title">
-        <h2 id="sync-title">{copy.title}</h2>
-        {/* "Criar conta" is in the notice at the top of the page (GuestNotice). */}
-        <p>{t.guest.syncNeedsAccount}</p>
-      </section>
-    );
-  }
   const sync = session.profile.sync;
   const cloud = session.profile.cloud;
   const offerCloud = availableProviders().length > 0;
+  const line = syncStatus({
+    guest: isGuest(session.profile),
+    ...(cloud ? { cloud: cloud.provider } : {}),
+    server: Boolean(sync),
+    ...(status.error ? { error: status.error } : {}),
+  });
+  const blockProps = {
+    id: SYNC_ANCHOR,
+    title: copy.title,
+    status: line.text,
+    // Back from a cloud sign-in: the password is asked for in here.
+    attention: line.attention || signInBack,
+  };
+
+  if (isGuest(session.profile)) {
+    return (
+      <SettingsBlock {...blockProps}>
+        {/* "Criar conta" is in the notice at the top of the page (GuestNotice). */}
+        <p>{t.guest.syncNeedsAccount}</p>
+      </SettingsBlock>
+    );
+  }
 
   if (cloud) {
     return (
-      <section className="settings-section" id={SYNC_ANCHOR} aria-labelledby="sync-title">
-        <h2 id="sync-title">{copy.title}</h2>
+      <SettingsBlock {...blockProps}>
         <CloudPanel previous={previous} onFinished={() => setPrevious(null)} />
-      </section>
+      </SettingsBlock>
     );
   }
 
@@ -141,8 +172,7 @@ function SyncSection() {
   }
 
   return (
-    <section className="settings-section" id={SYNC_ANCHOR} aria-labelledby="sync-title">
-      <h2 id="sync-title">{copy.title}</h2>
+    <SettingsBlock {...blockProps}>
       {notice && !sync && (
         <p role="status" className="doc-saved">
           {notice}
@@ -261,7 +291,7 @@ function SyncSection() {
           </button>
         </>
       )}
-    </section>
+    </SettingsBlock>
   );
 }
 
@@ -494,8 +524,7 @@ function AccountSection() {
   }
 
   return (
-    <section className="settings-section" aria-labelledby="account-title">
-      <h2 id="account-title">{accountCopy.title}</h2>
+    <SettingsBlock id="conta" title={accountCopy.title} status={session.profile.email}>
       <p className="muted">{accountCopy.signedInAs(session.profile.email)}</p>
       {isAdmin(session.profile) && <p className="muted">{accountCopy.admin}</p>}
       <h3>{accountCopy.changePassword}</h3>
@@ -551,28 +580,26 @@ function AccountSection() {
           {busy ? accountCopy.working : accountCopy.submit}
         </button>
       </form>
-    </section>
+    </SettingsBlock>
   );
 }
 
 function FeedbackSection() {
   return (
-    <section className="settings-section" aria-labelledby="feedback-title">
-      <h2 id="feedback-title">{t.feedback.title}</h2>
+    <SettingsBlock id="sugestoes" title={t.feedback.title}>
       <p className="muted">{t.feedback.intro}</p>
       <FeedbackLinks />
-    </section>
+    </SettingsBlock>
   );
 }
 
 function AppSection() {
   return (
-    <section className="settings-section" aria-labelledby="app-title">
-      <h2 id="app-title">{t.install.title}</h2>
+    <SettingsBlock id="app" title={t.install.title}>
       <p>{t.install.intro}</p>
       <InstallButton />
       <p className="muted">{t.install.dataNote}</p>
-    </section>
+    </SettingsBlock>
   );
 }
 
@@ -590,8 +617,7 @@ function PreferencesSection() {
       void updateSettings(session.repos, { [field]: event.target.checked });
 
   return (
-    <section className="settings-section" aria-labelledby="preferences-title">
-      <h2 id="preferences-title">{t.settings.preferences}</h2>
+    <SettingsBlock id="preferencias" title={t.settings.preferences}>
       <label className="check settings-check">
         <input type="checkbox" checked={settings.largeFamily} onChange={toggle('largeFamily')} />
         {t.settings.largeFamily}
@@ -612,7 +638,7 @@ function PreferencesSection() {
         />
         {t.settings.spendingEnabled}
       </label>
-    </section>
+    </SettingsBlock>
   );
 }
 

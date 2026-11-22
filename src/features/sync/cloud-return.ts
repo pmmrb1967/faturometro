@@ -43,6 +43,26 @@ export function startCloudReturn(): void {
       : completeCloudSignIn(oauth).catch(() => null);
 }
 
+/** The settings page started it (turn on, sign in again, move from the server): it opens its sync block. */
+export function backToSettings(signIn: CloudSignIn | LostSignIn | null): boolean {
+  return Boolean(signIn && !('lost' in signIn) && signIn.intent !== 'connect');
+}
+
+/** True once a sign-in the settings page started has come back (without taking it). */
+export function useSignInBackToSettings(): boolean {
+  const [back, setBack] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void pending?.then((signIn) => {
+      if (active && backToSettings(signIn)) setBack(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return back;
+}
+
 export interface CloudReturn {
   provider: CloudProvider | null;
   /** The sign-in to use (MSAL account id, or the key of the tokens held for this tab). */

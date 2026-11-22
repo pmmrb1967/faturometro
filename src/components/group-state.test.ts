@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextShown, parseOpenGroups } from './group-state';
+import { isOpenIn, nextShown, parseOpenGroups } from './group-state';
 
 describe('parseOpenGroups', () => {
   it('keeps the remembered blocks', () => {
@@ -21,5 +21,17 @@ describe('nextShown', () => {
   it('20 more each time, up to the last', () => {
     expect(nextShown(5, 100, 20)).toBe(25);
     expect(nextShown(85, 100, 20)).toBe(100);
+  });
+});
+
+describe('isOpenIn', () => {
+  it('follows what was remembered', () => {
+    expect(isOpenIn({ sync: true }, 'sync', false)).toBe(true);
+    expect(isOpenIn({ sync: false }, 'sync', true)).toBe(false);
+  });
+
+  it('a block never touched takes the page default', () => {
+    expect(isOpenIn({}, 'sync', true)).toBe(true);
+    expect(isOpenIn({}, 'sync', false)).toBe(false);
   });
 });

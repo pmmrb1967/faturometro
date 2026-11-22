@@ -22,6 +22,7 @@ import { formatIsoDate } from '../../lib/dates';
 import { useSession } from '../auth/session-context';
 import { getSettings, updateSettings } from '../settings/settings';
 import { aiErrorText } from './errors';
+import { SettingsBlock } from '../settings/SettingsBlock';
 
 const copy = t.ai.settings;
 const price = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 2 });
@@ -299,8 +300,7 @@ export function AiSettings() {
   const mode = aiModeOf(settings);
 
   return (
-    <section className="settings-section" aria-labelledby="ai-title">
-      <h2 id="ai-title">{copy.title}</h2>
+    <SettingsBlock id="ia" title={copy.title} status={copy.modes[mode]}>
       <p>{copy.intro}</p>
 
       <fieldset className="ai-modes">
@@ -346,6 +346,6 @@ export function AiSettings() {
       {usage && mode !== 'none' && (
         <p className="muted">{copy.usage(usage.requests, formatMicroUsd(usage.costMicroUsd))}</p>
       )}
-    </section>
+    </SettingsBlock>
   );
 }
