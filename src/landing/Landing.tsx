@@ -23,7 +23,8 @@ export function Landing() {
   const action = landingAction({ signedIn: session !== null, ...profiles });
 
   async function startGuest() {
-    signIn(await createGuest());
+    // Leaving this page reloads the document (web-analytics.ts): the session must be kept first.
+    await signIn(await createGuest());
     navigate('/app');
   }
 

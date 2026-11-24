@@ -16,7 +16,8 @@ export interface SessionContextValue {
   session: Session | null;
   /** On load: still looking for a session kept across a reload of this tab. */
   restoring: boolean;
-  signIn: (account: UnlockedAccount) => void;
+  /** Resolves once a reload of this tab can reopen the session (session-store.ts). */
+  signIn: (account: UnlockedAccount) => Promise<void>;
   lock: () => void;
   /** Keeps the session in step with a saved profile (sync state). */
   updateProfile: (profile: Profile) => void;

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { profilesDb } from '../../db/profiles';
 import { decryptJson, encryptJson } from '../../lib/crypto';
-import { createAccount } from './accounts';
+import { createAccount, createGuest } from './accounts';
 import {
   forgetSession,
   rememberSession,
@@ -44,6 +44,14 @@ describe('session kept across reloads', () => {
     const restored = await restoreSession(T0 + 5 * MINUTE);
     expect(restored?.profile.id).toBe(account.profile.id);
     expect(await decryptJson(restored!.masterKey, secret)).toEqual({ ok: 1 });
+  });
+
+  it('reopens the profile without an account (the landing page reloads into /app)', async () => {
+    const guest = await createGuest();
+    await rememberSession(guest, T0);
+
+    const restored = await restoreSession(T0 + MINUTE);
+    expect(restored?.profile.id).toBe(guest.profile.id);
   });
 
   it('keeps no master key in clear in the tab storage', async () => {

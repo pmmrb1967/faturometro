@@ -53,8 +53,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     (account: UnlockedAccount) => {
       open(account);
-      // The guest has no password: it opens by itself, nothing to remember.
-      if (!isGuest(account.profile)) void rememberSession(account);
+      // The guest too: with accounts on this device it does not open by itself, and the
+      // landing page reloads the document on its way into /app (web-analytics.ts).
+      return rememberSession(account);
     },
     [open],
   );
