@@ -6,12 +6,14 @@
 import { sumCents, type Cents } from '../lib/money';
 import { incomeMonth } from './income';
 import { addMonthsTo, lastDay, monthOf, monthSummary } from './month';
+import { contractCategory, knownCategory } from './categories';
 import type {
+  CategoryId,
   Contract,
+  CustomCategory,
   Income,
   Invoice,
   RecurringExpense,
-  Sector,
   SpendingCategory,
   SpendingTransaction,
 } from './types';
@@ -30,16 +32,6 @@ export const SPENDING_CATEGORIES = [
   'other',
 ] as const satisfies readonly SpendingCategory[];
 
-const SECTOR_CATEGORY: Record<Sector, SpendingCategory> = {
-  telecom: 'bills',
-  electricity: 'bills',
-  gas: 'bills',
-  water: 'bills',
-  insurance: 'insurance',
-  transport: 'transport',
-  other: 'other',
-};
-
 export interface SpendingItem {
   /** Stable key of the line. */
   id: string;
@@ -49,7 +41,8 @@ export interface SpendingItem {
   transactionId?: string;
   date: string;
   amountCents: Cents;
-  category: SpendingCategory;
+  /** Already known: an unknown one is "other". */
+  category: CategoryId;
 }
 
 export interface SpendingMonth {
@@ -58,7 +51,7 @@ export interface SpendingMonth {
   items: SpendingItem[];
   totalCents: Cents;
   /** Only categories with spending, highest first. */
-  byCategory: { category: SpendingCategory; totalCents: Cents }[];
+  byCategory: { category: CategoryId; totalCents: Cents }[];
   previousTotalCents: Cents;
 }
 
@@ -67,10 +60,13 @@ export interface SpendingData {
   expenses: readonly RecurringExpense[];
   transactions: readonly SpendingTransaction[];
   contracts: readonly Contract[];
+  /** The user's categories: without them, theirs count as "other". */
+  categories?: readonly CustomCategory[];
 }
 
 function monthItems(month: string, data: SpendingData): SpendingItem[] {
-  const sectors = new Map(data.contracts.map((contract) => [contract.id, contract.sector]));
+  const contracts = new Map(data.contracts.map((contract) => [contract.id, contract]));
+  const known = (id: CategoryId | undefined) => knownCategory(id, data.categories ?? []);
   const invoices = new Map(data.invoices.map((invoice) => [invoice.id, invoice]));
   const expenses = new Map(data.expenses.map((expense) => [expense.id, expense]));
   // A purchase whose document was later added as an invoice would count twice.
@@ -87,18 +83,18 @@ function monthItems(month: string, data: SpendingData): SpendingItem[] {
         expenseId,
         date: item.date,
         amountCents: item.amountCents,
-        category: expenses.get(expenseId)?.category ?? 'other',
+        category: known(expenses.get(expenseId)?.category),
       };
     }
     const invoiceId = item.invoiceId ?? '';
-    const sector = sectors.get(invoices.get(invoiceId)?.contractId ?? '');
+    const contract = contracts.get(invoices.get(invoiceId)?.contractId ?? '');
     return {
       id: `invoice-${invoiceId}`,
       kind: 'invoice',
       invoiceId,
       date: item.date,
       amountCents: item.amountCents,
-      category: sector ? SECTOR_CATEGORY[sector] : 'other',
+      category: contract ? known(contractCategory(contract)) : 'other',
     };
   });
 
@@ -111,7 +107,7 @@ function monthItems(month: string, data: SpendingData): SpendingItem[] {
       transactionId: transaction.id,
       date: transaction.date,
       amountCents: transaction.amountCents,
-      category: transaction.category,
+      category: known(transaction.category),
     });
   }
   return items.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
@@ -132,7 +128,11 @@ export function sortSpendingItems(
     date: () => 0,
     amount: (item) => -item.amountCents,
     type: (item) => KIND_RANK[item.kind],
-    category: (item) => SPENDING_CATEGORIES.indexOf(item.category),
+    // The app's in their order, then the user's.
+    category: (item) => {
+      const index = (SPENDING_CATEGORIES as readonly string[]).indexOf(item.category);
+      return index < 0 ? SPENDING_CATEGORIES.length : index;
+    },
   };
   return [...items].sort((a, b) => rank[order](a) - rank[order](b));
 }
@@ -143,10 +143,12 @@ function total(items: readonly SpendingItem[]): Cents {
 
 export function spendingMonth(month: string, data: SpendingData): SpendingMonth {
   const items = monthItems(month, data);
-  const byCategory = SPENDING_CATEGORIES.flatMap((category) => {
-    const inCategory = items.filter((item) => item.category === category);
-    return inCategory.length > 0 ? [{ category, totalCents: total(inCategory) }] : [];
-  }).sort((a, b) => b.totalCents - a.totalCents);
+  const byCategory = [...new Set(items.map((item) => item.category))]
+    .map((category) => ({
+      category,
+      totalCents: total(items.filter((item) => item.category === category)),
+    }))
+    .sort((a, b) => b.totalCents - a.totalCents || a.category.localeCompare(b.category));
   return {
     month,
     items,

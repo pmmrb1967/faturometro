@@ -129,6 +129,8 @@ export interface Contract extends SyncMeta {
   directDebit?: boolean;
   /** Date the user changed supplier (the contract ended). */
   endedAt?: IsoDate;
+  /** Category of its invoices on "Resumo", chosen by the user; otherwise, from the sector. */
+  category?: CategoryId;
   /** The contract that replaced this one (same sector, new supplier). */
   replacedById?: string;
   createdAt: IsoDateTime;
@@ -276,8 +278,8 @@ export interface RecurringExpense extends SyncMeta {
    * counts as paid on its due date, unless the user unticks that month.
    */
   paidUntil?: IsoDate;
-  /** Category on the page "Gastos" ("other" when missing). */
-  category?: SpendingCategory;
+  /** Category on "Resumo" ("other" when missing or deleted). */
+  category?: CategoryId;
   createdAt: IsoDateTime;
 }
 
@@ -293,6 +295,21 @@ export type SpendingCategory =
   | 'insurance'
   | 'other';
 
+/** A category the user added in Definições (`c-` and a random id). */
+export type CustomCategoryId = `c-${string}`;
+
+/** The app's categories and the user's. An unknown id (deleted elsewhere) counts as "other". */
+export type CategoryId = SpendingCategory | CustomCategoryId;
+
+/** A category of "Resumo" added by the user, with what it is for. */
+export interface CustomCategory extends SyncMeta {
+  id: CustomCategoryId;
+  name: string;
+  /** What goes in it, shown when choosing a category. */
+  note?: string;
+  createdAt: IsoDateTime;
+}
+
 /**
  * One-off expense on "Este mês": a purchase already made (typed or read from
  * the QR code of a receipt) or one still to pay (works, a new appliance).
@@ -307,7 +324,7 @@ export interface SpendingTransaction extends SyncMeta {
   paidOn?: IsoDate;
   /** Negative for a refund or a credit note. */
   amountCents: Cents;
-  category: SpendingCategory;
+  category: CategoryId;
   /** May be empty: the category then names the line. */
   description: string;
   source: 'manual' | 'qr';

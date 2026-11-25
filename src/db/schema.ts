@@ -107,7 +107,13 @@ export const SCHEMA_V10 = {
   warranties: 'id, updatedAt',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V10;
+/** v11: categories of "Resumo" added by the user (Definições). New table only. */
+export const SCHEMA_V11 = {
+  ...SCHEMA_V10,
+  categories: 'id, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V11;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -128,6 +134,7 @@ export class ProfileDb extends Dexie {
   transactions!: Table<StoredRow, string>;
   incomes!: Table<StoredRow, string>;
   warranties!: Table<StoredRow, string>;
+  categories!: Table<StoredRow, string>;
   pendingPush!: Table<PendingPush, [string, string]>;
 
   constructor(profileId: string) {
@@ -151,6 +158,7 @@ export class ProfileDb extends Dexie {
     this.version(8).stores(SCHEMA_V8);
     this.version(9).stores(SCHEMA_V9);
     this.version(10).stores(SCHEMA_V10);
+    this.version(11).stores(SCHEMA_V11);
   }
 }
 

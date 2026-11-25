@@ -22,11 +22,10 @@ import {
   type MonthItem,
   type MonthOrder,
 } from '../../domain/month';
-import { SPENDING_CATEGORIES } from '../../domain/spending';
 import type {
   Payment,
   RecurringExpense,
-  SpendingCategory,
+  CategoryId,
   SpendingTransaction,
   Warranty,
 } from '../../domain/types';
@@ -35,6 +34,8 @@ import { formatIsoDate, formatMonth } from '../../lib/dates';
 import { centsToPtInput, formatCents, parsePtAmount, sumCents } from '../../lib/money';
 import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { CategorySelect } from '../categories/CategorySelect';
+import { categoryName, useCustomCategories } from '../categories/use-categories';
 import { AddInvoice } from '../ingest/AddInvoice';
 import { ProviderCoverage } from '../ingest/ProviderCoverage';
 import { IncomeSection } from '../spending/IncomeSection';
@@ -184,17 +185,27 @@ function ExpensesView({ month, onMonth }: { month: string; onMonth: (month: stri
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const repos = session.repos;
-    const [invoices, contracts, providers, expenses, payments, transactions, incomes, warranties] =
-      await Promise.all([
-        repos.invoices.list(),
-        repos.contracts.list(),
-        repos.providers.list(),
-        repos.expenses.list(),
-        repos.payments.list(),
-        repos.transactions.list(),
-        repos.incomes.list(),
-        repos.warranties.list(),
-      ]);
+    const [
+      invoices,
+      contracts,
+      providers,
+      expenses,
+      payments,
+      transactions,
+      incomes,
+      warranties,
+      categories,
+    ] = await Promise.all([
+      repos.invoices.list(),
+      repos.contracts.list(),
+      repos.providers.list(),
+      repos.expenses.list(),
+      repos.payments.list(),
+      repos.transactions.list(),
+      repos.incomes.list(),
+      repos.warranties.list(),
+      repos.categories.list(),
+    ]);
     return {
       invoices: new Map(invoices.map((invoice) => [invoice.id, invoice])),
       contracts: new Map(contracts.map((contract) => [contract.id, contract])),
@@ -203,6 +214,7 @@ function ExpensesView({ month, onMonth }: { month: string; onMonth: (month: stri
       payments,
       transactions: countedTransactions(transactions, invoices),
       incomes,
+      categories,
       warrantyByTransaction: new Map(
         warranties.flatMap((warranty) =>
           warranty.transactionId ? [[warranty.transactionId, warranty] as const] : [],
@@ -239,7 +251,7 @@ function ExpensesView({ month, onMonth }: { month: string; onMonth: (month: stri
   const shown = lines.filter((item) => matches(item, filter));
 
   const transactionName = (transaction: SpendingTransaction) =>
-    transaction.description || t.spending.categories[transaction.category];
+    transaction.description || categoryName(transaction.category, data.categories);
 
   const nameOf = (item: MonthItem): string => {
     if (item.parts) {
@@ -632,6 +644,7 @@ function TransactionLine({
   onMonth: (month: string) => void;
 }) {
   const { session } = useSession();
+  const custom = useCustomCategories() ?? [];
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   if (!session) return null;
@@ -667,7 +680,7 @@ function TransactionLine({
             ? copy.due(formatIsoDate(transaction.date))
             : copy.oneOff.spentOn(formatIsoDate(transaction.date)),
           oneOff && item.paidOn ? copy.paidOn(formatIsoDate(item.paidOn)) : undefined,
-          t.spending.categories[transaction.category],
+          categoryName(transaction.category, custom),
           warranty ? copy.oneOff.warrantyTag : undefined,
         ]
           .filter(Boolean)
@@ -801,7 +814,7 @@ function ExpenseForm({
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
   const [endMonth, setEndMonth] = useState(initial?.endMonth ?? '');
-  const [category, setCategory] = useState<SpendingCategory>(initial?.category ?? 'other');
+  const [category, setCategory] = useState<CategoryId>(initial?.category ?? 'other');
   const [paidBefore, setPaidBefore] = useState(!initial);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
@@ -926,18 +939,12 @@ function ExpenseForm({
         error={errors.endMonth}
         onChange={(event) => setEndMonth(event.target.value)}
       />
-      <SelectField
+      <CategorySelect
         id={`expense-category-${id}`}
         label={copy.expenses.category}
         value={category}
-        onChange={(event) => setCategory(event.target.value as SpendingCategory)}
-      >
-        {SPENDING_CATEGORIES.map((item) => (
-          <option key={item} value={item}>
-            {t.spending.categories[item]}
-          </option>
-        ))}
-      </SelectField>
+        onChange={(next) => setCategory(next ?? 'other')}
+      />
       {startsInThePast && (
         <label className="month-paid-before">
           <input

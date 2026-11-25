@@ -34,6 +34,7 @@ import { SYNC_ANCHOR } from '../sync/anchor';
 import { CloudChoice, CloudPanel, MovedNotice, MoveToCloud } from '../sync/CloudSync';
 import { useSignInBackToSettings } from '../sync/cloud-return';
 import { BACKUP_ANCHOR } from '../backup/backup';
+import { CategoriesSection } from '../categories/CategoriesSection';
 import { SettingsBlock, SettingsBlocks } from './SettingsBlock';
 import { syncStatus } from './section-status';
 
@@ -52,6 +53,7 @@ const BLOCK_IDS = [
   'administrador',
   'ia',
   'preferencias',
+  'categorias',
   'app',
   'sugestoes',
   BACKUP_ANCHOR,
@@ -67,6 +69,7 @@ export function SettingsPage() {
         <AdminStatsSection />
         <AiSettings />
         <PreferencesSection />
+        <CategoriesSection />
         <AppSection />
         <FeedbackSection />
         <BackupSection />

@@ -1,19 +1,21 @@
 import { INCOME_KINDS } from '../../domain/income';
-import { SPENDING_CATEGORIES } from '../../domain/spending';
+import { categoryOrder } from '../../domain/categories';
 import { t } from '../../i18n/pt-PT';
+import { categoryName, categoryNote, useCustomCategories } from '../categories/use-categories';
 
 const copy = t.spending;
 
 /** Closed by default: what each category is for. */
 export function SpendingHelp() {
+  const custom = useCustomCategories() ?? [];
   return (
     <details className="spending-help">
       <summary>{copy.help.spendingTitle}</summary>
       <dl>
-        {SPENDING_CATEGORIES.map((category) => (
+        {categoryOrder(custom).map((category) => (
           <div key={category}>
-            <dt>{copy.categories[category]}</dt>
-            <dd>{copy.help.category[category]}</dd>
+            <dt>{categoryName(category, custom)}</dt>
+            <dd>{categoryNote(category, custom)}</dd>
           </div>
         ))}
       </dl>

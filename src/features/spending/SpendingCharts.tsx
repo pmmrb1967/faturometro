@@ -2,9 +2,15 @@ import { useId, type ReactNode } from 'react';
 import { niceMax } from '../../components/chart-scale';
 import '../../components/chart.css';
 import { addMonthsTo } from '../../domain/month';
-import { categoryShare, type MonthProgress, type SpendingMonth } from '../../domain/spending';
+import {
+  categoryShare,
+  type MonthProgress,
+  type SpendingItem,
+  type SpendingMonth,
+} from '../../domain/spending';
+import type { CategoryId } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
-import { formatMonth } from '../../lib/dates';
+import { formatIsoDate, formatMonth } from '../../lib/dates';
 import { formatCents, type Cents } from '../../lib/money';
 import { HEIGHT, PAD, TICKS, useChartPointer, useDrawingWidth } from './chart-frame';
 
@@ -13,23 +19,49 @@ const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 
 /**
  * Ranked bars on one baseline, not a pie: with ten categories the small ones must stay readable.
- * Each track is the whole month, so a bar says the same as the percentage beside it.
+ * Each track is the whole month, so a bar says the same as the percentage beside it. A line
+ * opens to show what is in it, highest first.
  */
-export function CategoryChart({ summary }: { summary: SpendingMonth }) {
+export function CategoryChart({
+  summary,
+  categoryLabel,
+  itemName,
+}: {
+  summary: SpendingMonth;
+  categoryLabel: (category: CategoryId) => string;
+  itemName: (item: SpendingItem) => string;
+}) {
   return (
     <figure className="chart">
       <figcaption className="chart-title">{copy.byCategory}</figcaption>
+      <p className="muted spending-hint">{copy.byCategoryHint}</p>
       <ul className="spending-bars">
         {summary.byCategory.map(({ category, totalCents }) => {
           const share = categoryShare(totalCents, summary.byCategory);
+          const items = summary.items
+            .filter((item) => item.category === category)
+            .sort((a, b) => b.amountCents - a.amountCents);
           return (
             <li key={category}>
-              <span>{copy.categories[category]}</span>
-              <strong>{formatCents(totalCents)}</strong>
-              <span className="muted">{share} %</span>
-              <span className="spending-bar" aria-hidden="true">
-                {totalCents > 0 && <span style={{ width: `${share}%` }} />}
-              </span>
+              <details className="spending-category">
+                <summary>
+                  <span>{categoryLabel(category)}</span>
+                  <strong>{formatCents(totalCents)}</strong>
+                  <span className="muted">{share} %</span>
+                  <span className="spending-bar" aria-hidden="true">
+                    {totalCents > 0 && <span style={{ width: `${share}%` }} />}
+                  </span>
+                </summary>
+                <ul className="spending-category-items">
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      <span className="muted">{formatIsoDate(item.date)}</span>
+                      <span>{itemName(item)}</span>
+                      <strong>{formatCents(item.amountCents)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </li>
           );
         })}

@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Field, SelectField } from '../../components/Field';
-import { SPENDING_CATEGORIES } from '../../domain/spending';
-import type { SpendingCategory, Warranty } from '../../domain/types';
+import { Field } from '../../components/Field';
+import type { CategoryId, Warranty } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { centsToPtInput, parsePtAmount } from '../../lib/money';
 import {
@@ -10,6 +9,7 @@ import {
   type WarrantyFieldErrors,
   type WarrantyFieldsValue,
 } from '../warranties/save';
+import { CategorySelect } from '../categories/CategorySelect';
 import { WarrantyFields } from '../warranties/WarrantyFields';
 import type { TransactionDraft } from './receipt';
 
@@ -48,7 +48,7 @@ export function TransactionForm({
   const [amount, setAmount] = useState(
     initial.amountCents !== 0 ? centsToPtInput(initial.amountCents) : '',
   );
-  const [category, setCategory] = useState<SpendingCategory>(initial.category);
+  const [category, setCategory] = useState<CategoryId>(initial.category);
   const [description, setDescription] = useState(initial.description);
   const [date, setDate] = useState(initial.date);
   const [toPay, setToPay] = useState(initial.toPay === true);
@@ -143,18 +143,12 @@ export function TransactionForm({
         error={errors.amount}
         onChange={(event) => setAmount(event.target.value)}
       />
-      <SelectField
+      <CategorySelect
         id={`spending-category-${id}`}
         label={copy.category}
         value={category}
-        onChange={(event) => setCategory(event.target.value as SpendingCategory)}
-      >
-        {SPENDING_CATEGORIES.map((item) => (
-          <option key={item} value={item}>
-            {copy.categories[item]}
-          </option>
-        ))}
-      </SelectField>
+        onChange={(next) => setCategory(next ?? 'other')}
+      />
       <Field
         id={`spending-description-${id}`}
         label={copy.form.description}

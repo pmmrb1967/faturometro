@@ -23,6 +23,9 @@ import { EarlyExitSection } from './EarlyExitSection';
 import { SwitchSection } from './SwitchSection';
 import { TelecomCompare } from './TelecomCompare';
 import '../invoices/invoices.css';
+import { contractCategory } from '../../domain/categories';
+import { CategorySelect } from '../categories/CategorySelect';
+import { categoryName } from '../categories/use-categories';
 
 const copy = t.contracts;
 const kwh = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
@@ -176,6 +179,23 @@ export function ContractPage() {
           </span>
         </label>
       )}
+
+      <div className="contract-category">
+        <CategorySelect
+          id={`contract-category-${contract.id}`}
+          label={t.categories.contract.label}
+          value={contract.category}
+          emptyLabel={t.categories.contract.fromSector(
+            categoryName(contractCategory({ sector: contract.sector }), []),
+          )}
+          onChange={async (category) => {
+            const next = { ...contract };
+            if (category) next.category = category;
+            else delete next.category;
+            await session.repos.contracts.put(next);
+          }}
+        />
+      </div>
 
       {contract.active && MONTHLY_PRICE_SECTORS.includes(contract.sector) && (
         <MonthlyPriceForm

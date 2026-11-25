@@ -8,8 +8,10 @@ PWA gratuita e local-first para acompanhar as faturas da casa em Portugal — el
 
 - **Lê as faturas** em PDF ou fotografia: o código QR fiscal (total, IVA, data) em todas; o resto (período, linhas, consumos, contrato) com leitores automáticos por fornecedor. Uma fatura pode ter várias fotografias.
 - **Valida** cada leitura contra o QR fiscal, venha de um leitor ou da IA.
-- **Alertas:** aumentos de preço, fim de fidelização, fatura em falta, renovação de seguros, leituras estimadas, erros nas contas da fatura.
-- **Contratos:** histórico, mensalidade contratada, periodicidade, coberturas e capitais dos seguros, "mudei de fornecedor".
+- **Alertas:** aumentos de preço, fim de fidelização, fatura em falta, renovação de seguros, leituras estimadas, erros nas contas da fatura, faturas por pagar, garantias a terminar.
+- **Este mês:** uma só lista com tudo o que a casa paga no mês (faturas, faturas previstas, despesas periódicas sem fatura, gastos e despesas pontuais), com o que está pago e por pagar, as receitas e o saldo. Gastos à mão ou pelo QR de um talão, fotografia ou PDF. No Resumo, gráficos ao longo do mês e do ano e por categoria (as da app e as tuas, com uma nota para cada), com as despesas de cada categoria.
+- **Contratos:** histórico, mensalidade contratada, periodicidade, categoria das faturas, coberturas e capitais dos seguros, "mudei de fornecedor".
+- **Garantias:** a garantia legal das compras (3 anos, ou 18 meses num usado), com a fatura guardada, as datas importantes (30 dias para pedir a troca, fim da presunção do defeito, fim da garantia) e avisos no Início antes do fim da presunção e do fim da garantia.
 - **Eletricidade:** comparação com as ofertas do simulador da ERSE.
 - **Casa:** gastos por mês e por tipo de despesa.
 - **Cartas** ao fornecedor, sem IA: pedir um preço melhor, contestar um aumento, reclamar de leituras estimadas, denunciar o contrato.

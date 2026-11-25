@@ -485,6 +485,7 @@ export const t = {
       'Os gráficos só contam valores reais: faturas guardadas, despesas sem fatura, gastos e despesas pontuais. As faturas previstas ficam de fora até chegarem.',
     empty: 'Ainda não há gastos neste mês.',
     byCategory: 'Por categoria',
+    byCategoryHint: 'Carrega numa categoria para veres o que tem.',
     progress: {
       title: 'Ao longo do mês',
       summary: (day: number, current: string, previous: string) =>
@@ -559,7 +560,7 @@ export const t = {
         other: 'O que não couber nas restantes.',
       },
       invoices:
-        'As faturas entram sozinhas: luz, gás, água e telecomunicações em Contas da casa, seguros em Seguros. Nas despesas periódicas sem fatura, escolhes a categoria ao acrescentá-las ou alterá-las.',
+        'As faturas entram sozinhas: luz, gás, água e telecomunicações em Contas da casa, seguros em Seguros; noutra categoria, se a escolheres no contrato. Nas despesas periódicas sem fatura, escolhes a categoria ao acrescentá-las ou alterá-las. Podes acrescentar as tuas categorias nas Definições.',
       income: {
         salary: 'O que recebes do trabalho ou da reforma, todos os meses.',
         rent: 'Rendas pagas pelos teus inquilinos.',
@@ -786,6 +787,40 @@ export const t = {
         endMonth: 'Escreve o mês como 2026-12, igual ou depois do primeiro mês.',
         fromMonth: 'Escreve o mês como 2027-01, igual ou depois do primeiro mês.',
       },
+    },
+  },
+  categories: {
+    title: 'Categorias',
+    status: (count: number) =>
+      count === 0 ? 'Só as da app' : count === 1 ? '1 categoria tua' : `${count} categorias tuas`,
+    intro:
+      'As categorias arrumam as despesas no Resumo de "Este mês". Às da app podes juntar as tuas, com uma nota a dizer o que lá cabe: aparece como ajuda quando escolhes a categoria.',
+    appTitle: 'As categorias da app e o que cabe em cada uma',
+    ownTitle: 'As tuas categorias',
+    empty: 'Ainda não acrescentaste nenhuma.',
+    add: 'Acrescentar categoria',
+    name: 'Nome',
+    namePlaceholder: 'Ex.: Animais',
+    note: 'Nota (opcional)',
+    noteHint: 'O que deve ir para esta categoria.',
+    notePlaceholder: 'Ex.: Ração, veterinário, seguro do cão.',
+    save: 'Guardar categoria',
+    cancel: 'Cancelar',
+    edit: 'Alterar',
+    remove: 'Apagar',
+    confirm: 'Apagar categoria',
+    confirmRemove: (name: string, uses: number) =>
+      uses === 0
+        ? `Apagar a categoria "${name}"? Nenhuma despesa a usa.`
+        : `Apagar a categoria "${name}"? ${uses === 1 ? 'A despesa ou o contrato que a usa passa' : `As ${uses} despesas e contratos que a usam passam`} para "Outros" (os contratos voltam à categoria do setor).`,
+    errors: {
+      name: 'Escreve o nome da categoria.',
+      long: (max: number) => `Usa no máximo ${max} carateres.`,
+      taken: 'Já existe uma categoria com este nome.',
+    },
+    contract: {
+      label: 'Categoria das faturas (no Resumo)',
+      fromSector: (name: string) => `A do setor (${name})`,
     },
   },
   warranties: {
