@@ -489,8 +489,11 @@ export const t = {
       title: 'Ao longo do mês',
       summary: (day: number, current: string, previous: string) =>
         `Até ao dia ${day}: ${current}. No mês anterior, até ao mesmo dia: ${previous}.`,
-      incomeLeft: (amount: string) => `Faltam ${amount} para chegares às receitas do mês.`,
-      incomeOver: (amount: string) => `Já passaste ${amount} acima das receitas do mês.`,
+      incomeLeft: (amount: string) =>
+        `Até hoje, faltam ${amount} para chegares às receitas do mês.`,
+      incomeOver: (amount: string) => `Até hoje já gastaste ${amount} acima das receitas do mês.`,
+      closes: (still: string, balance: string) =>
+        `Com os ${still} que ainda faltam este mês, fecha com um saldo de ${balance}.`,
       incomeBelow: (amount: string) => `Ficaste ${amount} abaixo das receitas do mês.`,
       incomeAbove: (amount: string) => `Ficaste ${amount} acima das receitas do mês.`,
       incomeLabel: 'Receitas',

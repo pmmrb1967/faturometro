@@ -23,12 +23,15 @@ export function SpendingTimeline({
   data,
   incomes,
   incomeCents,
+  monthTotalCents,
 }: {
   month: string;
   progress: MonthProgress | null;
   data: SpendingData;
   incomes: readonly Income[];
   incomeCents: Cents;
+  /** The month's total, forecasts and what is still to pay included. */
+  monthTotalCents?: Cents;
 }) {
   const [view, setView] = useRememberedOrder('faturometro.spending.chart', VIEWS);
   const year = month.slice(0, 4);
@@ -61,6 +64,7 @@ export function SpendingTimeline({
       month={month}
       progress={progress}
       incomeCents={incomeCents}
+      {...(monthTotalCents !== undefined ? { monthTotalCents } : {})}
       past={month < monthOf(today())}
       switcher={switcher}
     />

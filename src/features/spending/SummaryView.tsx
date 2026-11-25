@@ -5,6 +5,7 @@ import { monthProgress, spendingMonth } from '../../domain/spending';
 import { t } from '../../i18n/pt-PT';
 import { today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { useMonthTotals } from '../month/use-month-totals';
 import { CategoryChart } from './SpendingCharts';
 import { SpendingTimeline } from './SpendingTimeline';
 import './spending.css';
@@ -18,6 +19,7 @@ const copy = t.spending;
  */
 export function SummaryView({ month }: { month: string }) {
   const { session } = useSession();
+  const totals = useMonthTotals(month);
   const data = useLiveQuery(async () => {
     if (!session) return null;
     const repos = session.repos;
@@ -34,6 +36,8 @@ export function SummaryView({ month }: { month: string }) {
   if (!session || !data) return null;
 
   const summary = spendingMonth(month, data);
+  // The month's total with what is still to come, as above the tabs.
+  const monthTotalCents = totals?.summary.totalCents;
   const progress = monthProgress(month, data, today());
   const income = incomeMonth(month, data.incomes);
 
@@ -52,6 +56,7 @@ export function SummaryView({ month }: { month: string }) {
           data={data}
           incomes={data.incomes}
           incomeCents={income.totalCents}
+          {...(monthTotalCents !== undefined ? { monthTotalCents } : {})}
         />
         {summary.items.length > 0 && <CategoryChart summary={summary} />}
       </div>

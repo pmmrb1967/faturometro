@@ -46,12 +46,15 @@ export function ProgressChart({
   month,
   progress,
   incomeCents = 0,
+  monthTotalCents,
   past = false,
   switcher,
 }: {
   month: string;
   progress: MonthProgress;
   incomeCents?: Cents;
+  /** The month's total with what is still to come: how the month closes. */
+  monthTotalCents?: Cents;
   /** The month is over: the text says how it ended, not what is left. */
   past?: boolean;
   switcher: ReactNode;
@@ -82,6 +85,15 @@ export function ProgressChart({
       formatCents(previous[Math.min(lastIndex, previous.length - 1)] ?? 0),
     ),
     ...(incomeCents > 0 ? [againstIncome] : []),
+    // Today's line is not the month's balance: what is still to come closes it.
+    ...(incomeCents > 0 && !past && monthTotalCents !== undefined && monthTotalCents > atLast
+      ? [
+          copy.progress.closes(
+            formatCents(monthTotalCents - atLast),
+            formatCents(incomeCents - monthTotalCents),
+          ),
+        ]
+      : []),
   ].join(' ');
   const names = { current: formatMonth(month), previous: formatMonth(addMonthsTo(month, -1)) };
 
