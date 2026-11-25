@@ -864,8 +864,6 @@ export const t = {
     repairsNote:
       'As datas são as mais cedo possíveis: enquanto o bem está a ser reparado, a garantia fica parada, e cada reparação acrescenta 6 meses. A app ainda não soma esse tempo.',
     disclaimer: 'Informação geral, não é aconselhamento jurídico.',
-    problem: 'Tens um problema com este bem?',
-    problemLink: 'O Prazómetro ajuda-te a reclamar à loja',
     noDocument: 'sem fatura guardada',
     errors: {
       product: 'Escreve o que compraste.',

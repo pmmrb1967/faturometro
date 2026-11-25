@@ -25,8 +25,6 @@ import { WarrantyFields } from './WarrantyFields';
 const copy = t.warranties;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const LAW_URL = 'https://diariodarepublica.pt/dr/detalhe/decreto-lei/84-2021-172938301';
-/** Prazómetro (a separate app): letters to complain to the store. A plain link, nothing sent. */
-const PRAZOMETRO_URL = 'https://app.prazometro.workers.dev/garantia/nova';
 
 /** The tab "Garantias" of Contratos: each purchase's legal warranty and its document. */
 export function WarrantiesView() {
@@ -196,14 +194,6 @@ function WarrantyItem({
             </p>
             <p className="muted">{copy.repairsNote}</p>
           </>
-        )}
-        {status.state !== 'ended' && (
-          <p>
-            {copy.problem}{' '}
-            <a href={PRAZOMETRO_URL} target="_blank" rel="noreferrer">
-              {copy.problemLink}
-            </a>
-          </p>
         )}
         <p className="muted">{copy.disclaimer}</p>
       </details>

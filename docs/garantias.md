@@ -59,5 +59,4 @@ vazio):
 
 ## Fora do âmbito
 
-As cartas de reclamação ficam no Prazómetro: cada garantia ainda em curso tem
-uma ligação simples para a página de garantias do Prazómetro, sem enviar dados.
+As cartas de reclamação à loja: a app não as escreve nem remete para outra app.
