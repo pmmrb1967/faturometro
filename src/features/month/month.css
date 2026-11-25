@@ -57,6 +57,45 @@
   border-style: dashed;
 }
 
+/* The kind of each line: a bar on the left and, under it, its name with an icon. */
+.month-item.kind-invoice,
+.month-item.kind-forecast {
+  --kind: var(--kind-invoice);
+}
+
+.month-item.kind-expense {
+  --kind: var(--kind-expense);
+}
+
+.month-item.kind-oneOff {
+  --kind: var(--kind-oneoff);
+}
+
+.list-item.month-item {
+  border-left: 5px solid var(--kind, var(--border));
+}
+
+.list-item.month-item.is-forecast {
+  border-left-style: dashed;
+}
+
+.month-kind {
+  order: 1;
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--kind);
+}
+
+.month-kind svg {
+  flex: none;
+}
+
 .month-item.is-forecast strong,
 .month-item.is-forecast .amount {
   color: var(--muted);

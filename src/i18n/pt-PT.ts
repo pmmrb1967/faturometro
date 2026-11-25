@@ -694,9 +694,6 @@ export const t = {
         count === 0 ? 'Nenhum neste mês.' : `${count} neste mês · ${total}`,
       intro:
         'Compras já feitas, frequentes (combustível, farmácia, prendas) ou de uma só vez (uma máquina de lavar), e despesas que ainda tens de pagar uma vez, como uma obra. Se a compra tem garantia, guarda a fatura com ela.',
-      introBasic:
-        'Despesas de uma só vez, como uma obra ou um eletrodoméstico, já pagas ou ainda por pagar. Se a compra tem garantia, guarda a fatura com ela.',
-      add: 'Acrescentar',
       purchaseTag: 'Gasto',
       oneOffTag: 'Pontual',
       warrantyTag: 'Com garantia',
@@ -721,8 +718,12 @@ export const t = {
     statement: (label: string) => `${label} — extrato`,
     statementShow: (count: number) => `Ver as ${count} faturas`,
     statementHide: 'Esconder as faturas',
-    expenseTag: 'Sem fatura',
-    forecastTag: 'Prevista',
+    kinds: {
+      invoice: 'Fatura',
+      forecast: 'Fatura prevista',
+      expense: 'Periódica sem fatura',
+      oneOff: 'Pontual',
+    },
     forecastAmount: (amount: string) => `≈ ${amount}`,
     forecastDue: (date: string) => `Vence por volta de ${date}`,
     forecastDebit: (date: string) => `Débito direto por volta de ${date}`,
@@ -1267,8 +1268,6 @@ export const t = {
     largeFamily:
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
-    spendingEnabled:
-      'Registar também as compras do dia a dia (com leitura de talões) e as receitas em "Este mês", com o separador Resumo',
     saved: 'Guardado.',
     /** The line next to each closed block of the page. */
     status: {

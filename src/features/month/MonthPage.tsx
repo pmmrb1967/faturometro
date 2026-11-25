@@ -37,7 +37,6 @@ import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
 import { AddInvoice } from '../ingest/AddInvoice';
 import { ProviderCoverage } from '../ingest/ProviderCoverage';
-import { getSettings } from '../settings/settings';
 import { IncomeSection } from '../spending/IncomeSection';
 import { SummaryView } from '../spending/SummaryView';
 import { TransactionForm } from '../spending/TransactionForm';
@@ -50,6 +49,8 @@ import { moveOneOffExpenses } from './one-off-migration';
 import { saveOneOff } from './one-off-save';
 import { OneOffSection } from './OneOffSection';
 import './month.css';
+import { KindTag } from './KindTag';
+import { lineKind } from './line-kind';
 import { MonthTotals } from './MonthTotals';
 import { useRememberedOrder } from './use-remembered-order';
 
@@ -89,16 +90,11 @@ function firstTab(): Tab {
 export function MonthPage() {
   const { session } = useSession();
   const [month, setMonth] = useState(monthOf(today()));
-  const [chosen, setChosen] = useState<Tab>(firstTab);
-  const settings = useLiveQuery(
-    async () => (session ? getSettings(session.repos) : null),
-    [session],
-  );
-  if (!session || !settings) return null;
-  const tab = settings.spendingEnabled ? chosen : 'expenses';
+  const [tab, setTab] = useState<Tab>(firstTab);
+  if (!session) return null;
 
   function choose(next: Tab) {
-    setChosen(next);
+    setTab(next);
     try {
       localStorage.setItem(TAB_KEY, next);
     } catch {
@@ -109,22 +105,20 @@ export function MonthPage() {
   return (
     <>
       <h1>{t.nav.month}</h1>
-      {settings.spendingEnabled && (
-        <div className="compare-tabs" role="tablist" aria-label={t.nav.month}>
-          {(['expenses', 'summary'] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={tab === item}
-              className="compare-tab"
-              onClick={() => choose(item)}
-            >
-              {copy.tabs[item]}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="compare-tabs" role="tablist" aria-label={t.nav.month}>
+        {(['expenses', 'summary'] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={tab === item}
+            className="compare-tab"
+            onClick={() => choose(item)}
+          >
+            {copy.tabs[item]}
+          </button>
+        ))}
+      </div>
       <p className="muted">{tab === 'summary' ? t.spending.intro : copy.intro}</p>
 
       <div className="month-nav">
@@ -151,12 +145,12 @@ export function MonthPage() {
         </button>
       </div>
 
-      <MonthTotals month={month} withIncome={settings.spendingEnabled} />
+      <MonthTotals month={month} />
 
       {tab === 'summary' ? (
         <SummaryView month={month} />
       ) : (
-        <ExpensesView month={month} onMonth={setMonth} withSpending={settings.spendingEnabled} />
+        <ExpensesView month={month} onMonth={setMonth} />
       )}
     </>
   );
@@ -173,15 +167,7 @@ function matches(item: MonthItem, filter: Filter): boolean {
  * first), then the blocks to add income, invoices, recurring expenses without
  * an invoice and one-off expenses.
  */
-function ExpensesView({
-  month,
-  onMonth,
-  withSpending,
-}: {
-  month: string;
-  onMonth: (month: string) => void;
-  withSpending: boolean;
-}) {
+function ExpensesView({ month, onMonth }: { month: string; onMonth: (month: string) => void }) {
   const { session } = useSession();
   // Expense being changed, in its line of the month or in the expenses block.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
@@ -243,7 +229,7 @@ function ExpensesView({
     forecasts: forecastInvoices(contracts, invoices, date),
     transactions: data.transactions,
   });
-  const income = withSpending ? incomeMonth(month, data.incomes) : null;
+  const income = incomeMonth(month, data.incomes);
   // Recurring expenses between their first and last month (due this month or not).
   const active = recurring
     .filter((expense) => expenseActive(expense, month))
@@ -385,8 +371,11 @@ function ExpensesView({
                 const name = nameOf(item);
                 if (item.kind === 'forecast') {
                   return (
-                    <li key={item.paymentId} className="list-item month-item is-forecast">
-                      <span className="month-check">{copy.forecastTag}</span>
+                    <li
+                      key={item.paymentId}
+                      className="list-item month-item is-forecast kind-forecast"
+                    >
+                      <span className="month-check" aria-hidden="true" />
                       <strong>{name}</strong>
                       <span className="amount">
                         {copy.forecastAmount(formatCents(item.amountCents))}
@@ -399,6 +388,7 @@ function ExpensesView({
                             : copy.forecastIssued(formatIsoDate(item.date))}
                         {item.late && ` · ${copy.forecastLate}`}
                       </span>
+                      <KindTag kind="forecast" />
                     </li>
                   );
                 }
@@ -430,7 +420,7 @@ function ExpensesView({
                 return (
                   <li
                     key={item.paymentId}
-                    className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}
+                    className={`list-item month-item kind-${lineKind(item)}${item.paidOn ? ' is-paid' : ''}`}
                   >
                     <PaidCheck
                       item={item}
@@ -455,8 +445,8 @@ function ExpensesView({
                               ? copy.receiptPaid(formatIsoDate(item.paidOn))
                               : copy.paidOn(formatIsoDate(item.paidOn))
                         }`}
-                      {item.kind === 'expense' && ` · ${copy.expenseTag}`}
                     </span>
+                    <KindTag kind={lineKind(item)} />
                     {item.parts && (
                       <div className="month-parts">
                         <button
@@ -495,20 +485,18 @@ function ExpensesView({
         )}
       </GroupBlock>
 
-      {income && (
-        <GroupBlock
-          title={t.spending.income.title}
-          summary={
-            income.items.length === 0
-              ? t.spending.income.emptyMonth
-              : t.spending.income.listSummary(income.items.length, formatCents(income.totalCents))
-          }
-          open={groups.isOpen('income')}
-          onToggle={(open) => groups.setOpen('income', open)}
-        >
-          <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} flat />
-        </GroupBlock>
-      )}
+      <GroupBlock
+        title={t.spending.income.title}
+        summary={
+          income.items.length === 0
+            ? t.spending.income.emptyMonth
+            : t.spending.income.listSummary(income.items.length, formatCents(income.totalCents))
+        }
+        open={groups.isOpen('income')}
+        onToggle={(open) => groups.setOpen('income', open)}
+      >
+        <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} flat />
+      </GroupBlock>
 
       <GroupBlock
         title={copy.addInvoice.title}
@@ -599,7 +587,7 @@ function ExpensesView({
         open={groups.isOpen('oneOff')}
         onToggle={(open) => groups.setOpen('oneOff', open)}
       >
-        <OneOffSection month={month} withReceipts={withSpending} onMonth={onMonth} />
+        <OneOffSection month={month} onMonth={onMonth} />
       </GroupBlock>
     </>
   );
@@ -669,7 +657,7 @@ function TransactionLine({
   }
 
   return (
-    <li className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}>
+    <li className={`list-item month-item kind-oneOff${item.paidOn ? ' is-paid' : ''}`}>
       <PaidCheck item={item} name={name} onPaid={onPaid} />
       <strong>{name}</strong>
       <span className="amount">{formatCents(item.amountCents)}</span>
@@ -680,12 +668,12 @@ function TransactionLine({
             : copy.oneOff.spentOn(formatIsoDate(transaction.date)),
           oneOff && item.paidOn ? copy.paidOn(formatIsoDate(item.paidOn)) : undefined,
           t.spending.categories[transaction.category],
-          oneOff ? copy.oneOff.oneOffTag : copy.oneOff.purchaseTag,
           warranty ? copy.oneOff.warrantyTag : undefined,
         ]
           .filter(Boolean)
           .join(' · ')}
       </span>
+      <KindTag kind="oneOff" label={oneOff ? copy.oneOff.oneOffTag : copy.oneOff.purchaseTag} />
       {confirming ? (
         <div className="month-confirm" role="alert">
           <p>{copy.oneOff.confirmRemove(name)}</p>

@@ -15,7 +15,7 @@ const copy = t.month;
  * The totals of "Este mês", above both tabs: the same numbers in "Despesas"
  * and "Resumo", forecasts included (and said so).
  */
-export function MonthTotals({ month, withIncome }: { month: string; withIncome: boolean }) {
+export function MonthTotals({ month }: { month: string }) {
   const { session } = useSession();
   const data = useLiveQuery(async () => {
     if (!session) return null;
@@ -45,8 +45,8 @@ export function MonthTotals({ month, withIncome }: { month: string; withIncome: 
       transactions: countedTransactions(data.transactions, data.invoices),
     },
   );
-  const income = withIncome ? incomeMonth(month, data.incomes) : null;
-  const hasIncome = income !== null && income.items.length > 0;
+  const income = incomeMonth(month, data.incomes);
+  const hasIncome = income.items.length > 0;
 
   return (
     <>

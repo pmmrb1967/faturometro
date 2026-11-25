@@ -15,6 +15,11 @@
   --highlight: #f2b134;
   --tint: #eef2ee;
   --border-strong: #c9d3cb;
+  /* The kinds of expense in the list of "Este mês": invoices (and forecasts), recurring
+     expenses without an invoice, one-off ones. */
+  --kind-invoice: #1f7a5a;
+  --kind-expense: #2b62a8;
+  --kind-oneoff: #8a3f9e;
   --nav-height: 64px;
   --font-display: 'Bricolage Grotesque Variable', system-ui, sans-serif;
   --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
@@ -40,6 +45,9 @@
     --accent-deep: #183a2f;
     --tint: #111a16;
     --border-strong: #2c3a33;
+    --kind-invoice: #6fc3a2;
+    --kind-expense: #8fb6ec;
+    --kind-oneoff: #d3a4e6;
   }
 }
 
@@ -422,4 +430,3 @@ body {
 .content a:not([class]) {
   color: var(--accent);
 }
-

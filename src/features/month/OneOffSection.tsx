@@ -27,12 +27,9 @@ type Notice = { text: string; month: string; problem?: boolean };
  */
 export function OneOffSection({
   month,
-  withReceipts,
   onMonth,
 }: {
   month: string;
-  /** Receipts and day-to-day purchases (Definições, "Gastos"). */
-  withReceipts: boolean;
   onMonth: (month: string) => void;
 }) {
   const { session } = useSession();
@@ -58,7 +55,7 @@ export function OneOffSection({
       id: crypto.randomUUID(),
       date: monthOf(now) === month ? now : `${month}-01`,
       amountCents: 0,
-      category: withReceipts ? 'food' : 'home',
+      category: 'other',
       description: '',
       source: 'manual',
     };
@@ -132,16 +129,14 @@ export function OneOffSection({
 
   return (
     <>
-      <p className="muted">{withReceipts ? t.month.oneOff.intro : t.month.oneOff.introBasic}</p>
+      <p className="muted">{t.month.oneOff.intro}</p>
       <div className="month-actions">
         <button type="button" className="action-primary" onClick={startNew}>
-          {withReceipts ? copy.add : t.month.oneOff.add}
+          {copy.add}
         </button>
-        {withReceipts && (
-          <button type="button" className="action-secondary" disabled={reading} onClick={startScan}>
-            {copy.scan}
-          </button>
-        )}
+        <button type="button" className="action-secondary" disabled={reading} onClick={startScan}>
+          {copy.scan}
+        </button>
         <button
           type="button"
           className="action-secondary"
@@ -179,7 +174,7 @@ export function OneOffSection({
           onClose={() => setScanning(false)}
         />
       )}
-      {withReceipts && <p className="muted spending-hint">{copy.scanHint}</p>}
+      <p className="muted spending-hint">{copy.scanHint}</p>
       <SpendingHelp />
 
       {reading && <p role="status">{copy.receipt.reading}</p>}

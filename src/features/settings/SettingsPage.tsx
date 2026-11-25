@@ -612,8 +612,7 @@ function PreferencesSection() {
   if (!session || !settings) return null;
 
   const toggle =
-    (field: 'largeFamily' | 'keepOriginalFiles' | 'spendingEnabled') =>
-    (event: { target: { checked: boolean } }) =>
+    (field: 'largeFamily' | 'keepOriginalFiles') => (event: { target: { checked: boolean } }) =>
       void updateSettings(session.repos, { [field]: event.target.checked });
 
   return (
@@ -629,14 +628,6 @@ function PreferencesSection() {
           onChange={toggle('keepOriginalFiles')}
         />
         {t.settings.keepOriginalFiles}
-      </label>
-      <label className="check settings-check">
-        <input
-          type="checkbox"
-          checked={settings.spendingEnabled}
-          onChange={toggle('spendingEnabled')}
-        />
-        {t.settings.spendingEnabled}
       </label>
     </SettingsBlock>
   );

@@ -455,7 +455,7 @@ export interface Settings extends SyncMeta {
   largeFamily: boolean;
   /** Minimum estimated yearly saving for a "cheaper offer" alert (PLAN.md §9). */
   cheaperOfferMinSavingCents: number;
-  /** Show receipts, income and the tab "Resumo" on "Este mês" (off by default; turning it off keeps the data). */
+  /** Legacy: receipts, income and "Resumo" used to be hidden behind it; now always shown and ignored. */
   spendingEnabled: boolean;
   /** Date of the last backup exported (`YYYY-MM-DD`), for the reminder on the home page. */
   lastBackupAt?: string;
