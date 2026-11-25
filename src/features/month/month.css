@@ -133,3 +133,16 @@
 .month-confirm p {
   margin: 0;
 }
+
+/* The warranty kept with a purchase, inside its form. */
+.month-warranty {
+  margin: 0 0 16px;
+  padding: 12px 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.month-warranty legend {
+  padding: 0 6px;
+  font-weight: 600;
+}

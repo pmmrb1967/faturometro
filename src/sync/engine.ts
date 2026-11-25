@@ -22,6 +22,7 @@ export const SYNCED_TABLES = [
   'consumptionProfiles',
   'transactions',
   'incomes',
+  'warranties',
 ] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
 

@@ -228,7 +228,8 @@ export interface Alert extends SyncMeta {
     | 'social_tariff_lost'
     | 'payment_due'
     | 'social_tariff_suggestion'
-    | 'direct_debit_soon';
+    | 'direct_debit_soon'
+    | 'warranty_ending';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;
@@ -259,7 +260,8 @@ export interface RecurringExpense extends SyncMeta {
   everyMonths: 1 | 2 | 3 | 4 | 6 | 12;
   /**
    * Paid once (works, a new fridge): `endMonth` equals `startMonth`, so it is due
-   * only then. On the household chart they have their own switch.
+   * only then. No longer written: one-off expenses are {@link SpendingTransaction}s
+   * with `toPay`, and older ones are moved there (`features/month/one-off-migration.ts`).
    */
   oneOff?: true;
   /** Day of the month it is due (shorter months use their last day). */
@@ -291,11 +293,17 @@ export type SpendingCategory =
   | 'other';
 
 /**
- * One-off purchase on the page "Gastos", typed or read from the QR code of a
- * receipt. Invoices and recurring expenses are not copied here.
+ * One-off expense on "Este mês": a purchase already made (typed or read from
+ * the QR code of a receipt) or one still to pay (works, a new appliance).
+ * Invoices and recurring expenses are not copied here.
  */
 export interface SpendingTransaction extends SyncMeta {
+  /** Day of the purchase or, with `toPay`, the day it is due. */
   date: IsoDate;
+  /** Still to pay: due on `date`, paid when the user ticks it. */
+  toPay?: true;
+  /** Day it was paid, when not `date` (ticked after being due). */
+  paidOn?: IsoDate;
   /** Negative for a refund or a credit note. */
   amountCents: Cents;
   category: SpendingCategory;
@@ -306,6 +314,28 @@ export interface SpendingTransaction extends SyncMeta {
   issuerNif?: string;
   /** Same key as {@link Invoice.docKey}; it also sets the id, so devices write one record. */
   docKey?: string;
+  createdAt: IsoDateTime;
+}
+
+/**
+ * Legal warranty of something bought (an appliance, works): from the day it was
+ * delivered, for `months` (DL 84/2021: 36, or 18 agreed for a used good;
+ * docs/garantias.md). The invoice or receipt is kept in `documents` by `fileHash`.
+ */
+export interface Warranty extends SyncMeta {
+  product: string;
+  /** Shop or company that sold it (optional). */
+  seller?: string;
+  purchaseDate: IsoDate;
+  /** The warranty runs from this day. */
+  deliveryDate: IsoDate;
+  months: number;
+  priceCents?: Cents;
+  /** File of the invoice or receipt, in `documents`. */
+  fileHash?: string;
+  /** The one-off expense it came from, if any. */
+  transactionId?: string;
+  notes?: string;
   createdAt: IsoDateTime;
 }
 
@@ -425,7 +455,7 @@ export interface Settings extends SyncMeta {
   largeFamily: boolean;
   /** Minimum estimated yearly saving for a "cheaper offer" alert (PLAN.md §9). */
   cheaperOfferMinSavingCents: number;
-  /** Show the section "Gastos" (off by default; turning it off keeps the data). */
+  /** Show receipts, income and the tab "Resumo" on "Este mês" (off by default; turning it off keeps the data). */
   spendingEnabled: boolean;
   /** Date of the last backup exported (`YYYY-MM-DD`), for the reminder on the home page. */
   lastBackupAt?: string;

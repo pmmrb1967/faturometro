@@ -7,6 +7,7 @@ import { requestPersistentStorage } from '../../lib/persistent-storage';
 import type { UnlockedAccount } from './accounts';
 import { refreshAlerts } from '../alerts/refresh';
 import { moveViaVerdeToTransport } from '../invoices/transport-migration';
+import { moveOneOffExpenses } from '../month/one-off-migration';
 import { SessionContext, type Session } from './session-context';
 import {
   forgetSession,
@@ -89,13 +90,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hasSession) void requestPersistentStorage();
   }, [hasSession]);
-  // Data moves after an update of the app (sector "Transportes" for Via Verde).
+  // Data moves after an update of the app (sector "Transportes" for Via Verde,
+  // one-off expenses with the purchases).
   const repos = session?.repos;
   useEffect(() => {
     if (!repos) return;
     void moveViaVerdeToTransport(repos)
       .then((moved) => (moved > 0 ? refreshAlerts(repos) : undefined))
       .catch(() => undefined);
+    void moveOneOffExpenses(repos).catch(() => undefined);
   }, [repos]);
 
   const value = useMemo(

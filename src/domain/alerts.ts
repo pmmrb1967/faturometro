@@ -18,7 +18,9 @@ import type {
   Reading,
   Sector,
   Settings,
+  Warranty,
 } from './types';
+import { warrantyStatus } from './warranty';
 
 export const MISSING_INVOICE_DAYS = 40;
 /** The meter reading reminder shows this many days before the window opens. */
@@ -56,6 +58,8 @@ export interface AlertInput {
   /** "Paid" marks; the due-payment alert only shows for users who mark payments. */
   payments?: Payment[];
   settings: Pick<Settings, 'priceIncreaseThresholdPct' | 'loyaltyAlertDays'>;
+  /** Legal warranties of purchases: an alert in their last days. */
+  warranties?: Pick<Warranty, 'id' | 'product' | 'deliveryDate' | 'months'>[];
   /** ISO date. */
   today: string;
 }
@@ -509,7 +513,32 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
         ...paymentDueAlerts(contract, history, input.today, isPaid, marksPayments),
       ].filter((alert): alert is AlertDraft => alert !== null);
     });
-  return [...perContract, ...suggestions];
+  return [...perContract, ...suggestions, ...warrantyAlerts(input.warranties ?? [], input.today)];
+}
+
+/** A warranty in its last days (not tied to a contract: `contractId` is empty). */
+export function warrantyAlerts(
+  warranties: readonly Pick<Warranty, 'id' | 'product' | 'deliveryDate' | 'months'>[],
+  today: string,
+): AlertDraft[] {
+  return warranties.flatMap((warranty) => {
+    const status = warrantyStatus(warranty, today);
+    if (status.state !== 'ending') return [];
+    return [
+      {
+        key: `warranty:${warranty.id}:ending`,
+        contractId: '',
+        kind: 'warranty_ending' as const,
+        severity: 'info' as const,
+        data: {
+          warrantyId: warranty.id,
+          product: warranty.product,
+          endDate: status.endDate,
+          daysLeft: status.daysLeft,
+        },
+      },
+    ];
+  });
 }
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {

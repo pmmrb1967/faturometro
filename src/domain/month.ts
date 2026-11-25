@@ -4,18 +4,20 @@
  * typed by the user count in the months they are due. Each item can be marked
  * as paid; invoices paid by direct debit count as paid from the debit day on.
  * Invoices still to come count as forecasts, which cannot be marked as paid.
- * Pure: no React, no database.
+ * One-off expenses (purchases, works) count on their day: paid then, unless
+ * still to pay. Pure: no React, no database.
  */
 import type { Cents } from '../lib/money';
 import type { ForecastInvoice } from './forecast';
-import type { Contract, Invoice, Payment, RecurringExpense } from './types';
+import type { Contract, Invoice, Payment, RecurringExpense, SpendingTransaction } from './types';
 
 export interface MonthItem {
   /** Stable key, also the id of its "paid" mark. */
   paymentId: string;
-  kind: 'invoice' | 'expense' | 'forecast';
+  kind: 'invoice' | 'expense' | 'transaction' | 'forecast';
   invoiceId?: string;
   expenseId?: string;
+  transactionId?: string;
   /** Contract of a forecast invoice. */
   contractId?: string;
   /** Direct debit date, else due date, else the issue date of an invoice without one. */
@@ -173,7 +175,45 @@ export function uncheckAction(item: Pick<MonthItem, 'autoPaid'>): 'unpaid' | 're
 export const MONTH_ORDERS = ['date', 'amount', 'type', 'unpaid'] as const;
 export type MonthOrder = (typeof MONTH_ORDERS)[number];
 
-const KIND_RANK: Record<MonthItem['kind'], number> = { invoice: 0, expense: 1, forecast: 2 };
+const KIND_RANK: Record<MonthItem['kind'], number> = {
+  invoice: 0,
+  expense: 1,
+  transaction: 2,
+  forecast: 3,
+};
+
+/** Day a one-off expense was paid, or null while it is still to pay. */
+export function transactionPaidOn(
+  transaction: Pick<SpendingTransaction, 'date' | 'toPay' | 'paidOn'>,
+): string | null {
+  if (transaction.toPay) return null;
+  return transaction.paidOn ?? transaction.date;
+}
+
+/** A one-off expense ticked (paid today) or unticked (back to still to pay). */
+export function withTransactionPaid<
+  T extends Pick<SpendingTransaction, 'date' | 'toPay' | 'paidOn'>,
+>(transaction: T, paid: boolean, today: string): T {
+  const next = { ...transaction };
+  delete next.toPay;
+  delete next.paidOn;
+  if (!paid) return { ...next, toPay: true };
+  return today === transaction.date ? next : { ...next, paidOn: today };
+}
+
+/**
+ * One-off expenses whose document is also an invoice (a receipt read before
+ * the invoice was added) would count twice: the invoice wins.
+ */
+export function countedTransactions<T extends Pick<SpendingTransaction, 'docKey'>>(
+  transactions: readonly T[],
+  invoices: readonly Pick<Invoice, 'docKey'>[],
+): T[] {
+  const invoiced = new Set(invoices.map((invoice) => invoice.docKey));
+  return transactions.filter(
+    (transaction) => !transaction.docKey || !invoiced.has(transaction.docKey),
+  );
+}
 
 /** Items of a month in another order; a tie keeps the date order of the list. */
 export function sortMonthItems(items: readonly MonthItem[], order: MonthOrder): MonthItem[] {
@@ -195,6 +235,8 @@ export function monthSummary(
     today?: string;
     contracts?: readonly Contract[];
     forecasts?: readonly ForecastInvoice[];
+    /** One-off expenses, already without those that are also invoices (`countedTransactions`). */
+    transactions?: readonly SpendingTransaction[];
   } = {},
 ): MonthSummary {
   const byId = new Map(payments.map((payment) => [payment.id, payment]));
@@ -242,6 +284,19 @@ export function monthSummary(
       hasDueDate: true,
       amountCents: expenseAmount(expense, month),
       ...(paid ? { paidOn: paid.paidOn, ...(paid.auto ? { autoPaid: true } : {}) } : {}),
+    });
+  }
+  for (const transaction of options.transactions ?? []) {
+    if (monthOf(transaction.date) !== month) continue;
+    const paidOn = transactionPaidOn(transaction);
+    items.push({
+      paymentId: `transaction-${transaction.id}`,
+      kind: 'transaction',
+      transactionId: transaction.id,
+      date: transaction.date,
+      hasDueDate: transaction.toPay === true || transaction.paidOn !== undefined,
+      amountCents: transaction.amountCents,
+      ...(paidOn ? { paidOn } : {}),
     });
   }
   for (const forecast of options.forecasts ?? []) {

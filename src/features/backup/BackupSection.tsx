@@ -11,6 +11,7 @@ import { getSettings, updateSettings } from '../settings/settings';
 import { syncSession } from '../sync/sync-store';
 import { AutoBackupSection } from './AutoBackupSection';
 import { BACKUP_ANCHOR, BackupError, backupFileName, exportBackup, importBackup } from './backup';
+import { moveOneOffExpenses } from '../month/one-off-migration';
 import { decryptBackup, isEncryptedBackup } from './encrypted-backup';
 import { SettingsBlock } from '../settings/SettingsBlock';
 import { backupStatus } from '../settings/section-status';
@@ -125,6 +126,8 @@ export function BackupSection() {
     setMessage(undefined);
     try {
       const result = await importBackup(repos, bytes);
+      // A backup from an older version may still have one-off expenses in the old place.
+      await moveOneOffExpenses(repos).catch(() => 0);
       await refreshAlerts(repos);
       setMessage({ text: copy.imported(result.added, result.skipped, result.files) });
       // The other devices get it now, not at the next automatic sync.

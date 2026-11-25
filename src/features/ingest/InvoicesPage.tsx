@@ -1,5 +1,6 @@
 import { t } from '../../i18n/pt-PT';
 import { InvoiceList } from '../invoices/InvoiceList';
+import { WarrantyDocuments } from '../warranties/WarrantyDocuments';
 import { AddInvoice } from './AddInvoice';
 import { ProviderCoverage } from './ProviderCoverage';
 import '../insurance/insurance.css';
@@ -11,6 +12,7 @@ export function InvoicesPage() {
       <AddInvoice />
       <ProviderCoverage />
       <InvoiceList />
+      <WarrantyDocuments />
     </>
   );
 }

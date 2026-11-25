@@ -88,7 +88,13 @@ export async function exportBackup(repos: Repositories): Promise<ExportResult> {
 
   const zip: Zippable = {};
   const documents: BackupData['documents'] = [];
-  const hashes = new Set((await repos.invoices.list()).map((invoice) => invoice.fileHash));
+  // Originals of the invoices and the invoices or receipts kept with the warranties.
+  const hashes = new Set([
+    ...(await repos.invoices.list()).map((invoice) => invoice.fileHash),
+    ...(await repos.warranties.list()).flatMap((warranty) =>
+      warranty.fileHash ? [warranty.fileHash] : [],
+    ),
+  ]);
   for (const fileHash of hashes) {
     const file = await repos.documents.getByFileHash(fileHash);
     if (!file) continue;

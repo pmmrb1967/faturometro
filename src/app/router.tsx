@@ -76,7 +76,7 @@ export const router = createBrowserRouter([
           : { path: section.path, element: sectionElement(section.id) },
       ),
       // "Gastos" was a section of its own at first: old links open its tab.
-      { path: '/app/gastos', element: <Navigate to="/app/mes?separador=gastos" replace /> },
+      { path: '/app/gastos', element: <Navigate to="/app/mes?separador=resumo" replace /> },
       { path: '/app/contratos/:id', element: <ContractPage /> },
       { path: '/app/tarifa-social', element: <SocialTariffPage /> },
     ],

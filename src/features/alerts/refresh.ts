@@ -96,6 +96,12 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
       );
     case 'renewal':
       return copy.renewal(label, formatIsoDate(text('date')), number('daysLeft'));
+    case 'warranty_ending':
+      return copy.warrantyEnding(
+        text('product'),
+        formatIsoDate(text('endDate')),
+        number('daysLeft'),
+      );
     case 'invoice_audit': {
       const kinds = Array.isArray(data.kinds) ? data.kinds.map(String) : [];
       const parts = kinds.map((kind) => copy.auditParts[kind]).filter(Boolean) as string[];
@@ -109,15 +115,17 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
  * removed, and dismissed alerts are kept (so they do not come back).
  */
 export async function refreshAlerts(repos: Repositories, date = today()): Promise<void> {
-  const [contracts, invoices, lines, readings, payments, settings, existing] = await Promise.all([
-    repos.contracts.list(),
-    repos.invoices.list(),
-    repos.invoiceLines.list(),
-    repos.readings.list(),
-    repos.payments.list(),
-    getSettings(repos),
-    repos.alerts.list(),
-  ]);
+  const [contracts, invoices, lines, readings, payments, settings, existing, warranties] =
+    await Promise.all([
+      repos.contracts.list(),
+      repos.invoices.list(),
+      repos.invoiceLines.list(),
+      repos.readings.list(),
+      repos.payments.list(),
+      getSettings(repos),
+      repos.alerts.list(),
+      repos.warranties.list(),
+    ]);
   const contractById = new Map(contracts.map((contract) => [contract.id, contract]));
   const drafts = computeAlerts({
     contracts,
@@ -126,6 +134,7 @@ export async function refreshAlerts(repos: Repositories, date = today()): Promis
     readings,
     payments,
     settings,
+    warranties,
     today: date,
   });
   const wanted = new Map(drafts.map((draft) => [draft.key, draft]));

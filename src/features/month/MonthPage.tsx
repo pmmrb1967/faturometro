@@ -1,9 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Field, SelectField } from '../../components/Field';
 import { GroupBlock } from '../../components/GroupBlock';
+import { useOpenGroups } from '../../components/group-state';
+import { forecastInvoices } from '../../domain/forecast';
+import { incomeMonth } from '../../domain/income';
 import {
   addMonthsTo,
+  countedTransactions,
   expenseActive,
   expenseAmount,
   expenseDueDate,
@@ -14,47 +18,74 @@ import {
   sortMonthItems,
   uncheckAction,
   withAmountFrom,
+  withTransactionPaid,
   type MonthItem,
   type MonthOrder,
 } from '../../domain/month';
-import { forecastInvoices } from '../../domain/forecast';
-import type { Payment, RecurringExpense } from '../../domain/types';
+import { SPENDING_CATEGORIES } from '../../domain/spending';
+import type {
+  Payment,
+  RecurringExpense,
+  SpendingCategory,
+  SpendingTransaction,
+  Warranty,
+} from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate, formatMonth } from '../../lib/dates';
-import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
+import { centsToPtInput, formatCents, parsePtAmount, sumCents } from '../../lib/money';
 import { refreshAlerts, today } from '../alerts/refresh';
 import { useSession } from '../auth/session-context';
+import { AddInvoice } from '../ingest/AddInvoice';
+import { ProviderCoverage } from '../ingest/ProviderCoverage';
 import { getSettings } from '../settings/settings';
-import { SpendingView } from '../spending/SpendingView';
+import { IncomeSection } from '../spending/IncomeSection';
+import { SummaryView } from '../spending/SummaryView';
+import { TransactionForm } from '../spending/TransactionForm';
+// The totals (`.facts`) are styled there.
+import '../alerts/alerts.css';
 import '../compare/compare.css';
+import '../insurance/insurance.css';
 import '../invoices/invoices.css';
-import { EVERY, frequencyOf, MONTH, ONE_OFF } from './frequency';
+import '../spending/spending.css';
+import { EVERY, frequencyOf, MONTH } from './frequency';
+import { moveOneOffExpenses } from './one-off-migration';
+import { saveOneOff } from './one-off-save';
+import { OneOffSection } from './OneOffSection';
 import './month.css';
 import { useRememberedOrder } from './use-remembered-order';
 
-type Tab = 'payments' | 'spending';
+type Tab = 'expenses' | 'summary';
 
 /** Per-device choice: the tab "Este mês" opens on. */
 const TAB_KEY = 'faturometro.month.tab';
+/** Per-device choice: which blocks of "Despesas" are open (only the list, at first). */
+const OPEN_GROUPS_KEY = 'faturometro.month.openGroups';
+const LIST = 'list';
 const copy = t.month;
 
 type SavedExpense = Omit<RecurringExpense, 'updatedAt'>;
 
-/** A link can ask for a tab (alerts open "Pagamentos"); otherwise, the last one on this device. */
+const FILTERS = ['all', 'invoice', 'expense', 'transaction'] as const;
+type Filter = (typeof FILTERS)[number];
+
+/** A link can ask for a tab (alerts open "Despesas"); otherwise, the last one on this device. */
 function firstTab(): Tab {
   const asked = new URLSearchParams(window.location.search).get('separador');
-  if (asked === 'gastos') return 'spending';
-  if (asked === 'pagamentos') return 'payments';
+  // "gastos" and "pagamentos": links from before the tabs were renamed.
+  if (asked === 'resumo' || asked === 'gastos') return 'summary';
+  if (asked === 'despesas' || asked === 'pagamentos') return 'expenses';
   try {
-    return localStorage.getItem(TAB_KEY) === 'spending' ? 'spending' : 'payments';
+    const stored = localStorage.getItem(TAB_KEY);
+    return stored === 'summary' || stored === 'spending' ? 'summary' : 'expenses';
   } catch {
-    return 'payments';
+    return 'expenses';
   }
 }
 
 /**
- * "Este mês": what is paid in a month and, when the user turned it on, what
- * was spent. Both tabs look at the same month.
+ * "Este mês": everything the household pays in a month (invoices, recurring
+ * expenses without one, purchases and one-off expenses), marked as paid or
+ * not, and, with purchases turned on, a summary of where the money went.
  */
 export function MonthPage() {
   const { session } = useSession();
@@ -65,7 +96,7 @@ export function MonthPage() {
     [session],
   );
   if (!session || !settings) return null;
-  const tab = settings.spendingEnabled ? chosen : 'payments';
+  const tab = settings.spendingEnabled ? chosen : 'expenses';
 
   function choose(next: Tab) {
     setChosen(next);
@@ -81,7 +112,7 @@ export function MonthPage() {
       <h1>{t.nav.month}</h1>
       {settings.spendingEnabled && (
         <div className="compare-tabs" role="tablist" aria-label={t.nav.month}>
-          {(['payments', 'spending'] as const).map((item) => (
+          {(['expenses', 'summary'] as const).map((item) => (
             <button
               key={item}
               type="button"
@@ -95,7 +126,7 @@ export function MonthPage() {
           ))}
         </div>
       )}
-      <p className="muted">{tab === 'spending' ? t.spending.intro : copy.intro}</p>
+      <p className="muted">{tab === 'summary' ? t.spending.intro : copy.intro}</p>
 
       <div className="month-nav">
         <button
@@ -121,22 +152,41 @@ export function MonthPage() {
         </button>
       </div>
 
-      {tab === 'spending' ? (
-        <SpendingView month={month} onMonth={setMonth} />
+      {tab === 'summary' ? (
+        <SummaryView month={month} />
       ) : (
-        <PaymentsView month={month} withSpending={settings.spendingEnabled} />
+        <ExpensesView month={month} onMonth={setMonth} withSpending={settings.spendingEnabled} />
       )}
     </>
   );
 }
 
-/** What is due in a month, marked as paid or not, and expenses without an invoice. */
-function PaymentsView({ month, withSpending }: { month: string; withSpending: boolean }) {
+function matches(item: MonthItem, filter: Filter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'invoice') return item.kind === 'invoice' || item.kind === 'forecast';
+  return item.kind === filter;
+}
+
+/**
+ * The tab "Despesas": the month's totals, every expense of the month (open at
+ * first), then the blocks to add income, invoices, recurring expenses without
+ * an invoice and one-off expenses.
+ */
+function ExpensesView({
+  month,
+  onMonth,
+  withSpending,
+}: {
+  month: string;
+  onMonth: (month: string) => void;
+  withSpending: boolean;
+}) {
   const { session } = useSession();
-  // Expense being changed, in its line of the month or in the expenses section.
+  // Expense being changed, in its line of the month or in the expenses block.
   const [editing, setEditing] = useState<{ id: string; place: 'line' | 'section' } | null>(null);
-  const [showExpenses, setShowExpenses] = useState(false);
+  const groups = useOpenGroups(OPEN_GROUPS_KEY, (group) => group === LIST);
   const [order, setOrder] = useRememberedOrder('faturometro.month.order', MONTH_ORDERS);
+  const [filter, setFilter] = useState<Filter>('all');
   /** Statements (Via Verde) showing their invoices. */
   const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
   const [shownMonth, setShownMonth] = useState(month);
@@ -146,36 +196,63 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
   }
   const data = useLiveQuery(async () => {
     if (!session) return null;
-    const [invoices, contracts, providers, expenses, payments] = await Promise.all([
-      session.repos.invoices.list(),
-      session.repos.contracts.list(),
-      session.repos.providers.list(),
-      session.repos.expenses.list(),
-      session.repos.payments.list(),
-    ]);
+    const repos = session.repos;
+    const [invoices, contracts, providers, expenses, payments, transactions, incomes, warranties] =
+      await Promise.all([
+        repos.invoices.list(),
+        repos.contracts.list(),
+        repos.providers.list(),
+        repos.expenses.list(),
+        repos.payments.list(),
+        repos.transactions.list(),
+        repos.incomes.list(),
+        repos.warranties.list(),
+      ]);
     return {
       invoices: new Map(invoices.map((invoice) => [invoice.id, invoice])),
       contracts: new Map(contracts.map((contract) => [contract.id, contract])),
       providers: new Map(providers.map((provider) => [provider.id, provider])),
       expenses,
       payments,
+      transactions: countedTransactions(transactions, invoices),
+      incomes,
+      warrantyByTransaction: new Map(
+        warranties.flatMap((warranty) =>
+          warranty.transactionId ? [[warranty.transactionId, warranty] as const] : [],
+        ),
+      ),
     };
   }, [session]);
+
+  // One-off expenses synced from a device with an older version: moved to the purchases here too.
+  const legacyOneOff = data?.expenses.some((expense) => expense.oneOff) ?? false;
+  useEffect(() => {
+    if (session && legacyOneOff) void moveOneOffExpenses(session.repos).catch(() => undefined);
+  }, [session, legacyOneOff]);
 
   if (!session || !data) return null;
   const repos = session.repos;
   const date = today();
   const invoices = [...data.invoices.values()];
   const contracts = [...data.contracts.values()];
-  const summary = monthSummary(month, invoices, data.expenses, data.payments, {
+  const recurring = data.expenses.filter((expense) => !expense.oneOff);
+  const summary = monthSummary(month, invoices, recurring, data.payments, {
     today: date,
     contracts,
     forecasts: forecastInvoices(contracts, invoices, date),
+    transactions: data.transactions,
   });
-  // Expenses between their first and last month (due this month or not).
-  const active = data.expenses
+  const income = withSpending ? incomeMonth(month, data.incomes) : null;
+  // Recurring expenses between their first and last month (due this month or not).
+  const active = recurring
     .filter((expense) => expenseActive(expense, month))
     .sort((a, b) => a.name.localeCompare(b.name, 'pt'));
+  const oneOffs = data.transactions.filter((transaction) => monthOf(transaction.date) === month);
+  const lines = sortMonthItems(groupStatements(summary.items, invoices, contracts), order);
+  const shown = lines.filter((item) => matches(item, filter));
+
+  const transactionName = (transaction: SpendingTransaction) =>
+    transaction.description || t.spending.categories[transaction.category];
 
   const nameOf = (item: MonthItem): string => {
     if (item.parts) {
@@ -183,6 +260,10 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
     }
     if (item.kind === 'expense') {
       return data.expenses.find((expense) => expense.id === item.expenseId)?.name ?? '';
+    }
+    if (item.kind === 'transaction') {
+      const transaction = data.transactions.find((entry) => entry.id === item.transactionId);
+      return transaction ? transactionName(transaction) : '';
     }
     const invoice = data.invoices.get(item.invoiceId ?? '');
     const contract = data.contracts.get(invoice?.contractId ?? item.contractId ?? '');
@@ -195,6 +276,11 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
     data.providers.get(data.invoices.get(item.invoiceId ?? '')?.providerId ?? '')?.name ?? '';
 
   async function markPaid(item: MonthItem, paid: boolean) {
+    if (item.kind === 'transaction') {
+      const transaction = data?.transactions.find((entry) => entry.id === item.transactionId);
+      if (transaction) await repos.transactions.put(withTransactionPaid(transaction, paid, date));
+      return;
+    }
     const target = {
       id: item.paymentId,
       ...(item.invoiceId ? { invoiceId: item.invoiceId } : {}),
@@ -240,14 +326,18 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
 
   async function saveExpense(expense: SavedExpense | null) {
     if (expense) await repos.expenses.put(expense);
-    // A new expense opens the list, so the user sees it was saved.
-    if (expense && editing?.id === 'new') setShowExpenses(true);
     setEditing(null);
   }
 
   return (
     <>
       <dl className="facts">
+        {income && income.items.length > 0 && (
+          <div>
+            <dt>{copy.income}</dt>
+            <dd>{formatCents(income.totalCents)}</dd>
+          </div>
+        )}
         <div>
           <dt>{copy.total}</dt>
           <dd>{formatCents(summary.totalCents)}</dd>
@@ -262,188 +352,261 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
             <strong>{formatCents(summary.toPayCents)}</strong>
           </dd>
         </div>
+        {income && income.items.length > 0 && (
+          <div>
+            <dt>{copy.balance}</dt>
+            <dd>
+              <strong>{formatCents(income.totalCents - summary.totalCents)}</strong>
+            </dd>
+          </div>
+        )}
       </dl>
       {summary.forecastCents !== 0 && (
         <p className="muted">{copy.forecastIncluded(formatCents(summary.forecastCents))}</p>
       )}
 
-      {summary.items.length > 1 && (
-        <SelectField
-          id="month-order"
-          label={copy.order.label}
-          value={order}
-          onChange={(event) => setOrder(event.target.value as MonthOrder)}
-        >
-          {MONTH_ORDERS.map((item) => (
-            <option key={item} value={item}>
-              {copy.order[item]}
-            </option>
-          ))}
-        </SelectField>
-      )}
-      {summary.items.length === 0 ? (
-        <p className="muted">{copy.empty}</p>
-      ) : (
-        <ul className="list">
-          {sortMonthItems(groupStatements(summary.items, invoices, contracts), order).map(
-            (item) => {
-              const name = nameOf(item);
-              if (item.kind === 'forecast') {
+      <GroupBlock
+        title={copy.list.title}
+        summary={copy.list.summary(lines.length, formatCents(summary.totalCents))}
+        open={groups.isOpen(LIST)}
+        onToggle={(open) => groups.setOpen(LIST, open)}
+      >
+        {summary.items.length === 0 ? (
+          <p className="muted">{copy.empty}</p>
+        ) : (
+          <>
+            {summary.items.length > 1 && (
+              <div className="spending-controls">
+                <SelectField
+                  id="month-filter"
+                  label={copy.list.filter}
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value as Filter)}
+                >
+                  {FILTERS.map((item) => (
+                    <option key={item} value={item}>
+                      {copy.list.filters[item]}
+                    </option>
+                  ))}
+                </SelectField>
+                <SelectField
+                  id="month-order"
+                  label={copy.order.label}
+                  value={order}
+                  onChange={(event) => setOrder(event.target.value as MonthOrder)}
+                >
+                  {MONTH_ORDERS.map((item) => (
+                    <option key={item} value={item}>
+                      {copy.order[item]}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+            )}
+            {filter !== 'all' && (
+              <p className="muted">
+                {shown.length === 0
+                  ? copy.list.emptyFilter
+                  : copy.list.summary(
+                      shown.length,
+                      formatCents(sumCents(shown.map((item) => item.amountCents))),
+                    )}
+              </p>
+            )}
+            <ul className="list">
+              {shown.map((item) => {
+                const name = nameOf(item);
+                if (item.kind === 'forecast') {
+                  return (
+                    <li key={item.paymentId} className="list-item month-item is-forecast">
+                      <span className="month-check">{copy.forecastTag}</span>
+                      <strong>{name}</strong>
+                      <span className="amount">
+                        {copy.forecastAmount(formatCents(item.amountCents))}
+                      </span>
+                      <span className="meta">
+                        {item.debitDate
+                          ? copy.forecastDebit(formatIsoDate(item.date))
+                          : item.hasDueDate
+                            ? copy.forecastDue(formatIsoDate(item.date))
+                            : copy.forecastIssued(formatIsoDate(item.date))}
+                        {item.late && ` · ${copy.forecastLate}`}
+                      </span>
+                    </li>
+                  );
+                }
+                const transaction =
+                  item.kind === 'transaction'
+                    ? data.transactions.find((entry) => entry.id === item.transactionId)
+                    : undefined;
+                if (transaction) {
+                  return (
+                    <TransactionLine
+                      key={item.paymentId}
+                      item={item}
+                      name={name}
+                      transaction={transaction}
+                      warranty={data.warrantyByTransaction.get(transaction.id)}
+                      onPaid={(paid) => void setPaid(item, paid)}
+                      onMonth={onMonth}
+                    />
+                  );
+                }
+                const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
+                if (expense && editing?.id === expense.id && editing.place === 'line') {
+                  return (
+                    <li key={item.paymentId}>
+                      <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                    </li>
+                  );
+                }
                 return (
-                  <li key={item.paymentId} className="list-item month-item is-forecast">
-                    <span className="month-check">{copy.forecastTag}</span>
+                  <li
+                    key={item.paymentId}
+                    className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}
+                  >
+                    <PaidCheck
+                      item={item}
+                      name={name}
+                      onPaid={(paid) => void setPaid(item, paid)}
+                    />
                     <strong>{name}</strong>
-                    <span className="amount">
-                      {copy.forecastAmount(formatCents(item.amountCents))}
-                    </span>
+                    <span className="amount">{formatCents(item.amountCents)}</span>
                     <span className="meta">
                       {item.debitDate
-                        ? copy.forecastDebit(formatIsoDate(item.date))
+                        ? copy.debit(formatIsoDate(item.debitDate))
                         : item.hasDueDate
-                          ? copy.forecastDue(formatIsoDate(item.date))
-                          : copy.forecastIssued(formatIsoDate(item.date))}
-                      {item.late && ` · ${copy.forecastLate}`}
-                    </span>
-                  </li>
-                );
-              }
-              const expense = data.expenses.find((candidate) => candidate.id === item.expenseId);
-              if (expense && editing?.id === expense.id && editing.place === 'line') {
-                return (
-                  <li key={item.paymentId}>
-                    <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
-                  </li>
-                );
-              }
-              return (
-                <li
-                  key={item.paymentId}
-                  className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}
-                >
-                  <label className="month-check">
-                    <input
-                      type="checkbox"
-                      checked={item.paidOn !== undefined}
-                      aria-label={copy.paidLabel(name)}
-                      onChange={(event) => void setPaid(item, event.target.checked)}
-                    />
-                    <span aria-hidden="true">{copy.paidCheck}</span>
-                  </label>
-                  <strong>{name}</strong>
-                  <span className="amount">{formatCents(item.amountCents)}</span>
-                  <span className="meta">
-                    {item.debitDate
-                      ? copy.debit(formatIsoDate(item.debitDate))
-                      : item.hasDueDate
-                        ? copy.due(formatIsoDate(item.date))
-                        : item.autoPaid
-                          ? copy.issuedOn(formatIsoDate(item.date))
-                          : copy.issued(formatIsoDate(item.date))}
-                    {item.paidOn &&
-                      ` · ${
-                        item.autoPaid && item.debitDate
-                          ? copy.autoPaid
+                          ? copy.due(formatIsoDate(item.date))
                           : item.autoPaid
-                            ? copy.receiptPaid(formatIsoDate(item.paidOn))
-                            : copy.paidOn(formatIsoDate(item.paidOn))
-                      }`}
-                    {item.kind === 'expense' && ` · ${copy.expenseTag}`}
-                  </span>
-                  {item.parts && (
-                    <div className="month-parts">
-                      <button
-                        type="button"
-                        className="action-secondary action-compact"
-                        aria-expanded={opened.has(item.paymentId)}
-                        onClick={() => toggleOpen(item.paymentId)}
-                      >
-                        {opened.has(item.paymentId)
-                          ? copy.statementHide
-                          : copy.statementShow(item.parts.length)}
-                      </button>
-                      {opened.has(item.paymentId) && (
-                        <ul>
-                          {item.parts.map((part) => (
-                            <li key={part.paymentId}>
-                              <span>{issuerOf(part)}</span>
-                              <span className="amount">{formatCents(part.amountCents)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-                  {expense && (
-                    <ExpenseActions
-                      expense={expense}
-                      onEdit={() => setEditing({ id: expense.id, place: 'line' })}
-                    />
-                  )}
-                </li>
-              );
-            },
-          )}
-        </ul>
+                            ? copy.issuedOn(formatIsoDate(item.date))
+                            : copy.issued(formatIsoDate(item.date))}
+                      {item.paidOn &&
+                        ` · ${
+                          item.autoPaid && item.debitDate
+                            ? copy.autoPaid
+                            : item.autoPaid
+                              ? copy.receiptPaid(formatIsoDate(item.paidOn))
+                              : copy.paidOn(formatIsoDate(item.paidOn))
+                        }`}
+                      {item.kind === 'expense' && ` · ${copy.expenseTag}`}
+                    </span>
+                    {item.parts && (
+                      <div className="month-parts">
+                        <button
+                          type="button"
+                          className="action-secondary action-compact"
+                          aria-expanded={opened.has(item.paymentId)}
+                          onClick={() => toggleOpen(item.paymentId)}
+                        >
+                          {opened.has(item.paymentId)
+                            ? copy.statementHide
+                            : copy.statementShow(item.parts.length)}
+                        </button>
+                        {opened.has(item.paymentId) && (
+                          <ul>
+                            {item.parts.map((part) => (
+                              <li key={part.paymentId}>
+                                <span>{issuerOf(part)}</span>
+                                <span className="amount">{formatCents(part.amountCents)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                    {expense && (
+                      <ExpenseActions
+                        expense={expense}
+                        onEdit={() => setEditing({ id: expense.id, place: 'line' })}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </GroupBlock>
+
+      {income && (
+        <GroupBlock
+          title={t.spending.income.title}
+          summary={
+            income.items.length === 0
+              ? t.spending.income.emptyMonth
+              : t.spending.income.listSummary(income.items.length, formatCents(income.totalCents))
+          }
+          open={groups.isOpen('income')}
+          onToggle={(open) => groups.setOpen('income', open)}
+        >
+          <IncomeSection month={month} incomes={data.incomes} onMonth={onMonth} flat />
+        </GroupBlock>
       )}
 
-      <section aria-labelledby="expenses-title">
-        <h2 id="expenses-title" className="section-title">
-          {copy.expenses.title}
-        </h2>
-        <p className="muted">
-          {copy.expenses.intro}
-          {withSpending && ` ${copy.expenses.introSpending}`}
-        </p>
+      <GroupBlock
+        title={copy.addInvoice.title}
+        summary={copy.addInvoice.summary}
+        open={groups.isOpen('invoice')}
+        onToggle={(open) => groups.setOpen('invoice', open)}
+      >
+        <AddInvoice />
+        <ProviderCoverage />
+      </GroupBlock>
+
+      <GroupBlock
+        title={copy.expenses.title}
+        summary={
+          active.length === 0
+            ? copy.expenses.emptyMonth
+            : copy.expenses.listSummary(
+                active.length,
+                formatCents(
+                  active.reduce((sum, expense) => sum + expenseAmount(expense, month), 0),
+                ),
+              )
+        }
+        open={groups.isOpen('expenses')}
+        onToggle={(open) => groups.setOpen('expenses', open)}
+      >
+        <p className="muted">{copy.expenses.intro}</p>
         {active.length === 0 && (
           <p className="muted">
-            {data.expenses.length === 0 ? copy.expenses.empty : copy.expenses.emptyMonth}
+            {recurring.length === 0 ? copy.expenses.empty : copy.expenses.emptyMonth}
           </p>
         )}
         {active.length > 0 && (
-          <GroupBlock
-            title={copy.expenses.listTitle}
-            summary={copy.expenses.listSummary(
-              active.length,
-              formatCents(active.reduce((sum, expense) => sum + expenseAmount(expense, month), 0)),
+          <ul className="list">
+            {active.map((expense) =>
+              editing?.id === expense.id && editing.place === 'section' ? (
+                <li key={expense.id}>
+                  <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
+                </li>
+              ) : (
+                <li key={expense.id} className="list-item month-expense">
+                  <strong>{expense.name}</strong>
+                  <span className="meta">
+                    {copy.expenses.summary(
+                      formatCents(expenseAmount(expense, month)),
+                      frequencyOf(expense),
+                      expense.dueDay,
+                    )}
+                    {' · '}
+                    {expense.endMonth
+                      ? copy.expenses.between(
+                          formatMonth(expense.startMonth),
+                          formatMonth(expense.endMonth),
+                        )
+                      : copy.expenses.since(formatMonth(expense.startMonth))}
+                  </span>
+                  <ExpenseActions
+                    expense={expense}
+                    stopFrom={month}
+                    onEdit={() => setEditing({ id: expense.id, place: 'section' })}
+                  />
+                </li>
+              ),
             )}
-            open={showExpenses}
-            onToggle={setShowExpenses}
-          >
-            <ul className="list">
-              {active.map((expense) =>
-                editing?.id === expense.id && editing.place === 'section' ? (
-                  <li key={expense.id}>
-                    <ExpenseForm initial={expense} month={month} onDone={saveExpense} />
-                  </li>
-                ) : (
-                  <li key={expense.id} className="list-item month-expense">
-                    <strong>{expense.name}</strong>
-                    <span className="meta">
-                      {copy.expenses.summary(
-                        formatCents(expenseAmount(expense, month)),
-                        frequencyOf(expense),
-                        expense.dueDay,
-                      )}
-                      {' · '}
-                      {expense.oneOff
-                        ? copy.expenses.inMonth(formatMonth(expense.startMonth))
-                        : expense.endMonth
-                          ? copy.expenses.between(
-                              formatMonth(expense.startMonth),
-                              formatMonth(expense.endMonth),
-                            )
-                          : copy.expenses.since(formatMonth(expense.startMonth))}
-                    </span>
-                    <ExpenseActions
-                      expense={expense}
-                      stopFrom={expense.oneOff ? undefined : month}
-                      onEdit={() => setEditing({ id: expense.id, place: 'section' })}
-                    />
-                  </li>
-                ),
-              )}
-            </ul>
-          </GroupBlock>
+          </ul>
         )}
         {editing?.id === 'new' ? (
           <ExpenseForm month={month} onDone={saveExpense} />
@@ -458,8 +621,136 @@ function PaymentsView({ month, withSpending }: { month: string; withSpending: bo
             </button>
           </p>
         )}
-      </section>
+      </GroupBlock>
+
+      <GroupBlock
+        title={copy.oneOff.title}
+        summary={copy.oneOff.summary(
+          oneOffs.length,
+          formatCents(sumCents(oneOffs.map((transaction) => transaction.amountCents))),
+        )}
+        open={groups.isOpen('oneOff')}
+        onToggle={(open) => groups.setOpen('oneOff', open)}
+      >
+        <OneOffSection month={month} withReceipts={withSpending} onMonth={onMonth} />
+      </GroupBlock>
     </>
+  );
+}
+
+function PaidCheck({
+  item,
+  name,
+  onPaid,
+}: {
+  item: MonthItem;
+  name: string;
+  onPaid: (paid: boolean) => void;
+}) {
+  return (
+    <label className="month-check">
+      <input
+        type="checkbox"
+        checked={item.paidOn !== undefined}
+        aria-label={copy.paidLabel(name)}
+        onChange={(event) => onPaid(event.target.checked)}
+      />
+      <span aria-hidden="true">{copy.paidCheck}</span>
+    </label>
+  );
+}
+
+/** A purchase or one-off expense in the month's list: ticked, changed or deleted there. */
+function TransactionLine({
+  item,
+  name,
+  transaction,
+  warranty,
+  onPaid,
+  onMonth,
+}: {
+  item: MonthItem;
+  name: string;
+  transaction: SpendingTransaction;
+  warranty?: Warranty;
+  onPaid: (paid: boolean) => void;
+  onMonth: (month: string) => void;
+}) {
+  const { session } = useSession();
+  const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  if (!session) return null;
+  const repos = session.repos;
+  const oneOff = transaction.toPay === true || transaction.paidOn !== undefined;
+
+  if (editing) {
+    return (
+      <li>
+        <TransactionForm
+          initial={transaction}
+          warranty={warranty}
+          onDone={async (draft, choice) => {
+            if (draft) {
+              await saveOneOff(repos, draft, choice, warranty);
+              if (monthOf(draft.date) !== monthOf(transaction.date)) onMonth(monthOf(draft.date));
+            }
+            setEditing(false);
+          }}
+        />
+      </li>
+    );
+  }
+
+  return (
+    <li className={`list-item month-item${item.paidOn ? ' is-paid' : ''}`}>
+      <PaidCheck item={item} name={name} onPaid={onPaid} />
+      <strong>{name}</strong>
+      <span className="amount">{formatCents(item.amountCents)}</span>
+      <span className="meta">
+        {[
+          oneOff
+            ? copy.due(formatIsoDate(transaction.date))
+            : copy.oneOff.spentOn(formatIsoDate(transaction.date)),
+          oneOff && item.paidOn ? copy.paidOn(formatIsoDate(item.paidOn)) : undefined,
+          t.spending.categories[transaction.category],
+          oneOff ? copy.oneOff.oneOffTag : copy.oneOff.purchaseTag,
+          warranty ? copy.oneOff.warrantyTag : undefined,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </span>
+      {confirming ? (
+        <div className="month-confirm" role="alert">
+          <p>{copy.oneOff.confirmRemove(name)}</p>
+          <div className="month-actions">
+            <button
+              type="button"
+              className="action-secondary danger"
+              onClick={() => void repos.transactions.remove(transaction.id)}
+            >
+              {copy.expenses.confirm}
+            </button>
+            <button type="button" className="action-secondary" onClick={() => setConfirming(false)}>
+              {copy.expenses.cancel}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="month-actions">
+          <button type="button" className="action-secondary" onClick={() => setEditing(true)}>
+            {copy.expenses.edit}
+          </button>
+          <button
+            type="button"
+            className="action-secondary danger"
+            aria-label={`${copy.expenses.remove}: ${name}`}
+            onClick={() => setConfirming(true)}
+          >
+            {copy.expenses.remove}
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -470,7 +761,7 @@ function ExpenseActions({
   onEdit,
 }: {
   expense: RecurringExpense;
-  /** Month from which "Já não pago" stops it (only in the expenses section). */
+  /** Month from which "Já não pago" stops it (only in the expenses block). */
   stopFrom?: string;
   onEdit: () => void;
 }) {
@@ -535,6 +826,7 @@ function ExpenseActions({
   );
 }
 
+/** A recurring expense without an invoice (one-off ones are in "Gastos e despesas pontuais"). */
 function ExpenseForm({
   initial,
   month,
@@ -550,19 +842,17 @@ function ExpenseForm({
     shownAmount !== undefined ? centsToPtInput(shownAmount) : '',
   );
   const [fromMonth, setFromMonth] = useState(month);
-  const [every, setEvery] = useState<RecurringExpense['everyMonths'] | typeof ONE_OFF>(
-    initial?.oneOff ? ONE_OFF : (initial?.everyMonths ?? 1),
-  );
+  const [every, setEvery] = useState<RecurringExpense['everyMonths']>(initial?.everyMonths ?? 1);
   const [dueDay, setDueDay] = useState(String(initial?.dueDay ?? 1));
   const [startMonth, setStartMonth] = useState(initial?.startMonth ?? month);
-  const [endMonth, setEndMonth] = useState(initial?.oneOff ? '' : (initial?.endMonth ?? ''));
+  const [endMonth, setEndMonth] = useState(initial?.endMonth ?? '');
+  const [category, setCategory] = useState<SpendingCategory>(initial?.category ?? 'other');
   const [paidBefore, setPaidBefore] = useState(!initial);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof copy.expenses.errors, string>>>(
     {},
   );
   const id = initial?.id ?? 'new';
   const amountCents = parsePtAmount(amount);
-  const oneOff = every === ONE_OFF;
   const date = today();
   // Starts in the past: on a new expense, those months were most likely paid; on a
   // stored one, the user may tick them all at once, and nothing changes unless they do.
@@ -572,9 +862,8 @@ function ExpenseForm({
       : null;
   const startsInThePast = firstDue !== null && firstDue < date;
   // A new amount on an existing expense: from which month (earlier ones keep theirs).
-  // A one-off expense has a single month, so its amount is simply replaced.
   const amountChanged =
-    !oneOff && shownAmount !== undefined && amountCents !== null && amountCents !== shownAmount;
+    shownAmount !== undefined && amountCents !== null && amountCents !== shownAmount;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -584,7 +873,7 @@ function ExpenseForm({
     if (amountCents === null || amountCents <= 0) found.amount = copy.expenses.errors.amount;
     if (!Number.isInteger(day) || day < 1 || day > 31) found.dueDay = copy.expenses.errors.dueDay;
     if (!MONTH.test(startMonth)) found.startMonth = copy.expenses.errors.startMonth;
-    if (!oneOff && endMonth && (!MONTH.test(endMonth) || endMonth < startMonth)) {
+    if (endMonth && (!MONTH.test(endMonth) || endMonth < startMonth)) {
       found.endMonth = copy.expenses.errors.endMonth;
     }
     if (amountChanged && (!MONTH.test(fromMonth) || fromMonth < startMonth)) {
@@ -592,36 +881,19 @@ function ExpenseForm({
     }
     setErrors(found);
     if (Object.keys(found).length > 0 || amountCents === null) return;
-    const common = {
+    const expense: SavedExpense = {
       id: initial?.id ?? crypto.randomUUID(),
       name: name.trim(),
+      amountCents: initial ? initial.amountCents : amountCents,
+      ...(initial?.amountChanges ? { amountChanges: initial.amountChanges } : {}),
+      everyMonths: every,
       dueDay: day,
       startMonth,
-      ...(initial?.category ? { category: initial.category } : {}),
+      ...(endMonth ? { endMonth } : {}),
+      category,
       ...(initial?.paidUntil ? { paidUntil: initial.paidUntil } : {}),
       ...(startsInThePast && paidBefore ? { paidUntil: date } : {}),
       createdAt: initial?.createdAt ?? new Date().toISOString(),
-    };
-    if (oneOff) {
-      // Due only in its month, also for app versions that do not know `oneOff`.
-      await onDone({
-        ...common,
-        amountCents,
-        everyMonths: 1,
-        endMonth: startMonth,
-        oneOff: true,
-      });
-      return;
-    }
-    const expense: SavedExpense = {
-      ...common,
-      // From a one-off expense, the amount typed is the amount from the start.
-      amountCents: initial && !initial.oneOff ? initial.amountCents : amountCents,
-      ...(initial?.amountChanges && !initial.oneOff
-        ? { amountChanges: initial.amountChanges }
-        : {}),
-      everyMonths: every,
-      ...(endMonth ? { endMonth } : {}),
     };
     await onDone(amountChanged ? withAmountFrom(expense, fromMonth, amountCents) : expense);
   }
@@ -659,13 +931,8 @@ function ExpenseForm({
         id={`expense-every-${id}`}
         label={copy.expenses.every}
         value={every}
-        hint={oneOff ? copy.expenses.oneOffHint : undefined}
         onChange={(event) =>
-          setEvery(
-            event.target.value === ONE_OFF
-              ? ONE_OFF
-              : (Number(event.target.value) as RecurringExpense['everyMonths']),
-          )
+          setEvery(Number(event.target.value) as RecurringExpense['everyMonths'])
         }
       >
         {EVERY.map(({ months, label }) => (
@@ -673,7 +940,6 @@ function ExpenseForm({
             {label}
           </option>
         ))}
-        <option value={ONE_OFF}>{copy.expenses.oneOff}</option>
       </SelectField>
       <Field
         id={`expense-day-${id}`}
@@ -689,24 +955,34 @@ function ExpenseForm({
       />
       <Field
         id={`expense-start-${id}`}
-        label={oneOff ? copy.expenses.month : copy.expenses.startMonth}
-        hint={oneOff ? undefined : copy.expenses.startMonthHint}
+        label={copy.expenses.startMonth}
+        hint={copy.expenses.startMonthHint}
         type="month"
         value={startMonth}
         error={errors.startMonth}
         onChange={(event) => setStartMonth(event.target.value)}
       />
-      {!oneOff && (
-        <Field
-          id={`expense-end-${id}`}
-          label={copy.expenses.endMonth}
-          hint={copy.expenses.endMonthHint}
-          type="month"
-          value={endMonth}
-          error={errors.endMonth}
-          onChange={(event) => setEndMonth(event.target.value)}
-        />
-      )}
+      <Field
+        id={`expense-end-${id}`}
+        label={copy.expenses.endMonth}
+        hint={copy.expenses.endMonthHint}
+        type="month"
+        value={endMonth}
+        error={errors.endMonth}
+        onChange={(event) => setEndMonth(event.target.value)}
+      />
+      <SelectField
+        id={`expense-category-${id}`}
+        label={copy.expenses.category}
+        value={category}
+        onChange={(event) => setCategory(event.target.value as SpendingCategory)}
+      >
+        {SPENDING_CATEGORIES.map((item) => (
+          <option key={item} value={item}>
+            {t.spending.categories[item]}
+          </option>
+        ))}
+      </SelectField>
       {startsInThePast && (
         <label className="month-paid-before">
           <input
@@ -714,7 +990,7 @@ function ExpenseForm({
             checked={paidBefore}
             onChange={(event) => setPaidBefore(event.target.checked)}
           />
-          {oneOff ? copy.expenses.alreadyPaid : copy.expenses.alreadyPaidMonths}
+          {copy.expenses.alreadyPaidMonths}
         </label>
       )}
       <div className="month-actions">

@@ -7,7 +7,7 @@
 import type { Cents } from '../lib/money';
 import { expenseAmount, expenseDueDate } from './month';
 import { statementBills } from './statements';
-import type { Contract, Invoice, RecurringExpense, Sector } from './types';
+import type { Contract, Invoice, RecurringExpense, Sector, SpendingTransaction } from './types';
 
 export interface HouseholdInput {
   contracts: Pick<Contract, 'id' | 'sector' | 'active' | 'usageBased'>[];
@@ -108,6 +108,36 @@ export function expensesYear(expenses: readonly RecurringExpense[], today: strin
   const inMonth = (month: string) =>
     expenses.reduce(
       (sum, expense) => sum + (expenseDueDate(expense, month) ? expenseAmount(expense, month) : 0),
+      0,
+    );
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = addMonths(current, i - 11);
+    return { month, totalCents: inMonth(month) };
+  });
+  const forecastCents = Array.from({ length: 12 }, (_, i) =>
+    inMonth(addMonths(current, i + 1)),
+  ).reduce((sum, value) => sum + value, 0);
+  return {
+    months,
+    totalCents: months.reduce((sum, entry) => sum + entry.totalCents, 0),
+    forecastCents,
+  };
+}
+
+/**
+ * One-off expenses and purchases over the same 12 months, each in the month
+ * of its day; the next 12 are only those already typed (works still to pay).
+ * Pass them without those that are also invoices (`countedTransactions`).
+ */
+export function oneOffYear(
+  transactions: readonly Pick<SpendingTransaction, 'date' | 'amountCents'>[],
+  today: string,
+): ExpensesYear {
+  const current = monthOf(today);
+  const inMonth = (month: string) =>
+    transactions.reduce(
+      (sum, transaction) =>
+        sum + (monthOf(transaction.date) === month ? transaction.amountCents : 0),
       0,
     );
   const months = Array.from({ length: 12 }, (_, i) => {

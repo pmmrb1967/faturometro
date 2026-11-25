@@ -101,7 +101,13 @@ export const SCHEMA_V9 = {
   pendingPush: '[table+id]',
 } as const;
 
-export const CURRENT_SCHEMA = SCHEMA_V9;
+/** v10: legal warranties of purchases (Contratos → Garantias). New table only. */
+export const SCHEMA_V10 = {
+  ...SCHEMA_V9,
+  warranties: 'id, updatedAt',
+} as const;
+
+export const CURRENT_SCHEMA = SCHEMA_V10;
 
 export type TableName = keyof typeof CURRENT_SCHEMA;
 
@@ -121,6 +127,7 @@ export class ProfileDb extends Dexie {
   consumptionProfiles!: Table<StoredRow, string>;
   transactions!: Table<StoredRow, string>;
   incomes!: Table<StoredRow, string>;
+  warranties!: Table<StoredRow, string>;
   pendingPush!: Table<PendingPush, [string, string]>;
 
   constructor(profileId: string) {
@@ -143,6 +150,7 @@ export class ProfileDb extends Dexie {
     this.version(7).stores(SCHEMA_V7);
     this.version(8).stores(SCHEMA_V8);
     this.version(9).stores(SCHEMA_V9);
+    this.version(10).stores(SCHEMA_V10);
   }
 }
 

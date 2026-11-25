@@ -4,6 +4,7 @@ import {
   contractForecast,
   expensesYear,
   householdSummary,
+  oneOffYear,
   type HouseholdInput,
 } from './household';
 import type { RecurringExpense } from './types';
@@ -175,5 +176,24 @@ describe('expensesYear', () => {
     expect(year.totalCents).toBe(8 * 65000 + 4 * 4500);
     // November 2026 to October 2027: 4 × 650 + 8 × 670; the condominium ended.
     expect(year.forecastCents).toBe(4 * 65000 + 8 * 67000);
+  });
+});
+
+describe('oneOffYear', () => {
+  it('counts each one-off expense in the month of its day, and the next 12 months typed', () => {
+    const year = oneOffYear(
+      [
+        { date: '2026-11-03', amountCents: 5000 },
+        { date: '2026-11-20', amountCents: 2500 },
+        { date: '2025-12-01', amountCents: 1000 },
+        { date: '2025-11-30', amountCents: 9999 },
+        { date: '2027-02-10', amountCents: 80000 },
+      ],
+      '2026-11-25',
+    );
+    expect(year.months[0]).toEqual({ month: '2025-12', totalCents: 1000 });
+    expect(year.months[11]).toEqual({ month: '2026-11', totalCents: 7500 });
+    expect(year.totalCents).toBe(8500);
+    expect(year.forecastCents).toBe(80000);
   });
 });

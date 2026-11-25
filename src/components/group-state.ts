@@ -31,9 +31,15 @@ export function nextShown(shown: number, total: number, step: number): number {
 
 /**
  * Open or closed blocks of a page ("Faturas", "Contratos", "Definições"), remembered
- * on this device under `storageKey`. A block never opened or closed is `defaultOpen`.
+ * on this device under `storageKey`. A block never opened or closed is `defaultOpen`
+ * (the same for all, or by block).
  */
-export function useOpenGroups(storageKey: string, defaultOpen = true) {
+export function useOpenGroups(
+  storageKey: string,
+  defaultOpen: boolean | ((group: string) => boolean) = true,
+) {
+  const byDefault = (group: string) =>
+    typeof defaultOpen === 'function' ? defaultOpen(group) : defaultOpen;
   const [open, setOpenGroups] = useState<OpenGroups>(() => {
     try {
       return parseOpenGroups(localStorage.getItem(storageKey));
@@ -54,10 +60,12 @@ export function useOpenGroups(storageKey: string, defaultOpen = true) {
       return next;
     });
   return {
-    isOpen: (group: string) => isOpenIn(open, group, defaultOpen),
+    isOpen: (group: string) => isOpenIn(open, group, byDefault(group)),
     setOpen: (group: string, value: boolean) =>
       update((current) =>
-        isOpenIn(current, group, defaultOpen) === value ? current : { ...current, [group]: value },
+        isOpenIn(current, group, byDefault(group)) === value
+          ? current
+          : { ...current, [group]: value },
       ),
     setAll: (groups: readonly string[], value: boolean) =>
       update((current) => ({

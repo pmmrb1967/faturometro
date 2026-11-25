@@ -2,7 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { BarChart, type Bar, type Series } from '../../components/BarChart';
 import type { Sector } from '../../domain/types';
-import { expensesYear, householdSummary, type ExpensesYear } from '../../domain/household';
+import {
+  expensesYear,
+  householdSummary,
+  oneOffYear,
+  type ExpensesYear,
+} from '../../domain/household';
+import { countedTransactions } from '../../domain/month';
 import { t } from '../../i18n/pt-PT';
 import { formatMonthShort } from '../../lib/dates';
 import { formatCents } from '../../lib/money';
@@ -28,7 +34,7 @@ const euros = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 });
 /** Per-device choice: show expenses without an invoice on the chart and totals. */
 const WITH_EXPENSES_KEY = 'faturometro.household.withExpenses';
-/** Per-device choice: show one-off expenses (works, appliances) too. */
+/** Per-device choice: show one-off expenses and purchases (works, appliances, fuel) too. */
 const WITH_ONE_OFF_KEY = 'faturometro.household.withOneOff';
 
 function saved(key: string): boolean {
@@ -57,19 +63,21 @@ export function HouseholdSection() {
   const [withOneOff, setWithOneOff] = useState(() => saved(WITH_ONE_OFF_KEY));
   const summary = useLiveQuery(async () => {
     if (!session) return null;
-    const [contracts, invoices, expenses] = await Promise.all([
+    const [contracts, invoices, expenses, transactions] = await Promise.all([
       session.repos.contracts.list(),
       session.repos.invoices.list(),
       session.repos.expenses.list(),
+      session.repos.transactions.list(),
     ]);
     if (invoices.length === 0) return null;
     const date = today();
+    // One-off expenses typed before they were moved to the purchases are moved at sign-in.
     const recurring = expenses.filter((expense) => !expense.oneOff);
-    const oneOff = expenses.filter((expense) => expense.oneOff);
+    const oneOff = countedTransactions(transactions, invoices);
     return {
       ...householdSummary({ contracts, invoices, today: date }),
       expenses: recurring.length > 0 ? expensesYear(recurring, date) : null,
-      oneOff: oneOff.length > 0 ? expensesYear(oneOff, date) : null,
+      oneOff: oneOff.length > 0 ? oneOffYear(oneOff, date) : null,
       switchSavingCents: await totalSwitchSavings(session.repos),
     };
   }, [session]);
@@ -81,6 +89,7 @@ export function HouseholdSection() {
   const oneOff = hasOneOff && withOneOff ? summary.oneOff : null;
   const anyExtra = expenses !== null || oneOff !== null;
   const extras = copy.extras(expenses !== null, oneOff !== null);
+  const named = copy.extrasNamed(expenses !== null, oneOff !== null);
   const grandTotal = summary.totalCents + (expenses?.totalCents ?? 0) + (oneOff?.totalCents ?? 0);
 
   const bars: Bar[] = summary.months.map(({ month, totalCents, bySector }, index) => {
@@ -172,7 +181,7 @@ export function HouseholdSection() {
         </div>
         {anyExtra && (
           <div>
-            <dt>{copy.totalWithExpenses(extras)}</dt>
+            <dt>{copy.totalWithExpenses(named)}</dt>
             <dd>{formatCents(grandTotal)}</dd>
           </div>
         )}
@@ -184,7 +193,7 @@ export function HouseholdSection() {
         )}
         {anyExtra && (
           <div>
-            <dt>{copy.forecastWithExpenses(extras)}</dt>
+            <dt>{copy.forecastWithExpenses(named)}</dt>
             <dd>
               {formatCents(
                 (summary.forecastCents ?? 0) +
@@ -204,7 +213,7 @@ export function HouseholdSection() {
                 percent.format((Math.abs(difference) / previous) * 100),
                 difference > 0,
               )}
-          {anyExtra && ` ${copy.previousInvoicesOnly(extras)}`}
+          {anyExtra && ` ${copy.previousInvoicesOnly(named)}`}
         </p>
       )}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeAlerts, invoiceRhythm, type AlertInput } from './alerts';
+import { computeAlerts, invoiceRhythm, warrantyAlerts, type AlertInput } from './alerts';
 import type { Contract, Invoice, InvoiceLine, Reading } from './types';
 
 const META = { updatedAt: '2026-01-01T00:00:00.000Z' };
@@ -613,5 +613,27 @@ describe('direct debit', () => {
         computeAlerts(input({ contracts: [electricity], invoices: [old], today: '2026-06-05' })),
       ),
     ).not.toContain('old_charges');
+  });
+});
+
+describe('warrantyAlerts', () => {
+  it('warns in the last 60 days of a warranty, not before nor after it ended', () => {
+    const washer = { id: 'w', product: 'Máquina de lavar', deliveryDate: '2024-01-10', months: 36 };
+    expect(warrantyAlerts([washer], '2026-11-10')).toEqual([]);
+    expect(warrantyAlerts([washer], '2026-11-25')).toEqual([
+      {
+        key: 'warranty:w:ending',
+        contractId: '',
+        kind: 'warranty_ending',
+        severity: 'info',
+        data: {
+          warrantyId: 'w',
+          product: 'Máquina de lavar',
+          endDate: '2027-01-10',
+          daysLeft: 46,
+        },
+      },
+    ]);
+    expect(warrantyAlerts([washer], '2027-01-11')).toEqual([]);
   });
 });

@@ -122,12 +122,15 @@ export function HomePage() {
             </span>
             <Link
               to={
-                // Paid marks are set on "Este mês"; the offer is in Comparar, electricity tab.
+                // Paid marks are set on "Este mês"; the offer is in Comparar, electricity tab;
+                // warranties are a tab of Contratos.
                 alert.kind === 'payment_due'
-                  ? '/app/mes?separador=pagamentos'
+                  ? '/app/mes?separador=despesas'
                   : alert.kind === 'cheaper_offer'
                     ? '/app/comparar?separador=luz'
-                    : `/app/contratos/${alert.contractId}`
+                    : alert.kind === 'warranty_ending'
+                      ? '/app/contratos?separador=garantias'
+                      : `/app/contratos/${alert.contractId}`
               }
               className="alert-message"
             >

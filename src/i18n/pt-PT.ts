@@ -476,11 +476,11 @@ export const t = {
   },
   spending: {
     intro:
-      'Tudo o que gastaste em cada mês: as faturas e as despesas sem fatura que já estão na app, mais as compras que registares aqui. Com as receitas, vês também o saldo.',
+      'Para onde vai o dinheiro de cada mês: as faturas, as despesas periódicas sem fatura e os gastos e despesas pontuais, ao longo do mês e do ano e por categoria. Com as receitas, vês também o saldo.',
     add: 'Registar gasto',
     forecastTipLabel: 'Porque não inclui as faturas previstas',
     forecastTip: (forecast: string, expected: string) =>
-      `Só valores reais: faturas guardadas, despesas sem fatura e compras. Faltam ≈ ${forecast} em faturas previstas (estão em Pagamentos). Com elas, os gastos do mês devem chegar a ≈ ${expected}.`,
+      `Só valores reais: faturas guardadas, despesas sem fatura, gastos e despesas pontuais. Faltam ≈ ${forecast} em faturas previstas (estão em Despesas). Com elas, os gastos do mês devem chegar a ≈ ${expected}.`,
     scan: 'Ler talão',
     scanHint: 'O talão é lido neste dispositivo e as imagens da câmara não ficam guardadas.',
     total: 'Total',
@@ -530,8 +530,6 @@ export const t = {
       month: 'Mês',
       incomeKey: 'Receitas de cada mês',
     },
-    movements: 'Movimentos',
-    allCategories: 'Todas',
     category: 'Categoria',
     categories: {
       food: 'Alimentação',
@@ -561,7 +559,7 @@ export const t = {
         other: 'O que não couber nas restantes.',
       },
       invoices:
-        'As faturas entram sozinhas: luz, gás, água e telecomunicações em Contas da casa, seguros em Seguros. Nas despesas sem fatura, escolhes a categoria na lista de movimentos.',
+        'As faturas entram sozinhas: luz, gás, água e telecomunicações em Contas da casa, seguros em Seguros. Nas despesas periódicas sem fatura, escolhes a categoria ao acrescentá-las ou alterá-las.',
       income: {
         salary: 'O que recebes do trabalho ou da reforma, todos os meses.',
         rent: 'Rendas pagas pelos teus inquilinos.',
@@ -571,31 +569,18 @@ export const t = {
         other: 'O resto, como ganhos em apostas ou a venda de um objeto usado.',
       },
     },
-    order: {
-      label: 'Ordenar por',
-      date: 'Data',
-      amount: 'Valor',
-      type: 'Tipo',
-      category: 'Categoria',
-    },
-    invoiceTag: 'Fatura',
-    expenseTag: 'Sem fatura',
-    purchaseTag: 'Compra',
-    expenseCategory: (name: string) => `Categoria de ${name}`,
-    filtered: (count: number, total: string) =>
-      `${count === 1 ? '1 movimento' : `${count} movimentos`} · ${total}`,
-    saved: 'Gasto guardado.',
-    edit: 'Alterar',
-    remove: 'Apagar',
-    confirmRemove: (name: string) => `Apagar "${name}"?`,
-    confirm: 'Apagar de vez',
+    saved: 'Guardado.',
     cancel: 'Cancelar',
     form: {
       amount: 'Valor, em euros',
       description: 'Descrição (opcional)',
       descriptionPlaceholder: 'Ex.: Supermercado',
       date: 'Data',
-      save: 'Guardar gasto',
+      dueDate: 'Vence a',
+      toPay: 'Ainda não está paga',
+      toPayHint:
+        'Fica por pagar em "Este mês" até a marcares, como uma obra que pagas mais tarde. O que pagas todos os meses vai para as despesas periódicas.',
+      save: 'Guardar',
       errors: {
         amount: 'Escreve um valor diferente de zero, por exemplo 12,50.',
         date: 'Escolhe a data.',
@@ -680,7 +665,7 @@ export const t = {
     },
   },
   month: {
-    tabs: { payments: 'Pagamentos', spending: 'Gastos' },
+    tabs: { expenses: 'Despesas', summary: 'Resumo' },
     order: {
       label: 'Ordenar por',
       date: 'Data',
@@ -689,7 +674,41 @@ export const t = {
       unpaid: 'Por pagar primeiro',
     },
     intro:
-      'O que a casa paga em cada mês: as faturas guardadas, no mês em que vencem, as que ainda vão chegar, com data e valor previstos, e as despesas sem fatura que acrescentares (renda, condomínio, escola). Marca o que já pagaste.',
+      'O que a casa paga em cada mês: as faturas, no mês em que vencem, as que ainda vão chegar, com data e valor previstos, as despesas periódicas sem fatura (renda, condomínio, escola) e os gastos e despesas pontuais. Marca o que já pagaste.',
+    income: 'Receitas',
+    balance: 'Saldo',
+    list: {
+      title: 'Despesas deste mês',
+      summary: (count: number, total: string) =>
+        `${count === 1 ? '1 despesa' : `${count} despesas`} · ${total}`,
+      filter: 'Mostrar',
+      filters: {
+        all: 'Todas',
+        invoice: 'Com fatura',
+        expense: 'Periódicas sem fatura',
+        transaction: 'Gastos e pontuais',
+      },
+      emptyFilter: 'Nada deste tipo neste mês.',
+    },
+    addInvoice: {
+      title: 'Adicionar fatura',
+      summary: 'PDF, fotografia ou à mão',
+    },
+    oneOff: {
+      title: 'Gastos e despesas pontuais',
+      summary: (count: number, total: string) =>
+        count === 0 ? 'Nenhum neste mês.' : `${count} neste mês · ${total}`,
+      intro:
+        'Compras já feitas, frequentes (combustível, farmácia, prendas) ou de uma só vez (uma máquina de lavar), e despesas que ainda tens de pagar uma vez, como uma obra. Se a compra tem garantia, guarda a fatura com ela.',
+      introBasic:
+        'Despesas de uma só vez, como uma obra ou um eletrodoméstico, já pagas ou ainda por pagar. Se a compra tem garantia, guarda a fatura com ela.',
+      add: 'Acrescentar',
+      purchaseTag: 'Gasto',
+      oneOffTag: 'Pontual',
+      warrantyTag: 'Com garantia',
+      spentOn: (date: string) => `A ${date}`,
+      confirmRemove: (name: string) => `Apagar "${name}"? Se tem garantia, a garantia fica.`,
+    },
     previous: 'Mês anterior',
     next: 'Mês seguinte',
     total: 'Total',
@@ -718,14 +737,13 @@ export const t = {
     forecastIncluded: (amount: string) =>
       `Inclui ${amount} em faturas previstas a partir das anteriores. Cada uma é substituída pela fatura quando a carregares.`,
     expenses: {
-      title: 'Despesas sem fatura',
+      title: 'Despesas periódicas sem fatura',
       intro:
-        'Despesas certas que não passam pela app, como a renda ou o condomínio. Escreves uma vez e aparecem nos meses em que vencem. Também podes acrescentar uma despesa pontual que ainda tens de pagar, como uma obra.',
-      introSpending: 'As compras já feitas registam-se em Gastos.',
+        'Despesas certas que não passam pela app, como a renda, o condomínio ou o IMI. Escreves uma vez e aparecem nos meses em que vencem. As de uma só vez (uma obra) e as compras ficam em Gastos e despesas pontuais.',
+      category: 'Categoria (para o Resumo)',
       empty: 'Ainda não acrescentaste nenhuma.',
       emptyMonth: 'Nenhuma neste mês.',
       add: 'Acrescentar despesa',
-      listTitle: 'Despesas deste mês',
       listSummary: (count: number, total: string) =>
         `${count === 1 ? '1 despesa' : `${count} despesas`} · ${total}`,
       name: 'Nome',
@@ -734,12 +752,7 @@ export const t = {
       every: 'Periodicidade',
       fourMonthly: 'Quadrimestral',
       oneOff: 'Pontual',
-      oneOffHint:
-        'Paga uma vez, como uma obra. Se a pagas em prestações, escolhe "Mensal" com o primeiro e o último mês.',
       alreadyPaidMonths: 'Já paguei os meses anteriores',
-      alreadyPaid: 'Já paguei esta despesa',
-      month: 'Mês',
-      inMonth: (month: string) => `em ${month}`,
       dueDay: 'Dia de pagamento',
       dueDayHint: 'Nos meses mais curtos, conta o último dia.',
       startMonth: 'Primeiro mês',
@@ -769,6 +782,65 @@ export const t = {
         endMonth: 'Escreve o mês como 2026-12, igual ou depois do primeiro mês.',
         fromMonth: 'Escreve o mês como 2027-01, igual ou depois do primeiro mês.',
       },
+    },
+  },
+  warranties: {
+    pageTitle: 'Contratos e garantias',
+    tabs: { contracts: 'Contratos', warranties: 'Garantias' },
+    intro:
+      'A garantia legal das compras feitas a lojas e empresas: 3 anos a contar da entrega, para bens novos e recondicionados; num bem usado, pode ter ficado combinado um prazo de 18 meses. Guarda a fatura ou o talão, que é a prova da compra. Recebes um aviso 60 dias antes do fim.',
+    source: 'Decreto-Lei n.º 84/2021, artigo 12.º',
+    empty:
+      'Ainda não guardaste nenhuma garantia. Podes acrescentá-la aqui ou ao registar um gasto em "Este mês".',
+    add: 'Acrescentar garantia',
+    keep: 'Guardar a garantia desta compra',
+    product: 'O que compraste',
+    productPlaceholder: 'Ex.: Máquina de lavar',
+    seller: 'Loja (opcional)',
+    purchaseDate: 'Data da compra',
+    deliveryDate: 'Data da entrega',
+    deliveryHint: 'A garantia conta a partir do dia em que recebeste o bem.',
+    price: 'Preço, em euros (opcional)',
+    term: 'Prazo',
+    terms: {
+      new: '3 anos (bem novo ou recondicionado)',
+      usedAgreed: '18 meses (bem usado, se ficou combinado)',
+      other: 'Outro prazo',
+    },
+    otherMonths: 'Prazo, em meses',
+    otherHint: 'Por exemplo, uma garantia comercial mais longa dada pela marca.',
+    file: 'Fatura ou talão (PDF ou fotografia, opcional)',
+    fileHint: 'Fica guardado cifrado, como os originais das faturas.',
+    fileKept: 'O documento já está guardado. Escolhe outro só se o quiseres substituir.',
+    notes: 'Notas (opcional)',
+    save: 'Guardar garantia',
+    saved: 'Garantia guardada.',
+    cancel: 'Cancelar',
+    edit: 'Alterar',
+    remove: 'Apagar',
+    confirmRemove: (product: string) => `Apagar a garantia de "${product}"?`,
+    confirm: 'Apagar de vez',
+    states: { active: 'Ativa', ending: 'A terminar', ended: 'Terminada' },
+    until: (date: string) => `Garantia até ${date}`,
+    endedOn: (date: string) => `Garantia terminou a ${date}`,
+    daysLeft: (days: number) =>
+      days === 0 ? 'último dia' : days === 1 ? 'falta 1 dia' : `faltam ${days} dias`,
+    delivered: (date: string) => `entregue a ${date}`,
+    noDocument: 'sem fatura guardada',
+    errors: {
+      product: 'Escreve o que compraste.',
+      date: 'Escolhe a data.',
+      deliveryBefore: 'A entrega não pode ser antes da compra.',
+      months: 'Escreve um número inteiro de meses, de 1 a 600.',
+      price: 'Escreve um valor, por exemplo 499,00.',
+      file: 'Não foi possível ler este ficheiro. Experimenta outro.',
+    },
+    documents: {
+      title: 'Faturas das garantias',
+      summary: (count: number) => (count === 1 ? '1 documento' : `${count} documentos`),
+      intro:
+        'As faturas e os talões guardados com as garantias das compras. Para as alterar, vai a Contratos, separador Garantias.',
+      link: 'Ver as garantias',
     },
   },
   socialTariff: {
@@ -879,29 +951,36 @@ export const t = {
     monthTitle: (month: string) => `Faturas emitidas em ${month}`,
     monthTitleWithExpenses: (month: string, extras: string) =>
       `Faturas emitidas e ${extras} de ${month}`,
-    withExpenses: 'Incluir despesas sem fatura',
-    withOneOff: 'Incluir despesas pontuais',
-    expensesSeries: 'Sem fatura',
-    oneOffSeries: 'Pontuais',
+    withExpenses: 'Incluir despesas periódicas sem fatura',
+    withOneOff: 'Incluir gastos e despesas pontuais',
+    expensesSeries: 'Periódicas sem fatura',
+    oneOffSeries: 'Gastos e pontuais',
     /** Table header for Telecomunicações, which is too wide for a phone. */
     telecomShort: 'Telecom.',
     /** What is added to the invoices, by which switches are on. */
     extras: (expenses: boolean, oneOff: boolean) =>
       expenses && oneOff
-        ? 'despesas sem fatura e pontuais'
+        ? 'despesas periódicas sem fatura, gastos e despesas pontuais'
         : oneOff
-          ? 'despesas pontuais'
-          : 'despesas sem fatura',
+          ? 'gastos e despesas pontuais'
+          : 'despesas periódicas sem fatura',
+    /** The same, with their articles ("os gastos e as despesas pontuais"). */
+    extrasNamed: (expenses: boolean, oneOff: boolean) =>
+      expenses && oneOff
+        ? 'as despesas periódicas sem fatura, os gastos e as despesas pontuais'
+        : oneOff
+          ? 'os gastos e as despesas pontuais'
+          : 'as despesas periódicas sem fatura',
     invoicesTotal: 'Faturas',
-    totalWithExpenses: (extras: string) => `Com as ${extras}`,
-    forecastWithExpenses: (extras: string) => `Próximos 12 meses, com as ${extras}`,
+    totalWithExpenses: (extras: string) => `Com ${extras}`,
+    forecastWithExpenses: (extras: string) => `Próximos 12 meses, com ${extras}`,
     previousInvoicesOnly: (extras: string) =>
-      `Esta comparação conta só as faturas: as ${extras} não entram.`,
+      `Esta comparação conta só as faturas: ${extras} não entram.`,
     chartWithExpenses: (extras: string) => `Faturas e ${extras} de cada mês`,
     expensesNote:
-      'As despesas sem fatura contam no mês em que vencem, com os valores e o último mês que escreveste em "Este mês".',
+      'As despesas periódicas sem fatura contam no mês em que vencem, com os valores e o último mês que escreveste em "Este mês".',
     oneOffNote:
-      'As despesas pontuais contam no mês em que as pagas; nos próximos 12 meses, só as que já escreveste em "Este mês".',
+      'Os gastos e as despesas pontuais contam no mês do seu dia; nos próximos 12 meses, só os que já escreveste em "Este mês".',
     forecast: 'Próximos 12 meses (estimativa)',
     switchSaving: (amount: string) =>
       `Com as mudanças de fornecedor, poupaste cerca de ${amount} até agora (estimativa).`,
@@ -964,6 +1043,8 @@ export const t = {
         water: (label: string) =>
           `${label}: a tarifa social da água depende do município e muitas vezes tem de ser pedida. Vê na página do contrato como saber se o teu tem.`,
       } as Record<string, ((label: string) => string) | undefined>,
+      warrantyEnding: (product: string, date: string, daysLeft: number) =>
+        `A garantia de ${product} termina ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}, daqui a ${daysLeft} dias`}. Se tem algum defeito, comunica-o à loja antes dessa data.`,
       paymentDue: (label: string, total: string, date: string, daysLeft: number) =>
         `${label}: a fatura de ${total} vence ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} e ainda não está marcada como paga. Se já pagaste, marca-a em "Este mês".`,
       socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>
@@ -1191,7 +1272,7 @@ export const t = {
       'Família numerosa (5 ou mais pessoas): IVA reduzido até 300 kWh por mês na eletricidade',
     keepOriginalFiles: 'Guardar o PDF ou a fotografia original de cada fatura (cifrado)',
     spendingEnabled:
-      'Mostrar o separador Gastos em "Este mês", para registar também as compras do dia a dia e as receitas',
+      'Registar também as compras do dia a dia (com leitura de talões) e as receitas em "Este mês", com o separador Resumo',
     saved: 'Guardado.',
     /** The line next to each closed block of the page. */
     status: {

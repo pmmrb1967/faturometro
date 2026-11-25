@@ -13,6 +13,7 @@ import type {
   RecurringExpense,
   Settings,
   SpendingTransaction,
+  Warranty,
 } from '../domain/types';
 import { DocumentStore } from './documents';
 import { EncryptedTable } from './encrypted-table';
@@ -47,6 +48,7 @@ export function createRepositories(db: ProfileDb, key: CryptoKey) {
     ]),
     transactions: new EncryptedTable<SpendingTransaction>(db.transactions, key, []),
     incomes: new EncryptedTable<Income>(db.incomes, key, []),
+    warranties: new EncryptedTable<Warranty>(db.warranties, key, []),
     documents: new DocumentStore(db.documents, key),
     /** Device-local (not in SYNCED_TABLES). */
     pendingPush: new PendingPushStore(db.pendingPush),

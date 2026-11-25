@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { GroupBlock, GroupControls } from '../../components/GroupBlock';
 import { useOpenGroups } from '../../components/group-state';
@@ -14,13 +15,66 @@ import type { Invoice } from '../../domain/types';
 import { formatCents } from '../../lib/money';
 import { statementBills } from '../../domain/statements';
 import { useSession } from '../auth/session-context';
+import { WarrantiesView } from '../warranties/WarrantiesView';
 import { CalendarExport } from './CalendarExport';
+import '../compare/compare.css';
 import '../invoices/invoices.css';
 
 /** Per-device choice: which blocks of the list are open. */
 const OPEN_GROUPS_KEY = 'faturometro.contracts.openGroups';
+/** Per-device choice: the tab the page opens on. */
+const TAB_KEY = 'faturometro.contracts.tab';
 
+type Tab = 'contracts' | 'warranties';
+
+/** A link can ask for a tab (the warranty alert opens "Garantias"); otherwise, the last one. */
+function firstTab(): Tab {
+  const asked = new URLSearchParams(window.location.search).get('separador');
+  if (asked === 'garantias') return 'warranties';
+  if (asked === 'contratos') return 'contracts';
+  try {
+    return localStorage.getItem(TAB_KEY) === 'warranties' ? 'warranties' : 'contracts';
+  } catch {
+    return 'contracts';
+  }
+}
+
+/** "Contratos": the contracts and, in their own tab, the warranties of purchases. */
 export function ContractsPage() {
+  const [tab, setTab] = useState<Tab>(firstTab);
+
+  function choose(next: Tab) {
+    setTab(next);
+    try {
+      localStorage.setItem(TAB_KEY, next);
+    } catch {
+      // Not remembered on this device; the choice still applies now.
+    }
+  }
+
+  return (
+    <>
+      <h1>{t.warranties.pageTitle}</h1>
+      <div className="compare-tabs" role="tablist" aria-label={t.warranties.pageTitle}>
+        {(['contracts', 'warranties'] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={tab === item}
+            className="compare-tab"
+            onClick={() => choose(item)}
+          >
+            {t.warranties.tabs[item]}
+          </button>
+        ))}
+      </div>
+      {tab === 'warranties' ? <WarrantiesView /> : <ContractList />}
+    </>
+  );
+}
+
+function ContractList() {
   const { session } = useSession();
   const groupsOpen = useOpenGroups(OPEN_GROUPS_KEY);
   const rows = useLiveQuery(async () => {
@@ -78,7 +132,6 @@ export function ContractsPage() {
 
   return (
     <>
-      <h1>{t.nav.contracts}</h1>
       {rows?.length === 0 && <p className="muted">{t.contracts.empty}</p>}
       {groups.length > 1 && (
         <GroupControls

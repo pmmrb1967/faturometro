@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMonthsTo,
+  countedTransactions,
   debitDateOf,
   expenseActive,
   expenseAmount,
@@ -10,8 +11,10 @@ import {
   monthSummary,
   paymentId,
   sortMonthItems,
+  transactionPaidOn,
   uncheckAction,
   withAmountFrom,
+  withTransactionPaid,
   type MonthItem,
   type MonthOrder,
 } from './month';
@@ -392,5 +395,74 @@ describe('Via Verde statement (Extrato/Recibo, contract by usage)', () => {
     const [group] = groupStatements(summary.items, statement, [contract]);
     expect(group?.paidOn).toBeUndefined();
     expect(group?.parts).toHaveLength(3);
+  });
+});
+
+describe('one-off expenses in the month', () => {
+  const base = {
+    ...META,
+    amountCents: 4999,
+    category: 'home' as const,
+    description: '',
+    source: 'manual' as const,
+    createdAt: META.updatedAt,
+  };
+
+  it('counts a purchase as paid on its day and one still to pay as due', () => {
+    const summary = monthSummary('2026-11', [], [], [], {
+      transactions: [
+        { ...base, id: 'fuel', date: '2026-11-03' },
+        { ...base, id: 'works', date: '2026-11-20', amountCents: 80000, toPay: true },
+        { ...base, id: 'october', date: '2026-10-30' },
+      ],
+    });
+    expect(summary.items.map((item) => [item.transactionId, item.paidOn])).toEqual([
+      ['fuel', '2026-11-03'],
+      ['works', undefined],
+    ]);
+    expect(summary.toPayCents).toBe(80000);
+    expect(summary.items[1]).toMatchObject({ kind: 'transaction', hasDueDate: true });
+  });
+
+  it('is ticked as paid today and unticked back to still to pay', () => {
+    const works = { date: '2026-11-20', toPay: true as const };
+    expect(withTransactionPaid(works, true, '2026-11-25')).toEqual({
+      date: '2026-11-20',
+      paidOn: '2026-11-25',
+    });
+    expect(withTransactionPaid({ date: '2026-11-20' }, true, '2026-11-20')).toEqual({
+      date: '2026-11-20',
+    });
+    expect(withTransactionPaid({ date: '2026-11-20', paidOn: '2026-11-25' }, false, 'x')).toEqual({
+      date: '2026-11-20',
+      toPay: true,
+    });
+    expect(transactionPaidOn({ date: '2026-11-20', paidOn: '2026-11-25' })).toBe('2026-11-25');
+    expect(transactionPaidOn({ date: '2026-11-20', toPay: true })).toBeNull();
+  });
+
+  it('leaves out a receipt that was later added as an invoice', () => {
+    const kept = countedTransactions(
+      [{ id: 'a', docKey: 'k1' }, { id: 'b', docKey: 'k2' }, { id: 'c' }],
+      [{ docKey: 'k1' }],
+    );
+    expect(kept.map((entry) => entry.id)).toEqual(['b', 'c']);
+  });
+
+  it('sorts purchases after the recurring expenses and before the forecasts', () => {
+    const items: MonthItem[] = (['forecast', 'transaction', 'invoice'] as const).map(
+      (kind, index) => ({
+        kind,
+        paymentId: String(index),
+        date: '',
+        hasDueDate: false,
+        amountCents: 1,
+      }),
+    );
+    expect(sortMonthItems(items, 'type').map((item) => item.kind)).toEqual([
+      'invoice',
+      'transaction',
+      'forecast',
+    ]);
   });
 });

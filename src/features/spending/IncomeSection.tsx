@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { GroupBlock } from '../../components/GroupBlock';
 import { INCOME_KINDS, incomeMonth } from '../../domain/income';
 import { addMonthsTo, expenseActive, expenseAmount } from '../../domain/month';
@@ -17,15 +17,20 @@ function nameOf(income: Income): string {
   return income.name || copy.kinds[income.kind];
 }
 
-/** What comes in: the incomes of the month, and adding, changing or stopping one. */
+/**
+ * What comes in: the incomes of the month, and adding, changing or stopping one.
+ * Inside a block that already opens and closes, the list is shown as it is.
+ */
 export function IncomeSection({
   month,
   incomes,
   onMonth,
+  flat = false,
 }: {
   month: string;
   incomes: readonly Income[];
   onMonth: (month: string) => void;
+  flat?: boolean;
 }) {
   const { session } = useSession();
   const [editing, setEditing] = useState<string | null>(null);
@@ -62,7 +67,8 @@ export function IncomeSection({
         <p className="muted">{incomes.length === 0 ? copy.empty : copy.emptyMonth}</p>
       )}
       {active.length > 0 && (
-        <GroupBlock
+        <Listed
+          flat={flat}
           title={copy.listTitle}
           summary={copy.listSummary(
             active.length,
@@ -107,7 +113,7 @@ export function IncomeSection({
               ),
             )}
           </ul>
-        </GroupBlock>
+        </Listed>
       )}
       {editing === 'new' ? (
         <IncomeForm month={month} onDone={save} />
@@ -121,6 +127,22 @@ export function IncomeSection({
       <IncomeHelp />
     </section>
   );
+}
+
+/** The list in its own block, or as it is when the page's block already holds it. */
+function Listed({
+  flat,
+  children,
+  ...block
+}: {
+  flat: boolean;
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return flat ? <>{children}</> : <GroupBlock {...block}>{children}</GroupBlock>;
 }
 
 /** Change, stop or delete an income; deleting asks first. */
