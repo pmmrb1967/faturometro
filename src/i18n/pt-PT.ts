@@ -478,14 +478,11 @@ export const t = {
     intro:
       'Para onde vai o dinheiro de cada mês: as faturas, as despesas periódicas sem fatura e os gastos e despesas pontuais, ao longo do mês e do ano e por categoria. Com as receitas, vês também o saldo.',
     add: 'Registar gasto',
-    forecastTipLabel: 'Porque não inclui as faturas previstas',
-    forecastTip: (forecast: string, expected: string) =>
-      `Só valores reais: faturas guardadas, despesas sem fatura, gastos e despesas pontuais. Faltam ≈ ${forecast} em faturas previstas (estão em Despesas). Com elas, os gastos do mês devem chegar a ≈ ${expected}.`,
     scan: 'Ler talão',
+    pickFile: 'Escolher fotografia ou PDF',
     scanHint: 'O talão é lido neste dispositivo e as imagens da câmara não ficam guardadas.',
-    total: 'Total',
-    previousMonth: 'Mês anterior',
-    count: 'Movimentos',
+    chartsHint:
+      'Os gráficos só contam valores reais: faturas guardadas, despesas sem fatura, gastos e despesas pontuais. As faturas previstas ficam de fora até chegarem.',
     empty: 'Ainda não há gastos neste mês.',
     byCategory: 'Por categoria',
     progress: {
@@ -587,9 +584,9 @@ export const t = {
       },
     },
     receipt: {
-      reading: 'A ler o talão…',
+      reading: 'A ler o código QR…',
       read: 'Lido do código QR do talão. Confirma e guarda.',
-      noQr: 'Não foi possível encontrar o código QR nesta fotografia. Escreve o gasto à mão.',
+      noQr: 'Não foi possível encontrar o código QR neste documento. Escreve o gasto à mão.',
       invoice: 'Este documento já está guardado nas faturas.',
       known: 'Este talão já está registado.',
       live: {
@@ -605,11 +602,8 @@ export const t = {
       title: 'Receitas',
       intro:
         'O que entra em casa, como o vencimento, rendas de inquilinos, juros ou dividendos. Escreves uma vez e aparece nos meses em que entra, no mês da data de entrada.',
-      spent: 'Gastos',
-      received: 'Receitas',
-      balance: 'Saldo',
       balanceHint:
-        'O saldo conta todo o mês: as receitas e os gastos que ainda vão acontecer. A linha do gráfico vai só até hoje.',
+        'O saldo, em cima, conta todo o mês: as receitas e os gastos que ainda vão acontecer. A linha do gráfico vai só até hoje.',
       empty: 'Ainda não acrescentaste nenhuma receita.',
       emptyMonth: 'Nenhuma receita neste mês.',
       add: 'Acrescentar receita',
@@ -811,6 +805,8 @@ export const t = {
     otherHint: 'Por exemplo, uma garantia comercial mais longa dada pela marca.',
     file: 'Fatura ou talão (PDF ou fotografia, opcional)',
     fileHint: 'Fica guardado cifrado, como os originais das faturas.',
+    fileChosen: (name: string) =>
+      `Fica guardado ${name}, o documento que leste, cifrado. Escolhe outro só se quiseres.`,
     fileKept: 'O documento já está guardado. Escolhe outro só se o quiseres substituir.',
     notes: 'Notas (opcional)',
     save: 'Guardar garantia',

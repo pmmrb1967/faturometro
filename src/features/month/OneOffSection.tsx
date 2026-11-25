@@ -13,6 +13,10 @@ import { saveOneOff } from './one-off-save';
 
 const copy = t.spending;
 
+function isPdf(file: File): boolean {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
 /** Shown only in the month it is about, so it goes away with the arrows. */
 type Notice = { text: string; month: string; problem?: boolean };
 
@@ -33,6 +37,8 @@ export function OneOffSection({
 }) {
   const { session } = useSession();
   const [editing, setEditing] = useState<TransactionDraft | null>(null);
+  /** The photo or PDF the purchase being added was read from. */
+  const [readFile, setReadFile] = useState<File | null>(null);
   const [reading, setReading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -42,6 +48,7 @@ export function OneOffSection({
     setEditing(null);
   }
   const photoInput = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   if (!session) return null;
   const repos = session.repos;
 
@@ -59,6 +66,7 @@ export function OneOffSection({
 
   function startNew() {
     setNotice(null);
+    setReadFile(null);
     setEditing(newDraft());
   }
 
@@ -73,19 +81,25 @@ export function OneOffSection({
     photoInput.current?.click();
   }
 
-  async function onPhoto(event: ChangeEvent<HTMLInputElement>) {
-    const photo = event.target.files?.[0];
+  /** A photo from the camera, or a photo or PDF chosen from the device (kept for the warranty). */
+  async function onFile(event: ChangeEvent<HTMLInputElement>, keep: boolean) {
+    const file = event.target.files?.[0];
     event.target.value = '';
-    if (!photo) return;
-    await showReceipt(async () => {
-      // pdf.js and zxing are loaded only when a receipt is read.
-      const { readImage } = await import('../../pdf/browser');
-      return readImage(new Uint8Array(await photo.arrayBuffer()), photo.type);
-    });
+    if (!file) return;
+    await showReceipt(
+      async () => {
+        // pdf.js and zxing are loaded only when a receipt is read.
+        const { readImage, readPdf } = await import('../../pdf/browser');
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        return isPdf(file) ? (await readPdf(bytes)).qrs : readImage(bytes, file.type);
+      },
+      keep ? file : null,
+    );
   }
 
-  async function showReceipt(read: () => Promise<FoundQr[]>) {
+  async function showReceipt(read: () => Promise<FoundQr[]>, file: File | null = null) {
     setNotice(null);
+    setReadFile(file);
     setEditing(null);
     setReading(true);
     const problem = (text: string) => setNotice({ text, month, problem: true });
@@ -128,13 +142,31 @@ export function OneOffSection({
             {copy.scan}
           </button>
         )}
+        <button
+          type="button"
+          className="action-secondary"
+          disabled={reading}
+          onClick={() => {
+            setNotice(null);
+            fileInput.current?.click();
+          }}
+        >
+          {copy.pickFile}
+        </button>
         <input
           ref={photoInput}
           type="file"
           accept="image/*"
           capture="environment"
           hidden
-          onChange={(event) => void onPhoto(event)}
+          onChange={(event) => void onFile(event, false)}
+        />
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/pdf,image/*"
+          hidden
+          onChange={(event) => void onFile(event, true)}
         />
       </div>
       {scanning && (
@@ -160,14 +192,17 @@ export function OneOffSection({
         <TransactionForm
           key={editing.id}
           initial={editing}
+          {...(readFile ? { file: readFile } : {})}
           onDone={async (draft, warranty) => {
             if (!draft) {
               setEditing(null);
+              setReadFile(null);
               setNotice(null);
               return;
             }
             await saveOneOff(repos, draft, warranty, undefined);
             setEditing(null);
+            setReadFile(null);
             // An old receipt is shown where it landed.
             setNotice({ text: copy.saved, month: monthOf(draft.date) });
             onMonth(monthOf(draft.date));

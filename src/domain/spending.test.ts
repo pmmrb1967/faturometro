@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  forecastStillDue,
   categoryShare,
   lastFromIssuer,
   monthProgress,
@@ -362,32 +361,5 @@ describe('lastFromIssuer', () => {
     ];
     expect(lastFromIssuer(transactions, '123456789')?.description).toBe('Nova');
     expect(lastFromIssuer(transactions, '111111111')).toBeUndefined();
-  });
-});
-
-describe('forecastStillDue', () => {
-  const forecast = (date: string, amountCents: number) => ({
-    contractId: 'c1',
-    issueDate: date,
-    date,
-    hasDueDate: false,
-    debit: false,
-    amountCents,
-  });
-
-  it('adds the forecasts paid in the month, and what the month should then reach', () => {
-    const forecasts = [
-      forecast('2026-11-20', 2500),
-      forecast('2026-11-28', 242),
-      forecast('2026-12-20', 2600),
-    ];
-    expect(forecastStillDue('2026-11', 200717, forecasts)).toEqual({
-      forecastCents: 2742,
-      expectedCents: 203459,
-    });
-  });
-
-  it('nothing for a month without forecasts', () => {
-    expect(forecastStillDue('2026-10', 1000, [forecast('2026-11-20', 2500)])).toBeNull();
   });
 });

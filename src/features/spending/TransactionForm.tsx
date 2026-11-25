@@ -26,11 +26,14 @@ export type WarrantyChoice = WarrantyFieldsValue | null;
 export function TransactionForm({
   initial,
   warranty,
+  file,
   onDone,
 }: {
   initial: TransactionDraft;
   /** The warranty already kept with this purchase. */
   warranty?: Warranty;
+  /** The document the purchase was read from, kept with its warranty if one is saved. */
+  file?: File;
   onDone: (draft: TransactionDraft | null, warranty?: WarrantyChoice) => Promise<void>;
 }) {
   const [amount, setAmount] = useState(
@@ -41,9 +44,10 @@ export function TransactionForm({
   const [date, setDate] = useState(initial.date);
   const [toPay, setToPay] = useState(initial.toPay === true);
   const [keepWarranty, setKeepWarranty] = useState(warranty !== undefined);
-  const [warrantyFields, setWarrantyFields] = useState(() =>
-    emptyWarrantyFields('', initial.date, warranty),
-  );
+  const [warrantyFields, setWarrantyFields] = useState(() => ({
+    ...emptyWarrantyFields('', initial.date, warranty),
+    ...(file ? { file } : {}),
+  }));
   const [errors, setErrors] = useState<{ amount?: string; date?: string } & WarrantyFieldErrors>(
     {},
   );

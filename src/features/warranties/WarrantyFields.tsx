@@ -81,7 +81,13 @@ export function WarrantyFields({
       <Field
         id={`warranty-file-${id}`}
         label={copy.file}
-        hint={hasDocument ? copy.fileKept : copy.fileHint}
+        hint={
+          value.file
+            ? copy.fileChosen(value.file.name)
+            : hasDocument
+              ? copy.fileKept
+              : copy.fileHint
+        }
         type="file"
         accept="application/pdf,image/*"
         error={errors.file}

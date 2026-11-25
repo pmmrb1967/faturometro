@@ -41,8 +41,6 @@ import { getSettings } from '../settings/settings';
 import { IncomeSection } from '../spending/IncomeSection';
 import { SummaryView } from '../spending/SummaryView';
 import { TransactionForm } from '../spending/TransactionForm';
-// The totals (`.facts`) are styled there.
-import '../alerts/alerts.css';
 import '../compare/compare.css';
 import '../insurance/insurance.css';
 import '../invoices/invoices.css';
@@ -52,6 +50,7 @@ import { moveOneOffExpenses } from './one-off-migration';
 import { saveOneOff } from './one-off-save';
 import { OneOffSection } from './OneOffSection';
 import './month.css';
+import { MonthTotals } from './MonthTotals';
 import { useRememberedOrder } from './use-remembered-order';
 
 type Tab = 'expenses' | 'summary';
@@ -151,6 +150,8 @@ export function MonthPage() {
           →
         </button>
       </div>
+
+      <MonthTotals month={month} withIncome={settings.spendingEnabled} />
 
       {tab === 'summary' ? (
         <SummaryView month={month} />
@@ -331,40 +332,6 @@ function ExpensesView({
 
   return (
     <>
-      <dl className="facts">
-        {income && income.items.length > 0 && (
-          <div>
-            <dt>{copy.income}</dt>
-            <dd>{formatCents(income.totalCents)}</dd>
-          </div>
-        )}
-        <div>
-          <dt>{copy.total}</dt>
-          <dd>{formatCents(summary.totalCents)}</dd>
-        </div>
-        <div>
-          <dt>{copy.paid}</dt>
-          <dd>{formatCents(summary.paidCents)}</dd>
-        </div>
-        <div>
-          <dt>{copy.toPay}</dt>
-          <dd>
-            <strong>{formatCents(summary.toPayCents)}</strong>
-          </dd>
-        </div>
-        {income && income.items.length > 0 && (
-          <div>
-            <dt>{copy.balance}</dt>
-            <dd>
-              <strong>{formatCents(income.totalCents - summary.totalCents)}</strong>
-            </dd>
-          </div>
-        )}
-      </dl>
-      {summary.forecastCents !== 0 && (
-        <p className="muted">{copy.forecastIncluded(formatCents(summary.forecastCents))}</p>
-      )}
-
       <GroupBlock
         title={copy.list.title}
         summary={copy.list.summary(lines.length, formatCents(summary.totalCents))}
