@@ -128,7 +128,7 @@ export function HomePage() {
                   ? '/app/mes?separador=despesas'
                   : alert.kind === 'cheaper_offer'
                     ? '/app/comparar?separador=luz'
-                    : alert.kind === 'warranty_ending'
+                    : alert.kind === 'warranty_ending' || alert.kind === 'warranty_proof'
                       ? '/app/contratos?separador=garantias'
                       : `/app/contratos/${alert.contractId}`
               }

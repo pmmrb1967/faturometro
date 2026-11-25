@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Field } from '../../components/Field';
 import type { DocumentSyncState } from '../../db/schema';
 import type { Warranty } from '../../domain/types';
-import { warrantyStatus } from '../../domain/warranty';
+import { warrantyMilestones, warrantyStatus, warrantyTerm } from '../../domain/warranty';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
 import { centsToPtInput, formatCents, parsePtAmount } from '../../lib/money';
@@ -11,6 +11,7 @@ import { useSession } from '../auth/session-context';
 import { OriginalButton } from '../invoices/OriginalButton';
 import '../invoices/invoices.css';
 import '../month/month.css';
+import './warranties.css';
 import {
   emptyWarrantyFields,
   removeWarranty,
@@ -23,6 +24,9 @@ import { WarrantyFields } from './WarrantyFields';
 
 const copy = t.warranties;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const LAW_URL = 'https://diariodarepublica.pt/dr/detalhe/decreto-lei/84-2021-172938301';
+/** Prazómetro (a separate app): letters to complain to the store. A plain link, nothing sent. */
+const PRAZOMETRO_URL = 'https://app.prazometro.workers.dev/garantia/nova';
 
 /** The tab "Garantias" of Contratos: each purchase's legal warranty and its document. */
 export function WarrantiesView() {
@@ -36,11 +40,7 @@ export function WarrantiesView() {
     <>
       <p className="muted">
         {copy.intro}{' '}
-        <a
-          href="https://diariodarepublica.pt/dr/detalhe/decreto-lei/84-2021-172938301"
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a href={LAW_URL} target="_blank" rel="noreferrer">
           {copy.source}
         </a>
       </p>
@@ -120,31 +120,94 @@ function WarrantyItem({
   if (!session) return null;
   const status = warrantyStatus(warranty, date);
   const end = formatIsoDate(status.endDate);
+  const term = warrantyTerm(warranty);
+  const percent = Math.round(status.progress * 100);
 
   return (
-    <li className="list-item">
-      <strong>{warranty.product}</strong>
-      {warranty.priceCents !== undefined && (
-        <span className="amount">{formatCents(warranty.priceCents)}</span>
-      )}
-      <span className="meta">
-        {[
-          status.state === 'ended'
-            ? copy.endedOn(end)
-            : `${copy.until(end)} (${copy.daysLeft(status.daysLeft)})`,
-          warranty.seller,
-          copy.delivered(formatIsoDate(warranty.deliveryDate)),
-          warranty.fileHash ? undefined : copy.noDocument,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-      </span>
-      <span
-        className={`list-badge${status.state === 'ending' ? ' is-warning' : ''}${status.state === 'ended' ? ' is-question' : ''}`}
-      >
-        {copy.states[status.state]}
-      </span>
-      {warranty.notes && <span className="meta">{warranty.notes}</span>}
+    <li className={`list-item warranty-card is-${status.state}`}>
+      <div className="warranty-head">
+        <strong>{warranty.product}</strong>
+        {warranty.seller && <span className="meta">{warranty.seller}</span>}
+      </div>
+      <span className="list-badge warranty-badge">{copy.states[status.state]}</span>
+      <p className="warranty-when">
+        {status.state === 'ended'
+          ? copy.endedOn(end)
+          : `${copy.until(end)} ${copy.daysLeft(status.daysLeft)}`}
+      </p>
+      <div className="warranty-bar" role="img" aria-label={copy.progressLabel(percent)}>
+        <span style={{ width: `${percent}%` }} />
+      </div>
+      {!warranty.fileHash && <span className="meta warranty-full">{copy.noDocument}</span>}
+
+      <details className="warranty-more">
+        <summary>{copy.more}</summary>
+        <h3>{copy.datesTitle}</h3>
+        <ul className="warranty-dates">
+          {warrantyMilestones(warranty).map((milestone) => (
+            <li key={milestone.kind} className={milestone.date < date ? 'is-past' : undefined}>
+              <strong>{formatIsoDate(milestone.date)}</strong>
+              {milestone.date < date && <span className="muted"> {copy.past}</span>}
+              <p>
+                {milestone.kind === 'end' && term === 'other'
+                  ? copy.milestones.endOther
+                  : copy.milestones[milestone.kind]}
+              </p>
+            </li>
+          ))}
+        </ul>
+
+        <h3>{copy.details}</h3>
+        <dl className="warranty-details">
+          <dt>{copy.detailTerm}</dt>
+          <dd>
+            {term === 'other' ? copy.termLabels.other(warranty.months) : copy.termLabels[term]}
+          </dd>
+          <dt>{copy.detailPurchase}</dt>
+          <dd>{formatIsoDate(warranty.purchaseDate)}</dd>
+          <dt>{copy.detailDelivery}</dt>
+          <dd>{formatIsoDate(warranty.deliveryDate)}</dd>
+          {warranty.priceCents !== undefined && (
+            <>
+              <dt>{copy.detailPrice}</dt>
+              <dd>{formatCents(warranty.priceCents)}</dd>
+            </>
+          )}
+          {warranty.notes && (
+            <>
+              <dt>{copy.detailNotes}</dt>
+              <dd>{warranty.notes}</dd>
+            </>
+          )}
+        </dl>
+
+        {term !== 'other' && (
+          <>
+            <h3>{copy.sourcesTitle}</h3>
+            <ul className="warranty-sources">
+              {copy.sources.map((source) => (
+                <li key={source}>{source}</li>
+              ))}
+            </ul>
+            <p>
+              <a href={LAW_URL} target="_blank" rel="noreferrer">
+                {copy.sourceLink}
+              </a>
+            </p>
+            <p className="muted">{copy.repairsNote}</p>
+          </>
+        )}
+        {status.state !== 'ended' && (
+          <p>
+            {copy.problem}{' '}
+            <a href={PRAZOMETRO_URL} target="_blank" rel="noreferrer">
+              {copy.problemLink}
+            </a>
+          </p>
+        )}
+        <p className="muted">{copy.disclaimer}</p>
+      </details>
+
       {warranty.fileHash && state && state !== 'gone' && (
         <OriginalButton fileHash={warranty.fileHash} state={state} />
       )}

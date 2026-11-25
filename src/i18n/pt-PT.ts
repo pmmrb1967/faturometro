@@ -789,7 +789,7 @@ export const t = {
     pageTitle: 'Contratos e garantias',
     tabs: { contracts: 'Contratos', warranties: 'Garantias' },
     intro:
-      'A garantia legal das compras feitas a lojas e empresas: 3 anos a contar da entrega, para bens novos e recondicionados; num bem usado, pode ter ficado combinado um prazo de 18 meses. Guarda a fatura ou o talão, que é a prova da compra. Recebes um aviso 60 dias antes do fim.',
+      'A garantia legal das compras feitas a lojas e empresas: 3 anos a contar da entrega, para bens novos e recondicionados; num bem usado, pode ter ficado combinado um prazo de 18 meses. Guarda a fatura ou o talão, que é a prova da compra. Recebes um aviso no Início 60 dias antes do fim e 30 dias antes de deixares de beneficiar da presunção do defeito.',
     source: 'Decreto-Lei n.º 84/2021, artigo 12.º',
     empty:
       'Ainda não guardaste nenhuma garantia. Podes acrescentá-la aqui ou ao registar um gasto em "Este mês".',
@@ -824,12 +824,48 @@ export const t = {
     remove: 'Apagar',
     confirmRemove: (product: string) => `Apagar a garantia de "${product}"?`,
     confirm: 'Apagar de vez',
-    states: { active: 'Ativa', ending: 'A terminar', ended: 'Terminada' },
-    until: (date: string) => `Garantia até ${date}`,
-    endedOn: (date: string) => `Garantia terminou a ${date}`,
+    states: { active: 'Dentro da garantia', ending: 'A terminar', ended: 'Terminada' },
+    until: (date: string) => `Até ${date}.`,
+    endedOn: (date: string) => `Terminou a ${date}.`,
     daysLeft: (days: number) =>
-      days === 0 ? 'último dia' : days === 1 ? 'falta 1 dia' : `faltam ${days} dias`,
-    delivered: (date: string) => `entregue a ${date}`,
+      days === 0 ? 'Último dia.' : days === 1 ? 'Falta 1 dia.' : `Faltam ${days} dias.`,
+    progressLabel: (percent: number) => `Já passou ${percent} % do prazo da garantia.`,
+    delivered: (date: string) => `recebido a ${date}`,
+    termLabels: {
+      new: 'Novo ou recondicionado (3 anos)',
+      usedAgreed: 'Usado (18 meses combinados)',
+      other: (months: number) => `Outro prazo (${months} meses)`,
+    },
+    more: 'Datas importantes e detalhes',
+    datesTitle: 'Datas importantes',
+    past: '(já passou)',
+    milestones: {
+      rejection:
+        'Até esta data, se o defeito aparecer, podes pedir logo a troca do bem ou a devolução do dinheiro, sem teres de aceitar uma reparação.',
+      presumption:
+        'A partir desta data, se aparecer um defeito, podes ter de provar que ele já existia quando recebeste o bem.',
+      end: 'Último dia da garantia legal. Se compraste a uma loja ou empresa, para uso pessoal, a loja responde por qualquer defeito que apareça até esta data.',
+      endOther:
+        'Último dia do prazo que escreveste (por exemplo, uma garantia da marca). A app não sabe se este prazo é legal.',
+    },
+    details: 'Detalhes',
+    detailTerm: 'Garantia',
+    detailPurchase: 'Comprado a',
+    detailDelivery: 'Recebido a',
+    detailPrice: 'Preço',
+    detailNotes: 'Notas',
+    sourcesTitle: 'De onde vêm estas datas',
+    sources: [
+      'Prazo de 3 anos (18 meses num usado, se ficou combinado), a contar da entrega: artigo 12.º, n.os 1 e 3.',
+      'O defeito presume-se de origem durante 2 anos (1 ano com o prazo de 18 meses): artigo 13.º, n.os 1, 3 e 4.',
+      'Troca ou devolução do dinheiro nos primeiros 30 dias: artigo 16.º.',
+    ],
+    sourceLink: 'Decreto-Lei n.º 84/2021, no Diário da República',
+    repairsNote:
+      'As datas são as mais cedo possíveis: enquanto o bem está a ser reparado, a garantia fica parada, e cada reparação acrescenta 6 meses. A app ainda não soma esse tempo.',
+    disclaimer: 'Informação geral, não é aconselhamento jurídico.',
+    problem: 'Tens um problema com este bem?',
+    problemLink: 'O Prazómetro ajuda-te a reclamar à loja',
     noDocument: 'sem fatura guardada',
     errors: {
       product: 'Escreve o que compraste.',
@@ -1049,6 +1085,8 @@ export const t = {
       } as Record<string, ((label: string) => string) | undefined>,
       warrantyEnding: (product: string, date: string, daysLeft: number) =>
         `A garantia de ${product} termina ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}, daqui a ${daysLeft} dias`}. Se tem algum defeito, comunica-o à loja antes dessa data.`,
+      warrantyProof: (product: string, date: string, daysLeft: number) =>
+        `${product}: ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} acaba o prazo em que um defeito se presume de origem. Se tem algum problema, comunica-o à loja antes, enquanto não tens de provar que já existia.`,
       paymentDue: (label: string, total: string, date: string, daysLeft: number) =>
         `${label}: a fatura de ${total} vence ${daysLeft === 0 ? 'hoje' : daysLeft === 1 ? 'amanhã' : `a ${date}`} e ainda não está marcada como paga. Se já pagaste, marca-a em "Este mês".`,
       socialTariffLost: (label: string, date: string, previousDate: string, discount: string) =>

@@ -1,13 +1,29 @@
 /**
  * Legal warranty of a purchase (docs/garantias.md): it runs from the day the
  * good was delivered for a number of months (36 by law, 18 when agreed for a
- * used good). Only the essentials: end date, state and an alert before the
- * end. Pure: no React, no database.
+ * used good). The end date, the state, the dates that matter before it, and
+ * the alerts. Pure: no React, no database.
  */
 import type { Warranty } from './types';
 
 /** Months of the legal warranty (DL 84/2021, art. 12.º, n.os 1 e 3). */
 export const WARRANTY_MONTHS = { new: 36, usedAgreed: 18 } as const;
+
+/**
+ * The first days after delivery when a defect lets the buyer ask at once for a
+ * new good or the money back, without accepting a repair (art. 16.º).
+ */
+export const REJECTION_DAYS = 30;
+
+/**
+ * Months after delivery while a defect is presumed to have been there when the
+ * good arrived: 24 with the 3-year warranty, 12 with the 18 months agreed for a
+ * used good (art. 13.º, n.os 1, 3 e 4).
+ */
+export const PRESUMPTION_MONTHS = { new: 24, usedAgreed: 12 } as const;
+
+/** Days before the presumption ends when an alert appears. */
+export const PRESUMPTION_ALERT_DAYS = 30;
 
 /** Days before the end when the warranty is "a terminar" and an alert appears. */
 export const WARRANTY_ENDING_DAYS = 60;
@@ -64,6 +80,45 @@ export function warrantyStatus(
   const state: WarrantyState =
     daysLeft < 0 ? 'ended' : daysLeft <= WARRANTY_ENDING_DAYS ? 'ending' : 'active';
   return { state, endDate, daysLeft, progress };
+}
+
+export type MilestoneKind = 'rejection' | 'presumption' | 'end';
+
+export interface WarrantyMilestone {
+  kind: MilestoneKind;
+  date: string;
+}
+
+/** Which legal term a warranty has: the law's two, or one the user wrote (a brand's). */
+export function warrantyTerm(warranty: Pick<Warranty, 'months'>): 'new' | 'usedAgreed' | 'other' {
+  if (warranty.months === WARRANTY_MONTHS.new) return 'new';
+  if (warranty.months === WARRANTY_MONTHS.usedAgreed) return 'usedAgreed';
+  return 'other';
+}
+
+function addDays(date: string, days: number): string {
+  return new Date(utc(date) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * The dates that matter, in order: the end of the first 30 days and of the
+ * presumption of the defect (only for the law's terms; the law says nothing
+ * of a term the user wrote), and the last day.
+ */
+export function warrantyMilestones(
+  warranty: Pick<Warranty, 'deliveryDate' | 'months'>,
+): WarrantyMilestone[] {
+  const term = warrantyTerm(warranty);
+  const end: WarrantyMilestone = { kind: 'end', date: warrantyEnd(warranty) };
+  if (term === 'other') return [end];
+  return [
+    { kind: 'rejection', date: addDays(warranty.deliveryDate, REJECTION_DAYS) },
+    {
+      kind: 'presumption',
+      date: addMonthsToDate(warranty.deliveryDate, PRESUMPTION_MONTHS[term]),
+    },
+    end,
+  ];
 }
 
 /** Still running first, the closest end first; ended ones last, the latest first. */

@@ -20,7 +20,7 @@ import type {
   Settings,
   Warranty,
 } from './types';
-import { warrantyStatus } from './warranty';
+import { PRESUMPTION_ALERT_DAYS, warrantyMilestones, warrantyStatus } from './warranty';
 
 export const MISSING_INVOICE_DAYS = 40;
 /** The meter reading reminder shows this many days before the window opens. */
@@ -516,15 +516,40 @@ export function computeAlerts(input: AlertInput): AlertDraft[] {
   return [...perContract, ...suggestions, ...warrantyAlerts(input.warranties ?? [], input.today)];
 }
 
-/** A warranty in its last days (not tied to a contract: `contractId` is empty). */
+/**
+ * A warranty in its last days, or near the end of the presumption of the
+ * defect (not tied to a contract: `contractId` is empty).
+ */
 export function warrantyAlerts(
   warranties: readonly Pick<Warranty, 'id' | 'product' | 'deliveryDate' | 'months'>[],
   today: string,
 ): AlertDraft[] {
-  return warranties.flatMap((warranty) => {
+  return warranties.flatMap((warranty): AlertDraft[] => {
+    const presumption = warrantyMilestones(warranty).find(
+      (milestone) => milestone.kind === 'presumption',
+    );
+    const proofDays = presumption ? daysBetween(today, presumption.date) : -1;
+    const proof: AlertDraft[] =
+      presumption && proofDays >= 0 && proofDays <= PRESUMPTION_ALERT_DAYS
+        ? [
+            {
+              key: `warranty:${warranty.id}:proof`,
+              contractId: '',
+              kind: 'warranty_proof',
+              severity: 'info',
+              data: {
+                warrantyId: warranty.id,
+                product: warranty.product,
+                date: presumption.date,
+                daysLeft: proofDays,
+              },
+            },
+          ]
+        : [];
     const status = warrantyStatus(warranty, today);
-    if (status.state !== 'ending') return [];
+    if (status.state !== 'ending') return proof;
     return [
+      ...proof,
       {
         key: `warranty:${warranty.id}:ending`,
         contractId: '',

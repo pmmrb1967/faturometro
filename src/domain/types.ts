@@ -229,7 +229,8 @@ export interface Alert extends SyncMeta {
     | 'payment_due'
     | 'social_tariff_suggestion'
     | 'direct_debit_soon'
-    | 'warranty_ending';
+    | 'warranty_ending'
+    | 'warranty_proof';
   severity: 'info' | 'warning';
   message: string;
   data?: Record<string, unknown>;

@@ -636,4 +636,20 @@ describe('warrantyAlerts', () => {
     ]);
     expect(warrantyAlerts([washer], '2027-01-11')).toEqual([]);
   });
+
+  it('warns in the last 30 days before the defect stops being presumed', () => {
+    const kettle = { id: 'k', product: 'Chaleira', deliveryDate: '2024-12-10', months: 36 };
+    expect(warrantyAlerts([kettle], '2026-11-09')).toEqual([]);
+    expect(warrantyAlerts([kettle], '2026-11-25')).toEqual([
+      {
+        key: 'warranty:k:proof',
+        contractId: '',
+        kind: 'warranty_proof',
+        severity: 'info',
+        data: { warrantyId: 'k', product: 'Chaleira', date: '2026-12-10', daysLeft: 15 },
+      },
+    ]);
+    expect(warrantyAlerts([kettle], '2026-12-11')).toEqual([]);
+    expect(warrantyAlerts([{ ...kettle, months: 60 }], '2026-11-25')).toEqual([]);
+  });
 });

@@ -1,0 +1,136 @@
+/* A warranty in "Garantias": what, where, its state, how much of it has gone, and, opened,
+   the dates that matter and the details. */
+.list-item.warranty-card {
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+}
+
+.warranty-card > :not(.warranty-head, .warranty-badge) {
+  grid-column: 1 / -1;
+}
+
+.warranty-head {
+  display: flex;
+  flex-direction: column;
+}
+
+.warranty-head strong {
+  font-size: 1.05rem;
+}
+
+.warranty-badge {
+  grid-column: 2;
+  align-self: start;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.warranty-card.is-ending .warranty-badge {
+  color: var(--warning);
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+.warranty-card.is-ended .warranty-badge {
+  color: var(--muted);
+  background: transparent;
+  border: 1px dashed currentColor;
+}
+
+.warranty-when {
+  margin: 0;
+}
+
+.warranty-bar {
+  height: 8px;
+  overflow: hidden;
+  background: var(--tint);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.warranty-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+.warranty-card.is-ending .warranty-bar span {
+  background: var(--warning);
+}
+
+.warranty-card.is-ended .warranty-bar span {
+  background: var(--muted);
+}
+
+.warranty-more {
+  margin-top: 4px;
+}
+
+.warranty-more summary {
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.warranty-more h3 {
+  margin: 16px 0 6px;
+  font-size: 1rem;
+}
+
+.warranty-dates {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--border-strong);
+}
+
+.warranty-dates li {
+  position: relative;
+  padding: 0 0 10px;
+}
+
+.warranty-dates li::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: -20px;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.warranty-dates li.is-past::before {
+  background: var(--muted);
+}
+
+.warranty-dates li.is-past strong,
+.warranty-dates li.is-past p {
+  color: var(--muted);
+}
+
+.warranty-dates p {
+  margin: 2px 0 0;
+}
+
+.warranty-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.warranty-details dt {
+  color: var(--muted);
+}
+
+.warranty-details dd {
+  margin: 0;
+}
+
+.warranty-sources {
+  margin: 0;
+  padding-left: 20px;
+}

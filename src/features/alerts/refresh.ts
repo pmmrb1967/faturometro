@@ -102,6 +102,8 @@ export function alertMessage(alert: Pick<Alert, 'kind' | 'data'>, contract?: Con
         formatIsoDate(text('endDate')),
         number('daysLeft'),
       );
+    case 'warranty_proof':
+      return copy.warrantyProof(text('product'), formatIsoDate(text('date')), number('daysLeft'));
     case 'invoice_audit': {
       const kinds = Array.isArray(data.kinds) ? data.kinds.map(String) : [];
       const parts = kinds.map((kind) => copy.auditParts[kind]).filter(Boolean) as string[];

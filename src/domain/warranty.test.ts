@@ -4,7 +4,9 @@ import {
   sortWarranties,
   WARRANTY_MONTHS,
   warrantyEnd,
+  warrantyMilestones,
   warrantyStatus,
+  warrantyTerm,
 } from './warranty';
 
 describe('addMonthsToDate', () => {
@@ -50,6 +52,31 @@ describe('sortWarranties', () => {
       'later',
       'ended-recent',
       'ended-old',
+    ]);
+  });
+});
+
+describe('warrantyMilestones', () => {
+  it('has the first 30 days, the 2 years of presumption and the end of a new good', () => {
+    expect(warrantyMilestones({ deliveryDate: '2026-11-12', months: 36 })).toEqual([
+      { kind: 'rejection', date: '2026-12-12' },
+      { kind: 'presumption', date: '2028-11-12' },
+      { kind: 'end', date: '2029-11-12' },
+    ]);
+  });
+
+  it('presumes the defect for 1 year with the 18 months of a used good', () => {
+    expect(warrantyMilestones({ deliveryDate: '2026-01-31', months: 18 })).toEqual([
+      { kind: 'rejection', date: '2026-03-02' },
+      { kind: 'presumption', date: '2027-01-31' },
+      { kind: 'end', date: '2027-07-31' },
+    ]);
+  });
+
+  it('only has the end of a term the user wrote', () => {
+    expect(warrantyTerm({ months: 60 })).toBe('other');
+    expect(warrantyMilestones({ deliveryDate: '2026-01-10', months: 60 })).toEqual([
+      { kind: 'end', date: '2031-01-10' },
     ]);
   });
 });
