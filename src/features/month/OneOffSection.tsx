@@ -1,20 +1,32 @@
 import { useRef, useState, type ChangeEvent } from 'react';
+import { documentText, invoiceSource } from '../../ai/document';
+import type { InvoiceSource } from '../../ai/provider';
 import { monthOf } from '../../domain/month';
+import { productFromLines, storeFromText } from '../../domain/purchase-reading';
 import { t } from '../../i18n/pt-PT';
 import type { FoundQr } from '../../qr/scan';
 import { today } from '../alerts/refresh';
+import { AiExtractPanel } from '../ai/AiExtractPanel';
 import { useSession } from '../auth/session-context';
 import { canUseLiveCamera } from '../spending/camera';
 import { LiveReceiptScanner } from '../spending/LiveReceiptScanner';
 import { readReceipt, type TransactionDraft } from '../spending/receipt';
 import { SpendingHelp } from '../spending/SpendingHelp';
-import { TransactionForm } from '../spending/TransactionForm';
+import { TransactionForm, type PurchaseSuggestion } from '../spending/TransactionForm';
 import { saveOneOff } from './one-off-save';
 
 const copy = t.spending;
 
 function isPdf(file: File): boolean {
   return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
+/** The photo or PDF a purchase was read from: kept with its warranty, and what the AI may read. */
+interface ReadFile {
+  file: File;
+  /** Undefined when it cannot be sent (protected PDF, image the AI does not read). */
+  source: InvoiceSource | undefined;
+  pdfPages: number;
 }
 
 /** Shown only in the month it is about, so it goes away with the arrows. */
@@ -35,7 +47,9 @@ export function OneOffSection({
   const { session } = useSession();
   const [editing, setEditing] = useState<TransactionDraft | null>(null);
   /** The photo or PDF the purchase being added was read from. */
-  const [readFile, setReadFile] = useState<File | null>(null);
+  const [readFile, setReadFile] = useState<ReadFile | null>(null);
+  /** What the file says beyond its QR code (the store; with AI, the product too). */
+  const [suggestion, setSuggestion] = useState<PurchaseSuggestion>({});
   const [reading, setReading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -64,6 +78,7 @@ export function OneOffSection({
   function startNew() {
     setNotice(null);
     setReadFile(null);
+    setSuggestion({});
     setEditing(newDraft());
   }
 
@@ -83,20 +98,53 @@ export function OneOffSection({
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    let store = '';
     await showReceipt(
       async () => {
         // pdf.js and zxing are loaded only when a receipt is read.
         const { readImage, readPdf } = await import('../../pdf/browser');
         const bytes = new Uint8Array(await file.arrayBuffer());
-        return isPdf(file) ? (await readPdf(bytes)).qrs : readImage(bytes, file.type);
+        const pdf = isPdf(file);
+        let pages: Awaited<ReturnType<typeof readPdf>>['pages'] = [];
+        let qrs: FoundQr[];
+        let protectedPdf = false;
+        if (pdf) {
+          try {
+            ({ pages, qrs } = await readPdf(bytes));
+          } catch {
+            // A PDF with a password: kept, but neither read here nor sent.
+            protectedPdf = true;
+            qrs = [];
+          }
+        } else {
+          qrs = await readImage(bytes, file.type);
+        }
+        if (keep) {
+          store = storeFromText(documentText(pages));
+          setReadFile({
+            file,
+            source: invoiceSource({
+              pages,
+              bytes,
+              mime: file.type,
+              fileKind: pdf ? 'pdf' : 'image',
+              protectedPdf,
+            }),
+            pdfPages: Math.max(1, pages.length),
+          });
+          setSuggestion(store ? { seller: store } : {});
+        }
+        return qrs;
       },
-      keep ? file : null,
+      () => store,
     );
   }
 
-  async function showReceipt(read: () => Promise<FoundQr[]>, file: File | null = null) {
+  /** `store`: the store's name read from the file, once it was read. */
+  async function showReceipt(read: () => Promise<FoundQr[]>, store: () => string = () => '') {
     setNotice(null);
-    setReadFile(file);
+    setReadFile(null);
+    setSuggestion({});
     setEditing(null);
     setReading(true);
     const problem = (text: string) => setNotice({ text, month, problem: true });
@@ -110,14 +158,17 @@ export function OneOffSection({
       });
       if (outcome.kind === 'read') {
         setNotice({ text: copy.receipt.read, month });
-        setEditing(outcome.draft);
+        setEditing({
+          ...outcome.draft,
+          description: outcome.draft.description || store(),
+        });
       } else if (outcome.kind === 'invoice') {
         problem(copy.receipt.invoice);
       } else if (outcome.kind === 'known') {
         problem(copy.receipt.known);
       } else {
         problem(copy.receipt.noQr);
-        setEditing(newDraft());
+        setEditing({ ...newDraft(), description: store() });
       }
     } catch {
       problem(copy.receipt.noQr);
@@ -183,21 +234,46 @@ export function OneOffSection({
           {notice.text}
         </p>
       )}
+      {editing && readFile && !suggestion.product && (
+        <AiExtractPanel
+          source={readFile.source}
+          pdfPages={readFile.pdfPages}
+          intro={t.month.oneOff.aiIntro}
+          unavailable={t.month.oneOff.aiOff}
+          onResult={(parsed) => {
+            const seller = parsed.providerName || parsed.extraction.issuerName?.value || '';
+            const product = productFromLines(parsed.extraction.lines);
+            setSuggestion((previous) => ({
+              ...previous,
+              ...(seller ? { seller } : {}),
+              ...(product ? { product } : {}),
+            }));
+            setNotice({
+              text: product ? t.month.oneOff.aiDone : t.month.oneOff.aiNothing,
+              month,
+              problem: !product,
+            });
+          }}
+        />
+      )}
       {editing && (
         <TransactionForm
           key={editing.id}
           initial={editing}
-          {...(readFile ? { file: readFile } : {})}
+          suggestion={suggestion}
+          {...(readFile ? { file: readFile.file } : {})}
           onDone={async (draft, warranty) => {
             if (!draft) {
               setEditing(null);
               setReadFile(null);
+              setSuggestion({});
               setNotice(null);
               return;
             }
             await saveOneOff(repos, draft, warranty, undefined);
             setEditing(null);
             setReadFile(null);
+            setSuggestion({});
             // An old receipt is shown where it landed.
             setNotice({ text: copy.saved, month: monthOf(draft.date) });
             onMonth(monthOf(draft.date));

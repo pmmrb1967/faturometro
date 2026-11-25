@@ -694,6 +694,12 @@ export const t = {
         count === 0 ? 'Nenhum neste mês.' : `${count} neste mês · ${total}`,
       intro:
         'Compras já feitas, frequentes (combustível, farmácia, prendas) ou de uma só vez (uma máquina de lavar), e despesas que ainda tens de pagar uma vez, como uma obra. Se a compra tem garantia, guarda a fatura com ela.',
+      aiIntro:
+        'A app leu o código QR (valor, data e NIF da loja) e, num PDF com texto, o nome da loja. A IA pode ler também o produto.',
+      aiOff:
+        'Com a IA ligada nas Definições, a app lê também o produto da fatura. Sem ela, escreve-o tu.',
+      aiDone: 'A IA leu o produto e a loja. Confirma antes de guardar.',
+      aiNothing: 'A IA não encontrou o produto nesta fatura. Escreve-o tu.',
       purchaseTag: 'Gasto',
       oneOffTag: 'Pontual',
       warrantyTag: 'Com garantia',
@@ -806,8 +812,9 @@ export const t = {
     otherHint: 'Por exemplo, uma garantia comercial mais longa dada pela marca.',
     file: 'Fatura ou talão (PDF ou fotografia, opcional)',
     fileHint: 'Fica guardado cifrado, como os originais das faturas.',
-    fileChosen: (name: string) =>
-      `Fica guardado ${name}, o documento que leste, cifrado. Escolhe outro só se quiseres.`,
+    fileFromReading: (name: string) =>
+      `Fatura ou talão: ${name}, o ficheiro que leste. Fica guardado cifrado com a garantia.`,
+    otherFile: 'Usar outro ficheiro',
     fileKept: 'O documento já está guardado. Escolhe outro só se o quiseres substituir.',
     notes: 'Notas (opcional)',
     save: 'Guardar garantia',

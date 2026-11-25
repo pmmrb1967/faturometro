@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Field, SelectField } from '../../components/Field';
 import { t } from '../../i18n/pt-PT';
 import type { WarrantyFieldErrors, WarrantyFieldsValue, WarrantyTerm } from './save';
@@ -12,6 +13,7 @@ export function WarrantyFields({
   errors,
   hasDocument,
   withProduct = true,
+  readFile,
   onChange,
 }: {
   id: string;
@@ -21,8 +23,11 @@ export function WarrantyFields({
   hasDocument: boolean;
   /** False inside the purchase form, where the description names it unless changed. */
   withProduct?: boolean;
+  /** The photo or PDF the purchase was read from: kept unless another is chosen. */
+  readFile?: File;
   onChange: (value: WarrantyFieldsValue) => void;
 }) {
+  const [otherFile, setOtherFile] = useState(false);
   const set = <K extends keyof WarrantyFieldsValue>(key: K, next: WarrantyFieldsValue[K]) =>
     onChange({ ...value, [key]: next });
   return (
@@ -78,21 +83,30 @@ export function WarrantyFields({
           onChange={(event) => set('otherMonths', event.target.value)}
         />
       )}
-      <Field
-        id={`warranty-file-${id}`}
-        label={copy.file}
-        hint={
-          value.file
-            ? copy.fileChosen(value.file.name)
-            : hasDocument
-              ? copy.fileKept
-              : copy.fileHint
-        }
-        type="file"
-        accept="application/pdf,image/*"
-        error={errors.file}
-        onChange={(event) => set('file', event.target.files?.[0] ?? null)}
-      />
+      {readFile && !otherFile ? (
+        <p className="muted">
+          {copy.fileFromReading(readFile.name)}{' '}
+          <button type="button" className="link-button" onClick={() => setOtherFile(true)}>
+            {copy.otherFile}
+          </button>
+        </p>
+      ) : (
+        <Field
+          id={`warranty-file-${id}`}
+          label={copy.file}
+          hint={hasDocument ? copy.fileKept : copy.fileHint}
+          type="file"
+          accept="application/pdf,image/*"
+          error={errors.file}
+          // Back to the file read, unless another one is chosen.
+          onChange={(event) => set('file', event.target.files?.[0] ?? readFile ?? null)}
+        />
+      )}
+      {readFile && !otherFile && errors.file && (
+        <p className="ingest-problem" role="alert">
+          {errors.file}
+        </p>
+      )}
       <Field
         id={`warranty-notes-${id}`}
         label={copy.notes}

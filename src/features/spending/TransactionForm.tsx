@@ -16,6 +16,12 @@ import type { TransactionDraft } from './receipt';
 const copy = t.spending;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** What the purchase's document says beyond its QR code, filled in where nothing was written. */
+export interface PurchaseSuggestion {
+  seller?: string;
+  product?: string;
+}
+
 /** The warranty kept with the purchase, or none (an existing one is then removed). */
 export type WarrantyChoice = WarrantyFieldsValue | null;
 
@@ -27,6 +33,7 @@ export function TransactionForm({
   initial,
   warranty,
   file,
+  suggestion = {},
   onDone,
 }: {
   initial: TransactionDraft;
@@ -34,6 +41,8 @@ export function TransactionForm({
   warranty?: Warranty;
   /** The document the purchase was read from, kept with its warranty if one is saved. */
   file?: File;
+  /** May arrive after the form is open (an AI reading). */
+  suggestion?: PurchaseSuggestion;
   onDone: (draft: TransactionDraft | null, warranty?: WarrantyChoice) => Promise<void>;
 }) {
   const [amount, setAmount] = useState(
@@ -48,6 +57,35 @@ export function TransactionForm({
     ...emptyWarrantyFields('', initial.date, warranty),
     ...(file ? { file } : {}),
   }));
+  // A suggestion fills what is still empty, or the description still as it was read.
+  const [applied, setApplied] = useState<PurchaseSuggestion>({});
+  if (suggestion.seller !== applied.seller || suggestion.product !== applied.product) {
+    setApplied(suggestion);
+    if (suggestion.product && description === initial.description) {
+      setDescription(suggestion.product);
+    }
+    setWarrantyFields({
+      ...warrantyFields,
+      seller: warrantyFields.seller || suggestion.seller || '',
+      product: warrantyFields.product || suggestion.product || '',
+    });
+  }
+
+  function chooseWarranty(keep: boolean) {
+    setKeepWarranty(keep);
+    // Ready to confirm: what was bought, where, and when it arrived.
+    if (keep) {
+      setWarrantyFields({
+        ...warrantyFields,
+        product:
+          warrantyFields.product ||
+          suggestion.product ||
+          // A description that is the store's name does not say what was bought.
+          (description.trim() !== suggestion.seller ? description.trim() : ''),
+        seller: warrantyFields.seller || suggestion.seller || '',
+      });
+    }
+  }
   const [errors, setErrors] = useState<{ amount?: string; date?: string } & WarrantyFieldErrors>(
     {},
   );
@@ -155,7 +193,7 @@ export function TransactionForm({
         <input
           type="checkbox"
           checked={keepWarranty}
-          onChange={(event) => setKeepWarranty(event.target.checked)}
+          onChange={(event) => chooseWarranty(event.target.checked)}
         />
         {t.warranties.keep}
       </label>
@@ -177,6 +215,7 @@ export function TransactionForm({
             value={warrantyFields}
             errors={errors}
             hasDocument={warranty?.fileHash !== undefined}
+            {...(file ? { readFile: file } : {})}
             withProduct={false}
             onChange={setWarrantyFields}
           />

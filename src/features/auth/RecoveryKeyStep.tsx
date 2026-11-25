@@ -52,7 +52,12 @@ export function RecoveryKeyStep({ email, recoveryKey, onDone }: Props) {
         />
         {copy.confirm}
       </label>
-      <button type="button" className="action-primary action-wide" disabled={!saved} onClick={onDone}>
+      <button
+        type="button"
+        className="action-primary action-wide"
+        disabled={!saved}
+        onClick={onDone}
+      >
         {copy.continue}
       </button>
     </AuthLayout>

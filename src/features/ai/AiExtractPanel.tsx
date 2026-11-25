@@ -33,6 +33,10 @@ interface Props {
   /** With several invoices in one file: which one. */
   target?: DocumentTarget;
   qr?: FiscalQr;
+  /** Another first sentence, where the panel does not read a household invoice. */
+  intro?: string;
+  /** Shown instead of the panel without AI; by default, how to turn it on for invoices. */
+  unavailable?: string;
   onResult: (parsed: ParsedDocument) => void;
 }
 
@@ -42,7 +46,15 @@ interface Props {
  * user turned on automatic sending). The result goes through the same QR
  * cross-validation as the parsers.
  */
-export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props) {
+export function AiExtractPanel({
+  source,
+  pdfPages,
+  target,
+  qr,
+  intro,
+  unavailable,
+  onResult,
+}: Props) {
   const { session } = useSession();
   const settings = useLiveQuery(
     async () => (session ? getSettings(session.repos) : null),
@@ -93,6 +105,7 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
 
   if (!settings) return null;
   if (!session || !aiAvailable(session.profile, settings)) {
+    if (unavailable !== undefined) return <p className="muted ai-panel">{unavailable}</p>;
     return (
       <p className="muted ai-panel">
         {session && isGuest(session.profile) && aiModeOf(settings) !== 'none'
@@ -109,7 +122,7 @@ export function AiExtractPanel({ source, pdfPages, target, qr, onResult }: Props
   const estimate = estimateExtraction(aiModelOf(settings), source, pdfPages);
   return (
     <div className="ai-panel">
-      <p>{qr ? copy.intro : copy.introNoQr}</p>
+      <p>{intro ?? (qr ? copy.intro : copy.introNoQr)}</p>
       <AiSendSummary
         settings={settings}
         source={source}
