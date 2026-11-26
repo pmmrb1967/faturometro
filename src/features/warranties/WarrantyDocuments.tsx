@@ -7,6 +7,7 @@ import { formatIsoDate } from '../../lib/dates';
 import { today } from '../alerts/refresh';
 import { OriginalButton } from '../invoices/OriginalButton';
 import { useWarranties } from './use-warranties';
+import './warranties.css';
 
 const copy = t.warranties;
 
@@ -39,7 +40,7 @@ export function WarrantyDocuments() {
             const status = warrantyStatus(warranty, date);
             const end = formatIsoDate(status.endDate);
             return (
-              <li key={warranty.id} className="list-item">
+              <li key={warranty.id} className="list-item warranty-document">
                 <strong>{warranty.product}</strong>
                 <span className="meta">
                   {[

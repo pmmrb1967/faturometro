@@ -9,6 +9,12 @@
   grid-column: 1 / -1;
 }
 
+/* On "Faturas": a warranty's document has no amount, so one column, the name above
+   the details, like the invoices. */
+.list-item.warranty-document {
+  grid-template-columns: 1fr;
+}
+
 .warranty-head {
   display: flex;
   flex-direction: column;
