@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { Field } from '../../components/Field';
-import { isGuest, type ProfileSync } from '../../db/profiles';
+import { isDemo, isGuest, type ProfileSync } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import {
   changeAccountPassword,
@@ -36,6 +36,7 @@ import { useSignInBackToSettings } from '../sync/cloud-return';
 import { BACKUP_ANCHOR } from '../backup/backup';
 import { CategoriesSection } from '../categories/CategoriesSection';
 import { SettingsBlock, SettingsBlocks } from './SettingsBlock';
+import { useDemo } from '../../demo/use-demo';
 import { syncStatus } from './section-status';
 
 const copy = t.sync;
@@ -108,6 +109,14 @@ function SyncSection() {
     // Back from a cloud sign-in: the password is asked for in here.
     attention: line.attention || signInBack,
   };
+
+  if (isDemo(session.profile)) {
+    return (
+      <SettingsBlock {...blockProps} status={t.demo.syncOff} attention={false}>
+        <p>{t.demo.syncOff}</p>
+      </SettingsBlock>
+    );
+  }
 
   if (isGuest(session.profile)) {
     return (
@@ -489,6 +498,7 @@ function AccountSection() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   if (!session) return null;
+  if (isDemo(session.profile)) return <DemoNotice />;
   if (isGuest(session.profile)) return <GuestNotice />;
   const accountCopy = t.settings.account;
 
@@ -633,6 +643,27 @@ function PreferencesSection() {
         {t.settings.keepOriginalFiles}
       </label>
     </SettingsBlock>
+  );
+}
+
+/** Instead of the account section, in the demonstration. */
+function DemoNotice() {
+  const { startOwn, busy } = useDemo();
+  return (
+    <section className="settings-section" aria-labelledby="demo-title">
+      <h2 id="demo-title">{t.demo.noticeTitle}</h2>
+      {t.demo.notice.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
+      <button
+        type="button"
+        className="action-primary"
+        disabled={busy}
+        onClick={() => void startOwn()}
+      >
+        {t.demo.startOwn}
+      </button>
+    </section>
   );
 }
 

@@ -1,5 +1,5 @@
 /** AI glue for the app: provider from the settings, local usage log. */
-import { isGuest, type Profile } from '../db/profiles';
+import { isDemo, isGuest, type Profile } from '../db/profiles';
 import type { Repositories } from '../db/repositories';
 import type { AiMode, Settings } from '../domain/types';
 import { DEFAULT_SYNC_URL } from '../sync/config';
@@ -40,6 +40,8 @@ export function hasAiKey(settings: Partial<AiSettings>): boolean {
  * The free AI has no key, so guests can use it too.
  */
 export function aiAvailable(profile: Profile, settings: Partial<AiSettings>): boolean {
+  // The demonstration sends nothing anywhere, not even to the free AI.
+  if (isDemo(profile)) return false;
   const mode = aiModeOf(settings);
   if (mode === 'free') return true;
   return !isGuest(profile) && hasAiKey(settings);

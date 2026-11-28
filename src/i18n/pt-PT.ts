@@ -371,6 +371,25 @@ export const t = {
       backup: 'Fazer cópia de segurança',
     },
   },
+  demo: {
+    badge: 'Exemplo',
+    banner:
+      'Estás a ver dados de exemplo: nada disto é verdadeiro e tudo desaparece quando saíres.',
+    startOwn: 'Começar com os meus dados',
+    leave: 'Sair do exemplo',
+    leaveLabel: 'Sair do exemplo e apagar os dados de exemplo',
+    importNotice:
+      'Isto é o exemplo: o que importares aqui desaparece quando saíres. Para guardares as tuas faturas, começa com os teus dados.',
+    aiOff:
+      'No exemplo, a IA está desligada. Com os teus dados podes usar a IA gratuita ou uma chave tua.',
+    syncOff: 'No exemplo não há sincronização nem ligação à nuvem.',
+    autoBackupOff: 'No exemplo não há cópias automáticas.',
+    noticeTitle: 'Estás a ver o exemplo',
+    notice: [
+      'Os dados deste exemplo são inventados: servem para veres como a app fica com alguns meses de faturas, despesas e alertas.',
+      'Podes mexer à vontade. Quando saíres, o exemplo é apagado; da próxima vez começa de novo.',
+    ],
+  },
   signOutLabel: 'Sair da conta (a app fica bloqueada até voltares a entrar)',
   insurance: {
     section: {
@@ -2434,7 +2453,10 @@ export const t = {
     startGuest: 'Começar sem conta',
     continueGuest: 'Continuar sem conta',
     openApp: 'Abrir a app',
-    howItWorksLink: 'Como funciona',
+    tryDemo: 'Ver um exemplo',
+    tryDemoHint: 'Abre a app com dados inventados de uma casa: faturas, despesas e alertas.',
+    preparingDemo: 'A preparar o exemplo…',
+    demoFailed: 'Não foi possível preparar o exemplo. Tenta outra vez.',
     hero: {
       title: 'Quanto custa a tua casa, fatura a fatura.',
       lead: 'O Faturómetro lê as faturas de luz, gás, água e telecomunicações, guarda o histórico e avisa-te quando o preço sobe ou a fidelização está a acabar.',

@@ -11,7 +11,7 @@ import {
   providerFromSettings,
   recordUsage,
 } from '../../ai/session';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import { AiSendSummary } from '../ai/AiSendSummary';
 import { aiErrorText } from '../ai/errors';
@@ -53,9 +53,11 @@ export function ProposalReader({
   if (!aiAvailable(session.profile, settings)) {
     return (
       <p className="muted">
-        {isGuest(session.profile) && aiModeOf(settings) !== 'none'
-          ? t.guest.aiNeedsAccount
-          : copy.noKey}
+        {isDemo(session.profile)
+          ? t.demo.aiOff
+          : isGuest(session.profile) && aiModeOf(settings) !== 'none'
+            ? t.guest.aiNeedsAccount
+            : copy.noKey}
       </p>
     );
   }

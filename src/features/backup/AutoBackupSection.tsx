@@ -6,7 +6,13 @@ import {
   type AutoBackupEvery,
   type AutoBackupKeep,
 } from '../../domain/auto-backup';
-import { DEFAULT_AUTO_BACKUP, isGuest, profilesDb, type AutoBackupConfig } from '../../db/profiles';
+import {
+  DEFAULT_AUTO_BACKUP,
+  isDemo,
+  isGuest,
+  profilesDb,
+  type AutoBackupConfig,
+} from '../../db/profiles';
 import { t, type CloudService } from '../../i18n/pt-PT';
 import { serviceOf } from '../sync/cloud-service';
 import { useSession } from '../auth/session-context';
@@ -47,6 +53,14 @@ export function AutoBackupSection() {
     [profileId],
   );
   if (!session || config === undefined) return null;
+  if (isDemo(session.profile)) {
+    return (
+      <>
+        <h3>{copy.title}</h3>
+        <p className="muted">{t.demo.autoBackupOff}</p>
+      </>
+    );
+  }
   const guest = isGuest(session.profile);
   const cloudLinked = Boolean(session.profile.cloud);
   const folders = supportsFolderBackup();

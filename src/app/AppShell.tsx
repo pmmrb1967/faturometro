@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { LegalFooter } from '../components/LegalFooter';
-import { isGuest } from '../db/profiles';
+import { isDemo, isGuest } from '../db/profiles';
+import { DemoBanner, DemoTopbarAccount } from '../demo/DemoBanner';
 import { useSession } from '../features/auth/session-context';
 import { useAutoBackup } from '../features/backup/auto-backup-store';
 import { BackupBanner } from '../features/backup/BackupBanner';
@@ -61,7 +62,9 @@ export function AppShell() {
           {t.appName}
         </Link>
         <div className="topbar-account">
-          {session && isGuest(session.profile) ? (
+          {session && isDemo(session.profile) ? (
+            <DemoTopbarAccount />
+          ) : session && isGuest(session.profile) ? (
             <>
               <span className="topbar-badge">{t.guest.badge}</span>
               <Link to="/criar-conta" className="action-secondary action-compact">
@@ -145,6 +148,7 @@ export function AppShell() {
             </button>
           </div>
         )}
+        <DemoBanner />
         <BackupBanner />
         <CloudBanner />
         {/* Pages load in their own files: the shell and the menu stay while one arrives. */}

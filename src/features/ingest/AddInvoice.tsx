@@ -1,3 +1,4 @@
+import { DemoImportNotice } from '../../demo/DemoBanner';
 import {
   useEffect,
   useRef,
@@ -179,6 +180,7 @@ export function AddInvoice() {
       onDrop={onDrop}
     >
       <h2 id="ingest-title">{copy.title}</h2>
+      <DemoImportNotice />
       {dragging && (
         <p className="ingest-drop" aria-hidden="true">
           {copy.dropHere}

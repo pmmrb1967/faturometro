@@ -16,7 +16,7 @@ import {
   providerFromSettings,
   recordUsage,
 } from '../../ai/session';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
 import type { Contract } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
 import { useSession } from '../auth/session-context';
@@ -104,9 +104,11 @@ export function ContractAssistant({ contract }: { contract: Contract }) {
       </h2>
       {!aiAvailable(session.profile, settings) ? (
         <p className="muted">
-          {isGuest(session.profile) && aiModeOf(settings) !== 'none'
-            ? t.guest.aiNeedsAccount
-            : copy.noKey}
+          {isDemo(session.profile)
+            ? t.demo.aiOff
+            : isGuest(session.profile) && aiModeOf(settings) !== 'none'
+              ? t.guest.aiNeedsAccount
+              : copy.noKey}
         </p>
       ) : (
         <>

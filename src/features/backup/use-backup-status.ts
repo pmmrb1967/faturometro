@@ -8,7 +8,8 @@ import { getSettings } from '../settings/settings';
 export function useBackupStatus(): BackupStatus | null | undefined {
   const { session } = useSession();
   return useLiveQuery(async () => {
-    if (!session || session.profile.sync) return null;
+    // No reminder in the demonstration either: its data is thrown away.
+    if (!session || session.profile.sync || session.profile.demo) return null;
     const { repos } = session;
     const [settings, ...records] = await Promise.all([
       getSettings(repos),

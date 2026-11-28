@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { InstallButton } from '../components/InstallButton';
 import { LegalFooter } from '../components/LegalFooter';
+import { removeDemos } from '../demo/demo-account';
+import { useDemo } from '../demo/use-demo';
 import { createGuest, listAccountEmails, openGuest } from '../features/auth/accounts';
 import { useSession } from '../features/auth/session-context';
 import { t } from '../i18n/pt-PT';
@@ -10,9 +12,11 @@ import { QrSlip } from './QrSlip';
 import './landing.css';
 
 const copy = t.landing;
+/** A demonstration this old is no longer open anywhere (sessions end after 30 idle minutes). */
+const STALE_DEMO_MS = 12 * 60 * 60_000;
 
 export function Landing() {
-  const { session, signIn } = useSession();
+  const { session, restoring, signIn } = useSession();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState({ hasGuest: false, accounts: 0 });
   useEffect(() => {
@@ -21,6 +25,14 @@ export function Landing() {
     );
   }, []);
   const action = landingAction({ signedIn: session !== null, ...profiles });
+  const demo = useDemo();
+  const inDemo = session?.profile.demo === true;
+  // A demonstration left behind (signed in elsewhere, or the session expired) is cleared;
+  // a recent one may still be open in another tab.
+  useEffect(() => {
+    if (restoring || inDemo) return;
+    void removeDemos(new Date(Date.now() - STALE_DEMO_MS).toISOString()).catch(() => undefined);
+  }, [restoring, inDemo]);
 
   async function startGuest() {
     // Leaving this page reloads the document (web-analytics.ts): the session must be kept first.
@@ -59,11 +71,7 @@ export function Landing() {
                 </Link>
               )}
               {(action === 'startGuest' || action === 'continueGuest') && (
-                <button
-                  type="button"
-                  className="action-primary"
-                  onClick={() => void startGuest()}
-                >
+                <button type="button" className="action-primary" onClick={() => void startGuest()}>
                   {action === 'continueGuest' ? copy.continueGuest : copy.startGuest}
                 </button>
               )}
@@ -82,10 +90,23 @@ export function Landing() {
                   {copy.createAccount}
                 </Link>
               )}
-              <a href="#como-funciona" className="action-secondary">
-                {copy.howItWorksLink}
-              </a>
+              {(action !== 'open' || inDemo) && (
+                <button
+                  type="button"
+                  className="action-secondary"
+                  disabled={demo.busy}
+                  onClick={() => void demo.enter()}
+                  title={copy.tryDemoHint}
+                >
+                  {demo.busy ? copy.preparingDemo : copy.tryDemo}
+                </button>
+              )}
             </div>
+            {demo.failed && (
+              <p className="form-error" role="alert">
+                {copy.demoFailed}
+              </p>
+            )}
           </div>
           <QrSlip />
         </section>

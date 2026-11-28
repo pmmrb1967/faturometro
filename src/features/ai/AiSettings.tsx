@@ -14,7 +14,7 @@ import {
   recordUsage,
   usageSince,
 } from '../../ai/session';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
 import type { Repositories } from '../../db/repositories';
 import type { AiMode, Settings } from '../../domain/types';
 import { t } from '../../i18n/pt-PT';
@@ -295,6 +295,13 @@ export function AiSettings() {
     [session],
   );
   if (!session || !settings) return null;
+  if (isDemo(session.profile)) {
+    return (
+      <SettingsBlock id="ia" title={copy.title} status={copy.modes.none}>
+        <p>{t.demo.aiOff}</p>
+      </SettingsBlock>
+    );
+  }
   const { repos } = session;
   const guest = isGuest(session.profile);
   const mode = aiModeOf(settings);

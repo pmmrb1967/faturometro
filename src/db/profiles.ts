@@ -16,6 +16,11 @@ export interface Profile {
   wrappedKey?: WrappedMasterKey;
   /** Guest only: the raw master key in base64. */
   guestKey?: string;
+  /**
+   * The demonstration with example data: a guest of its own (email {@link DEMO_EMAIL}),
+   * made again at each visit, never synced, backed up or sent to the AI.
+   */
+  demo?: true;
   /** Present when this profile syncs with a server (device-local state). Never with `cloud`. */
   sync?: ProfileSync;
   /** Present when this profile syncs through the user's own cloud. Never with `sync`. */
@@ -123,6 +128,13 @@ export const GUEST_EMAIL = '';
 
 export function isGuest(profile: Profile): boolean {
   return profile.guestKey !== undefined;
+}
+
+/** Not an email, so no account can take it; unique like the guest's. */
+export const DEMO_EMAIL = '#demo';
+
+export function isDemo(profile: Pick<Profile, 'demo'>): boolean {
+  return profile.demo === true;
 }
 
 /** The password-wrapped key of an account; a guest has none (sync never runs for it). */

@@ -5,7 +5,7 @@ import comEscolhaData from '../../data/comescolha.json';
 import { checkIsStale, comEscolhaConfigSchema } from '../../domain/comescolha';
 import { t } from '../../i18n/pt-PT';
 import { formatIsoDate } from '../../lib/dates';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
 import { useSession } from '../auth/session-context';
 import { backupNow, useAutoBackupState } from '../backup/auto-backup-store';
 import { BACKUP_ANCHOR } from '../backup/backup';
@@ -65,7 +65,7 @@ export function HomePage() {
     <>
       {/* The menu already says where you are; screen readers still get the page title. */}
       <h1 className="visually-hidden">{t.nav.home}</h1>
-      {isGuest(session.profile) && <GuestHomeNotice />}
+      {isGuest(session.profile) && !isDemo(session.profile) && <GuestHomeNotice />}
       <h2 className="section-title">{t.alerts.title}</h2>
       {alerts?.length === 0 && !staleCheck && waiting === 0 && !backupDue && !autoProblem && (
         <p className="muted">{t.alerts.empty}</p>

@@ -14,7 +14,7 @@ import {
   providerFromSettings,
   recordUsage,
 } from '../../ai/session';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
 import { t } from '../../i18n/pt-PT';
 import type { FiscalQr } from '../../qr/parse';
 import { useSession } from '../auth/session-context';
@@ -108,11 +108,13 @@ export function AiExtractPanel({
     if (unavailable !== undefined) return <p className="muted ai-panel">{unavailable}</p>;
     return (
       <p className="muted ai-panel">
-        {session && isGuest(session.profile) && aiModeOf(settings) !== 'none'
-          ? t.guest.aiNeedsAccount
-          : qr
-            ? copy.noKey
-            : copy.noKeyNoQr}
+        {session && isDemo(session.profile)
+          ? t.demo.aiOff
+          : session && isGuest(session.profile) && aiModeOf(settings) !== 'none'
+            ? t.guest.aiNeedsAccount
+            : qr
+              ? copy.noKey
+              : copy.noKeyNoQr}
       </p>
     );
   }

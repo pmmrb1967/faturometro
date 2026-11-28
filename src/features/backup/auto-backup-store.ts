@@ -45,7 +45,8 @@ async function runFor(
   session: Session,
   options: { force: boolean; interactive: boolean },
 ): Promise<AutoBackupOutcome | null> {
-  if (state.running) return null;
+  // The demonstration keeps nothing: no copies of it anywhere.
+  if (state.running || session.profile.demo) return null;
   // Read each time: the settings page may have changed it since the last run.
   const config = await profilesDb.autoBackups.get(session.profile.id);
   if (!config) return null;

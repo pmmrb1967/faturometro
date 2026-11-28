@@ -379,6 +379,24 @@ body {
   border-left: 4px solid #b26a00;
 }
 
+/* The demonstration: example data, on every page. */
+.demo-banner {
+  border-left: 4px solid var(--highlight);
+}
+
+.demo-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.demo-import-notice {
+  padding: 8px 12px;
+  border-left: 4px solid var(--highlight);
+  background: var(--tint);
+  border-radius: 8px;
+}
+
 .legal-footer {
   display: flex;
   flex-wrap: wrap;

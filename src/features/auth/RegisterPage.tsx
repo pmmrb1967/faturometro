@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { t } from '../../i18n/pt-PT';
-import { isGuest } from '../../db/profiles';
+import { isDemo, isGuest } from '../../db/profiles';
+import { removeDemos } from '../../demo/demo-account';
 import { AccountError, convertGuest, createAccount, type UnlockedAccount } from './accounts';
 import { AuthLayout, Field, FormError } from './AuthLayout';
 import { RecoveryKeyStep } from './RecoveryKeyStep';
@@ -11,7 +12,9 @@ import { validateRegister, type FieldErrors } from './validation';
 export function RegisterPage() {
   const { session, signIn, updateProfile } = useSession();
   // From the guest, the account keeps its data (same key, now protected by the password).
-  const converting = session !== null && isGuest(session.profile);
+  // Never the demonstration: its example data does not go into a real account.
+  const converting = session !== null && isGuest(session.profile) && !isDemo(session.profile);
+  const fromDemo = session !== null && isDemo(session.profile);
   // The session stops being a guest as soon as it converts; remember it for the last step.
   const [converted, setConverted] = useState(false);
   const navigate = useNavigate();
@@ -63,6 +66,7 @@ export function RegisterPage() {
         onDone={() => {
           if (!converted) signIn(created.account);
           navigate('/app', { replace: true });
+          if (fromDemo) void removeDemos();
         }}
       />
     );
