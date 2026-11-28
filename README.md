@@ -1,8 +1,8 @@
 # Faturómetro
 
-PWA gratuita e local-first para acompanhar as faturas da casa em Portugal — eletricidade, gás, água, telecomunicações e seguros: deteta aumentos e fins de fidelização, e compara a eletricidade com as ofertas da ERSE.
+PWA gratuita e local-first para controlar as despesas da casa em Portugal. Lê as faturas de eletricidade, gás, água, telecomunicações e seguros, junta as despesas sem fatura (renda, condomínio, ginásio…), os gastos pontuais e as receitas do mês, guarda as garantias das compras, avisa de aumentos e fins de fidelização, e compara a eletricidade com as ofertas da ERSE.
 
-**Experimentar online:** <https://app.faturometro.workers.dev> (no telemóvel: abre o endereço e instala como app).
+**Experimentar online:** <https://app.faturometro.workers.dev> (no telemóvel: abre o endereço e instala como app). Para ver a app já preenchida, carrega em **Ver um exemplo**: abre uma casa com cerca de um ano de dados inventados, que é apagada ao sair.
 
 ## O que faz
 

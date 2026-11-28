@@ -262,7 +262,13 @@
 
 @media (min-width: 760px) {
   .features {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .features {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

@@ -2458,8 +2458,8 @@ export const t = {
     preparingDemo: 'A preparar o exemplo…',
     demoFailed: 'Não foi possível preparar o exemplo. Tenta outra vez.',
     hero: {
-      title: 'Quanto custa a tua casa, fatura a fatura.',
-      lead: 'O Faturómetro lê as faturas de luz, gás, água e telecomunicações, guarda o histórico e avisa-te quando o preço sobe ou a fidelização está a acabar.',
+      title: 'Quanto custa a tua casa, todos os meses.',
+      lead: 'O Faturómetro junta tudo o que a casa paga: lê as faturas de luz, gás, água e telecomunicações, regista a renda, o ginásio e os gastos do dia a dia, e avisa-te quando um preço sobe, uma fidelização acaba ou uma garantia está a terminar.',
     },
     qr: {
       title: 'O que está no código QR de uma fatura',
@@ -2482,8 +2482,12 @@ export const t = {
           body: 'As faturas emitidas em Portugal têm um código QR com o NIF do fornecedor, a data, o IVA e o total. A app lê-o do PDF ou de uma fotografia.',
         },
         {
+          title: 'O mês num só sítio',
+          body: 'Faturas, despesas sem fatura (renda, condomínio, explicações), gastos pontuais e receitas, com o que está pago, o que falta pagar e o saldo.',
+        },
+        {
           title: 'Avisa a tempo',
-          body: 'Fim da fidelização, aumentos de preço, leituras estimadas seguidas e faturas que deviam ter chegado e não chegaram.',
+          body: 'Fim da fidelização, aumentos de preço, faturas por pagar ou que não chegaram, e garantias a terminar.',
         },
         {
           title: 'Compara a eletricidade',
@@ -2494,7 +2498,7 @@ export const t = {
     privacy: {
       title: 'Os teus dados ficam contigo',
       items: [
-        'As faturas ficam cifradas no teu dispositivo. Com conta, ficam protegidas pela tua palavra-passe; sem conta, quem usar o mesmo browser consegue vê-las.',
+        'As faturas e as despesas ficam cifradas no teu dispositivo. Com conta, ficam protegidas pela tua palavra-passe; sem conta, quem usar o mesmo browser consegue vê-las.',
         'Sem publicidade e sem comissões dos fornecedores.',
         'Se quiseres os mesmos dados no telemóvel e no computador, ativas a sincronização: os dados saem cifrados e o servidor não os consegue ler.',
         'A inteligência artificial é opcional: gratuita, com os teus dados pessoais apagados do texto antes de enviar, ou com uma chave tua.',
@@ -2504,8 +2508,8 @@ export const t = {
       title: 'Como funciona',
       items: [
         {
-          title: 'Carrega a fatura',
-          body: 'Um PDF descarregado da área de cliente ou uma fotografia da fatura em papel.',
+          title: 'Carrega uma fatura ou regista uma despesa',
+          body: 'Um PDF descarregado da área de cliente, uma fotografia da fatura em papel, ou uma despesa sem fatura escrita à mão.',
         },
         {
           title: 'Confirma o que foi lido',
@@ -2513,7 +2517,7 @@ export const t = {
         },
         {
           title: 'Acompanha',
-          body: 'Vês a evolução de cada contrato e recebes avisos quando algo muda.',
+          body: 'Vês a evolução de cada contrato, o mês e o ano por categoria, e recebes avisos quando algo muda.',
         },
       ],
     },
